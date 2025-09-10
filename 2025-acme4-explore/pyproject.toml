@@ -21,6 +21,7 @@ dependencies = [
     "numpy>=2.2.6",
     "pandas>=2.3.2",
     "pytest>=8.4.2",
+    "python-dotenv>=1.1.1",
     "python-lsp-server>=1.13.1",
     "quak>=0.3.2",
     "scikit-learn>=1.7.1",
