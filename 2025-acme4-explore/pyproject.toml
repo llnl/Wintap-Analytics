@@ -16,6 +16,7 @@ dependencies = [
     "ipykernel>=6.30.1",
     "ipywidgets>=8.1.7",
     "jupysql>=0.11.1",
+    "jupyterlab>=4.4.7",
     "marimo>=0.15.2",
     "mypy>=1.17.1",
     "numpy>=2.2.6",
