@@ -42,6 +42,12 @@ uv run python -m ipykernel install --user --name acme4-explore --display-name "A
 When then until the **ACME4 Explore** kernel shows in the Jupyter launcher,
 then you can open the project's notebooks without Jupyter asking you to choose a kernel.
 
+### Notebook template
+
+While it is not mandatory,
+contributors are encouraged to start their own notebooks from [this template](intro.ipynb),
+provided as way of introduction to tools of `acme4_explore`.
+
 ## Accessing the dataset
 
 The ACME4 dataset is [published](https://gdo168.llnl.gov/) by the Lawrence Livermore National Laboratory.
@@ -102,7 +108,7 @@ The following table details the configurable settings for various tools included
 
 | Variable | Explanation | Default value |
 |----------|-------------|---------------|
-| `DIR_WORK` | Directory in which intermediate artifacts are written. In particular, the database instance connected to by `connect_db` has persistent storage under the name `db` in this directory. | `./.work` |
+| `DIR_WORK`    | Directory in which intermediate artifacts and generated data (e.g. new labels) are written. Parquet files in this directory will be added as views to the database. | `./.work` |
 | `URI_DATASET` | [Location](#uri-dataset) of the standard view Parquet files. Can be either a local filesystem path or a HTTP[S] URL. | https://gdo168.llnl.gov/data/ACME4/stdview-20240819-20240923/ |
 | `LOGGING`     | JSON-encoded dictionary of parameters one would pass to `logging.basicConfig` to set up logging. | `{}` |
 | `LOG_LEVEL`   | JSON-encoded dictionary that maps module names to specific logging levels. For instance, to debug `acme4_explore`, use `{"acme4_explore": "DEBUG"}`. | `{}` |

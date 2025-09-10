@@ -45,12 +45,16 @@ def _iter_dataset() -> Iterator[str]:
 
 
 def connect_db():
-    with dir_work() as dir:
-        conn = duckdb.connect(dir / "db")
+    conn = duckdb.connect()
     conn.sql("INSTALL httpfs; LOAD httpfs;")
     for name_view, uri_parquet in _iter_dataset():
-        _LOG.debug(f"Add view {name_view} over {uri_parquet}")
+        _LOG.debug(f"Add standard view to {name_view} over {uri_parquet}")
         conn.sql(f"create or replace view {name_view} as select * from '{uri_parquet}'")
+    with dir_work() as dir:
+        for path in dir.glob("*.parquet"):
+            name_view = path.with_suffix("").name
+            _LOG.debug(f"View custom data file {path} as {name_view}")
+            conn.sql(f"create or replace view {name_view} as select * from '{path}'")
     return conn
 
 
