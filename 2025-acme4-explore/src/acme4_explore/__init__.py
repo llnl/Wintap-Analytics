@@ -1,6 +1,5 @@
 from bs4 import BeautifulSoup
 from collections.abc import Iterator
-from contextlib import contextmanager
 import duckdb
 import json
 import logging as lg
@@ -14,11 +13,10 @@ _LOG = lg.getLogger(__name__)
 _URL_ACME4 = "https://gdo168.llnl.gov/data/ACME4/stdview-20240819-20240923/"
 
 
-@contextmanager
-def dir_work() -> Iterator[Path]:
+def dir_work() -> Path:
     path = Path(os.environ.get("DIR_WORK") or "./.work")
     path.mkdir(parents=True, exist_ok=True)
-    yield path
+    return path
 
 
 def _iter_dataset() -> Iterator[str]:
@@ -50,11 +48,10 @@ def connect_db():
     for name_view, uri_parquet in _iter_dataset():
         _LOG.debug(f"Add standard view to {name_view} over {uri_parquet}")
         conn.sql(f"create or replace view {name_view} as select * from '{uri_parquet}'")
-    with dir_work() as dir:
-        for path in dir.glob("*.parquet"):
-            name_view = path.with_suffix("").name
-            _LOG.debug(f"View custom data file {path} as {name_view}")
-            conn.sql(f"create or replace view {name_view} as select * from '{path}'")
+    for path in dir_work().glob("*.parquet"):
+        name_view = path.with_suffix("").name
+        _LOG.debug(f"View custom data file {path} as {name_view}")
+        conn.sql(f"create or replace view {name_view} as select * from '{path}'")
     return conn
 
 
