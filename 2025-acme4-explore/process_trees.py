@@ -66,7 +66,7 @@ def build_process_trees(process, min_tree_size=3, max_tree_size=1000000):
     df = df.drop_duplicates(cols)
     ## parents and children
     child = set(df.pid_hash)
-    parent = set(df.parent_pid_hash)
+    parent = set(df.parent_pid_hash) ## Can be 'None', we'll delete later
     ## node dictionaries
     nodes = parent.union(child)
     nodes_dict = {v:k for k,v in enumerate(nodes)}
@@ -156,8 +156,10 @@ def build_process_trees(process, min_tree_size=3, max_tree_size=1000000):
     G.vs[np.where(['bad' in x for x in G.vs['shortlabel']])[0]]['label_color'] = 'red'
     G.vs[np.where(['bad' in x for x in G.vs['shortlabel']])[0]]['color'] = 'red'
 
-    ## extract process trees
-
+    idx = np.where(np.array(G.vs['pid']) == None)[0]
+    if len(idx)>0:
+        G.delete_vertices(idx)
+    
     ## find all connected components a.k.a. process trees (with one exception)
     Trees = G.connected_components(mode="weak")
     G.vs['tree'] = Trees.membership
