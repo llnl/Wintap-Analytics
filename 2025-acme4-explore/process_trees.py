@@ -2,6 +2,22 @@ import igraph as ig
 import numpy as np
 import pandas as pd
 from collections import Counter
+from scipy.stats import chi2_contingency
+
+## Cramer's V score - "correlation" in [0,1] range
+def cramers_v(X,Y):
+    """Calculate Cramer's V statistic for categorical-categorical association."""
+    contingency_table = pd.crosstab(X, Y)
+    confusion_matrix = contingency_table.values
+    chi2 = chi2_contingency(confusion_matrix)[0]
+    n = confusion_matrix.sum().sum()
+    phi2 = chi2 / n
+    r, k = confusion_matrix.shape
+    # Apply correction (optional, but recommended)
+    phi2corr = max(0, phi2 - ((k-1)*(r-1))/(n-1))
+    rcorr = r - ((r-1)**2)/(n-1)
+    kcorr = k - ((k-1)**2)/(n-1)
+    return np.sqrt(phi2corr / min((kcorr-1), (rcorr-1)))
 
 ## compute bag of features
 def subtree_features(sg):
