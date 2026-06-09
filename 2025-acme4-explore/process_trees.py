@@ -113,7 +113,7 @@ def build_process_trees(process, min_tree_size=3, max_tree_size=1000000):
         if pd.isna(x):
             T.append('')
         else: 
-            T.append(int(x.timestamp()))
+            T.append(x.timestamp()) ## float / int 
     time_dict = dict(zip(df.pid_hash, T))
     G.vs['time'] = [time_dict.get(x, "") for x in G.vs['pid']]
 
