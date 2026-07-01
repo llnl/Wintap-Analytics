@@ -1,0 +1,6 @@
+bokeh==3.8.0
+ipykernel==7.0.1
+pipdeptree==2.29.0
+scikit-plot==0.3.7
+setuptools==80.9.0
+wheel==0.45.1
