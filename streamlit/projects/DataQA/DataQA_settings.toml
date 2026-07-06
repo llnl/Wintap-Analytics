@@ -1,5 +1,5 @@
 [datasets]
-dataset_path = "/Users/johnson30/data/wintapv6"
+dataset_path = "/data/wintapv6"
 
 [app]
 page_title = "DataQA"
