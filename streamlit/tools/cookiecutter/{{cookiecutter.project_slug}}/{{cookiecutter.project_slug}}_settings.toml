@@ -1,0 +1,6 @@
+[datasets]
+dataset_path = "/path/to/directory/containing/multiple/dataset/directories"
+
+[app]
+page_title="a name for the app, no spaces"
+logo="common/Wintap.png"

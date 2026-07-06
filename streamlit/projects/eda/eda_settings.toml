@@ -1,0 +1,6 @@
+[datasets]
+dataset_path = "/data/wintapv6"
+
+[app]
+page_title = "Wintap EDA"
+logo = "common/Wintap.PNG"

@@ -1,0 +1,2 @@
+dynaconf
+streamlit==1.33.0

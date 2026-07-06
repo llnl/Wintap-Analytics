@@ -1,0 +1,6 @@
+[datasets]
+dataset_path = "/data/wintapv6"
+
+[app]
+page_title = "DataQA"
+logo = "common/Wintap.png"

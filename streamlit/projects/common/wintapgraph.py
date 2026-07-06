@@ -25,23 +25,27 @@ select * from process
 {%- endfor -%}
 """
 
-#  Build all possible process trees by simply iterating over all rows
-def add_all(con):
-    sql="select pid_hash, parent_pid_hash, os_pid, process_name, process_started, process_term from process" # limit 1000000"
-    return con.sql(sql)
+search_pid_hash_sql = """
+select * from process
+{%- for x in pid_hashes -%}
+    {% if loop.first %}
+    where
+    {% else %}
+    or 
+    {% endif %}
+    pid_hash = '{{ x }}'
+{%- endfor -%}
+"""
 
-def build_process_tree_graph(con, process_seeds, name=None):
-    if not name:
-        name = f"Process Tree Graph from a bunch of processes"
 
-    netg = nx.Graph(name=name)
-    add_proc_node_for(netg, process_seeds)
-    add_parent_child(netg, process_seeds)
-    return netg
-
-# Functions for building graphs
 def search_process_name_in(con, names):
     sql = Template(search_sql).render(names=names)
+    print(sql)
+    return con.sql(sql)
+
+
+def search_pid_hash_in(con, pid_hash):
+    sql = Template(search_pid_hash_sql).render(pid_hashes=pid_hash)
     print(sql)
     return con.sql(sql)
 
@@ -81,12 +85,15 @@ def add_parent_child(g, processes):
     """
     cols = processes.columns
     for row in processes.fetchall():
-        if row[cols.index("pid_hash")] and row[cols.index("parent_pid_hash")]:
+        # Don't add self-reference if its the kernel.
+        if row[cols.index("pid_hash")]!=row[cols.index("parent_pid_hash")]:
             g.add_edge(
                 row[cols.index("pid_hash")],
                 row[cols.index("parent_pid_hash")],
                 type="parent",
             )
+        else:
+            print(f'  Ignore self-reference: {row[cols.index("pid_hash")]} {row[cols.index("process_name")]}')
 
 
 def add_node(graph, idx, nodetype, label, attributes={}):
@@ -99,6 +106,37 @@ def add_node(graph, idx, nodetype, label, attributes={}):
     # Now set the other attributes.
     nx.set_node_attributes(graph, {idx: attributes})
     return graph
+
+
+def add_all_network_activity(graph, pncdf, procdf):
+    """
+    Add all network activity in the given processNetConnDF to the graph.
+    Add nodes for any new Processes.
+    Returns the list of new pid_hashes.
+    """
+    new_pid_hashes = []
+    print(f"AddAll: PNC {pncdf.shape[0]} Proc {procdf.shape[0]}")
+    for _, row in pncdf.iterrows():
+        add_node(
+            graph,
+            idx=row["conn_id"],
+            nodetype="pnc",
+            label=f"{row['local_ip_addr']}->{row['remote_ip_addr']}",
+        )
+        if not row["pid_hash"] in graph:
+            add_proc_node_for(graph, [row["pid_hash"]], procdf)
+            new_pid_hashes.append(row["pid_hash"])
+            # Nope, this doesn't work... We'd need the full set of pncDF to pass...
+            # addNetworkActivity(graph, [row['pid_hash']], pncDF, procDF)
+        graph.add_edge(row["pid_hash"], row["conn_id"], protocol=row["protocol"])
+        # Hack to handle localhost
+        remote_ip = row["remote_ip_addr"]
+        if remote_ip == "127.0.0.1":
+            remote_ip = f"{row['hostname']}:{remote_ip}"
+        add_node(graph, idx=remote_ip, nodetype="ip", label=remote_ip)
+        graph.add_edge(row["conn_id"], remote_ip)
+
+    return new_pid_hashes
 
 
 def add_network_activity(con, netg, max_pnc=100, add_ip_nodes=True):
@@ -140,13 +178,19 @@ def add_network_activity(con, netg, max_pnc=100, add_ip_nodes=True):
             netg.add_edge(row[cols.index("conn_id")], row[cols.index("remote_ip_addr")])
 
 
-def build_graph(con, process_name_seeds, name=None):
+def build_graph(con, process_name=None, pid_hash=None, num_seeds=-1, name=None):
     if not name:
-        name = f"Process Graph from {','.join(process_name_seeds)}"
+        name = "Fix Me!"
+#        name = f"Process Graph from {','.join(process_name)}"
 
-    seed_processes = search_process_name_in(con, process_name_seeds)
+    print(type(pid_hash))
 
-    netg = nx.Graph(name=name)
+    if process_name != None and process_name != "":
+        seed_processes = search_process_name_in(con, process_name)
+    if pid_hash != None and pid_hash != "":
+        seed_processes = search_pid_hash_in(con, [pid_hash])
+
+    netg = nx.DiGraph(name=name)
     add_proc_node_for(netg, seed_processes)
     add_network_activity(con, netg)
     add_parents(netg, con, seed_processes)
