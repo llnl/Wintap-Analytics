@@ -1,0 +1,1096 @@
+{
+  "version": 2,
+  "version_hash": "d8BwWjVCHKRrBFrQZ0PeXcC7BVh61cNKevDkRPC6YuI=",
+  "engine_version": 11,
+  "name": "report_source",
+  "tables": {
+    "_dlt_version": {
+      "columns": {
+        "version": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "engine_version": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "inserted_at": {
+          "data_type": "timestamp",
+          "nullable": false
+        },
+        "schema_name": {
+          "data_type": "text",
+          "nullable": false
+        },
+        "version_hash": {
+          "data_type": "text",
+          "nullable": false
+        },
+        "schema": {
+          "data_type": "text",
+          "nullable": false
+        }
+      },
+      "write_disposition": "skip",
+      "resource": "_dlt_version",
+      "description": "Created by DLT. Tracks schema updates"
+    },
+    "_dlt_loads": {
+      "columns": {
+        "load_id": {
+          "data_type": "text",
+          "nullable": false,
+          "precision": 64
+        },
+        "schema_name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "status": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "inserted_at": {
+          "data_type": "timestamp",
+          "nullable": false
+        },
+        "schema_version_hash": {
+          "data_type": "text",
+          "nullable": true
+        }
+      },
+      "write_disposition": "skip",
+      "resource": "_dlt_loads",
+      "description": "Created by DLT. Tracks completed loads"
+    },
+    "raw_report": {
+      "columns": {
+        "name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "start": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "planner": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "adversary__adversary_id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "adversary__name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "adversary__description": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "adversary__objective": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "adversary__has_repeatable_abilities": {
+          "data_type": "bool",
+          "nullable": true
+        },
+        "adversary__plugin": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "jitter": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "objectives__id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "objectives__name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "objectives__description": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "objectives__percentage": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "_dlt_load_id": {
+          "data_type": "text",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        },
+        "finish": {
+          "nullable": true,
+          "data_type": "timestamp"
+        }
+      },
+      "write_disposition": "replace",
+      "resource": "raw_report",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "_dlt_pipeline_state": {
+      "columns": {
+        "version": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "engine_version": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "pipeline_name": {
+          "data_type": "text",
+          "nullable": false
+        },
+        "state": {
+          "data_type": "text",
+          "nullable": false
+        },
+        "created_at": {
+          "data_type": "timestamp",
+          "nullable": false
+        },
+        "version_hash": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_load_id": {
+          "data_type": "text",
+          "nullable": false,
+          "precision": 64
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "write_disposition": "append",
+      "file_format": "preferred",
+      "resource": "_dlt_pipeline_state",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__host_group": {
+      "columns": {
+        "paw": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "sleep_min": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "sleep_max": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "watchdog": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "group": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "architecture": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "platform": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "server": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "upstream_dest": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "username": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "location": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "pid": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "ppid": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "trusted": {
+          "data_type": "bool",
+          "nullable": true
+        },
+        "privilege": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "exe_name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "host": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "contact": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "origin_link_id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "deadman_enabled": {
+          "data_type": "bool",
+          "nullable": true
+        },
+        "display_name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "created": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "last_seen": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "pending_contact": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__host_group__executors": {
+      "columns": {
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__host_group",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__host_group__available_contacts": {
+      "columns": {
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__host_group",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__host_group__host_ip_addrs": {
+      "columns": {
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__host_group",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__host_group__links": {
+      "columns": {
+        "id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "paw": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "command": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "plaintext_command": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "status": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "score": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "jitter": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "decide": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "pin": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "pid": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "unique": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "collect": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "finish": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "ability__ability_id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "ability__tactic": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "ability__technique_name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "ability__technique_id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "ability__name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "ability__description": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "ability__privilege": {
+          "nullable": true,
+          "x-normalizer": {
+            "seen-null-first": true
+          }
+        },
+        "ability__repeatable": {
+          "data_type": "bool",
+          "nullable": true
+        },
+        "ability__singleton": {
+          "data_type": "bool",
+          "nullable": true
+        },
+        "ability__plugin": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "ability__delete_payload": {
+          "data_type": "bool",
+          "nullable": true
+        },
+        "executor__name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "executor__platform": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "executor__command": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "executor__code": {
+          "nullable": true,
+          "x-normalizer": {
+            "seen-null-first": true
+          }
+        },
+        "executor__language": {
+          "nullable": true,
+          "x-normalizer": {
+            "seen-null-first": true
+          }
+        },
+        "executor__build_target": {
+          "nullable": true,
+          "x-normalizer": {
+            "seen-null-first": true
+          }
+        },
+        "executor__timeout": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "cleanup": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "visibility__score": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "host": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "output": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "deadman": {
+          "data_type": "bool",
+          "nullable": true
+        },
+        "agent_reported_time": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__host_group",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__host_group__links__ability__executors": {
+      "columns": {
+        "name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "platform": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "command": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "code": {
+          "nullable": true,
+          "x-normalizer": {
+            "seen-null-first": true
+          }
+        },
+        "language": {
+          "nullable": true,
+          "x-normalizer": {
+            "seen-null-first": true
+          }
+        },
+        "build_target": {
+          "nullable": true,
+          "x-normalizer": {
+            "seen-null-first": true
+          }
+        },
+        "timeout": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__host_group__links",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__host_group__links__ability__buckets": {
+      "columns": {
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__host_group__links",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__steps": {
+      "columns": {
+        "paw": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__steps__steps": {
+      "columns": {
+        "link_id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "ability_id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "command": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "plaintext_command": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "delegated": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "run": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "status": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "platform": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "executor": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "pid": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "description": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "attack__tactic": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "attack__technique_name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "attack__technique_id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "output__stdout": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "output__stderr": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "output__exit_code": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "agent_reported_time": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__steps",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__adversary__atomic_ordering": {
+      "columns": {
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__objectives__goals": {
+      "columns": {
+        "target": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "count": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "operator": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "achieved": {
+          "data_type": "bool",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__facts": {
+      "columns": {
+        "unique": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "trait": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "created": {
+          "data_type": "timestamp",
+          "nullable": true
+        },
+        "score": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "source": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "origin_type": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "limit_count": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "technique_id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__facts__links": {
+      "columns": {
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__facts",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__facts__relationships": {
+      "columns": {
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__facts",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__facts__collected_by": {
+      "columns": {
+        "value": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__facts",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__skipped_abilities": {
+      "columns": {
+        "paw": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    },
+    "raw_report__skipped_abilities__abilities": {
+      "columns": {
+        "reason": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "reason_id": {
+          "data_type": "bigint",
+          "nullable": true
+        },
+        "ability_id": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "ability_name": {
+          "data_type": "text",
+          "nullable": true
+        },
+        "_dlt_parent_id": {
+          "data_type": "text",
+          "nullable": false,
+          "parent_key": true
+        },
+        "_dlt_list_idx": {
+          "data_type": "bigint",
+          "nullable": false
+        },
+        "_dlt_id": {
+          "data_type": "text",
+          "nullable": false,
+          "unique": true,
+          "row_key": true
+        }
+      },
+      "parent": "raw_report__skipped_abilities",
+      "x-normalizer": {
+        "seen-data": true
+      }
+    }
+  },
+  "settings": {
+    "detections": [
+      "iso_timestamp"
+    ],
+    "default_hints": {
+      "not_null": [
+        "_dlt_id",
+        "_dlt_root_id",
+        "_dlt_parent_id",
+        "_dlt_list_idx",
+        "_dlt_load_id"
+      ],
+      "parent_key": [
+        "_dlt_parent_id"
+      ],
+      "root_key": [
+        "_dlt_root_id"
+      ],
+      "unique": [
+        "_dlt_id"
+      ],
+      "row_key": [
+        "_dlt_id"
+      ]
+    }
+  },
+  "normalizers": {
+    "names": "snake_case",
+    "json": {
+      "module": "dlt.common.normalizers.json.relational"
+    }
+  },
+  "previous_hashes": [
+    "KruNg8qlfy/4we9A8EC41oqGKwG1RCzAq1Mehk22VeY=",
+    "U09Ue17lzbkwJcfdndS6Ayi8RQYJzS6m2mX30rEet1I="
+  ]
+}

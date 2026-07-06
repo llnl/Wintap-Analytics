@@ -38,7 +38,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Jupyter Notebook
-.ipynb_checkpoints
+**/.ipynb_checkpoints/
 
 # IPython
 profile_default/
@@ -70,3 +70,10 @@ ENV/
 auto-save-list
 tramp
 .\#*
+
+# Data files
+**/*.duckdb
+**/*.parquet
+
+# Mac files
+.DS_Store
