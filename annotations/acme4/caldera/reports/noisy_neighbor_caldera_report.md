@@ -2,619 +2,564 @@
 Noisy Neighbor
 ==============
 
-Contents
-========
+# CALDERA Operation Report
 
-* [Hosts Attacked](#hosts-attacked)
-* [Links](#links)
-	* [Host: ACME-HH-ZYQ](#host-acme-hh-zyq)
-	* [Host: ACME-HH-EUO](#host-acme-hh-euo)
-	* [Host: ACME-WS-PLU](#host-acme-ws-plu)
-	* [Host: ACME-HH-ESO](#host-acme-hh-eso)
-* [Steps](#steps)
-	* [Host: ACME-HH-ZYQ (paw: kwmxux)](#host-acme-hh-zyq-paw-kwmxux)
-		* [  Description: Stop terminal from logging history](#--description-stop-terminal-from-logging-history)
-		* [  Description: Find user running agent](#--description-find-user-running-agent)
-		* [  Description: Locate all active IP and FQDNs on the network](#--description-locate-all-active-ip-and-fqdns-on-the-network)
-		* [  Description: Identify system processes](#--description-identify-system-processes)
-		* [  Description: View all potential WIFI networks on host](#--description-view-all-potential-wifi-networks-on-host)
-		* [  Description: See the most used WIFI networks of a machine](#--description-see-the-most-used-wifi-networks-of-a-machine)
-		* [  Description: Turn a computers WIFI off](#--description-turn-a-computers-wifi-off)
-	* [Host: ACME-HH-EUO (paw: acpuoe)](#host-acme-hh-euo-paw-acpuoe)
-		* [  Description: Stop terminal from logging history](#--description-stop-terminal-from-logging-history)
-		* [  Description: Find user running agent](#--description-find-user-running-agent)
-		* [  Description: Locate all active IP and FQDNs on the network](#--description-locate-all-active-ip-and-fqdns-on-the-network)
-		* [  Description: Identify system processes](#--description-identify-system-processes)
-		* [  Description: View all potential WIFI networks on host](#--description-view-all-potential-wifi-networks-on-host)
-		* [  Description: See the most used WIFI networks of a machine](#--description-see-the-most-used-wifi-networks-of-a-machine)
-		* [  Description: Turn a computers WIFI off](#--description-turn-a-computers-wifi-off)
-	* [Host: ACME-WS-PLU (paw: hkrmxr)](#host-acme-ws-plu-paw-hkrmxr)
-		* [  Description: Stop terminal from logging history](#--description-stop-terminal-from-logging-history)
-		* [  Description: Find user running agent](#--description-find-user-running-agent)
-		* [  Description: Locate all active IP and FQDNs on the network](#--description-locate-all-active-ip-and-fqdns-on-the-network)
-		* [  Description: Identify system processes](#--description-identify-system-processes)
-		* [  Description: View all potential WIFI networks on host](#--description-view-all-potential-wifi-networks-on-host)
-		* [  Description: See the most used WIFI networks of a machine](#--description-see-the-most-used-wifi-networks-of-a-machine)
-		* [  Description: Turn a computers WIFI off](#--description-turn-a-computers-wifi-off)
-	* [Host: ACME-HH-ESO (paw: nowkww)](#host-acme-hh-eso-paw-nowkww)
-		* [  Description: Stop terminal from logging history](#--description-stop-terminal-from-logging-history)
-		* [  Description: Find user running agent](#--description-find-user-running-agent)
-		* [  Description: Locate all active IP and FQDNs on the network](#--description-locate-all-active-ip-and-fqdns-on-the-network)
-		* [  Description: Identify system processes](#--description-identify-system-processes)
-		* [  Description: View all potential WIFI networks on host](#--description-view-all-potential-wifi-networks-on-host)
-		* [  Description: See the most used WIFI networks of a machine](#--description-see-the-most-used-wifi-networks-of-a-machine)
-		* [  Description: Turn a computers WIFI off](#--description-turn-a-computers-wifi-off)
 
+**Operation:** Noisy Neighbor<br>**Start:** 2024-09-13T17:47:13Z<br>**Adversary:** Nosy Neighbor
 # Hosts Attacked
 
-|Host|User|Beachhead Command|PID|Parent PID|IP|C2 Server|
+|Host|User|Beachhead Cmd|PID|Parent PID|IPs|C2 Server|
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |ACME-HH-ZYQ|ACME\grantj|splunkd.exe|3872|4840|172.31.45.222|http://172.31.10.226:8888|
 |ACME-HH-EUO|ACME\grantj|splunkd.exe|1052|2004|172.31.41.178|http://172.31.10.226:8888|
 |ACME-WS-PLU|ACME\grantj|splunkd.exe|1116|8312|172.31.11.139, 172.25.240.1|http://172.31.10.226:8888|
 |ACME-HH-ESO|ACME\grantj|splunkd.exe|8376|8992|172.31.39.111|http://172.31.10.226:8888|
 
-# Links
+# Execution Timeline
 
-(what exactly is a link? seems to be a command executed when initializing the beachhead?)
-## Host: ACME-HH-ZYQ
 
+**[LINK] ACME-HH-ZYQ (kwmxux)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 2304
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-04T03:18:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-04T03:18:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 2304
 
+**Time:** 2024-09-04T03:18:40Z → 2024-09-04T03:18:40Z
 
-## Host: ACME-HH-EUO
 
+**[LINK] ACME-HH-EUO (acpuoe)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 4324
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:10:22Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:10:22Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 4324
 
+**Time:** 2024-09-13T17:10:22Z → 2024-09-13T17:10:22Z
 
-## Host: ACME-WS-PLU
 
+**[LINK] ACME-WS-PLU (hkrmxr)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 8504
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:12:11Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:12:12Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 8504
 
+**Time:** 2024-09-13T17:12:11Z → 2024-09-13T17:12:12Z
 
-## Host: ACME-HH-ESO
 
+**[LINK] ACME-HH-ESO (nowkww)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 10164
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:15:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:15:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 10164
 
+**Time:** 2024-09-13T17:15:40Z → 2024-09-13T17:15:40Z
 
-# Steps
 
-## Host: ACME-HH-ZYQ (paw: kwmxux)
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-###   Description: Stop terminal from logging history
+**Command:** `Clear-History;Clear`
 
+**Description:** Stop terminal from logging history
 
-  Attack: {'tactic': 'defense-evasion', 'technique_name': 'Indicator Removal on Host: Clear Command History', 'technique_id': 'T1070.003'}
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Status: Success
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  PID: 3772
+**Status:** `Success`
 
-  Start: 2024-09-13T17:48:09Z
+**PID:** 3772
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**Time:** 2024-09-13T17:48:09Z → N/A
 
 
-###   Description: Find user running agent
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
+**Command:** `$env:username`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Owner/User Discovery', 'technique_id': 'T1033'}
+**Description:** Find user running agent
 
-  Status: Success
+**Technique:** System Owner/User Discovery
 
-  PID: 7620
+**ATT&CK:** [T1033](https://attack.mitre.org/techniques/T1033)
 
-  Start: 2024-09-13T17:48:44Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-$env:username
-```
+**PID:** 7620
 
+**Time:** 2024-09-13T17:48:44Z → N/A
 
-###   Description: Locate all active IP and FQDNs on the network
 
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Remote System Discovery', 'technique_id': 'T1018'}
+**Command:** `arp -a`
 
-  Status: Success
+**Description:** Locate all active IP and FQDNs on the network
 
-  PID: 788
+**Technique:** Remote System Discovery
 
-  Start: 2024-09-13T17:49:38Z
+**ATT&CK:** [T1018](https://attack.mitre.org/techniques/T1018)
 
-  Command: 
-```powershell
-arp -a
-```
+**Status:** `Success`
 
+**PID:** 788
 
-###   Description: Identify system processes
+**Time:** 2024-09-13T17:49:38Z → N/A
 
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Status: Success
+**Command:** `Get-Process`
 
-  PID: 5252
+**Description:** Identify system processes
 
-  Start: 2024-09-13T17:50:28Z
+**Technique:** Process Discovery
 
-  Command: 
-```powershell
-Get-Process
-```
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
+**Status:** `Success`
 
-###   Description: View all potential WIFI networks on host
+**PID:** 5252
 
+**Time:** 2024-09-13T17:50:28Z → N/A
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
 
-  Status: Failed
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  PID: 4060
+**Command:** `.\obfuscated_payload.ps1 -Scan`
 
-  Start: 2024-09-13T17:51:05Z
+**Description:** View all potential WIFI networks on host
 
-  Command: 
-```powershell
-.\obfuscated_payload.ps1 -Scan
-```
+**Technique:** System Network Configuration Discovery
 
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
-###   Description: See the most used WIFI networks of a machine
+**Status:** `Failed`
 
+**PID:** 4060
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**Time:** 2024-09-13T17:51:05Z → N/A
 
-  Status: Failed
 
-  PID: 4032
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Start: 2024-09-13T17:51:58Z
+**Command:** `.\wifi.ps1 -Pref`
 
-  Command: 
-```powershell
-.\wifi.ps1 -Pref
-```
+**Description:** See the most used WIFI networks of a machine
 
+**Technique:** System Network Configuration Discovery
 
-###   Description: Turn a computers WIFI off
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
+**Status:** `Failed`
 
-  Attack: {'tactic': 'impact', 'technique_name': 'Endpoint Denial of Service', 'technique_id': 'T1499'}
+**PID:** 4032
 
-  Status: Failed
+**Time:** 2024-09-13T17:51:58Z → N/A
 
-  PID: 9172
 
-  Start: 2024-09-13T17:52:52Z
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Command: 
-```powershell
-.\wifi.ps1 -Off
-```
+**Command:** `.\wifi.ps1 -Off`
 
+**Description:** Turn a computers WIFI off
 
-## Host: ACME-HH-EUO (paw: acpuoe)
+**Technique:** Endpoint Denial of Service
 
-###   Description: Stop terminal from logging history
+**ATT&CK:** [T1499](https://attack.mitre.org/techniques/T1499)
 
+**Status:** `Failed`
 
-  Attack: {'tactic': 'defense-evasion', 'technique_name': 'Indicator Removal on Host: Clear Command History', 'technique_id': 'T1070.003'}
+**PID:** 9172
 
-  Status: Success
+**Time:** 2024-09-13T17:52:52Z → N/A
 
-  PID: 1168
 
-  Start: 2024-09-13T17:47:14Z
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**Command:** `Clear-History;Clear`
 
+**Description:** Stop terminal from logging history
 
-###   Description: Find user running agent
+**Technique:** Indicator Removal on Host: Clear Command History
 
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Owner/User Discovery', 'technique_id': 'T1033'}
+**Status:** `Success`
 
-  Status: Success
+**PID:** 1168
 
-  PID: 440
+**Time:** 2024-09-13T17:47:14Z → N/A
 
-  Start: 2024-09-13T17:48:37Z
 
-  Command: 
-```powershell
-$env:username
-```
+**[STEP] ACME-HH-EUO (acpuoe)**
 
+**Command:** `$env:username`
 
-###   Description: Locate all active IP and FQDNs on the network
+**Description:** Find user running agent
 
+**Technique:** System Owner/User Discovery
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Remote System Discovery', 'technique_id': 'T1018'}
+**ATT&CK:** [T1033](https://attack.mitre.org/techniques/T1033)
 
-  Status: Success
+**Status:** `Success`
 
-  PID: 4032
+**PID:** 440
 
-  Start: 2024-09-13T17:49:26Z
+**Time:** 2024-09-13T17:48:37Z → N/A
 
-  Command: 
-```powershell
-arp -a
-```
 
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-###   Description: Identify system processes
+**Command:** `arp -a`
 
+**Description:** Locate all active IP and FQDNs on the network
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Technique:** Remote System Discovery
 
-  Status: Success
+**ATT&CK:** [T1018](https://attack.mitre.org/techniques/T1018)
 
-  PID: 1876
+**Status:** `Success`
 
-  Start: 2024-09-13T17:50:18Z
+**PID:** 4032
 
-  Command: 
-```powershell
-Get-Process
-```
+**Time:** 2024-09-13T17:49:26Z → N/A
 
 
-###   Description: View all potential WIFI networks on host
+**[STEP] ACME-HH-EUO (acpuoe)**
 
+**Command:** `Get-Process`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**Description:** Identify system processes
 
-  Status: Failed
+**Technique:** Process Discovery
 
-  PID: 2264
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Start: 2024-09-13T17:51:06Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-.\obfuscated_payload.ps1 -Scan
-```
+**PID:** 1876
 
+**Time:** 2024-09-13T17:50:18Z → N/A
 
-###   Description: See the most used WIFI networks of a machine
 
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**Command:** `.\obfuscated_payload.ps1 -Scan`
 
-  Status: Success
+**Description:** View all potential WIFI networks on host
 
-  PID: 7008
+**Technique:** System Network Configuration Discovery
 
-  Start: 2024-09-13T17:51:59Z
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
-  Command: 
-```powershell
-.\wifi.ps1 -Pref
-```
+**Status:** `Failed`
 
+**PID:** 2264
 
-###   Description: Turn a computers WIFI off
+**Time:** 2024-09-13T17:51:06Z → N/A
 
 
-  Attack: {'tactic': 'impact', 'technique_name': 'Endpoint Denial of Service', 'technique_id': 'T1499'}
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Status: Success
+**Command:** `.\wifi.ps1 -Pref`
 
-  PID: 6856
+**Description:** See the most used WIFI networks of a machine
 
-  Start: 2024-09-13T17:52:39Z
+**Technique:** System Network Configuration Discovery
 
-  Command: 
-```powershell
-.\wifi.ps1 -Off
-```
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
+**Status:** `Success`
 
-## Host: ACME-WS-PLU (paw: hkrmxr)
+**PID:** 7008
 
-###   Description: Stop terminal from logging history
+**Time:** 2024-09-13T17:51:59Z → N/A
 
 
-  Attack: {'tactic': 'defense-evasion', 'technique_name': 'Indicator Removal on Host: Clear Command History', 'technique_id': 'T1070.003'}
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Status: Success
+**Command:** `.\wifi.ps1 -Off`
 
-  PID: 7788
+**Description:** Turn a computers WIFI off
 
-  Start: 2024-09-13T17:47:52Z
+**Technique:** Endpoint Denial of Service
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**ATT&CK:** [T1499](https://attack.mitre.org/techniques/T1499)
 
+**Status:** `Success`
 
-###   Description: Find user running agent
+**PID:** 6856
 
+**Time:** 2024-09-13T17:52:39Z → N/A
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Owner/User Discovery', 'technique_id': 'T1033'}
 
-  Status: Success
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  PID: 8628
+**Command:** `Clear-History;Clear`
 
-  Start: 2024-09-13T17:48:30Z
+**Description:** Stop terminal from logging history
 
-  Command: 
-```powershell
-$env:username
-```
+**Technique:** Indicator Removal on Host: Clear Command History
 
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-###   Description: Locate all active IP and FQDNs on the network
+**Status:** `Success`
 
+**PID:** 7788
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Remote System Discovery', 'technique_id': 'T1018'}
+**Time:** 2024-09-13T17:47:52Z → N/A
 
-  Status: Success
 
-  PID: 8772
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Start: 2024-09-13T17:49:12Z
+**Command:** `$env:username`
 
-  Command: 
-```powershell
-arp -a
-```
+**Description:** Find user running agent
 
+**Technique:** System Owner/User Discovery
 
-###   Description: Identify system processes
+**ATT&CK:** [T1033](https://attack.mitre.org/techniques/T1033)
 
+**Status:** `Success`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**PID:** 8628
 
-  Status: Success
+**Time:** 2024-09-13T17:48:30Z → N/A
 
-  PID: 9596
 
-  Start: 2024-09-13T17:50:02Z
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Command: 
-```powershell
-Get-Process
-```
+**Command:** `arp -a`
 
+**Description:** Locate all active IP and FQDNs on the network
 
-###   Description: View all potential WIFI networks on host
+**Technique:** Remote System Discovery
 
+**ATT&CK:** [T1018](https://attack.mitre.org/techniques/T1018)
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**Status:** `Success`
 
-  Status: Failed
+**PID:** 8772
 
-  PID: 8512
+**Time:** 2024-09-13T17:49:12Z → N/A
 
-  Start: 2024-09-13T17:50:56Z
 
-  Command: 
-```powershell
-.\obfuscated_payload.ps1 -Scan
-```
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
+**Command:** `Get-Process`
 
-###   Description: See the most used WIFI networks of a machine
+**Description:** Identify system processes
 
+**Technique:** Process Discovery
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Status: Success
+**Status:** `Success`
 
-  PID: 9628
+**PID:** 9596
 
-  Start: 2024-09-13T17:51:49Z
+**Time:** 2024-09-13T17:50:02Z → N/A
 
-  Command: 
-```powershell
-.\wifi.ps1 -Pref
-```
 
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-###   Description: Turn a computers WIFI off
+**Command:** `.\obfuscated_payload.ps1 -Scan`
 
+**Description:** View all potential WIFI networks on host
 
-  Attack: {'tactic': 'impact', 'technique_name': 'Endpoint Denial of Service', 'technique_id': 'T1499'}
+**Technique:** System Network Configuration Discovery
 
-  Status: Success
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
-  PID: 6628
+**Status:** `Failed`
 
-  Start: 2024-09-13T17:52:51Z
+**PID:** 8512
 
-  Command: 
-```powershell
-.\wifi.ps1 -Off
-```
+**Time:** 2024-09-13T17:50:56Z → N/A
 
 
-## Host: ACME-HH-ESO (paw: nowkww)
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-###   Description: Stop terminal from logging history
+**Command:** `.\wifi.ps1 -Pref`
 
+**Description:** See the most used WIFI networks of a machine
 
-  Attack: {'tactic': 'defense-evasion', 'technique_name': 'Indicator Removal on Host: Clear Command History', 'technique_id': 'T1070.003'}
+**Technique:** System Network Configuration Discovery
 
-  Status: Success
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
-  PID: 9856
+**Status:** `Success`
 
-  Start: 2024-09-13T17:48:00Z
+**PID:** 9628
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**Time:** 2024-09-13T17:51:49Z → N/A
 
 
-###   Description: Find user running agent
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
+**Command:** `.\wifi.ps1 -Off`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Owner/User Discovery', 'technique_id': 'T1033'}
+**Description:** Turn a computers WIFI off
 
-  Status: Success
+**Technique:** Endpoint Denial of Service
 
-  PID: 8484
+**ATT&CK:** [T1499](https://attack.mitre.org/techniques/T1499)
 
-  Start: 2024-09-13T17:49:03Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-$env:username
-```
+**PID:** 6628
 
+**Time:** 2024-09-13T17:52:51Z → N/A
 
-###   Description: Locate all active IP and FQDNs on the network
 
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Remote System Discovery', 'technique_id': 'T1018'}
+**Command:** `Clear-History;Clear`
 
-  Status: Success
+**Description:** Stop terminal from logging history
 
-  PID: 9856
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:49:42Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Command: 
-```powershell
-arp -a
-```
+**Status:** `Success`
 
+**PID:** 9856
 
-###   Description: Identify system processes
+**Time:** 2024-09-13T17:48:00Z → N/A
 
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Status: Success
+**Command:** `$env:username`
 
-  PID: 4036
+**Description:** Find user running agent
 
-  Start: 2024-09-13T17:50:22Z
+**Technique:** System Owner/User Discovery
 
-  Command: 
-```powershell
-Get-Process
-```
+**ATT&CK:** [T1033](https://attack.mitre.org/techniques/T1033)
 
+**Status:** `Success`
 
-###   Description: View all potential WIFI networks on host
+**PID:** 8484
 
+**Time:** 2024-09-13T17:49:03Z → N/A
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
 
-  Status: Failed
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  PID: 6856
+**Command:** `arp -a`
 
-  Start: 2024-09-13T17:51:14Z
+**Description:** Locate all active IP and FQDNs on the network
 
-  Command: 
-```powershell
-.\obfuscated_payload.ps1 -Scan
-```
+**Technique:** Remote System Discovery
 
+**ATT&CK:** [T1018](https://attack.mitre.org/techniques/T1018)
 
-###   Description: See the most used WIFI networks of a machine
+**Status:** `Success`
 
+**PID:** 9856
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**Time:** 2024-09-13T17:49:42Z → N/A
 
-  Status: Success
 
-  PID: 3856
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Start: 2024-09-13T17:52:05Z
+**Command:** `Get-Process`
 
-  Command: 
-```powershell
-.\wifi.ps1 -Pref
-```
+**Description:** Identify system processes
 
+**Technique:** Process Discovery
 
-###   Description: Turn a computers WIFI off
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
+**Status:** `Success`
 
-  Attack: {'tactic': 'impact', 'technique_name': 'Endpoint Denial of Service', 'technique_id': 'T1499'}
+**PID:** 4036
 
-  Status: Success
+**Time:** 2024-09-13T17:50:22Z → N/A
 
-  PID: 3616
 
-  Start: 2024-09-13T17:53:05Z
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Command: 
-```powershell
-.\wifi.ps1 -Off
-```
+**Command:** `.\obfuscated_payload.ps1 -Scan`
 
+**Description:** View all potential WIFI networks on host
+
+**Technique:** System Network Configuration Discovery
+
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
+
+**Status:** `Failed`
+
+**PID:** 6856
+
+**Time:** 2024-09-13T17:51:14Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `.\wifi.ps1 -Pref`
+
+**Description:** See the most used WIFI networks of a machine
+
+**Technique:** System Network Configuration Discovery
+
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
+
+**Status:** `Success`
+
+**PID:** 3856
+
+**Time:** 2024-09-13T17:52:05Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `.\wifi.ps1 -Off`
+
+**Description:** Turn a computers WIFI off
+
+**Technique:** Endpoint Denial of Service
+
+**ATT&CK:** [T1499](https://attack.mitre.org/techniques/T1499)
+
+**Status:** `Success`
+
+**PID:** 3616
+
+**Time:** 2024-09-13T17:53:05Z → N/A
+
+
+![Operation Graph](noisy_neighbor_graph.png)

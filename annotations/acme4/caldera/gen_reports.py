@@ -1,5 +1,4 @@
 import sys
-from pathlib import Path
 from mdutils.mdutils import MdUtils
 
 from caldera_report_common import (
@@ -12,18 +11,18 @@ from caldera_report_common import (
 
 # Modified from: https://github.com/marksowell/caldera-report-generator
 
-# Generate a simple markdown file for each report.
+# Next up: create a networkx graph
 
 def hosts(data, markdown):
     # Iterate through host groups
-    # Things get from here:
+    # Things to get from here:
     # the C2 IP Node
     # the C2 5-tuples, with date range(?)
     # the beachhead PID/parent PID
     # Map of "paw" to hostname. paw is a Caldera unique host id and is used in other parts of the report.
     hostmap = {}
     hosts = ["Host","User","Beachhead Command","PID","Parent PID","IP","C2 Server"]
-    num_hosts = 0
+    num_hosts = 0 
     markdown.new_header(level=1, title="Hosts Attacked")
     for host in iter_hosts(data):
         # There *should* only be 1 c2 server, so save values in a map and dump out after iterating over hosts.
@@ -40,29 +39,28 @@ def hosts(data, markdown):
         if host.get('paw'):
             hostmap[host.get('paw')] = host.get('host')
         num_hosts += 1
-    # Output the table now so its at the top.
+
+    print(f"hosts: {len(hosts)}  hostmap: {hostmap}  {num_hosts}")
     markdown.new_table(columns=7, rows=num_hosts+1, text=hosts)
 
-    # Now iterate thru the links for each host.
-    # Links executed
-    markdown.new_header(level=1, title="Links")
-    markdown.new_line("(what exactly is a link? seems to be a command executed when initializing the beachhead?)")
+    # Now we can process links and write them to the markdown
     for host in iter_hosts(data):
-        links(host, hostmap, markdown)
-
+        links(host.get('links', []), markdown)
     return hostmap
 
-def links(host, hostmap, markdown):
-    markdown.new_header(level=2, title=f"Host: {host.get('host', 'N/A')}")
-    for link in host.get('links', []):
+def links(links, markdown):
+    # Links executed
+    markdown.new_header(title="Executed Links",level=2)
+
+    for link in links:
         cmd = decode_if_base64(link.get('plaintext_command'))
-        markdown.new_paragraph(f"  Technique: {link['ability']['technique_name']}")
+        markdown.new_paragraph(f"  Host paw: {link['paw']} ")
         markdown.new_paragraph(f"  PID: {link['pid']}")
+        markdown.new_paragraph(f"  Command: {cmd}")
         markdown.new_paragraph(f"  Status: {'Success' if link['status'] == 0 else 'Failed'}")
+        markdown.new_paragraph(f"  Technique: {link['ability']['technique_name']}")
         markdown.new_paragraph(f"  Start: {link['collect']}")
         markdown.new_paragraph(f"  Finish: {link['finish']}")
-        markdown.new_paragraph(f"  Command: \n```powershell\n{cmd}\n```")
-        markdown.new_paragraph("")
 
 def steps(data, hostmap, markdown):
     markdown.new_header(level=1, title="Steps")
@@ -70,18 +68,18 @@ def steps(data, hostmap, markdown):
         markdown.new_header(level=2, title=f"Host: {hostmap[host_key]} (paw: {host_key})")
         for step in host_steps.get("steps", []):
             cmd = decode_if_base64(step.get('plaintext_command'))
-            markdown.new_header(level=3, title=f"  Description: {step.get('description')}")
-            markdown.new_paragraph(f"  Attack: {step.get('attack')}")
+            markdown.new_paragraph(f"  Command: {cmd}")
+            markdown.new_paragraph(f"  Description: {step.get('description')}")
             markdown.new_paragraph(f"  Status: {'Success' if step.get('status') == 0 else 'Failed'}")
             markdown.new_paragraph(f"  PID: {step.get('pid')}")
+            markdown.new_paragraph(f"  Attack: {step.get('attack')}")
             markdown.new_paragraph(f"  Start: {step.get('run')}")
-            markdown.new_paragraph(f"  Command: \n```powershell\n{cmd}\n```")
-            markdown.new_paragraph("")
+    return markdown
 
 def main():
     # Check if a file path is provided as a command-line argument
     if len(sys.argv) < 2:
-        print("Usage: python generate_markdown.py <path_to_json_file>")
+        print("Usage: python gen_reports.py <path_to_json_file>")
         sys.exit(1)
 
     json_file_path = sys.argv[1]
@@ -95,19 +93,12 @@ def main():
     # Get the operation name, sanitize it, and convert to lowercase
     operation_name = sanitize_operation_name(data.get('name'))
 
-    # Write reports next to this script so callers can run from any cwd.
-    out_dir = Path(__file__).resolve().parent / "reports"
-    out_dir.mkdir(parents=True, exist_ok=True)
-    markdown = MdUtils(
-        file_name=str(out_dir / f"{operation_name}_caldera_report.md"),
-        title=data.get("name", "Unnamed Operation"),
-    )
+    markdown = MdUtils(file_name=f"{operation_name}_caldera_report.md",title=data['name'])
     hostmap = hosts(data, markdown)
     steps(data, hostmap, markdown)
-    markdown.new_table_of_contents(table_title='Contents', depth=3)
     markdown.create_md_file()
-
 
 if __name__ == "__main__":
     main()
+
 

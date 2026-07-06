@@ -2,115 +2,88 @@
 Advanced Thief
 ==============
 
-Contents
-========
+# CALDERA Operation Report
 
-* [Hosts Attacked](#hosts-attacked)
-* [Links](#links)
-	* [Host: ACME-HH-ZYQ](#host-acme-hh-zyq)
-	* [Host: ACME-HH-EUO](#host-acme-hh-euo)
-	* [Host: ACME-WS-PLU](#host-acme-ws-plu)
-	* [Host: ACME-HH-ESO](#host-acme-hh-eso)
-* [Steps](#steps)
-	* [Host: ACME-HH-ZYQ (paw: kwmxux)](#host-acme-hh-zyq-paw-kwmxux)
-	* [Host: ACME-HH-EUO (paw: acpuoe)](#host-acme-hh-euo-paw-acpuoe)
-	* [Host: ACME-WS-PLU (paw: hkrmxr)](#host-acme-ws-plu-paw-hkrmxr)
-	* [Host: ACME-HH-ESO (paw: nowkww)](#host-acme-hh-eso-paw-nowkww)
 
+**Operation:** Advanced Thief<br>**Start:** 2024-09-13T18:13:19Z<br>**Adversary:** Advanced Thief
 # Hosts Attacked
 
-|Host|User|Beachhead Command|PID|Parent PID|IP|C2 Server|
+|Host|User|Beachhead Cmd|PID|Parent PID|IPs|C2 Server|
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |ACME-HH-ZYQ|ACME\grantj|splunkd.exe|3872|4840|172.31.45.222|http://172.31.10.226:8888|
 |ACME-HH-EUO|ACME\grantj|splunkd.exe|1052|2004|172.31.41.178|http://172.31.10.226:8888|
 |ACME-WS-PLU|ACME\grantj|splunkd.exe|1116|8312|172.31.11.139, 172.25.240.1|http://172.31.10.226:8888|
 |ACME-HH-ESO|ACME\grantj|splunkd.exe|8376|8992|172.31.39.111|http://172.31.10.226:8888|
 
-# Links
-
-(what exactly is a link? seems to be a command executed when initializing the beachhead?)
-## Host: ACME-HH-ZYQ
+# Execution Timeline
 
 
-  Technique: Indicator Removal on Host: Clear Command History
+**[LINK] ACME-HH-ZYQ (kwmxux)**
 
-  PID: 2304
+**Command:** `Clear-History;Clear`
 
-  Status: Success
+**Description:** N/A
 
-  Start: 2024-09-04T03:18:40Z
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Finish: 2024-09-04T03:18:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**Status:** `Success`
 
+**PID:** 2304
 
-## Host: ACME-HH-EUO
+**Time:** 2024-09-04T03:18:40Z → 2024-09-04T03:18:40Z
 
 
-  Technique: Indicator Removal on Host: Clear Command History
+**[LINK] ACME-HH-EUO (acpuoe)**
 
-  PID: 4324
+**Command:** `Clear-History;Clear`
 
-  Status: Success
+**Description:** N/A
 
-  Start: 2024-09-13T17:10:22Z
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Finish: 2024-09-13T17:10:22Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**Status:** `Success`
 
+**PID:** 4324
 
-## Host: ACME-WS-PLU
+**Time:** 2024-09-13T17:10:22Z → 2024-09-13T17:10:22Z
 
 
-  Technique: Indicator Removal on Host: Clear Command History
+**[LINK] ACME-WS-PLU (hkrmxr)**
 
-  PID: 8504
+**Command:** `Clear-History;Clear`
 
-  Status: Success
+**Description:** N/A
 
-  Start: 2024-09-13T17:12:11Z
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Finish: 2024-09-13T17:12:12Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**Status:** `Success`
 
+**PID:** 8504
 
-## Host: ACME-HH-ESO
+**Time:** 2024-09-13T17:12:11Z → 2024-09-13T17:12:12Z
 
 
-  Technique: Indicator Removal on Host: Clear Command History
+**[LINK] ACME-HH-ESO (nowkww)**
 
-  PID: 10164
+**Command:** `Clear-History;Clear`
 
-  Status: Success
+**Description:** N/A
 
-  Start: 2024-09-13T17:15:40Z
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Finish: 2024-09-13T17:15:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**Status:** `Success`
+
+**PID:** 10164
+
+**Time:** 2024-09-13T17:15:40Z → 2024-09-13T17:15:40Z
 
 
-# Steps
-
-## Host: ACME-HH-ZYQ (paw: kwmxux)
-
-## Host: ACME-HH-EUO (paw: acpuoe)
-
-## Host: ACME-WS-PLU (paw: hkrmxr)
-
-## Host: ACME-HH-ESO (paw: nowkww)
+![Operation Graph](advanced_thief_graph.png)

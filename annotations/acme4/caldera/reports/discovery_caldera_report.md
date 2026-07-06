@@ -2,691 +2,632 @@
 Discovery
 =========
 
-Contents
-========
+# CALDERA Operation Report
 
-* [Hosts Attacked](#hosts-attacked)
-* [Links](#links)
-	* [Host: ACME-HH-ZYQ](#host-acme-hh-zyq)
-	* [Host: ACME-HH-EUO](#host-acme-hh-euo)
-	* [Host: ACME-WS-PLU](#host-acme-ws-plu)
-	* [Host: ACME-HH-ESO](#host-acme-hh-eso)
-* [Steps](#steps)
-	* [Host: ACME-HH-ZYQ (paw: kwmxux)](#host-acme-hh-zyq-paw-kwmxux)
-		* [  Description: Find user running agent](#--description-find-user-running-agent)
-		* [  Description: Identify all local users](#--description-identify-all-local-users)
-		* [  Description: Get process info for processes running as a user](#--description-get-process-info-for-processes-running-as-a-user)
-		* [  Description: Network Share Discovery](#--description-network-share-discovery)
-		* [  Description: Identify the remote domain controllers](#--description-identify-the-remote-domain-controllers)
-		* [  Description: Identify AV](#--description-identify-av)
-		* [  Description: Summary of permission and security groups](#--description-summary-of-permission-and-security-groups)
-		* [  Description: Identify Firewalls](#--description-identify-firewalls)
-	* [Host: ACME-HH-EUO (paw: acpuoe)](#host-acme-hh-euo-paw-acpuoe)
-		* [  Description: Find user running agent](#--description-find-user-running-agent)
-		* [  Description: Identify all local users](#--description-identify-all-local-users)
-		* [  Description: Get process info for processes running as a user](#--description-get-process-info-for-processes-running-as-a-user)
-		* [  Description: Network Share Discovery](#--description-network-share-discovery)
-		* [  Description: Identify the remote domain controllers](#--description-identify-the-remote-domain-controllers)
-		* [  Description: Identify AV](#--description-identify-av)
-		* [  Description: Summary of permission and security groups](#--description-summary-of-permission-and-security-groups)
-		* [  Description: Identify Firewalls](#--description-identify-firewalls)
-	* [Host: ACME-WS-PLU (paw: hkrmxr)](#host-acme-ws-plu-paw-hkrmxr)
-		* [  Description: Find user running agent](#--description-find-user-running-agent)
-		* [  Description: Identify all local users](#--description-identify-all-local-users)
-		* [  Description: Get process info for processes running as a user](#--description-get-process-info-for-processes-running-as-a-user)
-		* [  Description: Network Share Discovery](#--description-network-share-discovery)
-		* [  Description: Identify the remote domain controllers](#--description-identify-the-remote-domain-controllers)
-		* [  Description: Identify AV](#--description-identify-av)
-		* [  Description: Summary of permission and security groups](#--description-summary-of-permission-and-security-groups)
-		* [  Description: Identify Firewalls](#--description-identify-firewalls)
-	* [Host: ACME-HH-ESO (paw: nowkww)](#host-acme-hh-eso-paw-nowkww)
-		* [  Description: Find user running agent](#--description-find-user-running-agent)
-		* [  Description: Identify all local users](#--description-identify-all-local-users)
-		* [  Description: Get process info for processes running as a user](#--description-get-process-info-for-processes-running-as-a-user)
-		* [  Description: Network Share Discovery](#--description-network-share-discovery)
-		* [  Description: Identify the remote domain controllers](#--description-identify-the-remote-domain-controllers)
-		* [  Description: Identify AV](#--description-identify-av)
-		* [  Description: Summary of permission and security groups](#--description-summary-of-permission-and-security-groups)
-		* [  Description: Identify Firewalls](#--description-identify-firewalls)
 
+**Operation:** Discovery<br>**Start:** 2024-09-13T17:16:24Z<br>**Adversary:** Discovery
 # Hosts Attacked
 
-|Host|User|Beachhead Command|PID|Parent PID|IP|C2 Server|
+|Host|User|Beachhead Cmd|PID|Parent PID|IPs|C2 Server|
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |ACME-HH-ZYQ|ACME\grantj|splunkd.exe|3872|4840|172.31.45.222|http://172.31.10.226:8888|
 |ACME-HH-EUO|ACME\grantj|splunkd.exe|1052|2004|172.31.41.178|http://172.31.10.226:8888|
 |ACME-WS-PLU|ACME\grantj|splunkd.exe|1116|8312|172.31.11.139, 172.25.240.1|http://172.31.10.226:8888|
 |ACME-HH-ESO|ACME\grantj|splunkd.exe|8376|8992|172.31.39.111|http://172.31.10.226:8888|
 
-# Links
+# Execution Timeline
 
-(what exactly is a link? seems to be a command executed when initializing the beachhead?)
-## Host: ACME-HH-ZYQ
 
+**[LINK] ACME-HH-ZYQ (kwmxux)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 2304
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-04T03:18:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-04T03:18:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 2304
 
+**Time:** 2024-09-04T03:18:40Z → 2024-09-04T03:18:40Z
 
-## Host: ACME-HH-EUO
 
+**[LINK] ACME-HH-EUO (acpuoe)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 4324
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:10:22Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:10:22Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 4324
 
+**Time:** 2024-09-13T17:10:22Z → 2024-09-13T17:10:22Z
 
-## Host: ACME-WS-PLU
 
+**[LINK] ACME-WS-PLU (hkrmxr)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 8504
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:12:11Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:12:12Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 8504
 
+**Time:** 2024-09-13T17:12:11Z → 2024-09-13T17:12:12Z
 
-## Host: ACME-HH-ESO
 
+**[LINK] ACME-HH-ESO (nowkww)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 10164
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:15:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:15:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 10164
 
+**Time:** 2024-09-13T17:15:40Z → 2024-09-13T17:15:40Z
 
-# Steps
 
-## Host: ACME-HH-ZYQ (paw: kwmxux)
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-###   Description: Find user running agent
+**Command:** `$env:username`
 
+**Description:** Find user running agent
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Owner/User Discovery', 'technique_id': 'T1033'}
+**Technique:** System Owner/User Discovery
 
-  Status: Success
+**ATT&CK:** [T1033](https://attack.mitre.org/techniques/T1033)
 
-  PID: 5892
+**Status:** `Success`
 
-  Start: 2024-09-13T17:16:48Z
+**PID:** 5892
 
-  Command: 
-```powershell
-$env:username
-```
+**Time:** 2024-09-13T17:16:48Z → N/A
 
 
-###   Description: Identify all local users
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
+**Command:** `Get-WmiObject -Class Win32_UserAccount`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Account Discovery: Local Account', 'technique_id': 'T1087.001'}
+**Description:** Identify all local users
 
-  Status: Success
+**Technique:** Account Discovery: Local Account
 
-  PID: 3848
+**ATT&CK:** [T1087.001](https://attack.mitre.org/techniques/T1087/001)
 
-  Start: 2024-09-13T17:17:57Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Get-WmiObject -Class Win32_UserAccount
-```
+**PID:** 3848
 
+**Time:** 2024-09-13T17:17:57Z → N/A
 
-###   Description: Get process info for processes running as a user
 
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Command:** `$owners = @{};gwmi win32_process |% {$owners[$_.handle] = $_.getowner().user};$ps = get-process | select processname,Id,@{l="Owner";e={$owners[$_.id.tostring()]}};foreach($p in $ps) {    if($p.Owner -eq "grantj") {        $p;    }}`
 
-  Status: Success
+**Description:** Get process info for processes running as a user
 
-  PID: 8112
+**Technique:** Process Discovery
 
-  Start: 2024-09-13T17:19:02Z
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Command: 
-```powershell
-$owners = @{};gwmi win32_process |% {$owners[$_.handle] = $_.getowner().user};$ps = get-process | select processname,Id,@{l="Owner";e={$owners[$_.id.tostring()]}};foreach($p in $ps) {    if($p.Owner -eq "grantj") {        $p;    }}
-```
+**Status:** `Success`
 
+**PID:** 8112
 
-###   Description: Network Share Discovery
+**Time:** 2024-09-13T17:19:02Z → N/A
 
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Network Share Discovery', 'technique_id': 'T1135'}
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Status: Success
+**Command:** `Get-SmbShare | ConvertTo-Json`
 
-  PID: 3212
+**Description:** Network Share Discovery
 
-  Start: 2024-09-13T17:19:58Z
+**Technique:** Network Share Discovery
 
-  Command: 
-```powershell
-Get-SmbShare | ConvertTo-Json
-```
+**ATT&CK:** [T1135](https://attack.mitre.org/techniques/T1135)
 
+**Status:** `Success`
 
-###   Description: Identify the remote domain controllers
+**PID:** 3212
 
+**Time:** 2024-09-13T17:19:58Z → N/A
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Remote System Discovery', 'technique_id': 'T1018'}
 
-  Status: Success
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  PID: 5804
+**Command:** `nltest /dsgetdc:$env:USERDOMAIN`
 
-  Start: 2024-09-13T17:20:35Z
+**Description:** Identify the remote domain controllers
 
-  Command: 
-```powershell
-nltest /dsgetdc:$env:USERDOMAIN
-```
+**Technique:** Remote System Discovery
 
+**ATT&CK:** [T1018](https://attack.mitre.org/techniques/T1018)
 
-###   Description: Identify AV
+**Status:** `Success`
 
+**PID:** 5804
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**Time:** 2024-09-13T17:20:35Z → N/A
 
-  Status: Failed
 
-  PID: 2204
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Start: 2024-09-13T17:21:38Z
+**Command:** `wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value`
 
-  Command: 
-```powershell
-wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value
-```
+**Description:** Identify AV
 
+**Technique:** Software Discovery: Security Software Discovery
 
-###   Description: Summary of permission and security groups
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
+**Status:** `Failed`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Permission Groups Discovery: Local Groups', 'technique_id': 'T1069.001'}
+**PID:** 2204
 
-  Status: Success
+**Time:** 2024-09-13T17:21:38Z → N/A
 
-  PID: 3224
 
-  Start: 2024-09-13T17:22:21Z
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Command: 
-```powershell
-gpresult /R
-```
+**Command:** `gpresult /R`
 
+**Description:** Summary of permission and security groups
 
-###   Description: Identify Firewalls
+**Technique:** Permission Groups Discovery: Local Groups
 
+**ATT&CK:** [T1069.001](https://attack.mitre.org/techniques/T1069/001)
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**Status:** `Success`
 
-  Status: Failed
+**PID:** 3224
 
-  PID: 8696
+**Time:** 2024-09-13T17:22:21Z → N/A
 
-  Start: 2024-09-13T17:23:10Z
 
-  Command: 
-```powershell
-$NameSpace = Get-WmiObject -Namespace "root" -Class "__Namespace" | Select Name | Out-String -Stream | Select-String "SecurityCenter";$SecurityCenter = $NameSpace | Select-Object -First 1;Get-WmiObject -Namespace "root\$SecurityCenter" -Class AntiVirusProduct | Select DisplayName, InstanceGuid, PathToSignedProductExe, PathToSignedReportingExe, ProductState, Timestamp | Format-List;
-```
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
+**Command:** `$NameSpace = Get-WmiObject -Namespace "root" -Class "__Namespace" | Select Name | Out-String -Stream | Select-String "SecurityCenter";$SecurityCenter = $NameSpace | Select-Object -First 1;Get-WmiObject -Namespace "root\$SecurityCenter" -Class AntiVirusProduct | Select DisplayName, InstanceGuid, PathToSignedProductExe, PathToSignedReportingExe, ProductState, Timestamp | Format-List;`
 
-## Host: ACME-HH-EUO (paw: acpuoe)
+**Description:** Identify Firewalls
 
-###   Description: Find user running agent
+**Technique:** Software Discovery: Security Software Discovery
 
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Owner/User Discovery', 'technique_id': 'T1033'}
+**Status:** `Failed`
 
-  Status: Success
+**PID:** 8696
 
-  PID: 6696
+**Time:** 2024-09-13T17:23:10Z → N/A
 
-  Start: 2024-09-13T17:17:00Z
 
-  Command: 
-```powershell
-$env:username
-```
+**[STEP] ACME-HH-EUO (acpuoe)**
 
+**Command:** `$env:username`
 
-###   Description: Identify all local users
+**Description:** Find user running agent
 
+**Technique:** System Owner/User Discovery
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Account Discovery: Local Account', 'technique_id': 'T1087.001'}
+**ATT&CK:** [T1033](https://attack.mitre.org/techniques/T1033)
 
-  Status: Success
+**Status:** `Success`
 
-  PID: 1284
+**PID:** 6696
 
-  Start: 2024-09-13T17:17:36Z
+**Time:** 2024-09-13T17:17:00Z → N/A
 
-  Command: 
-```powershell
-Get-WmiObject -Class Win32_UserAccount
-```
 
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-###   Description: Get process info for processes running as a user
+**Command:** `Get-WmiObject -Class Win32_UserAccount`
 
+**Description:** Identify all local users
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Technique:** Account Discovery: Local Account
 
-  Status: Success
+**ATT&CK:** [T1087.001](https://attack.mitre.org/techniques/T1087/001)
 
-  PID: 7080
+**Status:** `Success`
 
-  Start: 2024-09-13T17:18:15Z
+**PID:** 1284
 
-  Command: 
-```powershell
-$owners = @{};gwmi win32_process |% {$owners[$_.handle] = $_.getowner().user};$ps = get-process | select processname,Id,@{l="Owner";e={$owners[$_.id.tostring()]}};foreach($p in $ps) {    if($p.Owner -eq "grantj") {        $p;    }}
-```
+**Time:** 2024-09-13T17:17:36Z → N/A
 
 
-###   Description: Network Share Discovery
+**[STEP] ACME-HH-EUO (acpuoe)**
 
+**Command:** `$owners = @{};gwmi win32_process |% {$owners[$_.handle] = $_.getowner().user};$ps = get-process | select processname,Id,@{l="Owner";e={$owners[$_.id.tostring()]}};foreach($p in $ps) {    if($p.Owner -eq "grantj") {        $p;    }}`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Network Share Discovery', 'technique_id': 'T1135'}
+**Description:** Get process info for processes running as a user
 
-  Status: Success
+**Technique:** Process Discovery
 
-  PID: 5496
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Start: 2024-09-13T17:19:07Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Get-SmbShare | ConvertTo-Json
-```
+**PID:** 7080
 
+**Time:** 2024-09-13T17:18:15Z → N/A
 
-###   Description: Identify the remote domain controllers
 
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Remote System Discovery', 'technique_id': 'T1018'}
+**Command:** `Get-SmbShare | ConvertTo-Json`
 
-  Status: Success
+**Description:** Network Share Discovery
 
-  PID: 2176
+**Technique:** Network Share Discovery
 
-  Start: 2024-09-13T17:20:27Z
+**ATT&CK:** [T1135](https://attack.mitre.org/techniques/T1135)
 
-  Command: 
-```powershell
-nltest /dsgetdc:$env:USERDOMAIN
-```
+**Status:** `Success`
 
+**PID:** 5496
 
-###   Description: Identify AV
+**Time:** 2024-09-13T17:19:07Z → N/A
 
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Status: Failed
+**Command:** `nltest /dsgetdc:$env:USERDOMAIN`
 
-  PID: 7020
+**Description:** Identify the remote domain controllers
 
-  Start: 2024-09-13T17:21:14Z
+**Technique:** Remote System Discovery
 
-  Command: 
-```powershell
-wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value
-```
+**ATT&CK:** [T1018](https://attack.mitre.org/techniques/T1018)
 
+**Status:** `Success`
 
-###   Description: Summary of permission and security groups
+**PID:** 2176
 
+**Time:** 2024-09-13T17:20:27Z → N/A
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Permission Groups Discovery: Local Groups', 'technique_id': 'T1069.001'}
 
-  Status: Success
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  PID: 5988
+**Command:** `wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value`
 
-  Start: 2024-09-13T17:22:00Z
+**Description:** Identify AV
 
-  Command: 
-```powershell
-gpresult /R
-```
+**Technique:** Software Discovery: Security Software Discovery
 
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
-###   Description: Identify Firewalls
+**Status:** `Failed`
 
+**PID:** 7020
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**Time:** 2024-09-13T17:21:14Z → N/A
 
-  Status: Failed
 
-  PID: 6576
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Start: 2024-09-13T17:22:57Z
+**Command:** `gpresult /R`
 
-  Command: 
-```powershell
-$NameSpace = Get-WmiObject -Namespace "root" -Class "__Namespace" | Select Name | Out-String -Stream | Select-String "SecurityCenter";$SecurityCenter = $NameSpace | Select-Object -First 1;Get-WmiObject -Namespace "root\$SecurityCenter" -Class AntiVirusProduct | Select DisplayName, InstanceGuid, PathToSignedProductExe, PathToSignedReportingExe, ProductState, Timestamp | Format-List;
-```
+**Description:** Summary of permission and security groups
 
+**Technique:** Permission Groups Discovery: Local Groups
 
-## Host: ACME-WS-PLU (paw: hkrmxr)
+**ATT&CK:** [T1069.001](https://attack.mitre.org/techniques/T1069/001)
 
-###   Description: Find user running agent
+**Status:** `Success`
 
+**PID:** 5988
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Owner/User Discovery', 'technique_id': 'T1033'}
+**Time:** 2024-09-13T17:22:00Z → N/A
 
-  Status: Success
 
-  PID: 1564
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Start: 2024-09-13T17:16:46Z
+**Command:** `$NameSpace = Get-WmiObject -Namespace "root" -Class "__Namespace" | Select Name | Out-String -Stream | Select-String "SecurityCenter";$SecurityCenter = $NameSpace | Select-Object -First 1;Get-WmiObject -Namespace "root\$SecurityCenter" -Class AntiVirusProduct | Select DisplayName, InstanceGuid, PathToSignedProductExe, PathToSignedReportingExe, ProductState, Timestamp | Format-List;`
 
-  Command: 
-```powershell
-$env:username
-```
+**Description:** Identify Firewalls
 
+**Technique:** Software Discovery: Security Software Discovery
 
-###   Description: Identify all local users
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
+**Status:** `Failed`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Account Discovery: Local Account', 'technique_id': 'T1087.001'}
+**PID:** 6576
 
-  Status: Success
+**Time:** 2024-09-13T17:22:57Z → N/A
 
-  PID: 816
 
-  Start: 2024-09-13T17:17:41Z
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Command: 
-```powershell
-Get-WmiObject -Class Win32_UserAccount
-```
+**Command:** `$env:username`
 
+**Description:** Find user running agent
 
-###   Description: Get process info for processes running as a user
+**Technique:** System Owner/User Discovery
 
+**ATT&CK:** [T1033](https://attack.mitre.org/techniques/T1033)
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Status:** `Success`
 
-  Status: Success
+**PID:** 1564
 
-  PID: 9420
+**Time:** 2024-09-13T17:16:46Z → N/A
 
-  Start: 2024-09-13T17:18:28Z
 
-  Command: 
-```powershell
-$owners = @{};gwmi win32_process |% {$owners[$_.handle] = $_.getowner().user};$ps = get-process | select processname,Id,@{l="Owner";e={$owners[$_.id.tostring()]}};foreach($p in $ps) {    if($p.Owner -eq "grantj") {        $p;    }}
-```
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
+**Command:** `Get-WmiObject -Class Win32_UserAccount`
 
-###   Description: Network Share Discovery
+**Description:** Identify all local users
 
+**Technique:** Account Discovery: Local Account
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Network Share Discovery', 'technique_id': 'T1135'}
+**ATT&CK:** [T1087.001](https://attack.mitre.org/techniques/T1087/001)
 
-  Status: Success
+**Status:** `Success`
 
-  PID: 7012
+**PID:** 816
 
-  Start: 2024-09-13T17:19:20Z
+**Time:** 2024-09-13T17:17:41Z → N/A
 
-  Command: 
-```powershell
-Get-SmbShare | ConvertTo-Json
-```
 
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-###   Description: Identify the remote domain controllers
+**Command:** `$owners = @{};gwmi win32_process |% {$owners[$_.handle] = $_.getowner().user};$ps = get-process | select processname,Id,@{l="Owner";e={$owners[$_.id.tostring()]}};foreach($p in $ps) {    if($p.Owner -eq "grantj") {        $p;    }}`
 
+**Description:** Get process info for processes running as a user
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Remote System Discovery', 'technique_id': 'T1018'}
+**Technique:** Process Discovery
 
-  Status: Success
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  PID: 1916
+**Status:** `Success`
 
-  Start: 2024-09-13T17:20:18Z
+**PID:** 9420
 
-  Command: 
-```powershell
-nltest /dsgetdc:$env:USERDOMAIN
-```
+**Time:** 2024-09-13T17:18:28Z → N/A
 
 
-###   Description: Identify AV
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
+**Command:** `Get-SmbShare | ConvertTo-Json`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**Description:** Network Share Discovery
 
-  Status: Failed
+**Technique:** Network Share Discovery
 
-  PID: 5116
+**ATT&CK:** [T1135](https://attack.mitre.org/techniques/T1135)
 
-  Start: 2024-09-13T17:21:17Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value
-```
+**PID:** 7012
 
+**Time:** 2024-09-13T17:19:20Z → N/A
 
-###   Description: Summary of permission and security groups
 
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Permission Groups Discovery: Local Groups', 'technique_id': 'T1069.001'}
+**Command:** `nltest /dsgetdc:$env:USERDOMAIN`
 
-  Status: Success
+**Description:** Identify the remote domain controllers
 
-  PID: 2924
+**Technique:** Remote System Discovery
 
-  Start: 2024-09-13T17:21:59Z
+**ATT&CK:** [T1018](https://attack.mitre.org/techniques/T1018)
 
-  Command: 
-```powershell
-gpresult /R
-```
+**Status:** `Success`
 
+**PID:** 1916
 
-###   Description: Identify Firewalls
+**Time:** 2024-09-13T17:20:18Z → N/A
 
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Status: Failed
+**Command:** `wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value`
 
-  PID: 1432
+**Description:** Identify AV
 
-  Start: 2024-09-13T17:23:00Z
+**Technique:** Software Discovery: Security Software Discovery
 
-  Command: 
-```powershell
-$NameSpace = Get-WmiObject -Namespace "root" -Class "__Namespace" | Select Name | Out-String -Stream | Select-String "SecurityCenter";$SecurityCenter = $NameSpace | Select-Object -First 1;Get-WmiObject -Namespace "root\$SecurityCenter" -Class AntiVirusProduct | Select DisplayName, InstanceGuid, PathToSignedProductExe, PathToSignedReportingExe, ProductState, Timestamp | Format-List;
-```
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
+**Status:** `Failed`
 
-## Host: ACME-HH-ESO (paw: nowkww)
+**PID:** 5116
 
-###   Description: Find user running agent
+**Time:** 2024-09-13T17:21:17Z → N/A
 
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Owner/User Discovery', 'technique_id': 'T1033'}
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Status: Success
+**Command:** `gpresult /R`
 
-  PID: 9552
+**Description:** Summary of permission and security groups
 
-  Start: 2024-09-13T17:17:03Z
+**Technique:** Permission Groups Discovery: Local Groups
 
-  Command: 
-```powershell
-$env:username
-```
+**ATT&CK:** [T1069.001](https://attack.mitre.org/techniques/T1069/001)
 
+**Status:** `Success`
 
-###   Description: Identify all local users
+**PID:** 2924
 
+**Time:** 2024-09-13T17:21:59Z → N/A
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Account Discovery: Local Account', 'technique_id': 'T1087.001'}
 
-  Status: Success
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  PID: 5588
+**Command:** `$NameSpace = Get-WmiObject -Namespace "root" -Class "__Namespace" | Select Name | Out-String -Stream | Select-String "SecurityCenter";$SecurityCenter = $NameSpace | Select-Object -First 1;Get-WmiObject -Namespace "root\$SecurityCenter" -Class AntiVirusProduct | Select DisplayName, InstanceGuid, PathToSignedProductExe, PathToSignedReportingExe, ProductState, Timestamp | Format-List;`
 
-  Start: 2024-09-13T17:18:00Z
+**Description:** Identify Firewalls
 
-  Command: 
-```powershell
-Get-WmiObject -Class Win32_UserAccount
-```
+**Technique:** Software Discovery: Security Software Discovery
 
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
-###   Description: Get process info for processes running as a user
+**Status:** `Failed`
 
+**PID:** 1432
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Process Discovery', 'technique_id': 'T1057'}
+**Time:** 2024-09-13T17:23:00Z → N/A
 
-  Status: Success
 
-  PID: 5836
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Start: 2024-09-13T17:18:51Z
+**Command:** `$env:username`
 
-  Command: 
-```powershell
-$owners = @{};gwmi win32_process |% {$owners[$_.handle] = $_.getowner().user};$ps = get-process | select processname,Id,@{l="Owner";e={$owners[$_.id.tostring()]}};foreach($p in $ps) {    if($p.Owner -eq "grantj") {        $p;    }}
-```
+**Description:** Find user running agent
 
+**Technique:** System Owner/User Discovery
 
-###   Description: Network Share Discovery
+**ATT&CK:** [T1033](https://attack.mitre.org/techniques/T1033)
 
+**Status:** `Success`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Network Share Discovery', 'technique_id': 'T1135'}
+**PID:** 9552
 
-  Status: Success
+**Time:** 2024-09-13T17:17:03Z → N/A
 
-  PID: 8224
 
-  Start: 2024-09-13T17:19:21Z
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Command: 
-```powershell
-Get-SmbShare | ConvertTo-Json
-```
+**Command:** `Get-WmiObject -Class Win32_UserAccount`
 
+**Description:** Identify all local users
 
-###   Description: Identify the remote domain controllers
+**Technique:** Account Discovery: Local Account
 
+**ATT&CK:** [T1087.001](https://attack.mitre.org/techniques/T1087/001)
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Remote System Discovery', 'technique_id': 'T1018'}
+**Status:** `Success`
 
-  Status: Success
+**PID:** 5588
 
-  PID: 8244
+**Time:** 2024-09-13T17:18:00Z → N/A
 
-  Start: 2024-09-13T17:20:16Z
 
-  Command: 
-```powershell
-nltest /dsgetdc:$env:USERDOMAIN
-```
+**[STEP] ACME-HH-ESO (nowkww)**
 
+**Command:** `$owners = @{};gwmi win32_process |% {$owners[$_.handle] = $_.getowner().user};$ps = get-process | select processname,Id,@{l="Owner";e={$owners[$_.id.tostring()]}};foreach($p in $ps) {    if($p.Owner -eq "grantj") {        $p;    }}`
 
-###   Description: Identify AV
+**Description:** Get process info for processes running as a user
 
+**Technique:** Process Discovery
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**ATT&CK:** [T1057](https://attack.mitre.org/techniques/T1057)
 
-  Status: Failed
+**Status:** `Success`
 
-  PID: 9404
+**PID:** 5836
 
-  Start: 2024-09-13T17:21:13Z
+**Time:** 2024-09-13T17:18:51Z → N/A
 
-  Command: 
-```powershell
-wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value
-```
 
+**[STEP] ACME-HH-ESO (nowkww)**
 
-###   Description: Summary of permission and security groups
+**Command:** `Get-SmbShare | ConvertTo-Json`
 
+**Description:** Network Share Discovery
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Permission Groups Discovery: Local Groups', 'technique_id': 'T1069.001'}
+**Technique:** Network Share Discovery
 
-  Status: Success
+**ATT&CK:** [T1135](https://attack.mitre.org/techniques/T1135)
 
-  PID: 584
+**Status:** `Success`
 
-  Start: 2024-09-13T17:22:06Z
+**PID:** 8224
 
-  Command: 
-```powershell
-gpresult /R
-```
+**Time:** 2024-09-13T17:19:21Z → N/A
 
 
-###   Description: Identify Firewalls
+**[STEP] ACME-HH-ESO (nowkww)**
 
+**Command:** `nltest /dsgetdc:$env:USERDOMAIN`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**Description:** Identify the remote domain controllers
 
-  Status: Failed
+**Technique:** Remote System Discovery
 
-  PID: 8204
+**ATT&CK:** [T1018](https://attack.mitre.org/techniques/T1018)
 
-  Start: 2024-09-13T17:22:52Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-$NameSpace = Get-WmiObject -Namespace "root" -Class "__Namespace" | Select Name | Out-String -Stream | Select-String "SecurityCenter";$SecurityCenter = $NameSpace | Select-Object -First 1;Get-WmiObject -Namespace "root\$SecurityCenter" -Class AntiVirusProduct | Select DisplayName, InstanceGuid, PathToSignedProductExe, PathToSignedReportingExe, ProductState, Timestamp | Format-List;
-```
+**PID:** 8244
 
+**Time:** 2024-09-13T17:20:16Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value`
+
+**Description:** Identify AV
+
+**Technique:** Software Discovery: Security Software Discovery
+
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
+
+**Status:** `Failed`
+
+**PID:** 9404
+
+**Time:** 2024-09-13T17:21:13Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `gpresult /R`
+
+**Description:** Summary of permission and security groups
+
+**Technique:** Permission Groups Discovery: Local Groups
+
+**ATT&CK:** [T1069.001](https://attack.mitre.org/techniques/T1069/001)
+
+**Status:** `Success`
+
+**PID:** 584
+
+**Time:** 2024-09-13T17:22:06Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `$NameSpace = Get-WmiObject -Namespace "root" -Class "__Namespace" | Select Name | Out-String -Stream | Select-String "SecurityCenter";$SecurityCenter = $NameSpace | Select-Object -First 1;Get-WmiObject -Namespace "root\$SecurityCenter" -Class AntiVirusProduct | Select DisplayName, InstanceGuid, PathToSignedProductExe, PathToSignedReportingExe, ProductState, Timestamp | Format-List;`
+
+**Description:** Identify Firewalls
+
+**Technique:** Software Discovery: Security Software Discovery
+
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
+
+**Status:** `Failed`
+
+**PID:** 8204
+
+**Time:** 2024-09-13T17:22:52Z → N/A
+
+
+![Operation Graph](discovery_graph.png)

