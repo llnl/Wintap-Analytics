@@ -77,7 +77,7 @@ def get_bfs_subtree(Trees, tree_id, root_id):
 
 def build_process_trees(process, min_tree_size=3, max_tree_size=1000000):
     ## keep required columns
-    cols = ['pid_hash', 'parent_pid_hash', 'process_name', 'user_name', 'process_started', 'file_md5']
+    cols = ['pid_hash', 'parent_pid_hash', 'process_name', 'user_name', 'process_started', 'file_md5','red_team']
     df = process[cols]    
     df = df.drop_duplicates(cols)
     ## parents and children
@@ -107,13 +107,16 @@ def build_process_trees(process, min_tree_size=3, max_tree_size=1000000):
     ## file md5
     _dict = dict(zip(df.pid_hash, df.file_md5))
     G.vs['filemd5'] = [_dict.get(x, "") for x in G.vs['pid']]
+    ## red team
+    _dict = dict(zip(df.pid_hash, df.red_team))
+    G.vs['redteam'] = [_dict.get(x, "") for x in G.vs['pid']]
     ## timestamps
     T = []
     for x in df['process_started']:
         if pd.isna(x):
             T.append('')
         else: 
-            T.append(int(x.timestamp()))
+            T.append(x.timestamp()) ## float / int 
     time_dict = dict(zip(df.pid_hash, T))
     G.vs['time'] = [time_dict.get(x, "") for x in G.vs['pid']]
 
@@ -171,7 +174,7 @@ def build_process_trees(process, min_tree_size=3, max_tree_size=1000000):
     G.vs['color'] = 'black'
     G.vs[np.where(['bad' in x for x in G.vs['shortlabel']])[0]]['label_color'] = 'red'
     G.vs[np.where(['bad' in x for x in G.vs['shortlabel']])[0]]['color'] = 'red'
-
+    
     idx = np.where(np.array(G.vs['pid']) == None)[0]
     if len(idx)>0:
         G.delete_vertices(idx)
