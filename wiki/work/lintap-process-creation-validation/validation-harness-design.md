@@ -675,3 +675,52 @@ Validated before this checkpoint:
 Known remaining issue:
 
 - Short-lived bash workload still left 59 manifest PIDs with open rows after the 780-second noisy run. This is much improved, but not solved.
+
+## One-Hour Noisy Run
+
+After the first commit checkpoint, a longer one-hour noisy resolver-mode run was executed in the Multipass Ubuntu VM.
+
+Run summary:
+
+```text
+run_id: noisy-state-1786071273
+duration: 3600 seconds
+manifest processes: 8732
+manifest cases: 767
+process table rows: 10372
+distinct process IDs in table: 10064
+closed rows: 10060
+open rows: 312
+manifest PIDs observed: 8732 / 8732
+manifest PIDs with open rows: 285 / 8732
+```
+
+Dominant process names:
+
+| Process Name | Rows | Closed | Open |
+|---|---:|---:|---:|
+| `bash` | 8783 | 8498 | 285 |
+| `python3` | 237 | 237 | 0 |
+| `dpkg-deb` | 194 | 194 | 0 |
+| `rm` | 115 | 113 | 2 |
+
+Interpretation:
+
+- All workload manifest PIDs were observed in the process table.
+- The residual open-row rate for workload PIDs was approximately 3.3% (`285 / 8732`).
+- Longer-lived Python processes closed cleanly in this workload.
+- Residual leakage remains concentrated in the very short-lived `bash` workload.
+- The table still includes non-workload system/package-management processes created during the run, so total table rows exceed manifest process count.
+- `stop_only_like` is no longer a reliable name for that metric, because many legitimate short-lived processes can have `create_time` and `exit_time` equal at second precision after pending-exit reconciliation.
+
+Post-run smoke test:
+
+```text
+PASS: captured process records for all creation variants
+```
+
+Artifact:
+
+```text
+validation/process-creation/noisy-state-1h-summary-multipass-2026-08-06.json
+```

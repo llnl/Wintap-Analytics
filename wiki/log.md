@@ -94,3 +94,11 @@ Summary: Prepared commit checkpoint after implementing the first executable vali
 Validated: Wintap build passed in Multipass; validation harness tests passed on macOS and Linux; Lintap process smoke passed; five 15-minute smoke rounds passed; noisy resolver-mode run observed 1888/1888 manifest PIDs with 60 open process rows remaining.
 Pages updated: work/lintap-process-creation-validation/validation-harness-design.md; log.md.
 Open follow-up: run a longer one-hour noisy process-state test and investigate the residual short-lived open rows.
+
+## [2026-08-06] test | One-hour Lintap noisy process state run
+
+Environment: Same Multipass Ubuntu 24.04 arm64 validation VM and Wintap process-state fixes as prior noisy run.
+Workload: `wpv-noisy-processes` for 3600 seconds with 8732 manifest processes across 767 cases.
+Results: all 8732 manifest PIDs were observed in the DuckDB `process` table. Table totals were 10372 rows, 10064 distinct process IDs, 10060 closed rows, and 312 open rows. Manifest-specific open rows were 285/8732, concentrated in short-lived bash workload rows. Longer-lived Python workload rows closed cleanly. A post-run Lintap process smoke test passed.
+Artifact: validation/process-creation/noisy-state-1h-summary-multipass-2026-08-06.json.
+Limitations: residual short-lived open rows remain; reference sensors and true C-based execveat workload not yet tested.

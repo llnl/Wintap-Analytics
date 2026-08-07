@@ -1,0 +1,405 @@
+{
+  "by_name": [
+    {
+      "closed_rows": 8498,
+      "open_rows": 285,
+      "process_name": "bash",
+      "rows": 8783,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 237,
+      "open_rows": 0,
+      "process_name": "python3",
+      "rows": 237,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 194,
+      "open_rows": 0,
+      "process_name": "dpkg-deb",
+      "rows": 194,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 113,
+      "open_rows": 2,
+      "process_name": "rm",
+      "rows": 115,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 97,
+      "open_rows": 0,
+      "process_name": "dpkg-split",
+      "rows": 97,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 97,
+      "open_rows": 0,
+      "process_name": "tar",
+      "rows": 97,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 64,
+      "open_rows": 3,
+      "process_name": "sh",
+      "rows": 67,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 47,
+      "open_rows": 1,
+      "process_name": "dpkg",
+      "rows": 48,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 29,
+      "open_rows": 0,
+      "process_name": "gzip",
+      "rows": 29,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 27,
+      "open_rows": 1,
+      "process_name": "mkdir",
+      "rows": 28,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 25,
+      "open_rows": 0,
+      "process_name": "install-info",
+      "rows": 25,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 21,
+      "open_rows": 0,
+      "process_name": "sleep",
+      "rows": 21,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 21,
+      "open_rows": 0,
+      "process_name": "systemctl",
+      "rows": 21,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 20,
+      "open_rows": 0,
+      "process_name": "chown",
+      "rows": 20,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 18,
+      "open_rows": 2,
+      "process_name": "grep",
+      "rows": 20,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 15,
+      "open_rows": 3,
+      "process_name": "ls",
+      "rows": 18,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 18,
+      "open_rows": 0,
+      "process_name": "tr",
+      "rows": 18,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 17,
+      "open_rows": 1,
+      "process_name": "chmod",
+      "rows": 18,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 15,
+      "open_rows": 0,
+      "process_name": "deb-systemd-helper",
+      "rows": 15,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 15,
+      "open_rows": 0,
+      "process_name": "update-alternatives",
+      "rows": 15,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 13,
+      "open_rows": 0,
+      "process_name": "basename",
+      "rows": 13,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 13,
+      "open_rows": 0,
+      "process_name": "nscd",
+      "rows": 13,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 11,
+      "open_rows": 1,
+      "process_name": "ln",
+      "rows": 12,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 10,
+      "open_rows": 0,
+      "process_name": "dpkg-maintscript-helper",
+      "rows": 10,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 10,
+      "open_rows": 0,
+      "process_name": "stty",
+      "rows": 10,
+      "section": "by_name"
+    }
+  ],
+  "db": "/tmp/lintap-noisy-state-1786071273/event_store/main.duckdb",
+  "duplicate_pid": [
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33296,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 32383,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 32523,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 32797,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 32863,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 32938,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 32977,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33041,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33053,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33090,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33102,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33235,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 32362,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33272,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33350,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33435,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33572,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33596,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33824,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 33907,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 34010,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 34076,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 34214,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 34278,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 34486,
+      "rows": 2,
+      "section": "duplicate_pid"
+    }
+  ],
+  "manifest": "/tmp/validation-runs/noisy-state-1786071273/workload/manifest.json",
+  "manifest_by_name": [
+    {
+      "closed_rows": 8496,
+      "open_rows": 285,
+      "process_name": "bash",
+      "rows": 8781
+    },
+    {
+      "closed_rows": 236,
+      "open_rows": 0,
+      "process_name": "python3",
+      "rows": 236
+    }
+  ],
+  "manifest_info": {
+    "manifest_cases": 767,
+    "manifest_distinct_pids": 8732,
+    "manifest_processes": 8732
+  },
+  "manifest_pid_summary": [
+    {
+      "closed_manifest_pids": 8732,
+      "closed_rows_for_manifest_pids": 8732,
+      "joined_rows": 9017,
+      "manifest_pids": 9017,
+      "missing_manifest_pids": 285,
+      "observed_manifest_pids": 8732,
+      "open_manifest_pids": 285,
+      "open_rows_for_manifest_pids": 285
+    }
+  ],
+  "stop_only_like": [
+    {
+      "rows": 5975,
+      "section": "stop_only_like"
+    }
+  ],
+  "table_totals": [
+    {
+      "closed_rows": 10060,
+      "distinct_pid_hashes": 10372,
+      "distinct_pids": 10064,
+      "open_rows": 312,
+      "rows": 10372,
+      "section": "table_totals"
+    }
+  ]
+}
