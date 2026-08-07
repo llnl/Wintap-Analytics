@@ -1,0 +1,26 @@
+[project]
+name = "wintap-process-validation"
+version = "0.1.0"
+description = "Sensor-neutral process creation validation harness for Wintap/Lintap research"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+parquet = ["duckdb>=1.0.0"]
+dev = ["pytest>=8.0.0"]
+
+[project.scripts]
+wpv-workload = "wintap_process_validation.cli.workload:main"
+wpv-evaluate = "wintap_process_validation.cli.evaluate:main"
+wpv-mock-run = "wintap_process_validation.cli.mock_run:main"
+wpv-normalize-lintap = "wintap_process_validation.cli.normalize_lintap:main"
+wpv-noisy-processes = "wintap_process_validation.cli.noisy_processes:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

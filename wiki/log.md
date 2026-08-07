@@ -32,3 +32,65 @@ Contradictions flagged: none.
 Pages created: decision/feature-work-artifacts.md; concept/llm-assisted-feature-workflow.md; concept/feature-work-template.md; work/
 Pages updated: index.md; AGENTS.md
 Notes: Validated that all wiki pages have required frontmatter keys, have no broken wikilinks, and that `grounded_by` paths resolve. Added the optional feature-work module pages and aligned AGENTS.md directory names with the on-disk `wiki/decision/` and `wiki/tension/` layout.
+
+## [2026-07-31] research | Lintap process creation validation thread
+
+Sources read: ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracer.bpf.c; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_tracer.bpf.c; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs; ../wintap/wintap/core/shared/ProcessHash.cs; ../wintap/devtools/process_capture_smoke_test.py; ../../tetragon process lifecycle sources; ../../tracee process lifecycle sources; ../../sysdig capture selection sources; public GitHub issues/PRs for Tetragon, Tracee, and Falco/Sysdig process accuracy risks.
+Pages created: work/lintap-process-creation-validation/index.md; work/lintap-process-creation-validation/research-snapshot-2026-07-31.md; work/lintap-process-creation-validation/handoff-validation-next-steps.md.
+Pages updated: index.md; log.md.
+Contradictions flagged: none.
+
+## [2026-07-31] design | Sensor-neutral process validation harness
+
+Sources read: ../wintap/devtools/process_capture_smoke_test.py; ../wintap/devtools/file_capture_smoke_test.py; ../wintap/devtools/network_capture_smoke_test.py; ../wintap/diagnostics/process-smoke-test/Program.cs; ../wintap/BUILD_AND_TEST.md; ../wintap/devtools/README.md.
+Pages created: work/lintap-process-creation-validation/validation-harness-design.md.
+Pages updated: work/lintap-process-creation-validation/index.md; index.md; log.md.
+Contradictions flagged: none.
+
+## [2026-07-31] test | Process validation mock checks on macOS
+
+Commands run: Python frontmatter/wikilink/source-path checker for wiki/work/lintap-process-creation-validation; Python in-memory mock manifest/evaluator exercise for normalized process events.
+Results: frontmatter, wikilinks, checked GROUND_TRUTH paths, and key local source paths passed. Mock evaluator produced expected fork, exec-attempt, exec-success, exit, parent-join, duplicate-start, and identity-collision metrics and detected one deliberately injected duplicate exec-success event.
+Pages updated: work/lintap-process-creation-validation/validation-harness-design.md; log.md.
+Limitations: no Linux eBPF attachment, ring-buffer polling, Lintap Parquet output, live reference-sensor output, or load/loss behavior could be tested on macOS.
+
+## [2026-07-31] setup | Linux VM setup for validation
+
+Sources read: ../wintap/BUILD_AND_TEST.md; ../wintap/documentation/Linux Deployment Guide.md; ../wintap/wintap/Makefile; ../wintap/devtools/README.md; ../wintap/devtools/process_capture_smoke_test.py.
+Pages created: work/lintap-process-creation-validation/linux-setup.md.
+Pages updated: work/lintap-process-creation-validation/index.md; index.md; log.md.
+Notes: Recommended Multipass for fastest repeatable CLI setup and UTM for kernel/distro control. Recommended running sensors and workloads inside the Linux VM, with macOS used for SSH orchestration and artifact copying.
+Contradictions flagged: none.
+
+## [2026-07-31] code | Initial process validation harness prototype
+
+Files created: validation/process-creation/pyproject.toml; validation/process-creation/uv.lock; validation/process-creation/README.md; validation/process-creation/src/wintap_process_validation/*; validation/process-creation/tests/*.
+Implemented: uv-managed Python package with manifest schema, workload generator, mock normalized event writer, evaluator metrics, Lintap process row normalizer, and CLIs `wpv-workload`, `wpv-mock-run`, `wpv-evaluate`, `wpv-normalize-lintap`.
+Tests run: `uv run --extra dev pytest` in validation/process-creation, result 5 passed. Also ran `wpv-workload` and `wpv-mock-run` on macOS; execveat was skipped with a manifest note because macOS lacks `os.execveat`, and mock evaluation detected the intentionally injected duplicate exec-success row.
+Pages updated: work/lintap-process-creation-validation/validation-harness-design.md; log.md.
+Limitations: live Linux eBPF, Lintap Parquet normalization, and reference sensor output remain untested until a Linux VM is available.
+
+## [2026-08-06] test | Multipass Lintap process smoke test
+
+Environment: Multipass Ubuntu 24.04 arm64; kernel 6.8.0-136-generic; BTF present; Wintap branch grantj-ebf-fixes at 7f93255.
+Commands run: VM toolchain checks; `make build_ebpf`; `make build_dotnet`; `UV_PROJECT_ENVIRONMENT=/tmp/wpv-venv uv run --extra dev pytest`; `UV_PROJECT_ENVIRONMENT=/tmp/wpv-venv uv run wpv-mock-run`; `sudo python3 devtools/process_capture_smoke_test.py --start-lintap --lintap-dll /home/ubuntu/git/wintap/wintap/bin/Debug/net8.0/Lintap.dll --timeout 240 --poll-interval 5`.
+Results: eBPF and .NET builds passed; validation harness tests passed with 5 tests; mock run passed and detected expected duplicate exec-success warning; Lintap process smoke test passed.
+Fixes made: Wintap eBPF tracer now uses `task_struct.start_time` for Ubuntu arm64 CO-RE compatibility; ExecveSensor/CloneSensor attach extra programs by program name instead of unavailable `bpf_object__find_program_by_title`; ExecveSensor parent hash conversion now matches `/proc` clock-tick semantics and uses eBPF parent attribution as fallback; process smoke test ignores `.parquet.active` files and relaxes execveat flag validation when Python lacks `os.execveat`.
+Pages updated: work/lintap-process-creation-validation/validation-harness-design.md; log.md.
+Limitations: reference sensors not yet run; true `execveat(2)` validation still needs a C workload because Ubuntu Python 3.12 lacks `os.execveat`.
+
+## [2026-08-06] test | Lintap noisy process state table run
+
+Environment: Multipass Ubuntu 24.04 arm64; Wintap branch grantj-ebf-fixes; Lintap resolver-mode config with Execve and Exit enabled, direct parquet and Esper send disabled, Clone/Network/FileOps/Rundown disabled.
+Workload: `wpv-noisy-processes` for 780 seconds, 1888 manifest processes across 166 cases, combining short-lived `bash` processes and longer-lived Python sleep processes.
+Fixes applied before final run: disabled BPF diag monitor by default; captured process `task_struct.start_time` in exec eBPF events; used eBPF process start time when `/proc` is unavailable; filtered CO-RE exit tracer to thread-group leader exits; stopped inserting unmatched Stop-only rows; added pending-exit reconciliation in ProcessResolver; made GetPidHash respect exit_time.
+Results: final noisy run `noisy-state-1786064182` observed all 1888 manifest PIDs in the `process` table. Table had 1983 rows, 1924 distinct process IDs, 1923 closed rows, and 60 open rows. Manifest-specific open rows were 59/1888, mostly short-lived bash. Final process smoke test also passed after the fixes.
+Artifacts: validation/process-creation/noisy-state-summary-multipass-2026-08-06.json; validation/process-creation/smoke-15m-summary-multipass-2026-08-06.json.
+Limitations: residual open rows remain; true execveat still needs a C workload; reference sensors were not run.
+
+## [2026-08-06] checkpoint | Process validation implementation commit point
+
+Summary: Prepared commit checkpoint after implementing the first executable validation harness, Multipass setup updates, Lintap eBPF/process-state fixes, and noisy process-state tests.
+Validated: Wintap build passed in Multipass; validation harness tests passed on macOS and Linux; Lintap process smoke passed; five 15-minute smoke rounds passed; noisy resolver-mode run observed 1888/1888 manifest PIDs with 60 open process rows remaining.
+Pages updated: work/lintap-process-creation-validation/validation-harness-design.md; log.md.
+Open follow-up: run a longer one-hour noisy process-state test and investigate the residual short-lived open rows.
