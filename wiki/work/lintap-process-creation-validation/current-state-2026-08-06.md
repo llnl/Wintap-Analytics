@@ -181,4 +181,34 @@ validation/process-creation/all-events-30m-parquet-summary-multipass-2026-08-07.
 validation/process-creation/all-events-30m-network-smoke-multipass-2026-08-07.out
 ```
 
-Next diagnostic focus: network eBPF PID/socket attribution and why normal network rows are not emitted despite generated traffic and BPF miss diagnostics.
+Follow-up network fix:
+
+- Root cause was another libbpf compatibility issue: `NetworkSensor` still used `bpf_object__find_program_by_title`, which is unavailable in the Ubuntu 24.04 arm64 VM's `libbpf.so.1`.
+- `NetworkSensor` was patched to attach additional network programs by BPF function name.
+- Its diagnostic reporter is now gated by `EnableBpfDiagMonitor` so normal validation does not create extra diagnostic process/message noise.
+
+Validation after the fix:
+
+```text
+Direct-Parquet network smoke: PASS
+Normal ETL all-events short run: PASS for process, file, and network smoke
+```
+
+Normal ETL short all-events output after the fix:
+
+| Output Directory | Files | Rows |
+|---|---:|---:|
+| `raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=16/protoPK=tcp` | 2 | 165 |
+| `raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=16/protoPK=udp` | 2 | 33 |
+| `raw_sensor/raw_process/dayPK=20260807/hourPK=16` | 4 | 9859 |
+| `raw_sensor/raw_process_file/dayPK=20260807/hourPK=16` | 2 | 73685 |
+
+Artifacts:
+
+```text
+validation/process-creation/all-events-10m-summary-multipass-2026-08-07.json
+validation/process-creation/all-events-10m-parquet-summary-multipass-2026-08-07.json
+validation/process-creation/all-events-10m-network-smoke-multipass-2026-08-07.out
+```
+
+Remaining network follow-up: the older failed 30-minute all-events artifact should be treated as pre-fix evidence. A full 30-minute normal ETL all-events run should be repeated with the network attachment fix when time allows.

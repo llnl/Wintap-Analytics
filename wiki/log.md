@@ -116,3 +116,10 @@ Workload: Existing process/file/network smoke tests plus `wpv-noisy-processes` d
 Results: process smoke passed; file smoke passed; network smoke failed. No TCP/UDP/raw_process_conn_incr Parquet rows were found. Parquet outputs included fileserializer=2996 rows, processserializer=57 rows, processstopserializer=26 rows, raw_process=32013 rows, raw_process_file=300000 rows, raw_host=1 row, raw_macip=1 row. Network logs showed BPF diag misses (`STORE/HIT/MISS = 0/0/62`) but no normal network rows.
 Artifacts: validation/process-creation/all-events-30m-summary-multipass-2026-08-07.json; validation/process-creation/all-events-30m-parquet-summary-multipass-2026-08-07.json; validation/process-creation/all-events-30m-network-smoke-multipass-2026-08-07.out.
 Open follow-up: diagnose network eBPF/socket PID attribution and why network telemetry is not materialized under normal ETL output.
+
+## [2026-08-07] fix | Network program attachment compatibility
+
+Root cause: NetworkSensor used `bpf_object__find_program_by_title` for additional program attachment, but Ubuntu 24.04 arm64 libbpf did not export that symbol. The network sensor failed startup after the primary program loaded, leaving only diagnostic output and no normal network rows.
+Fix: NetworkSensor now attaches additional network programs by BPF function name using `bpf_object__find_program_by_name`, and its diagnostic reporter is gated by `EnableBpfDiagMonitor`.
+Validation: direct-Parquet network smoke passed. A short normal ETL all-events run also passed process, file, and network smoke and produced `raw_process_conn_incr` TCP/UDP rows: tcp=165 rows, udp=33 rows.
+Artifacts: validation/process-creation/all-events-10m-summary-multipass-2026-08-07.json; validation/process-creation/all-events-10m-parquet-summary-multipass-2026-08-07.json; validation/process-creation/all-events-10m-network-smoke-multipass-2026-08-07.out.
