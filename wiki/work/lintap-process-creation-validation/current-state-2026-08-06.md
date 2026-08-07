@@ -123,3 +123,62 @@ Interpretation:
 3. Add a C `execveat` workload to validation.
 4. Add a Lintap normalizer/evaluator path for resolver-mode `process` DuckDB output, not just Parquet.
 5. Run the same noisy workload with Tetragon and Tracee for comparison.
+
+## 30-Minute All-Events Normal ETL Run
+
+On 2026-08-07, a 30-minute Lintap run was executed with normal ETL/Parquet output enabled:
+
+```json
+{
+  "DisableETL": false,
+  "EnableDirectParquet": false,
+  "WriteToParquet": true,
+  "Execve": true,
+  "Clone": true,
+  "Exit": true,
+  "Network": true,
+  "FileOps": true,
+  "ProcessRundown": true
+}
+```
+
+Run summary:
+
+```text
+run_id: all-events-30m-1786118104
+duration: 1878 seconds
+noisy workload processes: 3432
+noisy workload cases: 302
+process smoke: PASS
+file smoke: PASS
+network smoke: FAIL
+```
+
+Parquet outputs written under `/tmp/lintap-all-events-30m-1786118104/parquet`:
+
+| Output Directory | Files | Rows |
+|---|---:|---:|
+| `fileserializer` | 1 | 2996 |
+| `processserializer` | 1 | 57 |
+| `processstopserializer` | 1 | 26 |
+| `raw_sensor/raw_host/dayPK=20260807/hourPK=16` | 1 | 1 |
+| `raw_sensor/raw_macip/dayPK=20260807/hourPK=16` | 1 | 1 |
+| `raw_sensor/raw_process/dayPK=20260807/hourPK=16` | 12 | 32013 |
+| `raw_sensor/raw_process_file/dayPK=20260807/hourPK=16` | 6 | 300000 |
+
+Network finding:
+
+- HTTP/HTTPS and UDP test traffic was generated successfully.
+- No matching network Parquet rows were found before timeout.
+- Lintap logs showed `NetworkSensor aggregated BPF diag (STORE/HIT/MISS) = 0/0/62` and BPF diag miss events, indicating the network path was active enough to emit diagnostics but did not resolve/emit normal TCP/UDP telemetry rows.
+- No `raw_process_conn_incr`/TCP/UDP output appeared in the summarized Parquet directories.
+
+Artifacts copied to this repo:
+
+```text
+validation/process-creation/all-events-30m-summary-multipass-2026-08-07.json
+validation/process-creation/all-events-30m-parquet-summary-multipass-2026-08-07.json
+validation/process-creation/all-events-30m-network-smoke-multipass-2026-08-07.out
+```
+
+Next diagnostic focus: network eBPF PID/socket attribution and why normal network rows are not emitted despite generated traffic and BPF miss diagnostics.

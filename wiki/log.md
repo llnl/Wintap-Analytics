@@ -108,3 +108,11 @@ Limitations: residual short-lived open rows remain; reference sensors and true C
 Pages created: work/lintap-process-creation-validation/current-state-2026-08-06.md.
 Pages updated: work/lintap-process-creation-validation/index.md; index.md; log.md.
 Summary: Recorded current commits, validation harness state, one-hour noisy run results, known residual short-lived process leakage, and next-step recommendations.
+
+## [2026-08-07] test | 30-minute all-events normal ETL Parquet run
+
+Environment: Multipass Ubuntu 24.04 arm64; Lintap normal ETL/Parquet config with process, clone, exit, network, file, and process rundown sensors enabled; direct Parquet disabled.
+Workload: Existing process/file/network smoke tests plus `wpv-noisy-processes` during a 1878-second capture window.
+Results: process smoke passed; file smoke passed; network smoke failed. No TCP/UDP/raw_process_conn_incr Parquet rows were found. Parquet outputs included fileserializer=2996 rows, processserializer=57 rows, processstopserializer=26 rows, raw_process=32013 rows, raw_process_file=300000 rows, raw_host=1 row, raw_macip=1 row. Network logs showed BPF diag misses (`STORE/HIT/MISS = 0/0/62`) but no normal network rows.
+Artifacts: validation/process-creation/all-events-30m-summary-multipass-2026-08-07.json; validation/process-creation/all-events-30m-parquet-summary-multipass-2026-08-07.json; validation/process-creation/all-events-30m-network-smoke-multipass-2026-08-07.out.
+Open follow-up: diagnose network eBPF/socket PID attribution and why network telemetry is not materialized under normal ETL output.

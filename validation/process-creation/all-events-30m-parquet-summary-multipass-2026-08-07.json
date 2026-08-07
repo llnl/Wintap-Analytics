@@ -1,0 +1,36 @@
+{
+  "by_dir": {
+    "fileserializer": {
+      "files": 1,
+      "rows": 2996
+    },
+    "processserializer": {
+      "files": 1,
+      "rows": 57
+    },
+    "processstopserializer": {
+      "files": 1,
+      "rows": 26
+    },
+    "raw_sensor/raw_host/dayPK=20260807/hourPK=16": {
+      "files": 1,
+      "rows": 1
+    },
+    "raw_sensor/raw_macip/dayPK=20260807/hourPK=16": {
+      "files": 1,
+      "rows": 1
+    },
+    "raw_sensor/raw_process/dayPK=20260807/hourPK=16": {
+      "files": 12,
+      "rows": 32013
+    },
+    "raw_sensor/raw_process_file/dayPK=20260807/hourPK=16": {
+      "files": 6,
+      "rows": 300000
+    }
+  },
+  "data_root": "/tmp/lintap-all-events-30m-1786118104",
+  "files": 23,
+  "run_dir": "/tmp/validation-runs/all-events-30m-1786118104",
+  "run_id": "all-events-30m-1786118104"
+}
