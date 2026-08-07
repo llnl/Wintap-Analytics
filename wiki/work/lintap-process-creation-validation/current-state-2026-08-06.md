@@ -212,3 +212,62 @@ validation/process-creation/all-events-10m-network-smoke-multipass-2026-08-07.ou
 ```
 
 Remaining network follow-up: the older failed 30-minute all-events artifact should be treated as pre-fix evidence. A full 30-minute normal ETL all-events run should be repeated with the network attachment fix when time allows.
+
+## One-Hour All-Events Normal ETL Dataset
+
+On 2026-08-07, a one-hour normal ETL/Parquet capture was run to create a fuller dataset with pidstat collection.
+
+Run summary:
+
+```text
+run_id: all-events-1h-1786139524
+duration: 3674 seconds
+data root in VM: /home/ubuntu/data/lintap/all-events-1h-1786139524
+data root on Mac mount: ~/data/lintap/all-events-1h-1786139524
+pidstat file: pidstat/pidstat_20260807_145204.csv
+pidstat lines: 47454
+```
+
+Smoke results:
+
+| Test | Result | Notes |
+|---|---|---|
+| Process smoke | PASS | Parent/process linkage validated. |
+| Network smoke | PASS | TCP and UDP rows materialized under `raw_process_conn_incr`. |
+| File smoke | FAIL | Exact temp file path was not found, despite large file telemetry volume. |
+
+Parquet output summary:
+
+| Output Directory | Files | Rows |
+|---|---:|---:|
+| `fileserializer` | 5 | 49591 |
+| `processserializer` | 5 | 3763 |
+| `processstopserializer` | 5 | 485 |
+| `raw_sensor/raw_host/dayPK=20260807/hourPK=21` | 1 | 1 |
+| `raw_sensor/raw_host/dayPK=20260807/hourPK=22` | 1 | 1 |
+| `raw_sensor/raw_macip/dayPK=20260807/hourPK=21` | 1 | 1 |
+| `raw_sensor/raw_macip/dayPK=20260807/hourPK=22` | 1 | 1 |
+| `raw_sensor/raw_process/dayPK=20260807/hourPK=21` | 2 | 1240 |
+| `raw_sensor/raw_process/dayPK=20260807/hourPK=22` | 20 | 66359 |
+| `raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=21/protoPK=tcp` | 1 | 174 |
+| `raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=21/protoPK=udp` | 1 | 32 |
+| `raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=22/protoPK=tcp` | 10 | 1235 |
+| `raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=22/protoPK=udp` | 4 | 30 |
+| `raw_sensor/raw_process_file/dayPK=20260807/hourPK=21` | 1 | 50000 |
+| `raw_sensor/raw_process_file/dayPK=20260807/hourPK=22` | 10 | 510000 |
+| `tcpconnectionserializer` | 5 | 108 |
+
+Artifacts:
+
+```text
+validation/process-creation/all-events-1h-summary-multipass-2026-08-07.json
+validation/process-creation/all-events-1h-parquet-summary-multipass-2026-08-07.json
+validation/process-creation/all-events-1h-file-smoke-multipass-2026-08-07.out
+validation/process-creation/all-events-1h-network-smoke-multipass-2026-08-07.out
+```
+
+Interpretation:
+
+- This is the first good full dataset candidate for DBT/post-processing with process, network, file, raw_sensor, and pidstat present.
+- The file smoke failure should be investigated as an exact-path validation issue or file path aggregation/filtering issue, not as absence of file telemetry.
+- DBT should now find pidstat automatically because `$WINTAP_DATA_ROOT/pidstat/*.csv` exists.

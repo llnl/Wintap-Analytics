@@ -1,0 +1,72 @@
+{
+  "by_dir": {
+    "fileserializer": {
+      "files": 5,
+      "rows": 49591
+    },
+    "processserializer": {
+      "files": 5,
+      "rows": 3763
+    },
+    "processstopserializer": {
+      "files": 5,
+      "rows": 485
+    },
+    "raw_sensor/raw_host/dayPK=20260807/hourPK=21": {
+      "files": 1,
+      "rows": 1
+    },
+    "raw_sensor/raw_host/dayPK=20260807/hourPK=22": {
+      "files": 1,
+      "rows": 1
+    },
+    "raw_sensor/raw_macip/dayPK=20260807/hourPK=21": {
+      "files": 1,
+      "rows": 1
+    },
+    "raw_sensor/raw_macip/dayPK=20260807/hourPK=22": {
+      "files": 1,
+      "rows": 1
+    },
+    "raw_sensor/raw_process/dayPK=20260807/hourPK=21": {
+      "files": 2,
+      "rows": 1240
+    },
+    "raw_sensor/raw_process/dayPK=20260807/hourPK=22": {
+      "files": 20,
+      "rows": 66359
+    },
+    "raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=21/protoPK=tcp": {
+      "files": 1,
+      "rows": 174
+    },
+    "raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=21/protoPK=udp": {
+      "files": 1,
+      "rows": 32
+    },
+    "raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=22/protoPK=tcp": {
+      "files": 10,
+      "rows": 1235
+    },
+    "raw_sensor/raw_process_conn_incr/dayPK=20260807/hourPK=22/protoPK=udp": {
+      "files": 4,
+      "rows": 30
+    },
+    "raw_sensor/raw_process_file/dayPK=20260807/hourPK=21": {
+      "files": 1,
+      "rows": 50000
+    },
+    "raw_sensor/raw_process_file/dayPK=20260807/hourPK=22": {
+      "files": 10,
+      "rows": 510000
+    },
+    "tcpconnectionserializer": {
+      "files": 5,
+      "rows": 108
+    }
+  },
+  "data_root": "/home/ubuntu/data/lintap/all-events-1h-1786139524",
+  "files": 73,
+  "run_dir": "/tmp/validation-runs/all-events-1h-1786139524",
+  "run_id": "all-events-1h-1786139524"
+}

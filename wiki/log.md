@@ -123,3 +123,11 @@ Root cause: NetworkSensor used `bpf_object__find_program_by_title` for additiona
 Fix: NetworkSensor now attaches additional network programs by BPF function name using `bpf_object__find_program_by_name`, and its diagnostic reporter is gated by `EnableBpfDiagMonitor`.
 Validation: direct-Parquet network smoke passed. A short normal ETL all-events run also passed process, file, and network smoke and produced `raw_process_conn_incr` TCP/UDP rows: tcp=165 rows, udp=33 rows.
 Artifacts: validation/process-creation/all-events-10m-summary-multipass-2026-08-07.json; validation/process-creation/all-events-10m-parquet-summary-multipass-2026-08-07.json; validation/process-creation/all-events-10m-network-smoke-multipass-2026-08-07.out.
+
+## [2026-08-07] test | One-hour all-events normal ETL dataset with pidstat
+
+Environment: Multipass Ubuntu 24.04 arm64. Normal ETL/Parquet run with process, clone, exit, network, file, and rundown sensors enabled; direct Parquet disabled. Separate pidstat collector wrote to `$WINTAP_DATA_ROOT/pidstat`.
+Data root: `/home/ubuntu/data/lintap/all-events-1h-1786139524` in VM, mounted to `~/data/lintap/all-events-1h-1786139524` on Mac.
+Results: process smoke passed; network smoke passed; file smoke failed exact-path validation. Dataset includes pidstat CSV with 47454 lines. Raw sensor outputs include raw_process=67600 rows across hour partitions, raw_process_conn_incr tcp=1409 rows, raw_process_conn_incr udp=62 rows, raw_process_file=560000 rows, plus host/macip rows. Serializer outputs include fileserializer=49591 rows, processserializer=3763 rows, processstopserializer=485 rows, tcpconnectionserializer=108 rows.
+Artifacts: validation/process-creation/all-events-1h-summary-multipass-2026-08-07.json; validation/process-creation/all-events-1h-parquet-summary-multipass-2026-08-07.json; validation/process-creation/all-events-1h-file-smoke-multipass-2026-08-07.out; validation/process-creation/all-events-1h-network-smoke-multipass-2026-08-07.out.
+Open follow-up: investigate file smoke exact-path miss despite large file telemetry volume.
