@@ -34,6 +34,7 @@ This thread is intentionally separate from canonical `wiki/event_type/process-ev
 - [[wiki/work/lintap-process-creation-validation/handoff-validation-next-steps]] lays out the next engineering/research steps for known-workload validation across sensors.
 - [[wiki/work/lintap-process-creation-validation/validation-harness-design]] proposes a concrete sensor-neutral manifest, normalized event schema, workload matrix, evaluator metrics, and first implementation slice.
 - [[wiki/work/lintap-process-creation-validation/linux-setup]] describes UTM/Multipass Linux VM setup for running Lintap/reference-sensor validation from a Mac.
+- [[wiki/work/lintap-process-creation-validation/current-state-2026-08-06]] summarizes the latest committed state, validation results, open problems, and recommended next steps.
 
 ## Current Scope
 

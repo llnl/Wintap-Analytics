@@ -102,3 +102,9 @@ Workload: `wpv-noisy-processes` for 3600 seconds with 8732 manifest processes ac
 Results: all 8732 manifest PIDs were observed in the DuckDB `process` table. Table totals were 10372 rows, 10064 distinct process IDs, 10060 closed rows, and 312 open rows. Manifest-specific open rows were 285/8732, concentrated in short-lived bash workload rows. Longer-lived Python workload rows closed cleanly. A post-run Lintap process smoke test passed.
 Artifact: validation/process-creation/noisy-state-1h-summary-multipass-2026-08-06.json.
 Limitations: residual short-lived open rows remain; reference sensors and true C-based execveat workload not yet tested.
+
+## [2026-08-06] checkpoint | Current process validation state
+
+Pages created: work/lintap-process-creation-validation/current-state-2026-08-06.md.
+Pages updated: work/lintap-process-creation-validation/index.md; index.md; log.md.
+Summary: Recorded current commits, validation harness state, one-hour noisy run results, known residual short-lived process leakage, and next-step recommendations.
