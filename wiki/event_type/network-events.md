@@ -48,4 +48,4 @@ TCP and UDP ETL both use the shared `Every10Seconds` Esper context. TCP aggregat
 Downstream network rows are 10-second stream aggregates, not raw packet captures. Process attribution is added centrally by `EventChannel`, so gaps in process resolution can surface as unknown process names or fallback `PidHash` values.
 <!-- SYNTHESIS: inferred from ../wintap/wintap/core/infrastructure/EventChannel.cs, ../wintap/wintap/core/etl/esper/tcp.epl, and ../wintap/wintap/core/etl/esper/udp.epl -->
 
-See also [[wiki/tension/etw-ebpf-and-cross-platform-compatibility]].
+See also [[wiki/tension/etw-ebpf-and-cross-platform-compatibility]] and [[wiki/repo/wintappy-pipeline-repo]] (downstream `process_net_conn`/`process_net_summary` DBT models).

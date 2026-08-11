@@ -49,4 +49,4 @@ Process lineage is keyed by `PidHash` and `ParentPidHash`, not PID alone. PID re
 Security log retention matters. If the oldest Security log entry is newer than machine boot time, the sensor logs that a complete process tree cannot be built and a reboot is required.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/ProcessSensor.cs §Initialize; §GetOldestSecurityLogEntryTime -->
 
-See also [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]] and [[wiki/workflow/future-experiment-analysis-workflows]].
+See also [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]], [[wiki/workflow/future-experiment-analysis-workflows]], and [[wiki/repo/wintappy-pipeline-repo]] (downstream `process`/`process_summary`/`process_uber_summary` DBT models).

@@ -7,8 +7,9 @@ grounded_by:
   - ../wintap/README.md
   - ../Wintap-Analytics/README.md
   - ../Lintap/README.md
+  - ../Wintappy/README.md
 policy: agent-editable
-last_validated: 2026-06-29
+last_validated: 2026-08-11
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -34,13 +35,17 @@ The wiki lives in `../Wintap-Analytics/wiki`, but it covers the Wintap ecosystem
 `../Lintap` documents Linux proof-of-concept and support workflows. Its README says the newer TeleTap/eBPF implementation has moved into the Wintap repo, while the Lintap repo still hosts post-processing and legacy sysdig playground material.
 <!-- GROUND_TRUTH: ../Lintap/README.md §Lintap -->
 
+`../Wintappy` ("Wintap-PyUtil") is the canonical Python/DBT/DuckDB post-processing repository, described as providing "Python, DuckDB, and DBT utilities for processing Wintap/Lintap telemetry data." Both Lintap's TeleTap docs and Wintappy's own review notes state that canonical ETL transformations live in `Wintap-PyUtil/wintap_dbt`, not in `wintap` or `Lintap`.
+<!-- GROUND_TRUTH: ../Wintappy/README.md §Wintap-PyUtil -->
+<!-- GROUND_TRUTH: ../Lintap/teletap/README.md §Full ETL with DBT -->
+
 ## Decision
 
-The wiki is cross-repo but Wintap-focused. It should prioritize Windows sensor internals, WintapAPI-normalized event semantics, Esper/NEsper stream-processing behavior, and analytics workflows that consume Wintap data. It should document Lintap primarily for Linux dev-environment, packaging/deployment, and semantic-compatibility context.
-<!-- SYNTHESIS: inferred from ../Wintap-Analytics/AGENTS.md, ../wintap/README.md, ../Wintap-Analytics/README.md, and ../Lintap/README.md -->
+The wiki is cross-repo but Wintap-focused. It should prioritize Windows sensor internals, WintapAPI-normalized event semantics, Esper/NEsper stream-processing behavior, and analytics workflows that consume Wintap data. It should document Lintap primarily for Linux dev-environment, packaging/deployment, and semantic-compatibility context, and it should document Wintappy as the canonical DBT/DuckDB post-processing pipeline sitting between raw sensor output and analytics consumption.
+<!-- SYNTHESIS: inferred from ../Wintap-Analytics/AGENTS.md, ../wintap/README.md, ../Wintap-Analytics/README.md, ../Lintap/README.md, and ../Wintappy/review-notes/Architecture.md -->
 
 ## Consequences
 
-Claims about sensor semantics should cite live source paths from `../wintap`, not copied source artifacts. Claims about analytics workflows should cite `../Wintap-Analytics`. Claims about Lintap should explicitly distinguish legacy sysdig workflows from newer TeleTap/eBPF support paths.
+Claims about sensor semantics should cite live source paths from `../wintap`, not copied source artifacts. Claims about analytics workflows should cite `../Wintap-Analytics`. Claims about canonical ETL/post-processing (bronze/silver/gold DBT models, `raw_sensor` contract) should cite `../Wintappy`, not `../wintap` or `../Wintap-Analytics`. Claims about Lintap should explicitly distinguish legacy sysdig workflows from newer TeleTap/eBPF support paths.
 
-See also [[wiki/repo/wintap-primary-sensor-repo]], [[wiki/repo/wintap-analytics-host-repo]], and [[wiki/repo/lintap-supporting-repo]].
+See also [[wiki/repo/wintap-primary-sensor-repo]], [[wiki/repo/wintap-analytics-host-repo]], [[wiki/repo/lintap-supporting-repo]], and [[wiki/repo/wintappy-pipeline-repo]].

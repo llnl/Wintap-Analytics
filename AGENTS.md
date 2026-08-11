@@ -19,7 +19,7 @@ This is the default mode unless the user explicitly asks for code changes.
 In wiki-maintainer mode:
 - You write only to `wiki/`.
 - You never modify files under `raw/`.
-- You never modify source code, schemas, or other artifacts in sibling repos (`../wintap`, `../Lintap`, `../Wintap-Analytics`).
+- You never modify source code, schemas, or other artifacts in sibling repos (`../wintap`, `../Lintap`, `../Wintap-Analytics`, `../Wintappy`).
 
 ### Code-Development Mode
 
@@ -27,7 +27,7 @@ Code-development mode is active only when the user explicitly asks to implement,
 
 In code-development mode:
 - You may modify source code, scripts, notebooks, configs, and documentation in this repository (`Wintap-Analytics/`) as needed to complete the task.
-- You still never modify sibling repos (`../wintap`, `../Lintap`, `../Wintap-Analytics`) unless the user explicitly authorizes those changes.
+- You still never modify sibling repos (`../wintap`, `../Lintap`, `../Wintap-Analytics`, `../Wintappy`) unless the user explicitly authorizes those changes.
 - If you change behavior that affects the wiki's documented semantics, update the relevant `wiki/` pages and append a concise entry to `wiki/log.md`.
 
 ---
@@ -60,6 +60,7 @@ Wintap-Analytics/           ← this repo (wiki lives here)
 ../wintap/            ← primary repo (analysis context, READ ONLY)
 ../Wintap-Analytics/            ← sibling repo (READ ONLY — never write here)
 ../Lintap/            ← sibling repo (READ ONLY — never write here)
+../Wintappy/          ← sibling repo (READ ONLY — never write here) — canonical DBT/DuckDB post-processing pipeline ("Wintap-PyUtil")
 ```
 
 ---
@@ -117,8 +118,8 @@ grounded_by:
   - ../Wintap-Analytics/path/to/source
 policy: agent-editable | human-review-required | immutable
 last_validated: YYYY-MM-DD
-repo_scope: wintap | Wintap-Analytics | Lintap | cross-repo
-implementation_area: windows-sensor | wintap-api | esper | analytics | packaging | dev-environment
+repo_scope: wintap | Wintap-Analytics | Lintap | Wintappy | cross-repo
+implementation_area: windows-sensor | wintap-api | esper | analytics | data-pipeline | packaging | dev-environment
 event_domain: process | file | network | cross-domain | none
 audience: llm-agent | developer | researcher | mixed
 status: stub | draft | reviewed | stable
@@ -258,7 +259,7 @@ Some undefined thing.
 
 ## Domain Context
 
-Wintap is a researcher-first host telemetry and analytics platform developed at LLNL, with the Windows sensor and shared data model as the center of gravity. The wiki exists to preserve architecture decisions, telemetry semantics, and stream-processing knowledge that are easy to lose when moving between C# sensor internals, WintapAPI abstractions, NEsper/Esper rules, and analysis repositories. Wintap-Analytics is treated as the host location and future home for experiment-analysis documentation, while Lintap is documented mainly as supporting infrastructure for dev environments and packaging/deployment workflows.
+Wintap is a researcher-first host telemetry and analytics platform developed at LLNL, with the Windows sensor and shared data model as the center of gravity. The wiki exists to preserve architecture decisions, telemetry semantics, and stream-processing knowledge that are easy to lose when moving between C# sensor internals, WintapAPI abstractions, NEsper/Esper rules, and analysis repositories. Wintap-Analytics is treated as the host location and future home for experiment-analysis documentation, Wintappy ("Wintap-PyUtil") is the canonical Python/DBT/DuckDB post-processing pipeline that turns raw `raw_sensor` parquet from Wintap/Lintap into bronze/silver/gold analysis-ready models, and Lintap is documented mainly as supporting infrastructure for dev environments and packaging/deployment workflows.
 
 ### Key research/design questions to keep surfaced
 
@@ -268,6 +269,7 @@ Wintap is a researcher-first host telemetry and analytics platform developed at 
 - Which design choices are driven by research flexibility rather than production endpoint-management hardening?
 - How should semantic compatibility be maintained between Wintap and Lintap-derived or Lintap-packaged environments?
 - Which Wintap-Analytics experiment-analysis workflows should become first-class wiki topics later, including notebooks, Streamlit apps, ACME4/CALDERA annotations, schemas, and process classification JSON?
+- How should Wintappy's DBT bronze/silver/gold pipeline (DuckDB-only output today) reconcile with Wintap-Analytics' and the workshop material's expectations of published `stdview-*` parquet datasets, given parquet export is not yet implemented?
 
 ---
 

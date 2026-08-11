@@ -43,4 +43,9 @@ Process events use `ProcessObject` fields for parent PID/hash/name, executable n
 `EventChannel.Send` is the main runtime boundary where raw producer events become normalized, enriched Wintap events. It drops Wintap's own process events, tags events with `AgentId`, resolves process ownership for non-process events, resolves parent context for process events, registers process events with the process resolver, and sends the final event to Esper unless direct Parquet or skip flags are enabled.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/EventChannel.cs §EVENT ROUTING & ENRICHMENT -->
 
+## Downstream Consumption
+
+`WintapMessage` events serialized to `raw_sensor` parquet are the canonical input contract for Wintappy's DBT bronze/silver/gold pipeline, which normalizes them further into process-centric analysis models. See [[wiki/repo/wintappy-pipeline-repo]].
+<!-- SYNTHESIS: inferred from ../wintap/shared/WintapAPI/WintapMessage.cs and ../Wintappy/review-notes/DataModel.md -->
+
 See also [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]] and [[wiki/pipeline/nesper-esper-event-stream-processing]].

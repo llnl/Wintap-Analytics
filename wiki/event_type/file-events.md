@@ -45,3 +45,5 @@ Downstream file rows are aggregate activity records rather than one row per raw 
 
 Missing path resolution is possible when no rundown ETL exists or the ETW event lacks enough file-key context; the sensor logs that file events may not always contain a path in that case.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/FileSensor.cs §ProcessRundownTrace -->
+
+See also [[wiki/repo/wintappy-pipeline-repo]] (downstream `process_file`/`files`/`process_file_summary` DBT models).

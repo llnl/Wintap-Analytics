@@ -7,8 +7,9 @@ grounded_by:
   - ../Wintap-Analytics/2025-acme4-explore/src/acme4_explore/__init__.py
   - ../Wintap-Analytics/notebooks/ProcessTrees.md
   - ../Wintap-Analytics/workshop/5_SQL_Exploration.md
+  - ../Wintappy/review-notes/DataModel.md
 policy: agent-editable
-last_validated: 2026-06-29
+last_validated: 2026-08-11
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: process
@@ -42,6 +43,11 @@ Workshop SQL describes process paths as representations up to the root process, 
 
 Wintap analysis commonly joins two perspectives of the same network 5-tuple using `conn_id` to represent process-to-network-to-process links across hosts. The workshop material frames `conn_id` as a hash of local IP/port to remote IP/port plus protocol, where local/remote are relative to the host recording the row.
 <!-- GROUND_TRUTH: ../Wintap-Analytics/workshop/5_SQL_Exploration.md §Potentially interesting inter-host communication -->
+
+## Where The Standard Views Come From
+
+This page previously did not identify who builds the `process`/`process_path`/`process_uber_summary`/`process_net_conn` tables analysts query. They are produced by Wintappy's DBT bronze/silver/gold pipeline (`../Wintappy`, see [[wiki/repo/wintappy-pipeline-repo]]), not by anything in this repo. The pipeline's current official output is a DuckDB database; parquet export equivalent to the historical `stdview-*` layer this repo's docs reference is not yet implemented, which is an open cross-repo tension — see [[wiki/tension/dbt-duckdb-output-vs-legacy-stdview-parquet]].
+<!-- SYNTHESIS: inferred from ../Wintappy/review-notes/DataModel.md and this page's own ACME4/workshop citations -->
 
 ## Future Pages To Split Out
 
