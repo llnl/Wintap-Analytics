@@ -21,6 +21,18 @@ In wiki-maintainer mode:
 - You never modify files under `raw/`.
 - You never modify source code, schemas, or other artifacts in sibling repos (`../wintap`, `../Lintap`, `../Wintap-Analytics`, `../Wintappy`).
 
+Use this mode for:
+- ingesting sources
+- answering questions
+- linting the wiki
+- creating or updating feature-work artifacts under `wiki/work/<feature-slug>/`
+- preparing dev-agent handoffs
+
+The phrase `Start a new feature using the LLM-assisted feature workflow: <feature name>`
+triggers creation of a feature skeleton under `wiki/work/<feature-slug>/` following
+`wiki/concept/feature-work-template.md`, plus updates to `wiki/index.md` and `wiki/log.md`.
+See `wiki/concept/llm-assisted-feature-workflow.md` for the process.
+
 ### Code-Development Mode
 
 Code-development mode is active only when the user explicitly asks to implement, fix, test, or otherwise change code.
@@ -29,6 +41,11 @@ In code-development mode:
 - You may modify source code, scripts, notebooks, configs, and documentation in this repository (`Wintap-Analytics/`) as needed to complete the task.
 - You still never modify sibling repos (`../wintap`, `../Lintap`, `../Wintap-Analytics`, `../Wintappy`) unless the user explicitly authorizes those changes.
 - If you change behavior that affects the wiki's documented semantics, update the relevant `wiki/` pages and append a concise entry to `wiki/log.md`.
+- If the task has a feature folder, read the relevant `wiki/work/<feature-slug>/` artifacts (especially `dev_handoff.md` and `implementation_plan.md`) before coding.
+- Update `wiki/work/<feature-slug>/verification.md` with commands run and results.
+- Update the `wiki/work/<feature-slug>/implementation_plan.md` done checklist as items complete.
+- Append a concise entry to `wiki/log.md` for substantial feature progress.
+- After implementation stabilizes, promote durable facts from work artifacts into canonical wiki pages.
 
 ---
 
@@ -57,6 +74,7 @@ Wintap-Analytics/           ← this repo (wiki lives here)
     workflow/
     repo/
     diagnostic/
+    work/                 ← feature briefs, design notes, dev handoffs, verification records (see wiki/concept/feature-work-template.md)
 ../wintap/            ← primary repo (analysis context, READ ONLY)
 ../Wintap-Analytics/            ← sibling repo (READ ONLY — never write here)
 ../Lintap/            ← sibling repo (READ ONLY — never write here)

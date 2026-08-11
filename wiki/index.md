@@ -22,8 +22,8 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
-| [[wiki/concept/llm-assisted-feature-workflow]] | medium | Lightweight workflow for LLM-assisted feature work: brief → references → design → plan → verification → closeout. |
-| [[wiki/concept/feature-work-template]] | medium | Standard artifact set for `wiki/work/<feature>/` and when to use it. |
+| [[wiki/concept/llm-assisted-feature-workflow]] | medium | Lightweight workflow for LLM-assisted feature work (brief → references → design → spike → plan → handoff → verification → closeout), with when-to-use guidance, the invocation phrase, and the promote-to-canonical operating rule. |
+| [[wiki/concept/feature-work-template]] | medium | Full markdown skeletons for every `wiki/work/<feature-slug>/` artifact (brief, references, design, spike, implementation plan, dev handoff, verification, research-thread index); only `brief.md` is required. |
 | [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 ## Component
 
@@ -90,4 +90,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-11 (Wintappy pipeline repo ingest)*
+*Last updated: 2026-08-11 (LLM-assisted feature workflow ported from pEyeON-Analytics)*
