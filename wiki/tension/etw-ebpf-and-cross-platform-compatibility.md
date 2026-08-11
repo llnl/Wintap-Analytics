@@ -44,3 +44,8 @@ TeleTap output is expected to use canonical raw sensor Parquet layout, and the f
 
 Document platform-specific producer behavior separately from WintapAPI-normalized semantics. Treat Windows ETW behavior, Linux eBPF/sysdig behavior, raw sensor Parquet, and downstream standard views as distinct layers.
 <!-- SYNTHESIS: inferred from ../wintap/documentation/wintap-developer-guide.md, ../wintap/wintap/platform/windows/infrastructure/WindowsSubscriptionManager.cs, and ../Lintap/teletap/README.md -->
+
+## Prior Art Note
+
+A brainstorming note suggests Sysmon for Linux as prior art for this exact tension: Microsoft's eBPF-based Sysmon port reportedly documents how Windows event concepts (Process Creation, Network Connection, FileCreateTime) were mapped onto Linux eBPF hooks. Unverified; see [[wiki/concept/agentic-ebpf-probe-development]].
+<!-- SPECULATIVE: raw/Agentic_Coding_for_eBPF.md — unverified brainstorming claim; no source inspection of Sysmon for Linux yet -->

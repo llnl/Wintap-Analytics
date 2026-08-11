@@ -23,6 +23,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 |------|------------|---------|
 | [[wiki/concept/llm-assisted-feature-workflow]] | medium | Lightweight workflow for LLM-assisted feature work: brief → references → design → plan → verification → closeout. |
 | [[wiki/concept/feature-work-template]] | medium | Standard artifact set for `wiki/work/<feature>/` and when to use it. |
+| [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 ## Component
 
 | Page | Confidence | Summary |
@@ -87,4 +88,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-07-31 (Lintap process creation validation research thread)*
+*Last updated: 2026-08-11 (Agentic eBPF probe development brainstorming ingest)*

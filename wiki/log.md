@@ -131,3 +131,19 @@ Data root: `/home/ubuntu/data/lintap/all-events-1h-1786139524` in VM, mounted to
 Results: process smoke passed; network smoke passed; file smoke failed exact-path validation. Dataset includes pidstat CSV with 47454 lines. Raw sensor outputs include raw_process=67600 rows across hour partitions, raw_process_conn_incr tcp=1409 rows, raw_process_conn_incr udp=62 rows, raw_process_file=560000 rows, plus host/macip rows. Serializer outputs include fileserializer=49591 rows, processserializer=3763 rows, processstopserializer=485 rows, tcpconnectionserializer=108 rows.
 Artifacts: validation/process-creation/all-events-1h-summary-multipass-2026-08-07.json; validation/process-creation/all-events-1h-parquet-summary-multipass-2026-08-07.json; validation/process-creation/all-events-1h-file-smoke-multipass-2026-08-07.out; validation/process-creation/all-events-1h-network-smoke-multipass-2026-08-07.out.
 Open follow-up: investigate file smoke exact-path miss despite large file telemetry volume.
+
+## [2026-08-11] ingest | raw/Agentic_Coding_for_eBPF.md brainstorming note
+
+Source: raw/Agentic_Coding_for_eBPF.md (previously untracked; added SOURCE/RETRIEVED provenance header — exact origin unrecorded, likely Confluence-retrieved AI-assistant output dated 2026-07-16/17).
+Pages created: concept/agentic-ebpf-probe-development.md (confidence low; all claims flagged SPECULATIVE pending verification).
+Pages updated: index.md; work/lintap-process-creation-validation/index.md (open question: Sysmon for Linux and Bombini as candidate reference sensors); tension/etw-ebpf-and-cross-platform-compatibility.md (prior-art note: Sysmon for Linux as Windows-event-to-eBPF mapping precedent).
+Contradictions flagged: none. Tetragon/Tracee/Falco framing is consistent with the 2026-07-31 research snapshot; new material is the agentic-tooling survey (MCPtrace, GPTtrace, eunomia-bpf/Wasm-bpf) plus Sysmon for Linux and Bombini as unexamined reference candidates.
+Notes: nothing on the new page is source-grounded, unlike the validation thread's snapshot pages; verification of tool existence/capability is an explicit open question.
+
+## [2026-08-11] ingest | raw/Agentic_Coding_for_eBPF.md brainstorming note
+
+Source: raw/Agentic_Coding_for_eBPF.md (untracked brainstorming note dated 2026-07-16; provenance header added — exact origin unrecorded, likely Confluence-retrieved AI-assistant output with unresolved domain-level citations).
+Pages created: concept/agentic-ebpf-probe-development.md (confidence: low; all claims flagged SPECULATIVE pending verification).
+Pages updated: index.md (new concept row); work/lintap-process-creation-validation/index.md (open question: Sysmon for Linux and Bombini as candidate additional reference implementations); tension/etw-ebpf-and-cross-platform-compatibility.md (prior-art note: Sysmon for Linux as Windows-event-to-eBPF mapping precedent).
+Contradictions flagged: none. Tetragon/Tracee/Falco framing consistent with research-snapshot-2026-07-31; new material limited to agentic tooling (MCPtrace, GPTtrace, eunomia-bpf/Wasm-bpf), Sysmon for Linux, and Bombini.
+Open follow-up: verify existence/viability of MCPtrace and GPTtrace before any adoption discussion; decide whether Sysmon for Linux warrants a local checkout and source-inspection pass as a fourth reference sensor.

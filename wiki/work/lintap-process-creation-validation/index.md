@@ -54,3 +54,5 @@ This thread is intentionally separate from canonical `wiki/event_type/process-ev
 - Which short-lived process patterns are measurable enough to become regression tests?
 - What loss counters and backpressure signals are required before comparing performance or accuracy numbers across sensors?
 - Can Lintap expose clone/vfork flags and lifecycle provenance without destabilizing WintapAPI process semantics?
+- Should additional reference implementations beyond Tetragon/Tracee/Sysdig be added to the comparison matrix? A brainstorming note proposes Sysmon for Linux (Microsoft's Windows-event-to-eBPF mapping) and Bombini (Rust/Aya/LSM) as candidates; neither has a local checkout or source-inspection pass yet. See [[wiki/concept/agentic-ebpf-probe-development]].
+<!-- SPECULATIVE: raw/Agentic_Coding_for_eBPF.md — candidate references from unverified brainstorming note -->
