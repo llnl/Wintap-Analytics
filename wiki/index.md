@@ -92,7 +92,8 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-pidstat-collector/design]] | medium | Design: continuous service, spool-then-parquet rotation into `raw_sensor/pidstat/dayPK=/hourPK=`, ride-along on the sensor's verified type-agnostic upload sweep, coordinated Wintappy parquet change. |
 | [[wiki/work/improve-pidstat-collector/implementation_plan]] | medium | Eight-step plan: Linux upload-path verification, collector script + systemd unit in Lintap, Wintappy DBT parquet migration, verification runs, closeout promotion. |
 | [[wiki/work/improve-pidstat-collector/dev_handoff]] | medium | Self-contained handoff for a code-development agent on another system: copy/paste prompt with scoped `../Lintap`-only authorization, first slice (plan steps 1–4), environment expectations, and closeout duties. |
+| [[wiki/work/improve-pidstat-collector/verification]] | medium | Command log and first-slice results for the new Lintap pidstat collector: environment checks, Linux ride-along verification, shell tests, and live parquet smoke run. |
 
 ---
 
-*Last updated: 2026-08-11 (new feature work: improve-pidstat-collector)*
+*Last updated: 2026-08-12 (improve-pidstat-collector first-slice implementation + verification)*

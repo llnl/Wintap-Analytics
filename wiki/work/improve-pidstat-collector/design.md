@@ -4,12 +4,17 @@ type: concept
 confidence: medium
 grounded_by:
   - ../Lintap/pidstat-collect.sh
+  - ../Lintap/packaging/lintap-rpm/lintap.env
+  - ../wintap/documentation/Linux Deployment Guide.md
+  - ../wintap/wintap/core/infrastructure/PluginManager.cs
   - ../wintap/wintap/core/etl/load/CacheManager.cs
+  - ../wintap/wintap/core/etl/ETLConfig.json
   - ../wintap/wintap/core/etl/load/RawSensorWriter.cs
   - ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs
+  - ../wintap/wintap/core/etl/shared/Utilities.cs
   - ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
 policy: agent-editable
-last_validated: 2026-08-11
+last_validated: 2026-08-12
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -156,15 +161,28 @@ pidstat should carry it in-band).
 
 ## Open Questions
 
+- Resolved 2026-08-12: the Linux service path does run the upload loop when ETL
+  is enabled. The documented Linux systemd service starts `Lintap.dll` with
+  `WINTAP_DISABLE_ETL=false`, and `PluginManager` responds by constructing
+  `WintapETL`, which starts `CacheManager`.
+  <!-- GROUND_TRUTH: ../wintap/documentation/Linux Deployment Guide.md §Example systemd Service -->
+  <!-- GROUND_TRUTH: ../Lintap/packaging/lintap-rpm/lintap.env §Enable normal ETL and Linux sensor manager -->
+  <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/PluginManager.cs §PluginManager() -->
+  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/WintapETL.cs §cacheManager_DoWork -->
+- Resolved 2026-08-12: the repo-shipped ETL config uses `UploadIntervalSec` =
+  `300`, and the current code only exposes an environment override for that
+  interval (`WINTAP_ETL_UPLOAD_INTERVAL_SEC`), not for adapter enablement.
+  The shipped `ETLConfig.json` leaves `S3Adapter.Enabled=false`, so the
+  pidstat ride-along works only on Linux deployments that explicitly enable S3
+  in the deployed `ETLConfig.json`; this slice therefore keeps upload
+  verification read-only/manual rather than assuming S3 is active everywhere.
+  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/ETLConfig.json §Adapters -->
+  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/ETLConfig.json §UploadIntervalSec -->
+  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/shared/Utilities.cs §GetETLConfig -->
 - DuckDB CLI vs. small Python program for the collector: bash+duckdb keeps
   `../Lintap`'s script style; Python (uv project already exists there) is
   easier to test. Leaning bash+duckdb for the first slice, tests via bats or
   shell harness.
-- Confirm the Linux service build runs the CacheManager upload loop with an
-  S3 adapter enabled in real Lintap deployments (verified in shared code
-  only). First implementation step.
-- Exact `UploadIntervalSec` value in current deployments, and whether rotation
-  should clamp to a minimum (e.g., 60 s).
 - Migration of already-collected tab-CSV data: one-time DuckDB conversion
   script, or keep a legacy `read_csv` union in bronze for one release?
 - Should the validation harness (lintap validation thread) switch its pidstat

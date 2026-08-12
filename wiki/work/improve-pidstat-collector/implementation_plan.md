@@ -6,7 +6,7 @@ grounded_by:
   - wiki/work/improve-pidstat-collector/brief.md
   - wiki/work/improve-pidstat-collector/design.md
 policy: agent-editable
-last_validated: 2026-08-11
+last_validated: 2026-08-12
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -73,6 +73,12 @@ authorization for sibling-repo changes per `AGENTS.md`.
 
 ## Migration Or Compatibility Notes
 
+- Verified 2026-08-12: Linux deployments do run `CacheManager`'s upload loop
+  when `WINTAP_DISABLE_ETL=false`, but the repo-shipped `ETLConfig.json`
+  leaves `S3Adapter` disabled and defaults `UploadIntervalSec` to `300`.
+  This first slice therefore aligns the collector to a 300-second default (or
+  `WINTAP_ETL_UPLOAD_INTERVAL_SEC` override) and keeps upload verification
+  opt-in/manual until deployment config is confirmed on a target host.
 - Existing tab-CSV pidstat datasets (e.g., the validation thread's one-hour
   dataset) predate the format change; convert once with DuckDB or keep a
   temporary legacy union in bronze — decide in step 6.
@@ -86,9 +92,9 @@ authorization for sibling-repo changes per `AGENTS.md`.
 
 ## Done Checklist
 
-- [ ] Step 1 verification recorded; design open questions resolved
-- [ ] Collector + rotation + conversion working locally
-- [ ] Crash salvage + accumulation guard tested
+- [x] Step 1 verification recorded; design open questions resolved
+- [x] Collector + rotation + conversion working locally
+- [x] Crash salvage + accumulation guard tested
 - [ ] systemd unit installs and survives reboot
 - [ ] Wintappy DBT updated; fixture test green
 - [ ] 1h+ end-to-end run with S3 upload + local delete confirmed

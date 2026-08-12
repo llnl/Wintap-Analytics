@@ -188,3 +188,34 @@ Pages created: work/improve-pidstat-collector/dev_handoff.md — written to be s
 Pages updated: index.md.
 Contradictions flagged: none.
 Notes: this is the workflow's first cross-system handoff test; verification.md is intentionally not pre-created — the dev agent creates it from the template when work starts.
+
+## [2026-08-12] code | Improve pidstat collector first slice
+
+Files created: `../Lintap/pidstat-collector.sh`; `../Lintap/tests/pidstat-collector-tests.sh`; `wiki/work/improve-pidstat-collector/verification.md`.
+Pages updated: `wiki/work/improve-pidstat-collector/design.md`; `wiki/work/improve-pidstat-collector/implementation_plan.md`; `wiki/index.md`; `wiki/log.md`.
+Results: verified Linux ride-along behavior read-only (`CacheManager` upload loop runs when ETL is enabled, shipped `UploadIntervalSec` is 300, shipped `S3Adapter` remains disabled unless deployment config enables it); implemented spool-then-parquet collector in `../Lintap` with wall-clock rotation, startup salvage, and oldest-first accumulation guard; shell tests passed (4); short live smoke run produced readable parquet from real `pidstat` output.
+Limitations: `shellcheck` missing on host; no S3 upload exercised; systemd packaging and Wintappy parquet reader change remain later slices.
+
+## [2026-08-12] test | Improve pidstat collector 15-minute run
+
+Command: `timeout --signal=TERM 905 env WINTAP_DATA_ROOT=/tmp/opencode/pidstat-15m.U6zwhN ../Lintap/pidstat-collector.sh`.
+Results: collector ran for 15 minutes with default 5-second sampling and 300-second rotation, producing 4 parquet files under `parquet/raw_sensor/pidstat/dayPK=20260812/hourPK=08/`; DuckDB loaded 15 rows across the files.
+Manual follow-up: inspect `/tmp/opencode/pidstat-15m.U6zwhN/parquet/raw_sensor/pidstat/dayPK=20260812/hourPK=08/`.
+
+## [2026-08-12] fix | Improve pidstat collector row-loss bug
+
+Diagnosis: the bad 15-minute output was caused by `normalize_pidstat_line()` inheriting the loop's empty `IFS` and using the wrong field count/index for `pidstat` rows. In practice it only retained commands with embedded spaces, which collapsed the dataset to one `tmux: server`-style row per minute.
+Fix: made the parser split on explicit shell whitespace and corrected the `Command` field index/count; added a regression test covering normalization inside the collector's `while IFS= read -r line` loop.
+Validation: shell test suite now passes with 5 tests, and a post-fix smoke run at `/tmp/opencode/pidstat-fixcheck.YwrUoU` produced 307 rows in ~16 seconds from the real collector.
+
+## [2026-08-12] fix | Improve pidstat collector joined-record recovery
+
+Diagnosis: a later 15-minute run showed occasional conversion failures because some raw `pidstat` chunks arrived with two records glued together at the sample boundary. The parser was treating the second raw record as part of the first row's command payload.
+Fix: made `normalize_pidstat_line()` split glued timestamp tokens, detect a next-record start at the command boundary, and emit multiple normalized rows from one joined raw chunk; added a deterministic joined-record regression test plus a live row-preservation validation that checks raw-detail-row count == normalized-row count == parquet-row count.
+Validation: shell test suite now passes with 7 tests.
+
+## [2026-08-12] test | Improve pidstat collector clean 15-minute run
+
+Command: `timeout --signal=TERM 905 env WINTAP_DATA_ROOT=/tmp/opencode/pidstat-15m-clean.dyb7fq ../Lintap/pidstat-collector.sh`.
+Results: collector ran cleanly for 15 minutes with explicit `-p ALL`, default 5-second sampling, and 300-second rotation. It produced 4 parquet files under `parquet/raw_sensor/pidstat/dayPK=20260812/hourPK=09/`; DuckDB loaded `59097` rows total with per-file counts `4731`, `19839`, `19631`, and `14896`.
+Manual follow-up: inspect `/tmp/opencode/pidstat-15m-clean.dyb7fq/parquet/raw_sensor/pidstat/dayPK=20260812/hourPK=09/`.
