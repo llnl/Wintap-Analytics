@@ -93,7 +93,10 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-pidstat-collector/implementation_plan]] | medium | Nine-step plan with slice-2 scope marked: review follow-up fixes, systemd unit, Wintappy DBT parquet migration, verification runs, closeout promotion; steps 1–4 complete. |
 | [[wiki/work/improve-pidstat-collector/dev_handoff]] | medium | Slice-2 handoff for a code-development agent on another system: review fixes, `-p ALL` README documentation, systemd packaging, and Wintappy parquet migration, with `../Lintap` + `../Wintappy` authorization. |
 | [[wiki/work/improve-pidstat-collector/verification]] | medium | Command log and first-slice results for the new Lintap pidstat collector: environment checks, Linux ride-along verification, shell tests, and live parquet smoke run. |
+| [[wiki/work/fix-unbounded-process-table-growth/brief]] | medium | Feature brief for bounding event_store process-table growth on long runs (8M rows/10 days observed) with retention + stale-open reconciliation while preserving PID-reuse-safe process resolution. |
+| [[wiki/work/fix-unbounded-process-table-growth/references]] | medium | Source map for the process-table retention feature: ProcessResolver/EventChannel hot paths, ClearDB call sites, validation-harness baseline, decisions to date, DuckDB space-reclamation questions. |
+| [[wiki/work/fix-unbounded-process-table-growth/dev_handoff]] | medium | Dev handoff authorizing ../wintap changes: retention sweep + liveness reconciliation as QA feature + retention-miss metric, delegated decisions, first slice, testing and closeout duties. |
 
 ---
 
-*Last updated: 2026-08-12 (improve-pidstat-collector slice-1 review accepted; slice-2 handoff prepared)*
+*Last updated: 2026-08-12 (fix-unbounded-process-table-growth: retention-miss decision reconciled; dev handoff prepared)*

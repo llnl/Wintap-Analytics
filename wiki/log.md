@@ -226,3 +226,34 @@ Source: independent review of ../Lintap c76ea87 and this repo's c16c6b7/c77f026 
 Review verdict: slice accepted. Findings: (1) -p ALL sampling deviated from design — accepted per human decision, documented as a post-review decision in design.md with the ETL-layer-reduction rationale (~5.7M rows/day observed baseline); (2) processing-time sample_date gives ~24h-forward timestamps at midnight; (3) partially malformed glued chunks drop valid leading records; (4) DuckDB conversion errors are swallowed. Findings 2-4 assigned to slice 2.
 Pages updated: design.md (post-review -p ALL decision; collector-loop command corrected to include -p ALL); verification.md (Independent Review section); implementation_plan.md (renumbered to nine steps, slice-2 scope marked, review follow-ups added as step 6, checklist expanded); dev_handoff.md (rewritten for slice 2: review fixes, systemd, Wintappy DBT parquet migration; authorization widened to ../Lintap + ../Wintappy, ../wintap still read-only); index.md.
 Contradictions flagged: none. The dev's deployment finding (S3Adapter disabled in shipped ETLConfig.json) refines rather than contradicts the design's ride-along mechanism; carried into slice-2 scope and the closeout list.
+
+## [2026-08-12] feature-work | fix-unbounded-process-table-growth: feature started
+
+Source: raw/Issues/Long_Running_Cleanup.md (~8M process rows over 10 days, ~1/3 with exit codes, CPU-load-grows-with-DB-size hypothesis), plus source inspection of ../wintap/wintap/core/infrastructure/ProcessResolver.cs (insert-on-Start/update-on-Stop, no delete path; ClearDB only called from Windows ProcessSensor.Initialize), EventChannel.cs (per-event ResolveProcessAtTime + GetPidHash fallback hot path), and ProcessSensor.cs (whole-table replay at startup).
+Pages created: work/fix-unbounded-process-table-growth/brief.md (problem, integrity constraints, retention + stale-open reconciliation goals, acceptance criteria, open questions, test plan); work/fix-unbounded-process-table-growth/references.md (change-site map, validation baseline, DuckDB space-reclamation questions).
+Pages updated: index.md (two new Work rows).
+Contradictions flagged: none. Boundary noted: this feature tolerates missed terminations; fixing their sensor-level root cause stays in the lintap-process-creation-validation thread (~3.3% residual open-row baseline, 2026-08-06). The improve-pidstat-collector feature explicitly deferred the event_store cleanup routine to this feature.
+Key facts captured: process table is unbounded within and across runs on Linux (no ClearDB call); all hot-path queries filter unindexed process_id; GetPidHash already has a /proc start-time fallback usable after pruning; design/implementation_plan deferred until the brief's open questions (retention window, stale-open policy, cleanup scheduling, DuckDB space reclamation) are decided.
+
+## [2026-08-12] feature-work | fix-unbounded-process-table-growth: stale-open policy decided
+
+Source: human decision in conversation.
+Decision recorded: the stale-open reconciliation is liveness-check-based (query /proc on Linux / process snapshot on Windows, close rows for dead PIDs with a synthesized exit_time), and the cross-check is to be implemented as an inherent QA feature — each sweep emits telemetry distinguishing rows closed by real Stop events from rows closed by reconciliation, making sensor termination-tracking quality measurable from a running instance. This supersedes the pure age-based alternative.
+Pages updated: work/fix-unbounded-process-table-growth/brief.md (Goals decision note, acceptance criterion for QA telemetry, open question closed with remaining design details: sweep cadence and QA telemetry surface).
+Contradictions flagged: none. Note: the QA telemetry deliberately takes over the role of the harness-side stop_only_like metric, which the lintap-process-creation-validation thread had flagged as unreliable after pending-exit reconciliation.
+
+## [2026-08-12] feature-work | fix-unbounded-process-table-growth: cleanup scheduling left to developer
+
+Source: human decision in conversation.
+Decision recorded: where the cleanup/reconciliation sweep runs (ProcessResolver timer vs. merge/upload cycle vs. EventChannel-driven) is explicitly left to the implementing developer's discretion — it is an implementation detail, not an architectural constraint. The chosen mechanism and rationale are to be recorded in design.md or verification notes when decided.
+Pages updated: work/fix-unbounded-process-table-growth/brief.md (open question closed with the delegation note).
+Contradictions flagged: none.
+Remaining open questions in the brief: retention grace window for exited rows, pruned-row lookup fallback/metrics, DuckDB space reclamation behavior, Windows startup-replay constraints, optional hard-cap backstop.
+
+## [2026-08-12] feature-work | fix-unbounded-process-table-growth: hand edits reconciled, dev handoff prepared
+
+Source: human edit to work/fix-unbounded-process-table-growth/brief.md (retention-miss open question decided: track as retention-miss metric), reconciled into standard decided-question format; dev_handoff.md written per the feature-work template.
+Decisions now recorded (3): liveness cross-check as inherent QA feature; cleanup scheduling at developer discretion; pruned-row lookup misses tracked as retention-miss metric (fallback still fires, misses counted for retention-window tuning).
+Pages updated: brief.md (retention-miss decision formatted, matching acceptance criterion added); references.md (Decisions To Date section for the dev agent; /proc liveness marked as the decided reconciliation mechanism; retention-miss note on GetPidHash fallback); index.md (dev_handoff row, references summary refreshed).
+Pages created: dev_handoff.md — copy/paste prompt authorizing ../wintap changes (../Lintap and ../Wintappy stay read-only; Wintap-Analytics writable only under validation/ and wiki/), summary of mechanism and hard integrity constraints, delegated decisions (scheduling, cadence, telemetry surface, default retention window, DuckDB reclamation), first slice scoped to sweep + reconciliation + QA telemetry + short validation run, multi-day CPU-correlation study deferred to a later slice, closeout duties including developer-authored design.md recording delegated decisions.
+Contradictions flagged: none. Remaining open questions (retention window default, DuckDB reclamation mechanics, Windows replay constraints, hard-cap backstop) are delegated to the dev agent to resolve by measurement and record in design.md.
