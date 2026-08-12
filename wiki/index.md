@@ -87,7 +87,12 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/lintap-process-creation-validation/validation-harness-design]] | medium | Concrete design for a sensor-neutral validation harness with manifest schema, normalized event tables, workload matrix, and first implementation slice. |
 | [[wiki/work/lintap-process-creation-validation/linux-setup]] | medium | UTM and Multipass Linux VM setup guidance for running eBPF validation workloads and reference sensors from a Mac. |
 | [[wiki/work/lintap-process-creation-validation/current-state-2026-08-06]] | medium | Current checkpoint summary for committed process-state fixes, one-hour noisy validation results, remaining leakage, and next steps. |
+| [[wiki/work/improve-pidstat-collector/brief]] | medium | Feature brief for making the pidstat collector run alongside Lintap with lifecycle management, time-based rotation, S3 push, and DBT `stg_pidstat_metrics` compatibility. |
+| [[wiki/work/improve-pidstat-collector/references]] | medium | Cross-repo source map for the pidstat collector feature: Lintap script, Wintappy DBT macros/models, wintap upload adapters, and observed data volumes. |
+| [[wiki/work/improve-pidstat-collector/design]] | medium | Design: continuous service, spool-then-parquet rotation into `raw_sensor/pidstat/dayPK=/hourPK=`, ride-along on the sensor's verified type-agnostic upload sweep, coordinated Wintappy parquet change. |
+| [[wiki/work/improve-pidstat-collector/implementation_plan]] | medium | Eight-step plan: Linux upload-path verification, collector script + systemd unit in Lintap, Wintappy DBT parquet migration, verification runs, closeout promotion. |
+| [[wiki/work/improve-pidstat-collector/dev_handoff]] | medium | Self-contained handoff for a code-development agent on another system: copy/paste prompt with scoped `../Lintap`-only authorization, first slice (plan steps 1–4), environment expectations, and closeout duties. |
 
 ---
 
-*Last updated: 2026-08-11 (LLM-assisted feature workflow ported from pEyeON-Analytics)*
+*Last updated: 2026-08-11 (new feature work: improve-pidstat-collector)*

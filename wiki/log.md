@@ -163,3 +163,28 @@ Pages updated: concept/llm-assisted-feature-workflow.md (added when-to-use/skip 
 AGENTS.md updated: wiki/work/ added to Repository Layout; wiki-maintainer mode gains feature-work uses and the skeleton invocation phrase; code-development mode gains handoff-reading and verification/implementation-plan update rules.
 Contradictions flagged: none. Prior stub declared five artifacts "required"; replaced with pEyeON's brief.md-only-required stance, matching actual practice in both repos. Existing work/lintap-process-creation-validation folder is grandfathered as the research-thread pattern rather than retrofitted.
 Notes: decision/feature-work-artifacts.md intentionally left abbreviated; pEyeON-Analytics retains the full rationale/alternatives history.
+
+## [2026-08-11] feature-work | improve-pidstat-collector started via LLM-assisted feature workflow
+
+Source: raw/Issues/Long_Running_Cleanup.md ("Improve pidstat-collector.sh to run alongside lintap and push data to S3"), plus source inspection of ../Lintap/pidstat-collect.sh, ../Lintap/teletap/*.sql, ../Wintappy/wintap_dbt pidstat macros and bronze/silver models, and ../wintap/wintap/core/etl/load upload adapters.
+Pages created: work/improve-pidstat-collector/brief.md (problem, goals, acceptance criteria, open questions, test plan); work/improve-pidstat-collector/references.md (cross-repo source map). First use of the ported feature-work template; design/spike/implementation_plan deferred until the brief's open questions are decided.
+Pages updated: index.md (two new Work rows).
+Contradictions flagged: none. Noted for design: the lintap validation thread treats ../wintap (Linux/eBPF branch) as canonical Lintap source while the collector script lives in legacy ../Lintap — code-location open question in the brief.
+Key facts captured: DBT reads $PIDSTAT_DATA_PATH/**/*.csv tab-delimited with hardcoded columns (rotation-friendly glob already); observed volume 47454 lines/hour at 2s interval; sensor upload pipeline (CacheManager + S3Adapter) is a candidate ride-along path.
+
+## [2026-08-11] feature-work | improve-pidstat-collector: brief decided, design and plan added
+
+Source: human edits to work/improve-pidstat-collector/brief.md (decisions in Goals), plus source verification of ../wintap/wintap/core/etl/load/CacheManager.cs, RawSensorWriter.cs, and adapters/base/Uploader.cs.
+Decisions recorded: new script in ../Lintap (old script kept as example); continuous service; 5s configurable interval; parquet output; rotation on the sensor merge cycle with dayPK=/hourPK= partitioning; S3 via the sensor's existing upload mechanism.
+Verified mechanism facts: CacheManager.upload() sweeps all *.parquet under raw_sensor/ type-agnostically; Uploader_UploadCompleted deletes after successful upload (local retention free); S3 keys mirror the local relative path; *.active is the existing in-progress-file convention. Ride-along therefore needs no C# changes.
+Pages updated: work/improve-pidstat-collector/brief.md (reconciled human decisions: DBT compatibility goal switched to deliberate versioning since parquet breaks the hardcoded tab-CSV bronze reader; acceptance criteria, affected areas, test plan, open questions aligned; ..\Lintap path typo normalized); index.md.
+Pages created: work/improve-pidstat-collector/design.md (approach, grounded mechanism facts, edge cases, risks incl. the implicit ride-along contract, alternatives, remaining open questions); work/improve-pidstat-collector/implementation_plan.md (8 steps; flags that ../Lintap and ../Wintappy writes need explicit sibling-repo authorization).
+Contradictions flagged: none hard. Human decision "output should be parquet" superseded the brief's original preserve-CSV-compatibility goal; reconciled as a deliberate coordinated Wintappy change rather than left as a conflict.
+
+## [2026-08-11] feature-work | improve-pidstat-collector: dev handoff prepared
+
+Source: work-folder artifacts (brief/design/implementation_plan/references), following the dev_handoff skeleton in concept/feature-work-template.md (first use).
+Pages created: work/improve-pidstat-collector/dev_handoff.md — written to be self-contained for a fresh agent on a different system: copy/paste prompt activates code-development mode, grants explicit authorization for ../Lintap only (../wintap and ../Wintappy stay read-only this slice), lists environment expectations (sibling checkouts, pidstat/duckdb/shellcheck, no assumed S3), scopes the first slice to implementation plan steps 1–4 with systemd packaging as stretch, and assigns verification.md/implementation_plan.md/log.md upkeep duties.
+Pages updated: index.md.
+Contradictions flagged: none.
+Notes: this is the workflow's first cross-system handoff test; verification.md is intentionally not pre-created — the dev agent creates it from the template when work starts.
