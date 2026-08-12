@@ -7,8 +7,9 @@ grounded_by:
   - wiki/work/improve-pidstat-collector/references.md
   - wiki/work/improve-pidstat-collector/design.md
   - wiki/work/improve-pidstat-collector/implementation_plan.md
+  - wiki/work/improve-pidstat-collector/verification.md
 policy: agent-editable
-last_validated: 2026-08-11
+last_validated: 2026-08-12
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -20,49 +21,82 @@ tags: [feature-work, handoff, lintap, pidstat]
 
 # Dev Handoff: Improve pidstat Collector
 
+Slice 1 (collector core: rotation, parquet conversion, salvage, accumulation
+guard, 7-test suite) is complete, committed (`../Lintap` c76ea87), and
+reviewed — accepted 2026-08-12 with follow-ups. This handoff covers **slice
+2**: review fixes, systemd packaging, and the Wintappy parquet migration.
+
 ## Copy/Paste Prompt
 
 Use this prompt to hand the work to a code-development agent:
 
 ```text
-Switch to code-development mode for the improve-pidstat-collector feature.
+Switch to code-development mode for the improve-pidstat-collector feature,
+slice 2.
 
 Work from the Wintap-Analytics repository root. Read AGENTS.md first and
 confirm code-development mode is active for this task.
 
 Use these wiki files as the handoff context, in this order:
 
+- wiki/work/improve-pidstat-collector/implementation_plan.md (steps 5-8 are
+  this slice; steps 1-4 are done)
+- wiki/work/improve-pidstat-collector/verification.md (slice-1 results and
+  the 2026-08-12 Independent Review findings you will fix)
+- wiki/work/improve-pidstat-collector/design.md (including the post-review
+  -p ALL decision and the resolved deployment findings)
 - wiki/work/improve-pidstat-collector/brief.md
-- wiki/work/improve-pidstat-collector/design.md
-- wiki/work/improve-pidstat-collector/implementation_plan.md
-- wiki/work/improve-pidstat-collector/references.md
 
-Goal: implement the first slice — steps 1 through 4 of the implementation
-plan: verify the Linux upload ride-along (read-only), then build the new
-collector script with rotation, parquet conversion, crash salvage, and the
-accumulation guard, with tests.
+Goal: implement slice 2 — plan steps 5 through 8: review follow-up fixes in
+the collector, systemd packaging, the Wintappy DBT parquet migration, and
+the verification runs.
 
 Authorization: you are explicitly authorized to create and modify files in
-../Lintap for this feature. Do NOT modify ../wintap or ../Wintappy — the
-Wintappy DBT change is a later slice, and ../wintap is verify/read-only.
-Leave ../Lintap/pidstat-collect.sh untouched; it stays as the simple example.
+../Lintap and ../Wintappy for this feature. Do NOT modify ../wintap (it
+remains read-only). Leave ../Lintap/pidstat-collect.sh untouched.
+
+Slice-2 work items, in recommended order:
+
+1. Collector fixes in ../Lintap/pidstat-collector.sh, each with a test:
+   - Derive sample_date from the window-start epoch, not processing-time
+     date (fixes ~24h-forward timestamps for samples in flight at midnight).
+   - In normalize_pidstat_line, emit valid leading records from a partially
+     malformed glued chunk instead of dropping the whole chunk.
+   - Capture DuckDB stderr into the collector log when conversion fails.
+2. Document -p ALL and the PIDSTAT_* environment knobs in
+   ../Lintap/README.md (the decision and rationale are already recorded in
+   the design page — summarize, do not re-litigate).
+3. systemd unit in ../Lintap/packaging/ (Restart=always), with install notes
+   in the README.
+4. Wintappy DBT migration in ../Wintappy/wintap_dbt/:
+   - pidstat macros: default glob $WINTAP_DATA_ROOT/raw_sensor/pidstat/**/*.parquet,
+     PIDSTAT_DATA_PATH still honored as an override.
+   - stg_pidstat_metrics: read_parquet with filename=true provenance;
+     casting already happens at collection time, so bronze becomes a typed
+     passthrough. Keep the empty-input case building a typed empty table.
+   - Legacy CSV data: recommended approach is parquet-only bronze plus a
+     one-time DuckDB conversion script for existing CSV datasets; a
+     temporary union is acceptable if it is genuinely cleaner. Record the
+     choice in design.md under Open Questions (resolve the pending item).
+5. Verification (record everything in verification.md):
+   - Install shellcheck (or run it via container) and get a clean run on
+     collector + tests; record the result.
+   - Re-run the full collector test suite.
+   - DBT build against rotated parquet output and against an empty input.
+   - 1h+ end-to-end run per the validation-thread Multipass setup; S3 upload
+     verification stays opt-in/manual (S3Adapter is disabled in the shipped
+     ETLConfig.json — see design.md).
 
 Environment expectations (verify before coding, report what is missing):
-- Sibling checkouts relative to Wintap-Analytics: ../Lintap, ../wintap,
-  ../Wintappy.
-- Host tools: pidstat (sysstat) and the duckdb CLI. shellcheck for linting.
-- No S3 access is assumed; upload verification is opt-in/manual.
+- Sibling checkouts: ../Lintap, ../wintap, ../Wintappy.
+- Host tools: pidstat (sysstat), duckdb CLI, shellcheck (install if absent),
+  and a working Wintappy dev environment for dbt runs.
+- No S3 access is assumed.
 
 As you work:
-- Record step-1 findings (does the Linux service build run CacheManager's
-  upload loop with an S3 adapter enabled, and what UploadIntervalSec is used)
-  in wiki/work/improve-pidstat-collector/design.md under Open Questions, and
-  update implementation_plan.md if the findings change the approach.
-- Update wiki/work/improve-pidstat-collector/verification.md (create it from
-  the skeleton in wiki/concept/feature-work-template.md) with every command
-  run and its results.
-- Check off wiki/work/improve-pidstat-collector/implementation_plan.md Done
-  Checklist items as they complete.
+- Update verification.md with every command run and its results.
+- Check off implementation_plan.md Done Checklist items as they complete.
+- Resolve the legacy-CSV open question in design.md when you decide it.
 - Append a concise entry to wiki/log.md for substantial progress.
 - Do not push data to any external service; no git commits unless the human
   driving the session asks for them.
@@ -70,99 +104,65 @@ As you work:
 
 ## Handoff Summary
 
-Replace the manually run `../Lintap/pidstat-collect.sh` with a new,
-continuously running collector service that samples pidstat (5 s default,
-configurable), rotates windows aligned to the sensor's merge/upload cycle,
-converts each closed window to typed parquet, and drops it into the sensor's
-parquet cache at `{parquetRoot}/raw_sensor/pidstat/dayPK=YYYYMMDD/hourPK=HH/`.
-The sensor's existing CacheManager/uploader then ships it to S3 (key mirrors
-the local relative path) and deletes it locally. No C# changes are expected —
-the upload sweep was verified type-agnostic. The motivating need is
-correlating Lintap CPU/memory use with system load and event_store growth
-over multi-day runs (`raw/Issues/Long_Running_Cleanup.md`).
+The collector (`../Lintap/pidstat-collector.sh`) works end-to-end locally:
+it samples `pidstat -u -d -r -w -h -p ALL` (5 s default), spools outside the
+swept tree, rotates on 300 s epoch-aligned windows, converts to typed parquet
+(bronze schema + `hostname`), and enforces byte/age accumulation caps. Slice 2
+hardens it (three review fixes), packages it (systemd), and connects the
+downstream consumer (Wintappy parquet migration). After slice 2, only the
+S3-enabled end-to-end confirmation and closeout promotion remain.
 
 ## Primary Sources For The Dev Agent
 
-Read these first:
-
-- [[wiki/work/improve-pidstat-collector/brief]] - decisions, acceptance
-  criteria, test plan.
-- [[wiki/work/improve-pidstat-collector/design]] - mechanism facts (with
-  ground-truth citations into `../wintap` source), collector loop, edge
-  cases, risks.
-- [[wiki/work/improve-pidstat-collector/implementation_plan]] - step list and
-  done checklist.
-- [[wiki/work/improve-pidstat-collector/references]] - cross-repo source map.
-- `../Lintap/pidstat-collect.sh` - the existing minimal collector (do not
-  modify).
-- `../wintap/wintap/core/etl/load/CacheManager.cs` and
-  `adapters/base/Uploader.cs` - the upload pipeline being ridden (read-only).
-- `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql` - the typed
-  schema the parquet output must match (plus a new `hostname` column).
-
-## Recommended First Implementation Slice
-
-Prefer the smallest useful change, in plan order:
-
-1. Step 1 (read-only): confirm the Linux service build runs the CacheManager
-   upload loop with an S3 adapter enabled and find the deployed
-   `UploadIntervalSec`; record findings in the design page before writing
-   collector code.
-2. Collector script in `../Lintap` (suggested name `pidstat-collector.sh`):
-   sampling loop, spool file outside `raw_sensor/`, wall-clock-aligned
-   rotation.
-3. DuckDB CLI conversion applying the `stg_pidstat_metrics` casts plus
-   `hostname`; atomic rename into the partition layout.
-4. Startup salvage of a leftover spool file and the configurable
-   accumulation guard (max bytes/age, oldest-first).
-5. Tests: shellcheck clean; rotation test producing multiple completed files
-   plus one in-progress spool; kill -9 mid-window test.
-
-systemd packaging (plan step 5) is a stretch goal for this slice; include it
-only if the above is solid.
+- [[wiki/work/improve-pidstat-collector/implementation_plan]] - steps 5-8 and
+  the Done Checklist.
+- [[wiki/work/improve-pidstat-collector/verification]] - slice-1 command log
+  and the Independent Review findings (items 2-4 are this slice's fixes).
+- [[wiki/work/improve-pidstat-collector/design]] - mechanism facts, the
+  `-p ALL` decision, deployment findings (`S3Adapter.Enabled=false`,
+  `UploadIntervalSec=300`), and the pending legacy-CSV open question.
+- `../Lintap/pidstat-collector.sh` and `../Lintap/tests/pidstat-collector-tests.sh`
+  - the code being extended.
+- `../Wintappy/wintap_dbt/macros/pidstat.sql` and
+  `models/bronze/stg_pidstat_metrics.sql` - the models being migrated.
 
 ## Non-Goals For This Slice
 
-- No Wintappy DBT changes (plan step 6, later slice).
-- No `../wintap` code changes at all.
-- No S3 or network-dependent default tests; upload verification is opt-in.
-- No modification or removal of `pidstat-collect.sh`.
-- No migration of existing tab-CSV datasets (decision deferred to the
-  Wintappy slice).
+- No `../wintap` code changes.
+- No changes to Wintappy silver/gold semantics beyond the bronze source swap.
+- No collector-side volume filtering — `-p ALL` stays; volume reduction, if
+  ever needed, happens in the ETL layer (recorded design decision).
+- No S3-dependent default tests.
+- Closeout promotion to canonical pages waits until after this slice.
 
 ## Testing Expectations
 
-Default tests must not require network access, S3 credentials, or a running
-Lintap sensor. Good first tests:
-
-- Rotation produces one parquet per closed window, none for empty windows,
-  and the in-progress spool is never visible as `*.parquet` under
-  `raw_sensor/`.
-- Parquet schema matches the bronze column list (names and types) plus
-  `hostname`; spot-check values against a captured pidstat sample.
-- kill -9 mid-window: completed files intact; next start salvages or
-  discards the spool per design.
-- Accumulation guard deletes oldest-first past the cap and logs it.
+- Every review fix lands with a regression test in
+  `../Lintap/tests/pidstat-collector-tests.sh`.
+- shellcheck clean (or documented, reproducible container invocation).
+- DBT: parquet fixture build, empty-input typed table, and — if the union
+  approach is chosen for legacy CSV — a mixed-source test.
+- 1h+ run: partition correctness across at least one hour boundary, row
+  counts in the expected order of magnitude, no conversion retries.
 
 ## Closeout Instructions
 
 When the slice is done:
 
-- Fill in [[wiki/work/improve-pidstat-collector/verification]] with commands
-  run and results (create from the template if absent).
+- Update [[wiki/work/improve-pidstat-collector/verification]] (commands,
+  results, and a slice-2 results section).
 - Update the [[wiki/work/improve-pidstat-collector/implementation_plan]] done
   checklist.
-- Record step-1 findings in [[wiki/work/improve-pidstat-collector/design]].
+- Resolve the legacy-CSV open question in
+  [[wiki/work/improve-pidstat-collector/design]].
 - Append a concise entry to `wiki/log.md`.
-- Leave durable-fact promotion to canonical pages for feature closeout (after
-  the Wintappy slice), unless step-1 findings contradict the design — then
-  flag it immediately in the design page and the log.
+- Flag immediately in the design page and log if anything contradicts the
+  recorded mechanism facts.
 
 ## Operating Mode Note
 
 `AGENTS.md` distinguishes wiki-maintainer mode from code-development mode.
-This handoff is intended to be used with the explicit trigger in the
-copy/paste prompt above. In that mode the agent may modify files in
-`Wintap-Analytics/` and — via the explicit authorization granted in the
-prompt — `../Lintap` only. `raw/`, `../wintap`, and `../Wintappy` remain
-protected for this slice.
+This handoff is used with the explicit trigger in the copy/paste prompt. For
+slice 2 the agent may modify files in `Wintap-Analytics/`, `../Lintap`, and
+`../Wintappy` (newly authorized this slice for the DBT migration). `raw/` and
+`../wintap` remain protected.

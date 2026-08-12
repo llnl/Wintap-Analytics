@@ -219,3 +219,10 @@ Validation: shell test suite now passes with 7 tests.
 Command: `timeout --signal=TERM 905 env WINTAP_DATA_ROOT=/tmp/opencode/pidstat-15m-clean.dyb7fq ../Lintap/pidstat-collector.sh`.
 Results: collector ran cleanly for 15 minutes with explicit `-p ALL`, default 5-second sampling, and 300-second rotation. It produced 4 parquet files under `parquet/raw_sensor/pidstat/dayPK=20260812/hourPK=09/`; DuckDB loaded `59097` rows total with per-file counts `4731`, `19839`, `19631`, and `14896`.
 Manual follow-up: inspect `/tmp/opencode/pidstat-15m-clean.dyb7fq/parquet/raw_sensor/pidstat/dayPK=20260812/hourPK=09/`.
+
+## [2026-08-12] feature-work | improve-pidstat-collector: slice-1 review accepted, slice-2 handoff prepared
+
+Source: independent review of ../Lintap c76ea87 and this repo's c16c6b7/c77f026 (test suite re-run on reviewer host: 7/7 passed; sibling-repo boundary check clean; parquet schema confirmed against stg_pidstat_metrics + hostname).
+Review verdict: slice accepted. Findings: (1) -p ALL sampling deviated from design — accepted per human decision, documented as a post-review decision in design.md with the ETL-layer-reduction rationale (~5.7M rows/day observed baseline); (2) processing-time sample_date gives ~24h-forward timestamps at midnight; (3) partially malformed glued chunks drop valid leading records; (4) DuckDB conversion errors are swallowed. Findings 2-4 assigned to slice 2.
+Pages updated: design.md (post-review -p ALL decision; collector-loop command corrected to include -p ALL); verification.md (Independent Review section); implementation_plan.md (renumbered to nine steps, slice-2 scope marked, review follow-ups added as step 6, checklist expanded); dev_handoff.md (rewritten for slice 2: review fixes, systemd, Wintappy DBT parquet migration; authorization widened to ../Lintap + ../Wintappy, ../wintap still read-only); index.md.
+Contradictions flagged: none. The dev's deployment finding (S3Adapter disabled in shipped ETLConfig.json) refines rather than contradicts the design's ride-along mechanism; carried into slice-2 scope and the closeout list.

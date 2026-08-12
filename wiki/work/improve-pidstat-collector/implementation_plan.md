@@ -42,15 +42,29 @@ authorization for sibling-repo changes per `AGENTS.md`.
    configurable max-bytes/max-age cap on unshipped parquet, oldest-first.
 5. **systemd unit** in `../Lintap/packaging/` (`Restart=always`), plus README
    notes; keep `pidstat-collect.sh` untouched as the simple example.
-6. **Wintappy DBT change**: parquet-oriented pidstat macros
+   *(Slice 2.)*
+6. **Review follow-ups in the collector** (from the 2026-08-12 review in
+   `verification.md`): derive `sample_date` from the window-start epoch
+   instead of processing-time `date` (midnight correctness); emit valid
+   leading records from a partially malformed glued chunk instead of dropping
+   the whole chunk; capture DuckDB stderr into the collector log on
+   conversion failure. Also document `-p ALL` and the env knobs in
+   `../Lintap/README.md` (decision already recorded in `design.md`).
+   *(Slice 2.)*
+7. **Wintappy DBT change**: parquet-oriented pidstat macros
    (`raw_sensor/pidstat/**/*.parquet` default, `PIDSTAT_DATA_PATH` still
-   honored) and `read_parquet` bronze model; decide legacy-CSV migration
-   (one-time conversion script vs. temporary union).
-7. **Verification runs** (record in `verification.md`): shellcheck; local
-   rotation + kill test; DBT build over rotated output; opt-in upload test;
-   1h+ Multipass end-to-end per the validation thread setup.
-8. **Closeout**: promote durable facts (collector behavior, layout, the
-   implicit ride-along contract) to canonical pages — likely
+   honored) and `read_parquet` bronze model with `filename=true` provenance;
+   legacy-CSV migration — recommended: keep bronze parquet-only and add a
+   one-time DuckDB conversion script for existing CSV datasets (dev may choose
+   a temporary union instead if cleaner). *(Slice 2.)*
+8. **Verification runs** (record in `verification.md`): shellcheck (install
+   it or run in a container); rotation + kill test rerun after the parser
+   fixes; DBT build over rotated parquet output including the empty-input
+   case; opt-in upload test; 1h+ Multipass end-to-end per the validation
+   thread setup. *(Slice 2.)*
+9. **Closeout**: promote durable facts (collector behavior, layout, the
+   implicit ride-along contract, the S3Adapter-disabled-by-default deployment
+   prerequisite) to canonical pages — likely
    `wiki/repo/lintap-supporting-repo.md`, `wiki/repo/wintappy-pipeline-repo.md`,
    and a note in the sensor upload docs; update `wiki/index.md` and
    `wiki/log.md`.
@@ -95,7 +109,10 @@ authorization for sibling-repo changes per `AGENTS.md`.
 - [x] Step 1 verification recorded; design open questions resolved
 - [x] Collector + rotation + conversion working locally
 - [x] Crash salvage + accumulation guard tested
+- [ ] Review follow-ups fixed (midnight date, glued-chunk partial emission, DuckDB error logging) with tests
+- [ ] `-p ALL` and env knobs documented in ../Lintap/README.md
 - [ ] systemd unit installs and survives reboot
-- [ ] Wintappy DBT updated; fixture test green
+- [ ] Wintappy DBT updated (parquet macros/bronze, legacy-CSV path decided); fixture test green
+- [ ] shellcheck run clean (install or container)
 - [ ] 1h+ end-to-end run with S3 upload + local delete confirmed
 - [ ] verification.md filled in; durable facts promoted; log updated

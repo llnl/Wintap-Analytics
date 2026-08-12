@@ -47,6 +47,19 @@ tab-delimited CSV to parquet in a coordinated update.
   partition layout `dayPK=/hourPK=` matching raw_sensor.
 - S3 push: ride the sensor's existing upload mechanism, at least for now.
 
+## Decisions Recorded (post-review, 2026-08-12)
+
+- Sample with `-p ALL` (every process every interval), as implemented in the
+  first slice. This deviates from the old activity-only collector and
+  multiplies volume roughly 5× (observed ~59k rows/15 min ≈ 5.7M rows/day on a
+  quiet host, vs. ~1.1M lines/day before), but idle-process RSS/VSZ is needed
+  for the motivating correlation analysis (Lintap memory/CPU vs. event_store
+  growth), and complete sampling is the safer default for research data.
+  Accepted for now; if volume becomes a problem, filter or compress in the ETL
+  layer (Wintappy bronze/silver) later rather than at collection time —
+  dropping data at the collector is unrecoverable, dropping it downstream is a
+  view choice.
+
 ## Proposed Approach
 
 ### Mechanism facts this design relies on (verified 2026-08-11)
@@ -73,7 +86,8 @@ tab-delimited CSV to parquet in a coordinated update.
 
 ### Collector loop
 
-1. Run `pidstat -u -d -r -w -h <interval>` (default 5 s) continuously,
+1. Run `pidstat -u -d -r -w -h -p ALL <interval>` (default 5 s) continuously
+   (`-p ALL` per the post-review decision above),
    appending raw samples to an in-progress spool file **outside** the
    `raw_sensor/` tree (e.g., `$WINTAP_DATA_ROOT/pidstat-spool/current.tsv`),
    so the uploader can never see a partial window.

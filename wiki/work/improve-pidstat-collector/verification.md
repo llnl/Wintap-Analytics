@@ -185,6 +185,31 @@ Result: per-file row counts were `4731`, `19839`, `19631`, and `14896`.
   read-only/manual because deployment-specific `ETLConfig.json` enablement is
   required and no external access is assumed.
 
+## Independent Review (2026-08-12)
+
+Reviewed by the wiki-maintainer session after the first-slice commits landed
+(`../Lintap` c76ea87; this repo c16c6b7, c77f026).
+
+- Test suite independently re-run on the reviewer host: all 7 tests passed.
+- Boundary check: no tracked changes in `../wintap` or `../Wintappy`;
+  `pidstat-collect.sh` untouched. Authorization respected.
+- Parquet schema confirmed to match `stg_pidstat_metrics` output columns plus
+  `hostname`; `filename` provenance deferred to `read_parquet(filename=true)`
+  in the Wintappy slice.
+- `shellcheck` also unavailable on the reviewer host; lint gap remains open.
+- Review verdict: slice accepted. Findings (fixes assigned to slice 2 in the
+  implementation plan):
+  1. `-p ALL` sampling deviated from the design — accepted and documented as a
+     post-review decision in [[wiki/work/improve-pidstat-collector/design]];
+     volume can be reduced in the ETL layer later if needed.
+  2. `sample_date` uses processing-time date; samples in flight at midnight
+     get a ~24h-forward timestamp. Fix: derive the date from the window-start
+     epoch.
+  3. A malformed second record in a glued pidstat chunk drops the whole chunk,
+     including the valid first record.
+  4. DuckDB conversion errors are discarded (`>/dev/null 2>&1`); failures log
+     no cause.
+
 ## Follow-Ups
 
 - Install `shellcheck` (or run lint in a container/CI) before calling shell lint “verified”.
