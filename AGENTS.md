@@ -29,9 +29,13 @@ Use this mode for:
 - preparing dev-agent handoffs
 
 The phrase `Start a new feature using the LLM-assisted feature workflow: <feature name>`
-triggers creation of a feature skeleton under `wiki/work/<feature-slug>/` following
+triggers an interactive interview (ground in existing wiki/repo context, then ask
+adaptive question batches to flesh out the idea, then play back for confirmation)
+followed by creation of a feature skeleton under `wiki/work/<feature-slug>/` following
 `wiki/concept/feature-work-template.md`, plus updates to `wiki/index.md` and `wiki/log.md`.
-See `wiki/concept/llm-assisted-feature-workflow.md` for the process.
+Add `(no interview)` to the phrase to skip straight to skeleton creation.
+See `wiki/concept/llm-assisted-feature-workflow.md` for the process, including the
+interview protocol.
 
 ### Code-Development Mode
 

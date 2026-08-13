@@ -4,7 +4,7 @@ type: concept
 confidence: medium
 grounded_by: []
 policy: agent-editable
-last_validated: 2026-08-11
+last_validated: 2026-08-13
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -29,6 +29,7 @@ The expected output is:
 
 ```text
 wiki/work/<feature-slug>/
+  interview.md             (optional; record of the context-building Q&A)
   brief.md                 (required)
   references.md            (optional)
   design.md                (optional)
@@ -38,6 +39,10 @@ wiki/work/<feature-slug>/
   verification.md          (optional)
   index.md                 (optional; long-running research threads)
 ```
+
+The interview stage (see [[wiki/concept/llm-assisted-feature-workflow]])
+normally runs before any artifact is written; `interview.md` is only created
+when its Q&A record adds value beyond what lands in `brief.md`.
 
 Only create the artifacts that are useful for the feature. For a small feature,
 `brief.md` plus `verification.md` may be enough. For a high-uncertainty feature,
@@ -74,6 +79,46 @@ tags: [feature-work]
 ```
 
 The body skeletons below assume this frontmatter is present.
+
+## `interview.md`
+
+Record of the interactive context-building session between the human and the
+agent. Keep it condensed — resolved topics with outcomes, not a verbatim chat
+transcript. Every item under Decisions/Constraints/Delegations must also be
+reflected in `brief.md`; this file preserves the *why* behind them.
+
+```markdown
+# Feature Interview: <Feature Name>
+
+## Initial Idea
+
+<The human's original statement of the idea, as given.>
+
+## Context Established Before Questioning
+
+<Wiki pages read and repo paths spot-checked; facts taken as given without
+asking.>
+
+## Interview Log
+
+### Round <n>
+
+**Q:** <question, with options offered if any>
+**A:** <the human's answer, condensed>
+**Outcome:** decision | constraint | delegated | deferred — <one line>
+
+## Decisions
+
+## Constraints
+
+## Delegations
+
+## Deferred / Open Questions
+
+## Playback Summary
+
+<The confirmed summary that seeded brief.md.>
+```
 
 ## `brief.md`
 
