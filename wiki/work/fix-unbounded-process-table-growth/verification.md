@@ -13,10 +13,14 @@ event_domain: process
 audience: developer
 status: draft
 source_paths: wiki/work/fix-unbounded-process-table-growth/verification.md
-tags: [feature-work, verification, process-events, retention]
+tags: [feature-work, verification, process-events, retention, starting-point]
 ---
 
 # Verification: Fix Unbounded Process Table Growth
+
+## Wiki Starting Point
+
+Use this page as the starting point for the current status of the unbounded process-table fix. It captures the accepted Linux slice-1 evidence, the 2026-08-13 Windows runtime check, remaining validation gaps, and links the durable implementation facts back to `ProcessResolver` and the validation harness.
 
 ## Test Commands
 
@@ -117,12 +121,65 @@ multipass exec lintap-dev -- bash -lc "cd /home/ubuntu/git/Wintap-Analytics/vali
 - Note on manifest metrics under aggressive retention:
   - with `PROCESS_EXIT_RETENTION_SEC=45`, end-of-run manifest-join counts are intentionally not a good workload-parity metric because most short-lived workload rows have already been pruned by summary time
 
+## Windows Runtime Check (2026-08-13)
+
+Commands and actions run on the Windows host:
+
+```powershell
+cd C:\PUBLIC\Wintap-Analytics\validation\process-creation
+uv run --extra dev pytest
+
+cd C:\PUBLIC\wintap
+dotnet publish "wintap\Wintap.csproj" -c Debug -r win-x64 --self-contained false
+```
+
+The first Windows attempt showed that the already-installed binaries were not the retention build: the test DB had no `process_retention_telemetry` table and the Wintap log lacked the `ProcessResolver retention:` startup line. Rebuilding the current source initially failed because `ProcessResolver.cs` referenced Linux `ProcReader` directly from the Windows build; the Windows compile fix replaced that direct dependency with a reflection-based Linux path and left Windows liveness on `Process.GetProcessById`.
+
+After republishing and redeploying to `C:\Program Files\Wintap`, an elevated service-mode run used temporary service environment overrides:
+
+```text
+WINTAP_CONFIG_PATH=C:\tmp\validation-runs\windows-retention-smoke-20260813143307\ETLConfig.json
+WINTAP_PROCESS_SWEEP_INTERVAL_SEC=15
+WINTAP_PROCESS_EXIT_RETENTION_SEC=45
+WINTAP_PROCESS_RECONCILE_MIN_AGE_SEC=10
+WINTAP_DISABLE_MCP=true
+WINTAP_DISABLE_DUCKDB_UI=true
+WINTAP_DISABLE_ETL=true
+```
+
+Windows run artifacts:
+
+- run id: `windows-retention-smoke-20260813143307`
+- run dir: `C:\tmp\validation-runs\windows-retention-smoke-20260813143307`
+- data root: `C:\tmp\wintap-windows-retention-smoke-20260813143307`
+- DB: `C:\tmp\wintap-windows-retention-smoke-20260813143307\event_store\main.duckdb`
+- transcript: `C:\Users\FRYE3~1.THE\AppData\Local\Temp\opencode\windows-retention-smoke-20260813143307.log`
+
+Windows results:
+
+- `uv run --extra dev pytest` passed on Windows: `5 passed`.
+- `dotnet publish "wintap\Wintap.csproj" -c Debug -r win-x64 --self-contained false` passed after the cross-platform compile fix.
+- Wintap service startup logged `ProcessResolver retention: enabled=True, sweepIntervalSec=15, exitRetentionSec=45, reconcileOpen=True, reconcileMinAgeSec=10`.
+- Workload generated `390` manifest processes across `35` cases.
+- Final process table had `278` rows: `223` closed and `55` open.
+- `process_retention_telemetry` was present.
+- Telemetry totals were `reconciled_closed=755` and `retention_deleted=532`.
+- The Windows `Process.GetProcessById` stale-open reconciliation path executed repeatedly, as shown by Wintap log `ProcessResolver reconcile closing ... livePidHash=<missing>` and `livePidHash=<hash>` entries plus persisted telemetry.
+- Manifest PID parity is not meaningful under the aggressive 45-second retention window: summary showed `151` observed manifest PIDs and `203` missing manifest PIDs after expired rows were deliberately pruned.
+
+Windows limitation found:
+
+- `ProcessSensor.Initialize` logged `Log wrap detected! Unable to build process tree, computer reboot required.` on this host, so `ClearDB` plus Security-log startup replay could not be fully validated in this run. Real-time process capture, Windows liveness reconciliation, retention deletion, and telemetry were validated.
+- Live-process coverage is not comparable to the Linux `ProcessRundown=true` checks on this host because Windows startup replay was skipped after log-wrap detection; the summary therefore showed only `1/463` live snapshot PIDs with matching open rows.
+
 ## Known Gaps
 
 - Windows runtime behavior unverified (compile only): reconciliation via
-  `Process.GetProcessById` and retention interplay with
-  `ClearDB`/startup replay need a Windows regression check before feature
-  closeout.
+- Windows runtime behavior is now partially verified: service-mode retention,
+  `Process.GetProcessById` reconciliation, retention deletion, and telemetry
+  worked on 2026-08-13. Full `ClearDB`/startup replay verification still needs
+  a Windows host/run where `ProcessSensor.Initialize` does not report Security
+  log wrap.
 - No long-duration plateau run yet.
 - No before/after pidstat-based CPU correlation run yet.
 - No direct DuckDB compaction/reclaim measurement yet.

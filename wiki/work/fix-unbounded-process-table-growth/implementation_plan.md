@@ -65,12 +65,13 @@ Implement the first working slice: bounded exited-row retention, stale-open reco
 - [x] Windows project compile passed in the Linux VM after fixing an unrelated import error.
 - [x] Short noisy retention run completed in the Linux VM and populated telemetry.
 - [x] Slice 1 reviewed and accepted (2026-08-13; build + pytest independently re-verified).
+- [x] Windows service-mode retention/reconciliation check completed on 2026-08-13; telemetry and `Process.GetProcessById` stale-open reconciliation executed.
 
 Remaining before feature closeout:
 
 - [ ] Long-run plateau validation (`scripts/run_lintap_currentish_long_run.sh`) with attribution parity vs. the 2026-08-06 baseline.
 - [ ] CPU-vs-table-size correlation from pidstat data (before/after) — uses the pidstat collector built by [[wiki/work/improve-pidstat-collector/brief]].
 - [ ] DuckDB reclaim behavior measured (DELETE vs. compaction).
-- [ ] Windows runtime regression check (reconciliation path, ClearDB/startup replay) — review finding 1.
+- [ ] Complete Windows runtime regression check on a host/run where Security-log startup replay is available; current host reported log wrap, so `ClearDB`/startup replay remains only partially exercised.
 - [ ] Review findings 2–3 fixed (uncached btime fallback; capped collision logging).
 - [ ] Closeout: promote durable facts to canonical pages — candidates: event-store "currentish" retention semantics, env knobs, and `process_retention_telemetry` (new component/data_model page + `wiki/event_type/process-events.md`); the `/proc/stat btime` hash-basis fact; the clone-sensor requirement for fork-without-exec live coverage (also feeds the lintap-process-creation-validation thread).

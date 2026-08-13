@@ -102,4 +102,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-13 (fix-unbounded-process-table-growth slice 1 reviewed and accepted; closeout checklist prepared)*
+*Last updated: 2026-08-13 (fix-unbounded-process-table-growth Windows runtime check recorded; starting point: [[wiki/work/fix-unbounded-process-table-growth/verification]])*

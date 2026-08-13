@@ -71,8 +71,14 @@ def main() -> int:
                 for idx in range(args.short_per_interval):
                     ref = f"{case_id}_proc_{idx:03d}"
                     marker = f"run_id={run_id} case_id={case_id} seq={idx}"
+                    if os.name == "nt":
+                        command = [sys.executable, "-c", "pass", marker]
+                        expected_name = Path(sys.executable).name
+                    else:
+                        command = ["bash", "-c", f": # {marker}"]
+                        expected_name = "bash"
                     proc = subprocess.Popen(
-                        ["bash", "-c", f": # {marker}"],
+                        command,
                         stdout=out,
                         stderr=err,
                         text=True,
@@ -85,8 +91,8 @@ def main() -> int:
                             "role": "short_child",
                             "observed_pid": proc.pid,
                             "observed_ppid": os.getpid(),
-                            "command": ["bash", "-c", f": # {marker}"],
-                            "expected_name": "bash",
+                            "command": command,
+                            "expected_name": expected_name,
                             "started_by_workload_utc": iso_now(),
                             "parent_ref": None,
                             "provenance_markers": [marker],

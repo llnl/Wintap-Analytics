@@ -26,8 +26,11 @@ def parse_duckdb_json_stream(text: str) -> list:
 
 
 def run_duckdb_json(db: Path, sql: str) -> list:
+    command = ["duckdb", "-json", str(db), "-c", sql]
+    if os.name == "posix":
+        command.insert(0, "sudo")
     proc = subprocess.run(
-        ["sudo", "duckdb", "-json", str(db), "-c", sql],
+        command,
         check=True,
         text=True,
         capture_output=True,
@@ -38,7 +41,10 @@ def run_duckdb_json(db: Path, sql: str) -> list:
 def load_live_snapshot(snapshot_path: Path | None) -> dict[str, Any] | None:
     if snapshot_path is None:
         return None
-    return json.loads(snapshot_path.read_text())
+    try:
+        return json.loads(snapshot_path.read_text(encoding="utf-8-sig"))
+    except UnicodeError:
+        return json.loads(snapshot_path.read_text(encoding="utf-16"))
 
 
 def get_linux_live_process_start_utc(pid: int) -> dt.datetime | None:

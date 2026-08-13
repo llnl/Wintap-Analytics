@@ -35,6 +35,21 @@ def _which(name: str, fallback: str) -> str:
     return shutil.which(name) or fallback
 
 
+def _python_parent_child_script(child_count: int = 1, child_sleep_seconds: float = 0.0) -> str:
+    return (
+        "import os, subprocess, sys; "
+        "print(f'PARENT_PID={os.getpid()}', flush=True); "
+        "children=[]; "
+        f"child_count={child_count}; child_sleep={child_sleep_seconds!r}; "
+        "\nfor idx in range(child_count):\n"
+        "    child = subprocess.Popen([sys.executable, '-c', f'import time; time.sleep({child_sleep!r})'])\n"
+        "    children.append(child)\n"
+        "    print(f'CHILD_PID_{idx}={child.pid}', flush=True)\n"
+        "\nfor child in children:\n"
+        "    child.wait()\n"
+    )
+
+
 class WorkloadBuilder:
     def __init__(self, run_id: str, profile: str = "process-baseline-v1") -> None:
         self.run_id = run_id
@@ -45,17 +60,22 @@ class WorkloadBuilder:
 
     def add_simple_exec(self) -> None:
         started = time.time()
-        sh = _which("sh", "/bin/sh")
-        true = _which("true", "/usr/bin/true")
-        proc = subprocess.run(
-            [sh, "-c", f"echo CHILD_PID=$$; {true}"],
-            check=True,
-            text=True,
-            capture_output=True,
-        )
-        ended = time.time()
-        pids = _parse_pid_lines(proc.stdout)
-        pid = pids.get("CHILD_PID")
+        if os.name == "nt":
+            command = [sys.executable, "-c", "import os; print(f'CHILD_PID={os.getpid()}')"]
+            proc = subprocess.run(command, check=True, text=True, capture_output=True)
+            ended = time.time()
+            pids = _parse_pid_lines(proc.stdout)
+            pid = pids.get("CHILD_PID")
+            expected_name = Path(sys.executable).name
+        else:
+            sh = _which("sh", "/bin/sh")
+            true = _which("true", "/usr/bin/true")
+            command = [sh, "-c", f"echo CHILD_PID=$$; {true}"]
+            proc = subprocess.run(command, check=True, text=True, capture_output=True)
+            ended = time.time()
+            pids = _parse_pid_lines(proc.stdout)
+            pid = pids.get("CHILD_PID")
+            expected_name = "sh"
         if pid is None:
             raise RuntimeError(f"simple_exec did not report child pid: {proc.stdout!r}")
         case_id = "simple_exec_001"
@@ -78,8 +98,8 @@ class WorkloadBuilder:
                 role="child",
                 observed_pid=pid,
                 observed_ppid=os.getpid(),
-                command=[sh, "-c", f"echo CHILD_PID=$$; {true}"],
-                expected_name="sh",
+                command=command,
+                expected_name=expected_name,
                 started_by_workload_utc=_iso(started),
                 ended_by_workload_utc=_iso(ended),
                 provenance_markers=[f"run_id={self.run_id}", f"case_id={case_id}"],
@@ -88,18 +108,23 @@ class WorkloadBuilder:
 
     def add_fork_exec(self) -> None:
         started = time.time()
-        bash = _which("bash", "/bin/bash")
-        sleep = _which("sleep", "/bin/sleep")
-        proc = subprocess.run(
-            [bash, "-c", f"echo PARENT_PID=$$; {sleep} 1 & echo CHILD_PID=$!; wait"],
-            check=True,
-            text=True,
-            capture_output=True,
-        )
+        if os.name == "nt":
+            command = [sys.executable, "-c", _python_parent_child_script(child_count=1, child_sleep_seconds=1)]
+            child_command = [sys.executable, "-c", "import time; time.sleep(1)"]
+            expected_parent_name = Path(sys.executable).name
+            expected_child_name = Path(sys.executable).name
+        else:
+            bash = _which("bash", "/bin/bash")
+            sleep = _which("sleep", "/bin/sleep")
+            command = [bash, "-c", f"echo PARENT_PID=$$; {sleep} 1 & echo CHILD_PID_0=$!; wait"]
+            child_command = [sleep, "1"]
+            expected_parent_name = "bash"
+            expected_child_name = "sleep"
+        proc = subprocess.run(command, check=True, text=True, capture_output=True)
         ended = time.time()
         pids = _parse_pid_lines(proc.stdout)
         parent = pids.get("PARENT_PID")
-        child = pids.get("CHILD_PID")
+        child = pids.get("CHILD_PID_0")
         if parent is None or child is None:
             raise RuntimeError(f"fork_exec did not report pids: {proc.stdout!r}")
         case_id = "fork_exec_001"
@@ -123,8 +148,8 @@ class WorkloadBuilder:
                     case_id=case_id,
                     role="parent",
                     observed_pid=parent,
-                    command=[bash, "-c", f"{sleep} 1 & wait"],
-                    expected_name="bash",
+                    command=command,
+                    expected_name=expected_parent_name,
                     started_by_workload_utc=_iso(started),
                     ended_by_workload_utc=_iso(ended),
                     provenance_markers=[f"run_id={self.run_id}", f"case_id={case_id}"],
@@ -135,8 +160,8 @@ class WorkloadBuilder:
                     role="child",
                     observed_pid=child,
                     observed_ppid=parent,
-                    command=[sleep, "1"],
-                    expected_name="sleep",
+                    command=child_command,
+                    expected_name=expected_child_name,
                     parent_ref=parent_ref,
                     started_by_workload_utc=_iso(started),
                     ended_by_workload_utc=_iso(ended),
@@ -148,15 +173,20 @@ class WorkloadBuilder:
     def add_short_lived_burst(self, count: int = 6) -> None:
         started = time.time()
         count = max(1, count)
-        bash = _which("bash", "/bin/bash")
-        true = _which("true", "/usr/bin/true")
-        children = "".join(f"{true} & echo CHILD_PID_{idx}=$!; " for idx in range(count))
-        proc = subprocess.run(
-            [bash, "-c", f"echo PARENT_PID=$$; {children} wait"],
-            check=True,
-            text=True,
-            capture_output=True,
-        )
+        if os.name == "nt":
+            command = [sys.executable, "-c", _python_parent_child_script(child_count=count, child_sleep_seconds=0)]
+            child_command = [sys.executable, "-c", "import time; time.sleep(0)"]
+            expected_parent_name = Path(sys.executable).name
+            expected_child_name = Path(sys.executable).name
+        else:
+            bash = _which("bash", "/bin/bash")
+            true = _which("true", "/usr/bin/true")
+            children = "".join(f"{true} & echo CHILD_PID_{idx}=$!; " for idx in range(count))
+            command = [bash, "-c", f"echo PARENT_PID=$$; {children} wait"]
+            child_command = [true]
+            expected_parent_name = "bash"
+            expected_child_name = "true"
+        proc = subprocess.run(command, check=True, text=True, capture_output=True)
         ended = time.time()
         pids = _parse_pid_lines(proc.stdout)
         parent = pids.get("PARENT_PID")
@@ -170,8 +200,8 @@ class WorkloadBuilder:
                 case_id=case_id,
                 role="parent",
                 observed_pid=parent,
-                command=[bash, "-c", f"many {true} children"],
-                expected_name="bash",
+                command=command,
+                expected_name=expected_parent_name,
                 started_by_workload_utc=_iso(started),
                 ended_by_workload_utc=_iso(ended),
                 provenance_markers=[f"run_id={self.run_id}", f"case_id={case_id}"],
@@ -190,8 +220,8 @@ class WorkloadBuilder:
                     role="child",
                     observed_pid=pid,
                     observed_ppid=parent,
-                    command=[true],
-                    expected_name="true",
+                    command=child_command,
+                    expected_name=expected_child_name,
                     parent_ref="short_lived_parent_001",
                     started_by_workload_utc=_iso(started),
                     ended_by_workload_utc=_iso(ended),
