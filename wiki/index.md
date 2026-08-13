@@ -95,8 +95,11 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-pidstat-collector/verification]] | medium | Command log and first-slice results for the new Lintap pidstat collector: environment checks, Linux ride-along verification, shell tests, and live parquet smoke run. |
 | [[wiki/work/fix-unbounded-process-table-growth/brief]] | medium | Feature brief for bounding event_store process-table growth on long runs (8M rows/10 days observed) with retention + stale-open reconciliation while preserving PID-reuse-safe process resolution. |
 | [[wiki/work/fix-unbounded-process-table-growth/references]] | medium | Source map for the process-table retention feature: ProcessResolver/EventChannel hot paths, ClearDB call sites, validation-harness baseline, decisions to date, DuckDB space-reclamation questions. |
+| [[wiki/work/fix-unbounded-process-table-growth/design]] | medium | First-slice design: lazy resolver-owned sweep scheduling, liveness-based stale-open reconciliation, exited-row retention, and DuckDB telemetry for stop/reconciled/deleted/retention-miss counts. |
+| [[wiki/work/fix-unbounded-process-table-growth/implementation_plan]] | medium | First-slice implementation checklist for resolver retention/reconciliation, harness updates, VM builds, and the remaining long-run follow-up work. |
 | [[wiki/work/fix-unbounded-process-table-growth/dev_handoff]] | medium | Dev handoff authorizing ../wintap changes: retention sweep + liveness reconciliation as QA feature + retention-miss metric, delegated decisions, first slice, testing and closeout duties. |
+| [[wiki/work/fix-unbounded-process-table-growth/verification]] | medium | VM-based verification log for the first retention slice: Linux build, validation pytest, Windows compile, and a short noisy retention run with telemetry totals. |
 
 ---
 
-*Last updated: 2026-08-12 (fix-unbounded-process-table-growth: retention-miss decision reconciled; dev handoff prepared)*
+*Last updated: 2026-08-13 (fix-unbounded-process-table-growth: first implementation slice verified in lintap-dev VM)*

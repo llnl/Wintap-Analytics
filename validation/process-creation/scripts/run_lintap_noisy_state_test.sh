@@ -13,6 +13,11 @@ INTERVAL_SECONDS=${INTERVAL_SECONDS:-5}
 SHORT_PER_INTERVAL=${SHORT_PER_INTERVAL:-12}
 LONG_PER_MINUTE=${LONG_PER_MINUTE:-4}
 LONG_LIVED_SECONDS=${LONG_LIVED_SECONDS:-90}
+PROCESS_SWEEP_INTERVAL_SEC=${PROCESS_SWEEP_INTERVAL_SEC:-60}
+PROCESS_EXIT_RETENTION_SEC=${PROCESS_EXIT_RETENTION_SEC:-600}
+PROCESS_RECONCILE_MIN_AGE_SEC=${PROCESS_RECONCILE_MIN_AGE_SEC:-30}
+PROCESS_RUNDOWN=${PROCESS_RUNDOWN:-false}
+CLONE_SENSOR=${CLONE_SENSOR:-false}
 
 mkdir -p "$RUN_DIR" "$DATA_ROOT"
 CONFIG="$RUN_DIR/etlconfig.json"
@@ -32,8 +37,8 @@ cat > "$CONFIG" <<EOF
   "DisableSensors": false,
   "Execve": true,
   "Exit": true,
-  "Clone": false,
-  "ProcessRundown": false,
+  "Clone": ${CLONE_SENSOR},
+  "ProcessRundown": ${PROCESS_RUNDOWN},
   "Network": false,
   "FileOps": false,
   "EnableBpfDiagMonitor": false
@@ -58,6 +63,9 @@ trap cleanup EXIT
 
 echo "==> Starting Lintap resolver-mode run: $RUN_ID"
 sudo env WINTAP_CONFIG_PATH="$CONFIG" ASPNETCORE_URLS=http://127.0.0.1:0 \
+  WINTAP_PROCESS_SWEEP_INTERVAL_SEC="$PROCESS_SWEEP_INTERVAL_SEC" \
+  WINTAP_PROCESS_EXIT_RETENTION_SEC="$PROCESS_EXIT_RETENTION_SEC" \
+  WINTAP_PROCESS_RECONCILE_MIN_AGE_SEC="$PROCESS_RECONCILE_MIN_AGE_SEC" \
   dotnet "$LINTAP_DLL" > "$RUN_DIR/lintap.out" 2> "$RUN_DIR/lintap.err" &
 LINTAP_PID=$!
 echo "$LINTAP_PID" > "$RUN_DIR/lintap.pid"
@@ -76,6 +84,99 @@ UV_PROJECT_ENVIRONMENT="$UV_PROJECT_ENVIRONMENT" uv run wpv-noisy-processes \
 
 echo "==> Waiting for final exit events"
 sleep 20
+
+LINTAP_PID_FOR_SNAPSHOT="$LINTAP_PID" python3 - <<'PY' > "$RUN_DIR/live-proc-snapshot.json"
+import json
+import os
+from datetime import datetime, timezone, timedelta
+from pathlib import Path
+
+def get_boot_time_utc():
+    for line in Path('/proc/stat').read_text().splitlines():
+        if line.startswith('btime '):
+            return datetime.fromtimestamp(int(line.split()[1]), tz=timezone.utc)
+    raise RuntimeError('missing btime')
+
+def get_clock_ticks_per_second():
+    return os.sysconf(os.sysconf_names['SC_CLK_TCK'])
+
+boot_utc = get_boot_time_utc()
+hz = get_clock_ticks_per_second()
+rows = []
+excluded_pids = {os.getpid(), os.getppid()}
+
+ancestor_pid = os.getppid()
+while ancestor_pid > 1 and ancestor_pid not in excluded_pids:
+    excluded_pids.add(ancestor_pid)
+    try:
+        stat = Path(f'/proc/{ancestor_pid}/stat').read_text()
+        end = stat.rfind(')')
+        if end < 0:
+            break
+        parts = stat[end + 1:].strip().split()
+        if len(parts) < 2:
+            break
+        ancestor_pid = int(parts[1])
+    except Exception:
+        break
+
+lintap_pid = os.environ.get('LINTAP_PID_FOR_SNAPSHOT')
+if lintap_pid:
+    try:
+        excluded_pids.add(int(lintap_pid))
+    except ValueError:
+        pass
+
+def is_descended_from_excluded(pid: int) -> bool:
+    current = pid
+    visited = set()
+    while current > 1 and current not in visited:
+        if current in excluded_pids:
+            return True
+        visited.add(current)
+        try:
+            stat = Path(f'/proc/{current}/stat').read_text()
+            end = stat.rfind(')')
+            if end < 0:
+                return False
+            parts = stat[end + 1:].strip().split()
+            if len(parts) < 2:
+                return False
+            current = int(parts[1])
+        except Exception:
+            return False
+    return current in excluded_pids
+
+for proc_dir in sorted(Path('/proc').iterdir(), key=lambda path: int(path.name) if path.name.isdigit() else -1):
+    if not proc_dir.is_dir() or not proc_dir.name.isdigit():
+        continue
+    pid = int(proc_dir.name)
+    if pid in excluded_pids or is_descended_from_excluded(pid):
+        continue
+    stat_path = proc_dir / 'stat'
+    try:
+        stat = stat_path.read_text()
+        end = stat.rfind(')')
+        if end < 0:
+            continue
+        parts = stat[end + 1:].strip().split()
+        if len(parts) <= 19:
+            continue
+        start_ticks = int(parts[19])
+        start_utc = boot_utc + timedelta(seconds=start_ticks / hz)
+        rows.append({
+            'process_id': int(proc_dir.name),
+            'live_start_utc': start_utc.isoformat().replace('+00:00', 'Z'),
+        })
+    except Exception:
+        continue
+
+print(json.dumps({
+    'captured_at_utc': datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z'),
+    'processes': rows,
+}, indent=2))
+PY
+
 cleanup
 trap - EXIT
 
@@ -92,39 +193,11 @@ if [[ ! -f "$DB" ]]; then
   exit 3
 fi
 
-cat > "$RUN_DIR/query.sql" <<'SQL'
-SELECT 'table_totals' AS section,
-  COUNT(*) AS rows,
-  COUNT(DISTINCT pid_hash) AS distinct_pid_hashes,
-  COUNT(DISTINCT process_id) AS distinct_pids,
-  COUNT(*) FILTER (WHERE exit_time IS NULL) AS open_rows,
-  COUNT(*) FILTER (WHERE exit_time IS NOT NULL) AS closed_rows
-FROM process;
-
-SELECT 'by_name' AS section, process_name, COUNT(*) AS rows,
-  COUNT(*) FILTER (WHERE exit_time IS NULL) AS open_rows,
-  COUNT(*) FILTER (WHERE exit_time IS NOT NULL) AS closed_rows
-FROM process
-GROUP BY process_name
-ORDER BY rows DESC
-LIMIT 25;
-
-SELECT 'duplicate_pid' AS section, process_id, COUNT(*) AS rows,
-  COUNT(DISTINCT pid_hash) AS identities,
-  COUNT(*) FILTER (WHERE exit_time IS NULL) AS open_rows
-FROM process
-GROUP BY process_id
-HAVING COUNT(*) > 1
-ORDER BY rows DESC
-LIMIT 25;
-
-SELECT 'stop_only_like' AS section,
-  COUNT(*) AS rows
-FROM process
-WHERE create_time = exit_time AND exit_time IS NOT NULL;
-SQL
-
-sudo duckdb -json "$DB" < "$RUN_DIR/query.sql" > "$RUN_DIR/process-table-summary.json"
+python3 "$VALIDATION_DIR/scripts/summarize_lintap_process_table.py" \
+  --db "$DB" \
+  --manifest "$RUN_DIR/workload/manifest.json" \
+  --live-snapshot "$RUN_DIR/live-proc-snapshot.json" \
+  --out "$RUN_DIR/process-table-summary.json" >/dev/null
 
 python3 - <<PY | tee "$RUN_DIR/run-summary.json"
 import json

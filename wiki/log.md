@@ -257,3 +257,44 @@ Decisions now recorded (3): liveness cross-check as inherent QA feature; cleanup
 Pages updated: brief.md (retention-miss decision formatted, matching acceptance criterion added); references.md (Decisions To Date section for the dev agent; /proc liveness marked as the decided reconciliation mechanism; retention-miss note on GetPidHash fallback); index.md (dev_handoff row, references summary refreshed).
 Pages created: dev_handoff.md — copy/paste prompt authorizing ../wintap changes (../Lintap and ../Wintappy stay read-only; Wintap-Analytics writable only under validation/ and wiki/), summary of mechanism and hard integrity constraints, delegated decisions (scheduling, cadence, telemetry surface, default retention window, DuckDB reclamation), first slice scoped to sweep + reconciliation + QA telemetry + short validation run, multi-day CPU-correlation study deferred to a later slice, closeout duties including developer-authored design.md recording delegated decisions.
 Contradictions flagged: none. Remaining open questions (retention window default, DuckDB reclamation mechanics, Windows replay constraints, hard-cap backstop) are delegated to the dev agent to resolve by measurement and record in design.md.
+
+## [2026-08-13] code | Fix unbounded process table growth first slice
+
+Files changed: `../wintap/wintap/core/infrastructure/ProcessResolver.cs`; `../wintap/wintap/platform/windows/infrastructure/WindowsStateManager.cs`; `validation/process-creation/scripts/summarize_lintap_process_table.py`; `validation/process-creation/scripts/run_lintap_noisy_state_test.sh`.
+Pages created: `work/fix-unbounded-process-table-growth/design.md`; `work/fix-unbounded-process-table-growth/implementation_plan.md`; `work/fix-unbounded-process-table-growth/verification.md`.
+Pages updated: `index.md`; `log.md`.
+Results: implemented resolver-owned periodic maintenance with configurable exited-row retention, liveness-based stale-open reconciliation, in-memory recently-pruned PID cache for retention-miss attribution, and DuckDB telemetry table `process_retention_telemetry` for `stop_closed` / `reconciled_closed` / `retention_deleted` / `retention_miss`. Validation in Multipass `lintap-dev`: `Lintap.csproj` build passed, validation pytest passed (`5 passed`), `Wintap.csproj -p:EnableWindowsTargeting=true` passed after fixing an unrelated missing `using System.IO;` import in `WindowsStateManager.cs`, and a 180-second noisy retention run with aggressive sweep settings produced telemetry totals `stop_closed=507`, `reconciled_closed=28`, `retention_deleted=499` with final process-table size `47` rows.
+Limitations: no long-duration plateau/perf run yet, no DuckDB compaction measurement yet, and the short noisy run is not sufficient to tune the final production retention window.
+
+## [2026-08-13] test | Fix unbounded process table growth rundown rerun
+
+Files changed: `validation/process-creation/scripts/summarize_lintap_process_table.py`; `validation/process-creation/scripts/run_lintap_noisy_state_test.sh`.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+Results: summary now reports end-of-run live system process count and open-row liveness classification. Re-checking the earlier short run showed `live_system_processes=143` with the lone tracked-open row classified as stale, clarifying that `open_rows=1` was never a claim that only one Linux process existed. A rerun with `ProcessRundown=true` still ended with `tracked_open_rows=1`, `live_open_rows=0`, `stale_open_rows=1`, while the VM had `live_system_processes=141` and telemetry totals `stop_closed=456`, `reconciled_closed=173`, `retention_deleted=590`.
+Open issue surfaced: the new rundown-enabled result suggests a mismatch between rundown-seeded process rows and the liveness-based reconciliation logic, because many apparently live pre-existing processes were counted as reconciliation-closed instead of remaining open/live-tracked.
+
+## [2026-08-13] fix | Add pid_hash to process retention telemetry
+
+Files changed: `../wintap/wintap/core/infrastructure/ProcessResolver.cs`.
+Pages updated: `work/fix-unbounded-process-table-growth/design.md`; `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+Results: `process_retention_telemetry` now stores per-event telemetry rows with `pid_hash` in addition to `metric_name`, `process_name`, and `metric_value`, and the resolver emits telemetry at process-instance granularity rather than only as process-name aggregates. This preserves the existing summary rollups while allowing later joins back to process identity.
+
+## [2026-08-13] fix | Rundown liveness reconciliation accuracy
+
+Files changed: `../wintap/wintap/core/infrastructure/ProcessResolver.cs`; `validation/process-creation/scripts/summarize_lintap_process_table.py`.
+Pages updated: `work/fix-unbounded-process-table-growth/design.md`; `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+Investigation: the new end-of-run summary fields showed that `ProcessRundown=true` initially preserved almost none of the current live process set (`1/141` tracked-open rows in a short run). First fix aligned the resolver's Linux live-start hash derivation with the same `/proc/stat` boot-time basis used by the rundown and exec sensors. That recovered the boot-time process population but still left a subset of long-lived non-boot services (`cron`, `dbus-daemon`, `systemd-networkd`, repeated `sshd`/`sshfs`/`sudo`) being reconciled closed. Final fix made Linux reconciliation use `ProcReader.ReadProcessInfo()` directly and treat close live-start-time matches as the same process instance, preserving or repairing the row instead of closing it.
+Validation: a clean 90-second rundown-enabled run (`retention-rundown-fix3b-1786645301`) finished with `live_pids_with_matching_open_row=139/143`, and the previously missing long-lived daemon set stayed open with `exit_time IS NULL`. A 10-minute aggressive-retention run (`retention-rundown-10m-1786645515`) held `live_pids_with_matching_open_row=130/138`; the remaining misses were recent end-of-run processes rather than long-lived baseline services. Telemetry totals for the 10-minute run were `stop_closed=524`, `reconciled_closed=48`, `retention_deleted=541`.
+Open follow-up: the remaining small set of misses/stale opens appears to be dominated by shutdown/final-window timing rather than the original rundown identity bug.
+
+## [2026-08-13] fix | End-of-run live snapshot coverage
+
+Files changed: `validation/process-creation/scripts/run_lintap_noisy_state_test.sh`; `validation/process-creation/scripts/summarize_lintap_process_table.py`.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+Results: the validation harness now snapshots `/proc` immediately before shutting down `Lintap` and scores coverage against that pre-stop live process set. This removes the previous measurement artifact where post-stop `python3`/`duckdb` summary processes inflated the apparent miss count. Validation: a snapshot-based 90-second run reached `140/142` live snapshot PIDs covered with `1` stale open row; a snapshot-based 10-minute run reached `131/139` live snapshot PIDs covered with `2` stale open rows. Remaining misses are now a small real tail rather than shutdown-summary self-noise.
+
+## [2026-08-13] validation | Clone sensor closes remaining live-process coverage gap
+
+Files changed: `validation/process-creation/scripts/run_lintap_noisy_state_test.sh`.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+Results: tightened the live snapshot filter further by excluding the snapshot helper's ancestor chain, which produced a clean clone-disabled 90-second run with `135/135` live snapshot PIDs covered. Investigation of the remaining misses on longer clone-disabled runs showed they were fork-without-exec processes. Added a `CLONE_SENSOR` toggle to the validation runner and reran with `Clone=true`: the 90-second run reached `135/135` live snapshot PIDs covered and the 10-minute run reached `137/137` live snapshot PIDs covered, both with `0` missing live PIDs. Conclusion: the currentish process table is accurate at shutdown when the clone sensor is enabled; the prior residual misses were a sensor-selection issue, not a remaining retention/reconciliation defect.
