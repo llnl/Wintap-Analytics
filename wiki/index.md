@@ -22,8 +22,8 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
-| [[wiki/concept/llm-assisted-feature-workflow]] | medium | Lightweight workflow for LLM-assisted feature work (brief → references → design → spike → plan → handoff → verification → closeout), with when-to-use guidance, the invocation phrase, and the promote-to-canonical operating rule. |
-| [[wiki/concept/feature-work-template]] | medium | Full markdown skeletons for every `wiki/work/<feature-slug>/` artifact (brief, references, design, spike, implementation plan, dev handoff, verification, research-thread index); only `brief.md` is required. |
+| [[wiki/concept/llm-assisted-feature-workflow]] | medium | Lightweight workflow for LLM-assisted feature work (interview → brief → references → design → spike → plan → handoff → verification → closeout), with the interactive interview protocol, when-to-use guidance, the invocation phrase, and the promote-to-canonical operating rule. |
+| [[wiki/concept/feature-work-template]] | medium | Full markdown skeletons for every `wiki/work/<feature-slug>/` artifact (interview, brief, references, design, spike, implementation plan, dev handoff, verification, research-thread index); only `brief.md` is required. |
 | [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 ## Component
 
@@ -99,7 +99,11 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/fix-unbounded-process-table-growth/implementation_plan]] | medium | First-slice implementation checklist for resolver retention/reconciliation, harness updates, VM builds, and the remaining long-run follow-up work. |
 | [[wiki/work/fix-unbounded-process-table-growth/dev_handoff]] | medium | Dev handoff authorizing ../wintap changes: retention sweep + liveness reconciliation as QA feature + retention-miss metric, delegated decisions, first slice, testing and closeout duties. |
 | [[wiki/work/fix-unbounded-process-table-growth/verification]] | medium | Slice-1 verification and accepted 2026-08-13 review: builds/pytest (independently re-verified), rundown-reconciliation bug found via QA telemetry and fixed, clone-sensor runs reaching 0 missing live PIDs, and remaining gaps before closeout. |
+| [[wiki/work/improve-windows-process-collection/interview]] | medium | Interview record for the Windows process collection overhaul: three Q&A rounds resolving kernel-ETW-primary, one-sensor consolidation, snapshot refresh, SID-POC adoption, boot-trace scope, and the no-breaking-changes constraint. |
+| [[wiki/work/improve-windows-process-collection/brief]] | medium | Feature brief for replacing Security-log-based Windows process collection with a unified kernel-ETW sensor: true create times, restored stop coverage, snapshot refresh, SID/command-line enrichment, boot ETL ingestion, no schema/PidHash changes. |
+| [[wiki/work/improve-windows-process-collection/references]] | medium | Source map for the Windows process collection feature: current dual-path sensors, shared kernel session infrastructure, the validated sid-extraction-test POC (SID offsets, Global Logger boot procedure), and the harness/resolver pages it builds on. |
+| [[wiki/work/improve-windows-process-collection/design]] | medium | Design: one WindowsProcessSensor fusing boot ETL replay, live snapshot, classic kernel ProcessStart/End, and manifest ProcessStop metrics, with create-time canonicalization for PidHash integrity, per-field enrichment fallbacks, QA counters, and startup sequencing around the Global Logger boot session. |
 
 ---
 
-*Last updated: 2026-08-13 (fix-unbounded-process-table-growth Windows runtime check recorded; starting point: [[wiki/work/fix-unbounded-process-table-growth/verification]])*
+*Last updated: 2026-08-13 (new feature started: improve-windows-process-collection — interview, brief, references, and design created)*
