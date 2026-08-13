@@ -1,0 +1,6 @@
+# Keep repository text files stable across Windows and Unix tooling.
+* text=auto
+
+# Wiki pages are maintained as LF so merely opening/reading them on Windows does
+# not create CRLF-only working tree changes when core.autocrlf is enabled.
+*.md text eol=lf

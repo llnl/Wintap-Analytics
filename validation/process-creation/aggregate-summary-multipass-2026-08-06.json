@@ -1,0 +1,322 @@
+[
+  {
+    "case_metrics": [
+      {
+        "case": "fork_exec",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16476,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16475,
+        "parent_rows": 5,
+        "parent_seen": true
+      },
+      {
+        "case": "posix_spawn",
+        "child_exec_attempt_rows": 4,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 5,
+        "child_pid": 16478,
+        "child_rows": 5,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16477,
+        "parent_rows": 2,
+        "parent_seen": true
+      },
+      {
+        "case": "execveat_fexecve",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16483,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16482,
+        "parent_rows": 5,
+        "parent_seen": true
+      }
+    ],
+    "children_seen": 3,
+    "data_root": "/tmp/lintap-data-process-smoke-1786056354",
+    "expected_links": 3,
+    "expected_pids": 13,
+    "parent_hash_matches": 3,
+    "parents_seen": 3,
+    "passed": true,
+    "rc": 0,
+    "round": 1,
+    "short_metrics": {
+      "short_parent_pids": 1,
+      "true_child_parent_hash_rows": 2,
+      "true_child_pids": 2,
+      "true_child_rows": 2
+    },
+    "total_child_rows_for_validated_cases": 9,
+    "total_parent_rows_for_validated_cases": 12,
+    "validated_cases": 3
+  },
+  {
+    "case_metrics": [
+      {
+        "case": "fork_exec",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16560,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16559,
+        "parent_rows": 5,
+        "parent_seen": true
+      },
+      {
+        "case": "posix_spawn",
+        "child_exec_attempt_rows": 4,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 5,
+        "child_pid": 16562,
+        "child_rows": 5,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16561,
+        "parent_rows": 2,
+        "parent_seen": true
+      },
+      {
+        "case": "execveat_fexecve",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16567,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16566,
+        "parent_rows": 5,
+        "parent_seen": true
+      }
+    ],
+    "children_seen": 3,
+    "data_root": "/tmp/lintap-data-process-smoke-1786056555",
+    "expected_links": 3,
+    "expected_pids": 13,
+    "parent_hash_matches": 3,
+    "parents_seen": 3,
+    "passed": true,
+    "rc": 0,
+    "round": 2,
+    "short_metrics": {
+      "short_parent_pids": 1,
+      "true_child_parent_hash_rows": 1,
+      "true_child_pids": 1,
+      "true_child_rows": 1
+    },
+    "total_child_rows_for_validated_cases": 9,
+    "total_parent_rows_for_validated_cases": 12,
+    "validated_cases": 3
+  },
+  {
+    "case_metrics": [
+      {
+        "case": "fork_exec",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16651,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16650,
+        "parent_rows": 5,
+        "parent_seen": true
+      },
+      {
+        "case": "posix_spawn",
+        "child_exec_attempt_rows": 4,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 5,
+        "child_pid": 16653,
+        "child_rows": 5,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16652,
+        "parent_rows": 2,
+        "parent_seen": true
+      },
+      {
+        "case": "execveat_fexecve",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16658,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16657,
+        "parent_rows": 5,
+        "parent_seen": true
+      }
+    ],
+    "children_seen": 3,
+    "data_root": "/tmp/lintap-data-process-smoke-1786056756",
+    "expected_links": 3,
+    "expected_pids": 13,
+    "parent_hash_matches": 3,
+    "parents_seen": 3,
+    "passed": true,
+    "rc": 0,
+    "round": 3,
+    "short_metrics": {
+      "short_parent_pids": 1,
+      "true_child_parent_hash_rows": 1,
+      "true_child_pids": 1,
+      "true_child_rows": 1
+    },
+    "total_child_rows_for_validated_cases": 9,
+    "total_parent_rows_for_validated_cases": 12,
+    "validated_cases": 3
+  },
+  {
+    "case_metrics": [
+      {
+        "case": "fork_exec",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16739,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16738,
+        "parent_rows": 5,
+        "parent_seen": true
+      },
+      {
+        "case": "posix_spawn",
+        "child_exec_attempt_rows": 4,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 5,
+        "child_pid": 16741,
+        "child_rows": 5,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16740,
+        "parent_rows": 2,
+        "parent_seen": true
+      },
+      {
+        "case": "execveat_fexecve",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16746,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16745,
+        "parent_rows": 5,
+        "parent_seen": true
+      }
+    ],
+    "children_seen": 3,
+    "data_root": "/tmp/lintap-data-process-smoke-1786056957",
+    "expected_links": 3,
+    "expected_pids": 13,
+    "parent_hash_matches": 3,
+    "parents_seen": 3,
+    "passed": true,
+    "rc": 0,
+    "round": 4,
+    "short_metrics": {
+      "short_parent_pids": 1,
+      "true_child_parent_hash_rows": 1,
+      "true_child_pids": 1,
+      "true_child_rows": 1
+    },
+    "total_child_rows_for_validated_cases": 9,
+    "total_parent_rows_for_validated_cases": 12,
+    "validated_cases": 3
+  },
+  {
+    "case_metrics": [
+      {
+        "case": "fork_exec",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16822,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16821,
+        "parent_rows": 5,
+        "parent_seen": true
+      },
+      {
+        "case": "posix_spawn",
+        "child_exec_attempt_rows": 4,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 5,
+        "child_pid": 16827,
+        "child_rows": 5,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16826,
+        "parent_rows": 2,
+        "parent_seen": true
+      },
+      {
+        "case": "execveat_fexecve",
+        "child_exec_attempt_rows": 1,
+        "child_parent_ebpf_rows": 0,
+        "child_parent_proc_rows": 2,
+        "child_pid": 16832,
+        "child_rows": 2,
+        "child_sched_exec_rows": 1,
+        "child_seen": true,
+        "parent_hash_match": true,
+        "parent_pid": 16831,
+        "parent_rows": 5,
+        "parent_seen": true
+      }
+    ],
+    "children_seen": 3,
+    "data_root": "/tmp/lintap-data-process-smoke-1786057158",
+    "expected_links": 3,
+    "expected_pids": 13,
+    "parent_hash_matches": 3,
+    "parents_seen": 3,
+    "passed": true,
+    "rc": 0,
+    "round": 5,
+    "short_metrics": {
+      "short_parent_pids": 1,
+      "true_child_parent_hash_rows": 0,
+      "true_child_pids": 0,
+      "true_child_rows": 0
+    },
+    "total_child_rows_for_validated_cases": 9,
+    "total_parent_rows_for_validated_cases": 12,
+    "validated_cases": 3
+  }
+]

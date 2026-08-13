@@ -1,0 +1,87 @@
+---
+title: "Feature References: Improve pidstat Collector"
+type: concept
+confidence: medium
+grounded_by:
+  - raw/Issues/Long_Running_Cleanup.md
+  - ../Lintap/pidstat-collect.sh
+  - ../Wintappy/wintap_dbt/macros/pidstat.sql
+policy: agent-editable
+last_validated: 2026-08-11
+repo_scope: cross-repo
+implementation_area: data-pipeline
+event_domain: process
+audience: mixed
+status: draft
+source_paths: wiki/work/improve-pidstat-collector/references.md
+tags: [feature-work, references, lintap, pidstat]
+---
+
+# Feature References: Improve pidstat Collector
+
+## Live Repo Sources
+
+- `../Lintap/pidstat-collect.sh` — current collector: `pidstat -u -d -r -w -h 2`
+  piped through `tail`/`grep`/`awk` (prepends a date column, tab-delimited) into
+  one timestamped `.csv` under
+  `$1 | $PIDSTAT_DATA_PATH | $PIDSTAT_OUTPUT_PATH | $WINTAP_DATA_ROOT/pidstat`.
+- `../Lintap/teletap/pidstat.sql`, `../Lintap/teletap/load-pidstat.sql` —
+  earlier standalone DuckDB table definition and loader for the same format;
+  useful as schema reference and to keep in sync if the format changes.
+- `../Wintappy/wintap_dbt/macros/pidstat.sql` — `pidstat_data_path()`
+  (`$PIDSTAT_DATA_PATH` defaulting to `$WINTAP_DATA_ROOT/pidstat`),
+  `pidstat_csv_glob()` (`<path>/**/*.csv` — already rotation-friendly), and
+  `pidstat_data_exists()` guard.
+- `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql` — hardcoded
+  tab delimiter, `header=false`, explicit column list (`date_col`, `Time`,
+  `UID`, `PID`, `%usr` … `command`), `ignore_errors=true`. The compatibility
+  contract any collector change must respect.
+- `../Wintappy/wintap_dbt/models/silver/pidstat_metrics.sql` — passthrough of
+  bronze; downstream name analyses depend on.
+- `../Wintappy/wintap_dbt/README.md` (lines ~30, ~64) — documents
+  `PIDSTAT_DATA_PATH` and that pidstat CSV loading is optional (empty typed
+  table when absent).
+- `../wintap/wintap/core/etl/load/CacheManager.cs` and
+  `../wintap/wintap/core/etl/load/adapters/` (`S3Adapter.cs`,
+  `SignedS3UrlAdapter.cs`, `SMBFileShareAdapter.cs`, `base/Uploader.cs`) — the
+  sensor's existing upload pipeline for raw_sensor output; candidate ride-along
+  path for pidstat S3 push.
+- `../wintap/docs-agent/s3-smb-upload-layout-changes.md` — notes on the upload
+  layout.
+
+## External Sources
+
+- `pidstat(1)` / sysstat documentation — flag semantics (`-u -d -r -w -h`) and
+  interval behavior.
+
+## Related Wiki Pages
+
+- [[wiki/work/lintap-process-creation-validation/index]] — the research thread
+  whose validation runs already capture pidstat alongside Lintap; notes that
+  canonical Lintap source is `../wintap` on the Linux/eBPF branch, not the
+  legacy `../Lintap` repo.
+- [[wiki/work/lintap-process-creation-validation/current-state-2026-08-06]] —
+  the one-hour all-events dataset with pidstat capture (47454 lines/hour) and
+  the note that DBT finds pidstat automatically via
+  `$WINTAP_DATA_ROOT/pidstat/*.csv`.
+- [[wiki/repo/lintap-supporting-repo]] — `../Lintap` repo role and status.
+- [[wiki/repo/wintappy-pipeline-repo]] — the DBT/DuckDB consumer side.
+
+## Libraries And APIs
+
+- sysstat/pidstat (host dependency).
+- systemd (candidate lifecycle manager on target hosts).
+- AWS S3 (`aws` CLI or the sensor's existing .NET S3 adapter).
+
+## Notes
+
+- Motivating issue: `raw/Issues/Long_Running_Cleanup.md` — "Improve
+  pidstat-collector.sh [t]o run alongside lintap and push data to S3" to
+  understand CPU/memory over time vs. system load; same note records ~8M
+  event_store process rows over 10 days and a CPU-growth-with-DB-size
+  hypothesis this data should help confirm.
+- Observed volume baseline: 47454 pidstat lines in a ~1h quiet Multipass run
+  (2s interval), i.e. roughly 1.1M lines/day per idle-ish host before S3
+  compression considerations.
+- The DBT glob is already recursive (`**/*.csv`), so date/hour subdirectories
+  under the pidstat path would load today without macro changes.

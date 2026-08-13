@@ -1,0 +1,88 @@
+data root: /tmp/lintap-all-events-30m-1786120735
+parquet root: /tmp/lintap-all-events-30m-1786120735/parquet
+timeout: 180s
+traffic round 1/3
+  OK  http://example.com/
+  OK  https://example.com/
+  OK  https://www.cloudflare.com/cdn-cgi/trace
+  OK  https://httpbin.org/get
+traffic round 2/3
+  OK  http://example.com/
+  OK  https://example.com/
+  OK  https://www.cloudflare.com/cdn-cgi/trace
+  OK  https://httpbin.org/get
+traffic round 3/3
+  OK  http://example.com/
+  OK  https://example.com/
+  OK  https://www.cloudflare.com/cdn-cgi/trace
+  OK  https://httpbin.org/get
+udp traffic round 1/3
+  UDP -> 8.8.8.8:53 ok=True err=
+  UDP -> 1.1.1.1:53 ok=True err=
+udp traffic round 2/3
+  UDP -> 8.8.8.8:53 ok=True err=
+  UDP -> 1.1.1.1:53 ok=True err=
+udp traffic round 3/3
+  UDP -> 8.8.8.8:53 ok=True err=
+  UDP -> 1.1.1.1:53 ok=True err=
+
+expected endpoint targets:
+  http://example.com/ -> port 80, IPv4: 104.20.23.154, 172.66.147.243, request_ok=True
+  https://example.com/ -> port 443, IPv4: 104.20.23.154, 172.66.147.243, request_ok=True
+  https://www.cloudflare.com/cdn-cgi/trace -> port 443, IPv4: 104.16.123.96, 104.16.124.96, request_ok=True
+  https://httpbin.org/get -> port 443, IPv4: 100.60.224.175, 23.20.164.10, 32.196.52.218, 34.200.45.130, 44.222.0.225, 54.158.57.87, 54.243.153.26, 54.81.88.174, request_ok=True
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 179s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 174s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 169s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 164s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 159s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 154s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 149s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 144s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 139s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 134s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 129s remaining
+
+querying 1 recent parquet file(s)...
+waiting for parquet network data... 124s remaining
+
+querying 3 recent parquet file(s)...
+
+collected network rows for remote ports 53,80,443:
+  remote=127.0.0.53:53 protocol=UDP rows=14
+  remote=104.20.23.154:80 protocol=TCP rows=6
+  remote=104.16.123.96:443 protocol=TCP rows=6
+  remote=172.66.147.243:443 protocol=TCP rows=6
+  remote=34.200.45.130:443 protocol=TCP rows=6
+  remote=192.168.252.1:53 protocol=UDP rows=4
+  remote=172.66.147.243:80 protocol=TCP rows=3
+  remote=104.16.124.96:443 protocol=TCP rows=3
+  remote=104.20.23.154:443 protocol=TCP rows=3
+  remote=54.158.57.87:443 protocol=TCP rows=3
+  remote=8.8.8.8:53 protocol=UDP rows=1
+  remote=1.1.1.1:53 protocol=UDP rows=1
+
+PASS: captured recent outbound network records for the generated traffic.
+No exact target IP match required; validation passed on captured remote ports.

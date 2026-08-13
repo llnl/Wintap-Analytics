@@ -1,0 +1,321 @@
+{
+  "by_name": [
+    {
+      "closed_rows": 1836,
+      "open_rows": 59,
+      "process_name": "bash",
+      "rows": 1895,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 52,
+      "open_rows": 0,
+      "process_name": "python3",
+      "rows": 52,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 21,
+      "open_rows": 0,
+      "process_name": "sleep",
+      "rows": 21,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 3,
+      "open_rows": 1,
+      "process_name": "sudo",
+      "rows": 4,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 2,
+      "open_rows": 0,
+      "process_name": "kill",
+      "rows": 2,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 2,
+      "open_rows": 0,
+      "process_name": "sadc",
+      "rows": 2,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 1,
+      "open_rows": 0,
+      "process_name": "uv",
+      "rows": 1,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 1,
+      "open_rows": 0,
+      "process_name": "sh",
+      "rows": 1,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 1,
+      "open_rows": 0,
+      "process_name": "tee",
+      "rows": 1,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 1,
+      "open_rows": 0,
+      "process_name": "debian-sa1",
+      "rows": 1,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 1,
+      "open_rows": 0,
+      "process_name": "pkill",
+      "rows": 1,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 1,
+      "open_rows": 0,
+      "process_name": "wpv-noisy-processes",
+      "rows": 1,
+      "section": "by_name"
+    },
+    {
+      "closed_rows": 1,
+      "open_rows": 0,
+      "process_name": "seq",
+      "rows": 1,
+      "section": "by_name"
+    }
+  ],
+  "db": "/tmp/lintap-noisy-state-1786064182/event_store/main.duckdb",
+  "duplicate_pid": [
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30826,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30264,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30153,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30101,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30040,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29992,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29912,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29862,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29587,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29329,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 31063,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30938,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30902,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29256,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30754,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30582,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30530,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30518,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30329,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30280,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 30077,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29838,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29494,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29342,
+      "rows": 2,
+      "section": "duplicate_pid"
+    },
+    {
+      "identities": 2,
+      "open_rows": 1,
+      "process_id": 29316,
+      "rows": 2,
+      "section": "duplicate_pid"
+    }
+  ],
+  "manifest": "/tmp/validation-runs/noisy-state-1786064182/workload/manifest.json",
+  "manifest_by_name": [
+    {
+      "closed_rows": 1836,
+      "open_rows": 59,
+      "process_name": "bash",
+      "rows": 1895
+    },
+    {
+      "closed_rows": 52,
+      "open_rows": 0,
+      "process_name": "python3",
+      "rows": 52
+    }
+  ],
+  "manifest_info": {
+    "manifest_cases": 166,
+    "manifest_distinct_pids": 1888,
+    "manifest_processes": 1888
+  },
+  "manifest_pid_summary": [
+    {
+      "closed_manifest_pids": 1888,
+      "closed_rows_for_manifest_pids": 1888,
+      "joined_rows": 1947,
+      "manifest_pids": 1947,
+      "missing_manifest_pids": 59,
+      "observed_manifest_pids": 1888,
+      "open_manifest_pids": 59,
+      "open_rows_for_manifest_pids": 59
+    }
+  ],
+  "stop_only_like": [
+    {
+      "rows": 1120,
+      "section": "stop_only_like"
+    }
+  ],
+  "table_totals": [
+    {
+      "closed_rows": 1923,
+      "distinct_pid_hashes": 1983,
+      "distinct_pids": 1924,
+      "open_rows": 60,
+      "rows": 1983,
+      "section": "table_totals"
+    }
+  ]
+}

@@ -1,0 +1,155 @@
+data root: /tmp/lintap-all-events-30m-1786118104
+parquet root: /tmp/lintap-all-events-30m-1786118104/parquet
+timeout: 180s
+traffic round 1/3
+  OK  http://example.com/
+  OK  https://example.com/
+  OK  https://www.cloudflare.com/cdn-cgi/trace
+  OK  https://httpbin.org/get
+traffic round 2/3
+  OK  http://example.com/
+  OK  https://example.com/
+  OK  https://www.cloudflare.com/cdn-cgi/trace
+  ERR https://httpbin.org/get: The read operation timed out
+traffic round 3/3
+  OK  http://example.com/
+  OK  https://example.com/
+  OK  https://www.cloudflare.com/cdn-cgi/trace
+  OK  https://httpbin.org/get
+udp traffic round 1/3
+  UDP -> 8.8.8.8:53 ok=True err=
+  UDP -> 1.1.1.1:53 ok=True err=
+udp traffic round 2/3
+  UDP -> 8.8.8.8:53 ok=True err=
+  UDP -> 1.1.1.1:53 ok=True err=
+udp traffic round 3/3
+  UDP -> 8.8.8.8:53 ok=True err=
+  UDP -> 1.1.1.1:53 ok=True err=
+
+expected endpoint targets:
+  http://example.com/ -> port 80, IPv4: 104.20.23.154, 172.66.147.243, request_ok=True
+  https://example.com/ -> port 443, IPv4: 104.20.23.154, 172.66.147.243, request_ok=True
+  https://www.cloudflare.com/cdn-cgi/trace -> port 443, IPv4: 104.16.123.96, 104.16.124.96, request_ok=True
+  https://httpbin.org/get -> port 443, IPv4: 100.60.224.175, 23.20.164.10, 32.196.52.218, 34.200.45.130, 44.222.0.225, 54.158.57.87, 54.243.153.26, 54.81.88.174, request_ok=True
+
+querying 8 recent parquet file(s)...
+waiting for parquet network data... 179s remaining
+
+querying 8 recent parquet file(s)...
+waiting for parquet network data... 174s remaining
+
+querying 8 recent parquet file(s)...
+waiting for parquet network data... 169s remaining
+
+querying 8 recent parquet file(s)...
+waiting for parquet network data... 164s remaining
+
+querying 8 recent parquet file(s)...
+waiting for parquet network data... 159s remaining
+
+querying 8 recent parquet file(s)...
+waiting for parquet network data... 154s remaining
+
+querying 9 recent parquet file(s)...
+waiting for parquet network data... 149s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 144s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 139s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 134s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 129s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 124s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 119s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 114s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 108s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 103s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 98s remaining
+
+querying 11 recent parquet file(s)...
+waiting for parquet network data... 93s remaining
+
+querying 12 recent parquet file(s)...
+waiting for parquet network data... 88s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 83s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 78s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 73s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 68s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 62s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 57s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 52s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 47s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 42s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 37s remaining
+
+querying 14 recent parquet file(s)...
+waiting for parquet network data... 32s remaining
+
+querying 16 recent parquet file(s)...
+waiting for parquet network data... 27s remaining
+
+querying 17 recent parquet file(s)...
+waiting for parquet network data... 22s remaining
+
+querying 17 recent parquet file(s)...
+waiting for parquet network data... 17s remaining
+
+querying 5 recent parquet file(s)...
+waiting for parquet network data... 12s remaining
+
+querying 5 recent parquet file(s)...
+waiting for parquet network data... 7s remaining
+
+querying 5 recent parquet file(s)...
+waiting for parquet network data... 1s remaining
+
+FAIL: no matching recent network capture rows were found before timeout.
+Recent parquet files considered: 5
+  /tmp/lintap-all-events-30m-1786118104/parquet/raw_sensor/raw_process/dayPK=20260807/hourPK=16/lintap-dev+raw_process+134305920251561786.parquet
+  /tmp/lintap-all-events-30m-1786118104/parquet/raw_sensor/raw_host/dayPK=20260807/hourPK=16/lintap-dev+raw_host+134305920251561786.parquet
+  /tmp/lintap-all-events-30m-1786118104/parquet/raw_sensor/raw_process/dayPK=20260807/hourPK=16/lintap-dev+raw_processstop+134305920251561786.parquet
+  /tmp/lintap-all-events-30m-1786118104/parquet/raw_sensor/raw_process_file/dayPK=20260807/hourPK=16/lintap-dev+raw_file+134305920251561786.parquet
+  /tmp/lintap-all-events-30m-1786118104/parquet/raw_sensor/raw_macip/dayPK=20260807/hourPK=16/lintap-dev+raw_macip+134305920251561786.parquet
+
+Tips:
+  - Confirm Lintap/Wintap is running.
+  - Use a short flush interval / serialization interval during this test.
+  - Confirm parquet output is enabled.
+  - Pass --data-root if the service uses a custom DataRootPath.

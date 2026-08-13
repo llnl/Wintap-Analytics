@@ -77,3 +77,6 @@ tramp
 
 # Mac files
 .DS_Store
+
+# Obsidian vault state
+.obsidian/
