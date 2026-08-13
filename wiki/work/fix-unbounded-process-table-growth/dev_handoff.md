@@ -29,6 +29,10 @@ Use this prompt to hand the work to a code-development agent:
 
     - wiki/work/fix-unbounded-process-table-growth/brief.md
     - wiki/work/fix-unbounded-process-table-growth/references.md
+    - wiki/work/fix-unbounded-process-table-growth/design.md
+    - wiki/work/fix-unbounded-process-table-growth/implementation_plan.md
+    - wiki/work/fix-unbounded-process-table-growth/verification.md (includes
+      the 2026-08-13 Independent Review findings)
     - wiki/work/fix-unbounded-process-table-growth/dev_handoff.md
 
     Goal: continue long-run validation for the bounded currentish-process

@@ -119,6 +119,10 @@ multipass exec lintap-dev -- bash -lc "cd /home/ubuntu/git/Wintap-Analytics/vali
 
 ## Known Gaps
 
+- Windows runtime behavior unverified (compile only): reconciliation via
+  `Process.GetProcessById` and retention interplay with
+  `ClearDB`/startup replay need a Windows regression check before feature
+  closeout.
 - No long-duration plateau run yet.
 - No before/after pidstat-based CPU correlation run yet.
 - No direct DuckDB compaction/reclaim measurement yet.
@@ -126,6 +130,44 @@ multipass exec lintap-dev -- bash -lc "cd /home/ubuntu/git/Wintap-Analytics/vali
 - Remaining misses are concentrated in very recent end-of-run processes and a small number of stale open rows; the long-lived daemon mismatch that originally broke rundown-enabled validation appears fixed.
 - End-of-run live-process coverage is now measured correctly against a pre-stop snapshot, so the residual miss count is a real signal rather than a summary-window artifact.
 - With `Clone=true`, pre-stop live-process coverage reached `0` missing live PIDs in both the short and 10-minute validation runs.
+
+## Independent Review (2026-08-13)
+
+Reviewed by the wiki-maintainer session after the slice-1 commits landed
+(`../wintap` 9d9c6fb; this repo 22702eb, 3483ab6, 4c797b3).
+
+Independently re-verified in `lintap-dev`: `Lintap.csproj` build (0 errors)
+and the validation pytest suite (5 passed).
+
+Code-review assessment of `ProcessResolver.cs`:
+
+- The integrity constraints hold by construction: the retention delete's
+  predicate (`exit_time IS NOT NULL AND exit_time < cutoff`) cannot touch
+  open rows; reconciliation is gated by min-age, closes only on live-hash
+  mismatch, and repairs (with a collision guard) rather than closes when the
+  live start time matches within 2 s. Failure backoff, telemetry SQL
+  escaping, and stop-closed/pending-exit dedup all check out.
+- The `/proc/stat btime` boot-time basis fix is a genuinely durable
+  correction — the old uptime-derived basis drifted, which is what broke
+  rundown-row reconciliation.
+
+Findings (minor, none blocking):
+
+1. Windows runtime behavior is compile-verified only: the
+   `Process.GetProcessById` reconciliation path and retention's interplay
+   with `ClearDB`/`SendProcessTreeToEsper` replay have not been exercised.
+   Added to Known Gaps and the plan checklist.
+2. `GetLinuxBootTimeUtc()` caches `DateTime.UtcNow` as the boot time if
+   `btime` is missing/unparseable — a silent wrong-hash generator for the
+   rest of the run. Unlikely on real Linux, but the fallback should not be
+   cached.
+3. Repair-collision warnings are logged uncapped every sweep for the same
+   stuck row (mismatch-close logging is capped at 25); a pathological row
+   could spam the log.
+
+Review verdict: slice 1 accepted. The QA-telemetry-first design proved
+itself — the rundown reconciliation bug was found by the feature's own
+metrics, not by chance.
 
 ## Follow-Ups
 

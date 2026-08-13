@@ -98,8 +98,8 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/fix-unbounded-process-table-growth/design]] | medium | First-slice design: lazy resolver-owned sweep scheduling, liveness-based stale-open reconciliation, exited-row retention, and DuckDB telemetry for stop/reconciled/deleted/retention-miss counts. |
 | [[wiki/work/fix-unbounded-process-table-growth/implementation_plan]] | medium | First-slice implementation checklist for resolver retention/reconciliation, harness updates, VM builds, and the remaining long-run follow-up work. |
 | [[wiki/work/fix-unbounded-process-table-growth/dev_handoff]] | medium | Dev handoff authorizing ../wintap changes: retention sweep + liveness reconciliation as QA feature + retention-miss metric, delegated decisions, first slice, testing and closeout duties. |
-| [[wiki/work/fix-unbounded-process-table-growth/verification]] | medium | VM-based verification log for the first retention slice: Linux build, validation pytest, Windows compile, and a short noisy retention run with telemetry totals. |
+| [[wiki/work/fix-unbounded-process-table-growth/verification]] | medium | Slice-1 verification and accepted 2026-08-13 review: builds/pytest (independently re-verified), rundown-reconciliation bug found via QA telemetry and fixed, clone-sensor runs reaching 0 missing live PIDs, and remaining gaps before closeout. |
 
 ---
 
-*Last updated: 2026-08-13 (fix-unbounded-process-table-growth: first implementation slice verified in lintap-dev VM)*
+*Last updated: 2026-08-13 (fix-unbounded-process-table-growth slice 1 reviewed and accepted; closeout checklist prepared)*
