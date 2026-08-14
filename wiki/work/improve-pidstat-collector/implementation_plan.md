@@ -51,6 +51,18 @@ authorization for sibling-repo changes per `AGENTS.md`.
    conversion failure. Also document `-p ALL` and the env knobs in
    `../Lintap/README.md` (decision already recorded in `design.md`).
    *(Slice 2.)*
+6b. **Fork-free hot loop** (field finding 2026-08-14, CRITICAL — see
+   [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]]): the
+   per-line command substitutions in `run_collector`/`normalize_pidstat_line`
+   fork ~7 subshells per pidstat line (~700 forks/sec with `-p ALL`),
+   flooding the sensor with bash/date process events — a self-observation
+   feedback storm that also pollutes raw_process data. Fix: normalize into a
+   global variable (no `$(...)` capture), bash-builtin
+   `printf '%(%s)T' -1` for epoch time, date column from window-start epoch
+   (merges with the midnight fix above), plain variables for spool/meta
+   paths. Add a regression guard: a test asserting the steady-state loop
+   spawns no child processes (e.g., compare `/proc/stat processes` delta
+   over a sampling window against the pidstat-only baseline). *(Slice 2.)*
 7. **Wintappy DBT change**: parquet-oriented pidstat macros
    (`raw_sensor/pidstat/**/*.parquet` default, `PIDSTAT_DATA_PATH` still
    honored) and `read_parquet` bronze model with `filename=true` provenance;

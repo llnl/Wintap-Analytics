@@ -77,6 +77,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 |------|------------|---------|
 | [[wiki/diagnostic/nesper-repro]] | high | Documents the standalone Fedora/shared-mount NEsper repro and the evidence that Bad IL range failures are output-location related. |
 | [[wiki/diagnostic/dependency-inventory-and-update-status]] | medium | Inventories Python, npm, and .NET dependency manifests across the ecosystem and records observed update availability with tooling caveats. |
+| [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]] | medium | RHEL 8 field findings: clone sensor attaches (Fedora failure doesn't generalize), the fork-without-exec warning signature (parent = child−1), and a suspected ~500-700 forks/sec storm with event-processing lag under investigation. |
 ## Work
 
 | Page | Confidence | Summary |
@@ -102,4 +103,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-13 (fix-unbounded-process-table-growth Windows runtime check recorded; starting point: [[wiki/work/fix-unbounded-process-table-growth/verification]])*
+*Last updated: 2026-08-14 (RHEL 8 field diagnostic: clone sensor attach + fork-without-exec investigation)*

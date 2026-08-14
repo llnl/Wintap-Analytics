@@ -80,3 +80,6 @@ tramp
 
 # Obsidian vault state
 .obsidian/
+
+# Wintap sensor runtime state files (per-machine AgentId; do not commit)
+wintapstate.json
