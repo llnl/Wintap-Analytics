@@ -9,7 +9,7 @@ grounded_by:
   - ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
   - ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs
 policy: agent-editable
-last_validated: 2026-08-11
+last_validated: 2026-08-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -81,6 +81,11 @@ for rationale and mechanism):
   over the new layout).
 - Enable the motivating analysis: correlate Lintap process resource use with
   system load and event_store growth over multi-day runs.
+- Added 2026-08-14 (human, "huge plus"): per-process container attribution —
+  cgroup path, namespace identity, and best-effort container runtime/ID
+  columns from `/proc/<pid>/cgroup` and `/proc/<pid>/ns/pid` (see the
+  telemetry-source investigation in
+  [[wiki/work/improve-pidstat-collector/design]]).
 
 ## Non-Goals
 

@@ -6,7 +6,7 @@ grounded_by:
   - wiki/work/improve-pidstat-collector/brief.md
   - wiki/work/improve-pidstat-collector/design.md
 policy: agent-editable
-last_validated: 2026-08-12
+last_validated: 2026-08-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -43,26 +43,38 @@ authorization for sibling-repo changes per `AGENTS.md`.
 5. **systemd unit** in `../Lintap/packaging/` (`Restart=always`), plus README
    notes; keep `pidstat-collect.sh` untouched as the simple example.
    *(Slice 2.)*
-6. **Review follow-ups in the collector** (from the 2026-08-12 review in
-   `verification.md`): derive `sample_date` from the window-start epoch
-   instead of processing-time `date` (midnight correctness); emit valid
-   leading records from a partially malformed glued chunk instead of dropping
-   the whole chunk; capture DuckDB stderr into the collector log on
-   conversion failure. Also document `-p ALL` and the env knobs in
-   `../Lintap/README.md` (decision already recorded in `design.md`).
-   *(Slice 2.)*
-6b. **Fork-free hot loop** (field finding 2026-08-14, CRITICAL — see
-   [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]]): the
-   per-line command substitutions in `run_collector`/`normalize_pidstat_line`
-   fork ~7 subshells per pidstat line (~700 forks/sec with `-p ALL`),
-   flooding the sensor with bash/date process events — a self-observation
-   feedback storm that also pollutes raw_process data. Fix: normalize into a
-   global variable (no `$(...)` capture), bash-builtin
-   `printf '%(%s)T' -1` for epoch time, date column from window-start epoch
-   (merges with the midnight fix above), plain variables for spool/meta
-   paths. Add a regression guard: a test asserting the steady-state loop
-   spawns no child processes (e.g., compare `/proc/stat processes` delta
-   over a sampling window against the pidstat-only baseline). *(Slice 2.)*
+6. **Rewrite the collector in Python** (`../Lintap/pidstat-collector.py`;
+   decided 2026-08-14 after the RHEL 8 fork storm — see design.md and
+   [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]]).
+   Single process converting closed windows with the duckdb Python API.
+   Telemetry source per the design's 2026-08-14 investigation: implement
+   behind a small sampler interface — preferred option B (stdlib `/proc`
+   sampler, zero children, full schema coverage), with option A (one
+   `pidstat -u -d -r -w -h -p ALL <interval>` child) as the conservative
+   fallback and as the side-by-side test oracle either way; record the
+   choice in design.md. Container attribution (added 2026-08-14): emit
+   `cgroup_path`, `pid_ns_inode`, and best-effort
+   `container_runtime`/`container_id` from `/proc/<pid>/cgroup` and
+   `/proc/<pid>/ns/pid` (v1/hybrid and v2 formats), cached per
+   (pid, starttime); the Wintappy bronze migration in step 7 adds the same
+   columns so the schema changes once. Requirements (validated slice-1 semantics carry
+   over): identical `PIDSTAT_*` env interface; spool/pending/meta
+   crash-salvage mechanics outside the swept tree; `dayPK=/hourPK=`
+   partitioning, file naming, and atomic rename; bronze schema + `hostname`;
+   accumulation guard; SIGTERM sealing; empty-window skip. The rewrite
+   absorbs all three open review findings: row date from the window-start
+   epoch (midnight fix), glued-record parsing that keeps valid leading
+   records (port the bash test fixture), and full exception detail logged on
+   conversion failure. Retire `pidstat-collector.sh` (delete; git history
+   preserves it); `pidstat-collect.sh` stays as the simple example.
+   Decide and record the Python runtime/packaging approach (RHEL 8 default
+   python3 is 3.6 — too old for duckdb wheels; see design open question).
+6b. **Port the test suite to pytest** in `../Lintap` (uv project exists):
+   all seven bash test cases (conversion/partitioning, loop parsing,
+   glued records, salvage, byte cap, age cap, live row preservation) plus
+   two new guards — the midnight/window-date case, and a fork regression
+   test asserting steady-state child processes == the single pidstat
+   (e.g., `/proc/stat processes` delta vs. pidstat-only baseline).
 7. **Wintappy DBT change**: parquet-oriented pidstat macros
    (`raw_sensor/pidstat/**/*.parquet` default, `PIDSTAT_DATA_PATH` still
    honored) and `read_parquet` bronze model with `filename=true` provenance;
@@ -83,7 +95,9 @@ authorization for sibling-repo changes per `AGENTS.md`.
 
 ## Files Likely To Change
 
-- `../Lintap/pidstat-collector.sh` (new), `../Lintap/packaging/…` (new unit),
+- `../Lintap/pidstat-collector.py` (new) and `pidstat-collector.sh`
+  (deleted), `../Lintap/tests/` (pytest port), `../Lintap/pyproject.toml`
+  (duckdb dependency), `../Lintap/packaging/…` (new unit),
   `../Lintap/README.md`.
 - `../Wintappy/wintap_dbt/macros/pidstat.sql`,
   `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql`,
@@ -92,8 +106,8 @@ authorization for sibling-repo changes per `AGENTS.md`.
 
 ## Tests To Add Or Update
 
-- shellcheck in whatever lint path `../Lintap` uses.
-- Rotation/kill/salvage shell tests (bats or minimal harness).
+- pytest in `../Lintap` (uv): the seven ported cases, the midnight/window-date
+  case, and the fork regression guard.
 - Wintappy DBT: pidstat model builds against a parquet fixture; empty-input
   path still yields the typed empty table.
 
@@ -121,10 +135,14 @@ authorization for sibling-repo changes per `AGENTS.md`.
 - [x] Step 1 verification recorded; design open questions resolved
 - [x] Collector + rotation + conversion working locally
 - [x] Crash salvage + accumulation guard tested
-- [ ] Review follow-ups fixed (midnight date, glued-chunk partial emission, DuckDB error logging) with tests
-- [ ] `-p ALL` and env knobs documented in ../Lintap/README.md
-- [ ] systemd unit installs and survives reboot
+- [ ] Python collector (`pidstat-collector.py`) implements all carried-over semantics; bash `pidstat-collector.sh` retired
+- [ ] Telemetry source chosen per design investigation (B preferred) and recorded; pidstat-oracle comparison test green
+- [ ] Container attribution columns emitted (cgroup_path, pid_ns_inode, runtime/id) and covered by tests incl. a containerized-process fixture where the environment allows
+- [ ] Review findings absorbed: window-epoch date, glued-record partial emission, conversion errors logged with detail
+- [ ] pytest suite ported (7 cases) + midnight case + fork regression guard; all green
+- [ ] Python runtime/packaging decided and recorded (RHEL 8 python3.6 constraint)
+- [ ] `-p ALL`, env knobs, and Python deps documented in ../Lintap/README.md
+- [ ] systemd unit (pinned interpreter) installs and survives reboot
 - [ ] Wintappy DBT updated (parquet macros/bronze, legacy-CSV path decided); fixture test green
-- [ ] shellcheck run clean (install or container)
 - [ ] 1h+ end-to-end run with S3 upload + local delete confirmed
 - [ ] verification.md filled in; durable facts promoted; log updated

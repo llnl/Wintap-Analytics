@@ -90,9 +90,9 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/lintap-process-creation-validation/current-state-2026-08-06]] | medium | Current checkpoint summary for committed process-state fixes, one-hour noisy validation results, remaining leakage, and next steps. |
 | [[wiki/work/improve-pidstat-collector/brief]] | medium | Feature brief for making the pidstat collector run alongside Lintap with lifecycle management, time-based rotation, S3 push, and DBT `stg_pidstat_metrics` compatibility. |
 | [[wiki/work/improve-pidstat-collector/references]] | medium | Cross-repo source map for the pidstat collector feature: Lintap script, Wintappy DBT macros/models, wintap upload adapters, and observed data volumes. |
-| [[wiki/work/improve-pidstat-collector/design]] | medium | Design: continuous service, spool-then-parquet rotation into `raw_sensor/pidstat/dayPK=/hourPK=`, ride-along on the sensor's verified type-agnostic upload sweep, coordinated Wintappy parquet change. |
-| [[wiki/work/improve-pidstat-collector/implementation_plan]] | medium | Nine-step plan with slice-2 scope marked: review follow-up fixes, systemd unit, Wintappy DBT parquet migration, verification runs, closeout promotion; steps 1–4 complete. |
-| [[wiki/work/improve-pidstat-collector/dev_handoff]] | medium | Slice-2 handoff for a code-development agent on another system: review fixes, `-p ALL` README documentation, systemd packaging, and Wintappy parquet migration, with `../Lintap` + `../Wintappy` authorization. |
+| [[wiki/work/improve-pidstat-collector/design]] | medium | Design: single-process Python collector (2026-08-14 decision) with telemetry-source investigation (/proc sampler preferred over pidstat child and psutil; container attribution via cgroup/ns), spool-then-parquet rotation into `raw_sensor/pidstat/dayPK=/hourPK=`, sensor upload ride-along, coordinated Wintappy parquet change. |
+| [[wiki/work/improve-pidstat-collector/implementation_plan]] | medium | Plan with slice 2 redefined (2026-08-14) as a Python rewrite: single-process collector on the duckdb Python API absorbing all review findings, pytest port with fork regression guard, systemd unit, Wintappy DBT parquet migration; steps 1–4 complete. |
+| [[wiki/work/improve-pidstat-collector/dev_handoff]] | medium | Slice-2 handoff: rewrite the collector in Python (retiring the fork-storm bash version), hard single-process requirement, carried-over semantics as spec, pytest port, systemd, and Wintappy parquet migration, with `../Lintap` + `../Wintappy` authorization. |
 | [[wiki/work/improve-pidstat-collector/verification]] | medium | Command log and first-slice results for the new Lintap pidstat collector: environment checks, Linux ride-along verification, shell tests, and live parquet smoke run. |
 | [[wiki/work/fix-unbounded-process-table-growth/brief]] | medium | Feature brief for bounding event_store process-table growth on long runs (8M rows/10 days observed) with retention + stale-open reconciliation while preserving PID-reuse-safe process resolution. |
 | [[wiki/work/fix-unbounded-process-table-growth/references]] | medium | Source map for the process-table retention feature: ProcessResolver/EventChannel hot paths, ClearDB call sites, validation-harness baseline, decisions to date, DuckDB space-reclamation questions. |
@@ -103,4 +103,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-14 (RHEL 8 field diagnostic: clone sensor attach + fork-without-exec investigation)*
+*Last updated: 2026-08-14 (pidstat slice 2 redefined: Python rewrite after fork-storm diagnosis)*

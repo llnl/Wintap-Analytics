@@ -7,7 +7,7 @@ grounded_by:
   - ../Lintap/pidstat-collect.sh
   - ../Wintappy/wintap_dbt/macros/pidstat.sql
 policy: agent-editable
-last_validated: 2026-08-11
+last_validated: 2026-08-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -53,6 +53,12 @@ tags: [feature-work, references, lintap, pidstat]
 
 - `pidstat(1)` / sysstat documentation — flag semantics (`-u -d -r -w -h`) and
   interval behavior.
+- `proc(5)` — field layouts for `/proc/<pid>/stat` (incl. minflt/majflt,
+  delayacct_blkio_ticks, guest_time, starttime), `/proc/<pid>/io`,
+  `/proc/<pid>/status`, `/proc/<pid>/schedstat`; the first-party feed behind
+  telemetry-source option B (see design.md).
+- psutil documentation — evaluated as option C; Linux API lacks page faults,
+  guest time, and iodelay, so it cannot fill the bronze schema alone.
 
 ## Related Wiki Pages
 
