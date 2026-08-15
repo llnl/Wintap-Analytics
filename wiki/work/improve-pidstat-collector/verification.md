@@ -275,6 +275,9 @@ Result: a temp unit using the new launcher shape verified cleanly in `lintap-dev
 
 ### Results
 
+- Branch note: the slice-2 implementation work is recorded on
+  `grantj-rhel8-testing` in `Wintap-Analytics/`, `../Lintap`, and
+  `../Wintappy`.
 - Slice 2 core implementation completed in `../Lintap`: the bash collector was retired and replaced with `pidstat-collector.py`, a single-process `/proc` sampler using the DuckDB Python API.
 - The new pytest suite passed with 12 tests on `lintap-dev`, covering: parquet conversion/partitioning, pidstat-oracle parsing, glued-record handling, malformed-tail partial emission, salvage, byte cap, age cap, midnight/window-date behavior, container-path parsing, pidstat-oracle agreement, zero-child fork regression, and a live uv-run collector smoke test.
 - The chosen telemetry source is option B (`/proc`) with pidstat retained only as the oracle in tests.
