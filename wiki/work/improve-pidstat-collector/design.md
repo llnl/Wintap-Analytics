@@ -14,7 +14,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/shared/Utilities.cs
   - ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
 policy: agent-editable
-last_validated: 2026-08-14
+last_validated: 2026-08-15
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -170,6 +170,34 @@ from collector data directly.
 The dev records the chosen source in this page and implements the sampler
 behind a small interface so the choice stays swappable.
 
+### Implemented Source Choice (2026-08-15)
+
+- Implemented **Option B** in `../Lintap/pidstat-collector.py`: a stdlib
+  `/proc` sampler with no steady-state child processes. The collector samples
+  `/proc/<pid>/stat`, `/proc/<pid>/status`, `/proc/<pid>/io`,
+  `/proc/<pid>/schedstat`, `/proc/<pid>/cgroup`, and `/proc/<pid>/ns/pid`,
+  caches container metadata by `(pid, starttime)`, and computes deltas/rates
+  in-process. PID reuse is detected by `starttime`.
+- The old `pidstat` text path is retained only as a **test oracle** in the new
+  pytest suite. The live oracle test runs a short workload, samples the target
+  PID with both the `/proc` sampler and `pidstat -u -d -r -w -h -p <pid> 1 1`,
+  and asserts CPU, RSS, and write-rate agreement within tolerance on
+  `lintap-dev`.
+- The steady-state fork-regression guard now verifies the collector process has
+  zero child PIDs via `/proc/<pid>/task/<pid>/children`, which is stricter than
+  the original "one pidstat child allowed" requirement because the chosen
+  source no longer needs the fallback child.
+
+### Implemented Container Attribution (2026-08-15)
+
+- The collector now emits `cgroup_path`, `pid_ns_inode`,
+  `container_runtime`, and `container_id` alongside the previously validated
+  bronze columns plus `hostname`.
+- Runtime/ID parsing is best-effort and nullable. The raw `cgroup_path` is
+  always preserved even when the runtime heuristic fails.
+- Unit coverage now includes both cgroup v1-style Docker paths and cgroup v2
+  Podman-style `libpod-<id>.scope` paths.
+
 ## Proposed Approach
 
 ### Mechanism facts this design relies on (verified 2026-08-11)
@@ -202,9 +230,9 @@ behind a small interface so the choice stays swappable.
 
 ### Collector loop
 
-1. Run `pidstat -u -d -r -w -h -p ALL <interval>` (default 5 s) continuously
-   (`-p ALL` per the post-review decision above),
-   appending raw samples to an in-progress spool file **outside** the
+1. Sample `/proc` for **all processes** every `PIDSTAT_INTERVAL_SEC` seconds
+   (default 5 s; equivalent to the accepted `-p ALL` semantics), appending
+   normalized TSV rows to an in-progress spool file **outside** the
    `raw_sensor/` tree (e.g., `$WINTAP_DATA_ROOT/pidstat-spool/current.tsv`),
    so the uploader can never see a partial window.
 2. On each rotation boundary (aligned to wall-clock so windows map cleanly to
@@ -237,8 +265,8 @@ what was dropped.
 
 ### Wintappy coordinated change
 
-- `pidstat_data_path()` / `pidstat_csv_glob()` macros become parquet-oriented:
-  default glob `$WINTAP_DATA_ROOT/raw_sensor/pidstat/**/*.parquet`, with
+- `pidstat_data_path()` / `pidstat_parquet_glob()` macros become parquet-oriented:
+  default glob `$WINTAP_DATA_ROOT/parquet/raw_sensor/pidstat/**/*.parquet`, with
   `PIDSTAT_DATA_PATH` still honored for overrides.
 - `stg_pidstat_metrics` becomes a `read_parquet` passthrough (casting already
   done at collection time); the silver model is unchanged.
@@ -246,10 +274,9 @@ what was dropped.
 ## Data Model Or Schema Changes
 
 Parquet columns = today's `stg_pidstat_metrics` output columns (time, uid,
-pid, usr_percent … command, filename-equivalent provenance column TBD). One
-addition: a `hostname` column, since data from many hosts lands in one S3
-bucket (raw_sensor rows carry host identity via filename convention;
-pidstat should carry it in-band).
+pid, usr_percent … command) plus `hostname`, `cgroup_path`, `pid_ns_inode`,
+`container_runtime`, and `container_id`. Filename provenance is now supplied
+in Wintappy via `read_parquet(..., filename=true)`.
 
 ## Edge Cases
 
@@ -269,6 +296,8 @@ pidstat should carry it in-band).
   the existing script.
 - Conversion failure keeps the spool file and retries next cycle rather than
   dropping samples.
+- The Python rewrite now logs full stack traces for DuckDB conversion failures
+  before leaving the pending spool in place for retry, closing review finding 4.
 
 ## Risks
 
@@ -318,12 +347,23 @@ pidstat should carry it in-band).
   caused the RHEL 8 fork storm and the code had grown unreadable; see the
   slice-2 decision section above and
   [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]].
-- Python runtime/packaging on targets: RHEL 8's default `python3` is 3.6,
-  too old for current duckdb wheels — pick the minimum Python (RHEL 8
-  offers 3.9/3.11 modules), and decide how the collector ships (uv-managed
-  venv from `../Lintap`'s project vs. system python + pip). The systemd unit
-  must pin the chosen interpreter path.
-- Migration of already-collected tab-CSV data: one-time DuckDB conversion
-  script, or keep a legacy `read_csv` union in bronze for one release?
+- Resolved 2026-08-15 (revised later the same day after validation): target
+  runtime/packaging is a **`uv`-managed dedicated venv** plus a small launcher,
+  not a hardcoded host interpreter path. The packaged service now runs:
+  `/bin/bash /usr/lib/lintap/pidstat-collector-launch.sh`, which resolves the
+  interpreter from `PIDSTAT_VENV_DIR` (default
+  `/opt/lintap/pidstat-collector/.venv`) and execs
+  `pidstat-collector.py` from that venv. A companion bootstrap script,
+  `pidstat-collector-bootstrap.sh`, creates the venv with `uv venv` and
+  installs DuckDB into it.
+
+  Default bootstrap runtime is `PIDSTAT_BOOTSTRAP_PYTHON=3.12`, which keeps the
+  collector inside its supported `3.11 <= python < 3.13` range while still
+  letting `uv` locate or download the interpreter per host. This avoids the
+  operational brittleness of pinning `/usr/bin/python3.11` while preserving
+  correctness (the service still runs as root for full `/proc` visibility).
+- Resolved 2026-08-15: Wintappy bronze is now **parquet-only** for pidstat.
+  No temporary CSV/parquet union was added. Existing legacy tab-CSV datasets
+  must be converted out-of-band before being run through the updated DBT model.
 - Should the validation harness (lintap validation thread) switch its pidstat
   capture to the new collector once it exists?

@@ -6,7 +6,7 @@ grounded_by:
   - wiki/work/improve-pidstat-collector/brief.md
   - wiki/work/improve-pidstat-collector/design.md
 policy: agent-editable
-last_validated: 2026-08-14
+last_validated: 2026-08-15
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -135,14 +135,14 @@ authorization for sibling-repo changes per `AGENTS.md`.
 - [x] Step 1 verification recorded; design open questions resolved
 - [x] Collector + rotation + conversion working locally
 - [x] Crash salvage + accumulation guard tested
-- [ ] Python collector (`pidstat-collector.py`) implements all carried-over semantics; bash `pidstat-collector.sh` retired
-- [ ] Telemetry source chosen per design investigation (B preferred) and recorded; pidstat-oracle comparison test green
+- [x] Python collector (`pidstat-collector.py`) implements all carried-over semantics; bash `pidstat-collector.sh` retired
+- [x] Telemetry source chosen per design investigation (B preferred) and recorded; pidstat-oracle comparison test green
 - [ ] Container attribution columns emitted (cgroup_path, pid_ns_inode, runtime/id) and covered by tests incl. a containerized-process fixture where the environment allows
-- [ ] Review findings absorbed: window-epoch date, glued-record partial emission, conversion errors logged with detail
-- [ ] pytest suite ported (7 cases) + midnight case + fork regression guard; all green
-- [ ] Python runtime/packaging decided and recorded (RHEL 8 python3.6 constraint)
-- [ ] `-p ALL`, env knobs, and Python deps documented in ../Lintap/README.md
-- [ ] systemd unit (pinned interpreter) installs and survives reboot
-- [ ] Wintappy DBT updated (parquet macros/bronze, legacy-CSV path decided); fixture test green
+- [x] Review findings absorbed: window-epoch date, glued-record partial emission, conversion errors logged with detail
+- [x] pytest suite ported (7 cases) + midnight case + fork regression guard; all green
+- [x] Python runtime/packaging decided and recorded (RHEL 8 python3.6 constraint)
+- [x] `-p ALL`, env knobs, and Python deps documented in ../Lintap/README.md
+- [ ] systemd unit (uv-managed venv launcher) installs and survives reboot
+- [x] Wintappy DBT updated (parquet macros/bronze, legacy-CSV path decided); fixture test green
 - [ ] 1h+ end-to-end run with S3 upload + local delete confirmed (blocked on [[wiki/work/fix-upload-cache-deletion/brief]] — delete-after-upload currently never fires)
 - [ ] verification.md filled in; durable facts promoted; log updated
