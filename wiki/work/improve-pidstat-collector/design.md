@@ -179,9 +179,15 @@ behind a small interface so the choice stays swappable.
   uploader; it is event-type-agnostic, so a new `raw_sensor/pidstat/` subtree
   rides along without sensor changes.
   <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/CacheManager.cs §upload() -->
-- `Uploader_UploadCompleted` deletes each parquet after a successful upload,
-  so local retention after upload is already handled.
-  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/CacheManager.cs §Uploader_UploadCompleted -->
+- ~~`Uploader_UploadCompleted` deletes each parquet after a successful
+  upload, so local retention after upload is already handled.~~
+  **Corrected 2026-08-15:** the delete handler exists and is subscribed, but
+  no adapter ever raises `UploadCompleted` — the sensor currently re-uploads
+  every cached parquet each cycle and never deletes. Confirmed by an
+  overnight field test and code review; fix tracked in
+  [[wiki/work/fix-upload-cache-deletion/brief]]. Until it lands, the
+  collector's accumulation guard is the only effective local-disk bound.
+  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/CacheManager.cs §Uploader_UploadCompleted (handler), §upload() (unused successfulUpload); adapters/S3Adapter.cs §UploadCompleted (declared, never invoked) -->
 - Uploaders build the S3 key from the path relative to the parquet root
   (`raw_sensor/<type>/dayPK=…/hourPK=…/file.parquet`), so the S3 layout
   mirrors the local layout automatically.

@@ -144,5 +144,5 @@ authorization for sibling-repo changes per `AGENTS.md`.
 - [ ] `-p ALL`, env knobs, and Python deps documented in ../Lintap/README.md
 - [ ] systemd unit (pinned interpreter) installs and survives reboot
 - [ ] Wintappy DBT updated (parquet macros/bronze, legacy-CSV path decided); fixture test green
-- [ ] 1h+ end-to-end run with S3 upload + local delete confirmed
+- [ ] 1h+ end-to-end run with S3 upload + local delete confirmed (blocked on [[wiki/work/fix-upload-cache-deletion/brief]] — delete-after-upload currently never fires)
 - [ ] verification.md filled in; durable facts promoted; log updated

@@ -71,9 +71,11 @@ for rationale and mechanism):
   type-agnostically and each uploader preserves the relative path as the S3
   key — the S3 layout therefore mirrors raw_sensor so DBT/pull tooling can
   fetch both uniformly, with no C# changes expected.
-- Keep local disk bounded: the sensor's uploader already deletes each parquet
-  after confirmed upload; the collector needs only a guard for accumulation
-  while the sensor is down.
+- Keep local disk bounded: the collector's accumulation guard is the
+  effective bound. (Corrected 2026-08-15: the sensor's delete-after-upload
+  was found never to fire — adapters never raise `UploadCompleted` — so
+  uploads currently repeat and nothing deletes; fix tracked in
+  [[wiki/work/fix-upload-cache-deletion/brief]].)
 - Deliberately version the downstream contract: Wintappy's
   `stg_pidstat_metrics` currently hardcodes tab-delimited
   `read_csv('$PIDSTAT_DATA_PATH/**/*.csv')`; moving to parquet requires a

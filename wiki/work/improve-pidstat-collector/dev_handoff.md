@@ -133,6 +133,12 @@ As you work:
 
 ## Handoff Summary
 
+Known issue (2026-08-15): the sensor's delete-after-upload never fires
+(adapters never raise `UploadCompleted`), so uploaded files currently repeat
+and accumulate — fixed separately in
+[[wiki/work/fix-upload-cache-deletion/brief]]. The collector's accumulation
+guard is the effective local bound until then; nothing in this slice changes.
+
 The bash collector proved the mechanics (spool → rotate → typed parquet →
 ride the sensor's upload sweep) and its test suite defined the behavior, but
 its implementation language fought the hot loop: command substitutions made
