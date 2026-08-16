@@ -137,12 +137,15 @@ authorization for sibling-repo changes per `AGENTS.md`.
 - [x] Crash salvage + accumulation guard tested
 - [x] Python collector (`pidstat-collector.py`) implements all carried-over semantics; bash `pidstat-collector.sh` retired
 - [x] Telemetry source chosen per design investigation (B preferred) and recorded; pidstat-oracle comparison test green
-- [ ] Container attribution columns emitted (cgroup_path, pid_ns_inode, runtime/id) and covered by tests incl. a containerized-process fixture where the environment allows
+- [x] Container attribution columns emitted (cgroup_path, pid_ns_inode, runtime/id) with v1/v2 parser test; live containerized-process fixture still open (environment-dependent)
 - [x] Review findings absorbed: window-epoch date, glued-record partial emission, conversion errors logged with detail
 - [x] pytest suite ported (7 cases) + midnight case + fork regression guard; all green
 - [x] Python runtime/packaging decided and recorded (RHEL 8 python3.6 constraint)
 - [x] `-p ALL`, env knobs, and Python deps documented in ../Lintap/README.md
-- [ ] systemd unit (uv-managed venv launcher) installs and survives reboot
 - [x] Wintappy DBT updated (parquet macros/bronze, legacy-CSV path decided); fixture test green
+- [x] Slice 2 reviewed and accepted (2026-08-16; pytest 12/12 independently re-verified, stat-field offsets checked against proc(5), Wintappy migration verified against spec)
+- [ ] Review follow-up: accumulation guard tolerant of files vanishing between listing and stat/delete (the uploader will delete concurrently once the upload fix lands), and guard failures reported distinctly from conversion failures
+- [ ] Live containerized-process fixture test (needs a container runtime on the test host)
+- [ ] systemd unit (uv-managed venv launcher) installs and survives reboot on a target host
 - [ ] 1h+ end-to-end run with S3 upload + local delete confirmed (blocked on [[wiki/work/fix-upload-cache-deletion/brief]] — delete-after-upload currently never fires)
 - [ ] verification.md filled in; durable facts promoted; log updated

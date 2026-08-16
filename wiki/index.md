@@ -95,7 +95,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-pidstat-collector/design]] | medium | Design: single-process Python collector (2026-08-14 decision) with telemetry-source investigation (/proc sampler preferred over pidstat child and psutil; container attribution via cgroup/ns), spool-then-parquet rotation into `raw_sensor/pidstat/dayPK=/hourPK=`, sensor upload ride-along, coordinated Wintappy parquet change. |
 | [[wiki/work/improve-pidstat-collector/implementation_plan]] | medium | Plan with slice 2 redefined (2026-08-14) as a Python rewrite: single-process collector on the duckdb Python API absorbing all review findings, pytest port with fork regression guard, systemd unit, Wintappy DBT parquet migration; steps 1–4 complete. |
 | [[wiki/work/improve-pidstat-collector/dev_handoff]] | medium | Slice-2 handoff: rewrite the collector in Python (retiring the fork-storm bash version), hard single-process requirement, carried-over semantics as spec, pytest port, systemd, and Wintappy parquet migration, with `../Lintap` + `../Wintappy` authorization. |
-| [[wiki/work/improve-pidstat-collector/verification]] | medium | Command log and first-slice results for the new Lintap pidstat collector: environment checks, Linux ride-along verification, shell tests, and live parquet smoke run. |
+| [[wiki/work/improve-pidstat-collector/verification]] | medium | Verification log for both slices, each with an accepted independent review: slice 1 (bash, retired) and slice 2 (Python /proc sampler, 12/12 pytest, container columns, Wintappy parquet migration); remaining items are operational (target-host systemd, container fixture, S3 end-to-end blocked on the upload fix). |
 | [[wiki/work/fix-unbounded-process-table-growth/brief]] | medium | Feature brief for bounding event_store process-table growth on long runs (8M rows/10 days observed) with retention + stale-open reconciliation while preserving PID-reuse-safe process resolution. |
 | [[wiki/work/fix-unbounded-process-table-growth/references]] | medium | Source map for the process-table retention feature: ProcessResolver/EventChannel hot paths, ClearDB call sites, validation-harness baseline, decisions to date, DuckDB space-reclamation questions. |
 | [[wiki/work/fix-unbounded-process-table-growth/design]] | medium | First-slice design: lazy resolver-owned sweep scheduling, liveness-based stale-open reconciliation, exited-row retention, and DuckDB telemetry for stop/reconciled/deleted/retention-miss counts. |
@@ -105,4 +105,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-15 (new feature: fix-upload-cache-deletion — dead delete-after-upload path found by overnight field test)*
+*Last updated: 2026-08-16 (pidstat slice 2 reviewed and accepted: Python /proc sampler + container attribution + Wintappy parquet migration)*

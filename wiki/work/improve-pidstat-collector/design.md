@@ -28,13 +28,14 @@ tags: [feature-work, design, lintap, pidstat, parquet, s3]
 
 ## Summary
 
-A new collector script in `../Lintap` runs pidstat continuously as a managed
-service, rotates samples into parquet files partitioned like raw_sensor
-(`dayPK=YYYYMMDD/hourPK=HH`), and drops completed files into the sensor's
-parquet cache under `raw_sensor/pidstat/`. The sensor's existing
-CacheManager/uploader pipeline ships them to S3 and deletes them locally —
-no C# changes. Wintappy's pidstat DBT macros and bronze model change from
-tab-delimited CSV to parquet in a coordinated update.
+A single-process Python collector in `../Lintap` samples `/proc` directly,
+rotates samples into typed parquet partitioned like raw_sensor
+(`dayPK=YYYYMMDD/hourPK=HH`) with hostname and container-attribution columns,
+and drops completed files into the sensor's parquet cache under
+`raw_sensor/pidstat/`. The sensor's existing CacheManager/uploader pipeline
+ships them to S3 (local deletion pending
+[[wiki/work/fix-upload-cache-deletion/brief]]) — no C# changes. Wintappy's
+pidstat DBT macros and bronze model read the parquet layout.
 
 ## Decisions Recorded (from brief, 2026-08-11)
 
@@ -227,6 +228,13 @@ behind a small interface so the choice stays swappable.
   in-progress-file convention: only completed data may carry the `.parquet`
   extension inside the swept tree.
   <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/CacheManager.cs §cleanup() -->
+- Small-file merging is already handled before upload (verified 2026-08-16):
+  serializer flush files (`SerializationIntervalSec`, shipped default 60 s)
+  are consolidated by `doMerge()`/`RawSensorWriter.MaterializeFromParquetGlob`
+  into one file per event type per upload cycle before the sweep runs; the
+  pidstat collector matches that granularity by construction (one file per
+  rotation window = one merge cycle), so no merge step is needed for pidstat.
+  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/Merge.cs §Start; ../wintap/wintap/core/etl/load/CacheManager.cs §uploader thread (doMerge before upload); ../wintap/wintap/core/etl/ETLConfig.json §SerializationIntervalSec -->
 
 ### Collector loop
 

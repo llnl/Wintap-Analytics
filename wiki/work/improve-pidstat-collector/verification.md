@@ -312,3 +312,50 @@ Result: a temp unit using the new launcher shape verified cleanly in `lintap-dev
   temp unit with the same `ExecStart` shape.
 - The container-attribution tests cover v1/v2 cgroup parsing, but not a live containerized-process fixture on this VM.
 - The end-to-end S3/local-delete validation remains blocked by the separate sensor-side delete-after-upload defect in [[wiki/work/fix-upload-cache-deletion/brief]].
+
+## Independent Review — Slice 2 (2026-08-16)
+
+Reviewed by the wiki-maintainer session after the slice-2 commits landed
+(`../Lintap` 8eaae5c, `../Wintappy` ccbf783 on `grantj-rhel8-testing`; this
+repo 3cafcbf/74ce903/2323d33).
+
+Independently re-verified: pytest 12/12 in `../Lintap` (uv, python 3.12),
+covering the seven ported cases plus oracle-tolerance, midnight/window-date,
+container v1/v2 parsing, and the steady-state-no-children fork guard.
+
+Code-review assessment of `pidstat-collector.py`:
+
+- `/proc` stat field offsets all verified correct against proc(5) with the
+  post-`)` indexing (minflt/majflt, utime/stime, starttime, vsize/rss,
+  processor, delayacct_blkio_ticks, guest_time).
+- Rate semantics match pidstat: %usr excludes guest time, %CPU =
+  user+system+guest, %wait from schedstat run-delay deltas, iodelay as delta
+  ticks. PID reuse handled via starttime comparison; first sample correctly
+  emits nothing.
+- Zero-child hot loop confirmed by construction and by the fork regression
+  test; conversion is in-process duckdb with atomic `os.replace` and full
+  traceback logging (review finding 4 absorbed as specified, likewise
+  midnight and glued-record findings).
+- Wintappy migration matches spec: `read_parquet(filename=true)`, container
+  columns included, empty-input typed table preserved, `PIDSTAT_DATA_PATH`
+  override honored with the new `parquet/raw_sensor/pidstat` default.
+- Boundary check: no pidstat-slice-2 changes in `../wintap` (its new commits
+  belong to the retention/eBPF thread).
+- The uv-managed venv launcher pivot (after the pinned `python3.11` proved
+  brittle) is a sound field-driven packaging decision, properly recorded in
+  the design page.
+
+Findings (minor, none blocking):
+
+1. `enforce_accumulation_guard` calls `.stat()` on files between listing and
+   deletion with no `FileNotFoundError` tolerance, and runs inside the
+   conversion `try` — once the upload-delete fix lands, the sensor's uploader
+   will delete these files concurrently, making the race real and its error
+   report misleading ("parquet conversion failed"). Queued as a checklist
+   follow-up.
+2. Open items are honestly tracked, not hidden: live container fixture test,
+   package-install/systemd verification on a target host, and the
+   S3/delete-after-upload end-to-end (blocked on fix-upload-cache-deletion).
+
+Review verdict: slice 2 accepted. Remaining checklist items are operational
+verification plus the closeout promotion — the feature is code-complete.
