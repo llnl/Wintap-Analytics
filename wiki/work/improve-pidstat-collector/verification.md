@@ -17,6 +17,22 @@ tags: [feature-work, verification, lintap, pidstat]
 
 # Verification: Improve pidstat Collector
 
+## Slice 2 Completion Note
+
+Slice 2 is complete on branch `grantj-rhel8-testing` across
+`Wintap-Analytics/`, `../Lintap`, and `../Wintappy`.
+
+- The bash collector was retired and replaced with a Python `/proc` sampler.
+- The collector now writes typed parquet with `hostname` and container
+  attribution columns.
+- The Wintappy bronze pidstat input was migrated from CSV to parquet.
+- Validation passed in `lintap-dev` for pytest, live collector smoke runs, the
+  `uv`-managed runtime bootstrap/launcher flow, and DBT fixture/empty-input
+  builds.
+- Remaining closeout items are operational, not design: package-install/systemd
+  verification on a target host, optional live container fixture coverage, and
+  the separate upload-delete fix needed for end-to-end S3/delete confirmation.
+
 ## Test Commands
 
 Commands are recorded in the order executed.
