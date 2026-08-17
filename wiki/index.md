@@ -90,6 +90,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/lintap-process-creation-validation/current-state-2026-08-06]] | medium | Current checkpoint summary for committed process-state fixes, one-hour noisy validation results, remaining leakage, and next steps. |
 | [[wiki/work/fix-upload-cache-deletion/brief]] | high | Feature brief for the dead upload-delete path (no adapter raises `UploadCompleted` → endless re-uploads), plus prioritized subsystem cleanups: merge-hang recovery wipes the whole parquet cache, pruneCache off-by-one/wrong-base/hardcoded cap, unguarded PostUpload loop, zero-byte stragglers, empty partition-dir removal. |
 | [[wiki/work/fix-upload-cache-deletion/dev_handoff]] | high | Handoff authorizing `../wintap` core/etl/load changes: inline delete gated on the unused `successfulUpload` flag, dead-event decision, prioritized robustness cleanups with do-not-change list, ≥3-cycle verification, deployment note for drained backlogs. |
+| [[wiki/work/fix-upload-cache-deletion/verification]] | medium | Verification record for the upload-cache deletion fix: inline delete-after-upload, dead-event removal, prune/hang-recovery hardening, Linux build verification, and remaining live-uploader/Windows gaps. |
 | [[wiki/work/improve-pidstat-collector/brief]] | medium | Feature brief for making the pidstat collector run alongside Lintap with lifecycle management, time-based rotation, S3 push, and DBT `stg_pidstat_metrics` compatibility. |
 | [[wiki/work/improve-pidstat-collector/references]] | medium | Cross-repo source map for the pidstat collector feature: Lintap script, Wintappy DBT macros/models, wintap upload adapters, and observed data volumes. |
 | [[wiki/work/improve-pidstat-collector/design]] | medium | Design: single-process Python collector (2026-08-14 decision) with telemetry-source investigation (/proc sampler preferred over pidstat child and psutil; container attribution via cgroup/ns), spool-then-parquet rotation into `raw_sensor/pidstat/dayPK=/hourPK=`, sensor upload ride-along, coordinated Wintappy parquet change. |
@@ -105,4 +106,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-16 (pidstat slice 2 reviewed and accepted: Python /proc sampler + container attribution + Wintappy parquet migration)*
+*Last updated: 2026-08-16 (fix-upload-cache-deletion verification added; upload cache now deletes inline after successful upload in branch work)*

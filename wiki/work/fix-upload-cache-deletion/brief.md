@@ -9,7 +9,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/load/adapters/SignedS3UrlAdapter.cs
   - raw/Issues/Long_Running_Cleanup.md
 policy: agent-editable
-last_validated: 2026-08-15
+last_validated: 2026-08-16
 repo_scope: wintap
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -156,18 +156,15 @@ cross-feature context in [[wiki/work/improve-pidstat-collector/design]]
 
 ## Open Questions
 
-- Multi-adapter policy: keep "any success = all success" (delete when at
-  least one uploader succeeded) or require all-enabled-success before
-  delete? Current comment says the former is intentional "for now" —
-  default to preserving it unless the human says otherwise.
-- Wire the `UploadCompleted` event properly (raise after the uploader loop
-  from CacheManager side is impossible — it's the adapters' event) or drop
-  the event from `IUpload` and delete inline in `upload()`? Inline delete is
-  the recommended shape (see design note in dev_handoff); event removal is
-  an interface change to record.
-- Should deletion be a move-to-`uploaded/` staging dir for one cycle instead
-  of immediate delete (cheap undo) — or is immediate delete fine given
-  parquet also lands in S3?
+- Resolved 2026-08-16: keep the existing multi-adapter policy, "any success =
+  all success, for now." `CacheManager.upload()` now deletes inline only after
+  the full uploader loop for a file, but a single successful uploader still
+  marks the file deletable.
+- Resolved 2026-08-16: remove the dead `UploadCompleted` event from `IUpload`
+  and the active adapters. The actual delete site is now inline in
+  `CacheManager.upload()`.
+- Resolved 2026-08-16: immediate delete is fine. No move-to-`uploaded/`
+  staging layer was added.
 
 ## Test Plan
 
