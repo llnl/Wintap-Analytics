@@ -429,6 +429,14 @@ Files changed: `../wintap/wintap/core/etl/load/CacheManager.cs`, `interfaces/IUp
 Results: delete-after-upload moved inline to `CacheManager.upload()` after the full uploader loop, preserving the existing any-success policy; dead `UploadCompleted` event plumbing removed from the active load path; zero-byte files now delete instead of spinning forever; empty partition dirs are pruned after delete; `pruneCache()` now measures `raw_sensor` size, deletes the threshold-crossing file, uses a configurable cap, and protects current-window files; merge-hang cleanup now skips `raw_sensor/`, `csv/`, and `merged/`; `PostUpload()` calls are guarded per uploader. Verified in `lintap-dev`: `dotnet build Lintap.csproj -warnaserror:CS0067` passed. `Wintap.csproj -p:EnableWindowsTargeting=true` remains blocked in this VM by unrelated Windows-target dependency issues.
 Limitations: no live uploader target was exercised yet, so single-upload-plus-delete across >=3 cycles still needs target-host verification.
 
+## [2026-08-17] instruction | [wintap] wpc-04 field enrichment instruction approved
+
+Decisions made: none. Architect requested and approved the wpc-04 instruction for Developer handoff. Scope is field enrichment on the already-landed `WindowsProcessSensor`: SID/user via wpc-01 helper, `LookupAccountSid` with bounded SID cache, token fallback for NoSid/Malformed, ETW command line with PEB fallback, and executable path via `QueryFullProcessImageName` with device-path translation fallback. The instruction preserves settled WPC constraints: no schema changes, no PidHash formula changes, TraceEvent stays 3.1.23, no new NuGet dependencies, resolver-backed sensor, runtime wire-in deferred to wpc-06, Stop metrics deferred to wpc-05, boot ETL deferred to wpc-07.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/log.md` only.
+Instructions written: `../wintap/developer_docs/instructions/wpc-04-field-enrichment.md` (Status: Approved — Architect approval 2026-08-17).
+Open questions: none for wpc-04 instruction handoff. Developer verification gate is `dotnet build -c Release` plus `dotnet test --filter "Category=wpc-04"`, with the documented project-scoped fallback if the known `Wintap-Workbench` `MSB4249` solution-level issue appears.
+
 ## [2026-08-17] closeout | improve-pidstat-collector + fix-upload-cache-deletion closed; durable facts promoted
 
 Source: final review of branch grantj-rhel8-testing across all four repos (wintap ecfa746 upload fix; Lintap 8eaae5c Python collector; Wintappy ccbf783 parquet bronze; this repo's verification commits), plus operator field notes from RHEL 8 testing.
