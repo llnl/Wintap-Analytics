@@ -7,7 +7,7 @@ grounded_by:
   - ../wintap/CLAUDE.md
   - ../wintap/tests/Wintap.Tests/Wintap.Tests.csproj
 policy: agent-editable
-last_validated: 2026-08-13
+last_validated: 2026-08-17
 repo_scope: cross-repo
 implementation_area: windows-sensor
 event_domain: process
@@ -26,24 +26,30 @@ slices. Code changes land in `../wintap` on a feature branch; harness changes
 land in this repo under `validation/`. The wintap repo uses the
 Architect/Engineer/Developer methodology (`../wintap/CLAUDE.md`): each step
 below is sized to become one approved instruction document
-(`developer_docs/instructions/P2.x-*.md`) implemented by the Developer with
-xUnit tests tagged `[Trait("Category", "P2.x")]` in `tests/Wintap.Tests`.
+(`developer_docs/instructions/wpc-<nn>-<slug>.md`) implemented by the
+Developer with xUnit tests tagged `[Trait("Category", "wpc-<nn>")]` in
+`tests/Wintap.Tests`.
 
-- **Slice 1 (P2.1–P2.6):** unified sensor, old paths removed, QA counters.
-- **Slice 2 (P2.7):** opt-in Global Logger boot ETL coverage.
-- **Slice 3 (P2.8):** Windows validation harness + verification runs +
+**Feature abbreviation: `wpc`** (windows-process-collection). Units are
+`wpc-01` … `wpc-08`; run one unit's tests with
+`dotnet test --filter "Category=wpc-01"` and the whole feature with
+`dotnet test --filter "Category~wpc"`.
+
+- **Slice 1 (wpc-01–wpc-06):** unified sensor, old paths removed, QA counters.
+- **Slice 2 (wpc-07):** opt-in Global Logger boot ETL coverage.
+- **Slice 3 (wpc-08):** Windows validation harness + verification runs +
   closeout.
 
 ## Steps
 
-1. **P2.1 — SID extraction helper.** Port
+1. **wpc-01 — SID extraction helper.** Port
    `../sid-extraction-test/ProcessTraceDataExtensions.cs` to
    `wintap/platform/windows/sensor/etw/helpers/`, namespace
    `gov.llnl.wintap.platform.windows.collect.etw.helpers`, unchanged logic.
    Tests: synthetic payload fixtures for V3/V4 layouts × 4/8-byte pointers,
    null-SID marker, malformed guards (offset math is pure — highly testable).
 
-2. **P2.2 — Sensor core.** New `WindowsProcessSensor` subscribing
+2. **wpc-02 — Sensor core.** New `WindowsProcessSensor` subscribing
    `KernelParser.Instance.EtwParser.ProcessStart/ProcessStop` on the shared
    session; in-memory instance map `PID -> (createTime, PidHash,
    ParentPidHash, name, path)`; create-time canonicalization helper
@@ -54,7 +60,7 @@ xUnit tests tagged `[Trait("Category", "P2.x")]` in `tests/Wintap.Tests`.
    accessor seam — keep it minimal, no new abstraction beyond what the tests
    need).
 
-3. **P2.3 — Snapshot refresh.** Snapshot enumerator (exact create times,
+3. **wpc-03 — Snapshot refresh.** Snapshot enumerator (exact create times,
    parent PID, path, command line via PEB, user via token) emitting Refresh
    events oldest-first; replaces `Initialize()` Security-log reconstruction;
    preserves `ClearProcessDB()`-before-Refresh ordering; seeds the same three
@@ -62,21 +68,21 @@ xUnit tests tagged `[Trait("Category", "P2.x")]` in `tests/Wintap.Tests`.
    dedup through the instance map. Tests: parent-instance selection (latest
    create time preceding child's), dedup rule.
 
-4. **P2.4 — Field enrichment.** SID→user via `LookupAccountSid` with bounded
+4. **wpc-04 — Field enrichment.** SID→user via `LookupAccountSid` with bounded
    cache and `OpenProcessToken` fallback on NoSid/Malformed; command line ETW
    field first, PEB fallback when empty; Win32 path via
    `QueryFullProcessImageName` with device-path translation fallback.
    Enrichment failures never drop the event. Tests: cache behavior, fallback
    selection matrix.
 
-5. **P2.5 — Stop metrics merge.** User-mode subscription to
+5. **wpc-05 — Stop metrics merge.** User-mode subscription to
    `Microsoft-Windows-Kernel-Process` (keyword 0x10) for ProcessStop
    counters; correlate by PID nearest-in-time (initial window 5 s); Stop
    emission never blocks on the manifest event — metrics default and
    `manifest_metric_misses` increments after window expiry. Tests:
    correlation window hit/miss/expiry, PID-reuse flush interaction.
 
-6. **P2.6 — Wire-in and removal.** `WindowsSubscriptionManager` starts
+6. **wpc-06 — Wire-in and removal.** `WindowsSubscriptionManager` starts
    `WindowsProcessSensor` first (kernel flags already seed
    `Keywords.Process`); delete `ProcessSensor.cs`, `KernelProcessSensor.cs`,
    their settings entries, and the now-unused
@@ -84,10 +90,10 @@ xUnit tests tagged `[Trait("Category", "P2.x")]` in `tests/Wintap.Tests`.
    and on shutdown (sid_extracted/null/malformed/fallback, cmdline_empty /
    cmdline_peb_recovered, stop_without_start, manifest_metric_misses,
    snapshot_count, dedup_suppressed). Verification gate: full
-   `dotnet build -c Release` + all P2.x tests green + manual smoke run
+   `dotnet build -c Release` + all wpc tests green + manual smoke run
    documented.
 
-7. **P2.7 — Boot ETL coverage (slice 2).** `EnableBootProcessTrace` setting
+7. **wpc-07 — Boot ETL coverage (slice 2).** `EnableBootProcessTrace` setting
    (default off); startup: detect/verify the Global Logger boot session
    (log-file path must match our configured ETL path), stop it before
    `KernelSession` construction, disarm registry; after live subscription +
@@ -96,7 +102,7 @@ xUnit tests tagged `[Trait("Category", "P2.x")]` in `tests/Wintap.Tests`.
    re-arm registry at shutdown when enabled. Tests: dedup tolerance logic,
    session-ownership verification predicate.
 
-8. **P2.8 — Verification (slice 3, cross-repo).** Extend
+8. **wpc-08 — Verification (slice 3, cross-repo).** Extend
    `validation/process-creation` for Windows: scripted workload manifest,
    scoring for start coverage, stop coverage, PidHash stability across
    activity types, lineage accuracy; identity matrix runs (plain user, runas,
@@ -112,17 +118,18 @@ xUnit tests tagged `[Trait("Category", "P2.x")]` in `tests/Wintap.Tests`.
 - `../wintap/wintap/platform/windows/sensor/etw/ProcessSensor.cs` (deleted)
 - `../wintap/wintap/platform/windows/sensor/etw/KernelProcessSensor.cs` (deleted)
 - `../wintap/wintap/platform/windows/infrastructure/WindowsSubscriptionManager.cs`
-- `../wintap/wintap/platform/windows/sensor/shared/EtwKernelCollector.cs` (P2.7 ordering only)
+- `../wintap/wintap/platform/windows/sensor/shared/EtwKernelCollector.cs` (wpc-07 ordering only)
 - `../wintap/wintap/Properties/Settings.*` (sensor settings, new boot-trace setting)
-- `../wintap/tests/Wintap.Tests/` (new P2.x test classes)
-- `validation/process-creation/` (Windows harness, P2.8)
+- `../wintap/tests/Wintap.Tests/` (new wpc test classes)
+- `validation/process-creation/` (Windows harness, wpc-08)
 
 ## Tests To Add Or Update
 
 Per-unit xUnit tests as listed in Steps, all tagged
-`[Trait("Category", "P2.x")]`, runnable via
-`dotnet test --filter "Category=P2.x"`. ETW-session and elevation-dependent
-behavior is out of unit-test reach — covered by the P2.8 harness instead; do
+`[Trait("Category", "wpc-<nn>")]`, runnable via
+`dotnet test --filter "Category=wpc-<nn>"` (whole feature:
+`dotnet test --filter "Category~wpc"`). ETW-session and elevation-dependent
+behavior is out of unit-test reach — covered by the wpc-08 harness instead; do
 not build heavy test doubles for it.
 
 ## Migration Or Compatibility Notes
@@ -142,20 +149,20 @@ not build heavy test doubles for it.
 
 - All wintap changes land on one feature branch; rollback = revert the merge.
 - Old sensors remain in git history; no data-format migration to unwind.
-- If P2.7 misbehaves in the field, setting off = fully inert (no registry
+- If wpc-07 misbehaves in the field, setting off = fully inert (no registry
   writes, no replay path).
 
 ## Done Checklist
 
-- [ ] P2.1 SID helper + tests merged
-- [ ] P2.2 sensor core + tests merged
-- [ ] P2.3 snapshot refresh + tests merged
-- [ ] P2.4 enrichment + tests merged
-- [ ] P2.5 stop-metrics merge + tests merged
-- [ ] P2.6 wire-in, old paths deleted, Release build + full P2 suite green,
+- [ ] wpc-01 SID helper + tests merged
+- [ ] wpc-02 sensor core + tests merged
+- [ ] wpc-03 snapshot refresh + tests merged
+- [ ] wpc-04 enrichment + tests merged
+- [ ] wpc-05 stop-metrics merge + tests merged
+- [ ] wpc-06 wire-in, old paths deleted, Release build + full wpc suite green,
       smoke run documented
-- [ ] P2.7 boot ETL coverage merged (opt-in verified inert when off)
-- [ ] P2.8 harness runs: acceptance criteria 1–7 of
+- [ ] wpc-07 boot ETL coverage merged (opt-in verified inert when off)
+- [ ] wpc-08 harness runs: acceptance criteria 1–7 of
       [[wiki/work/improve-windows-process-collection/brief]] demonstrated
 - [ ] verification.md complete; wiki/log.md entry appended
 - [ ] Durable semantics promoted to [[wiki/event_type/process-events]]

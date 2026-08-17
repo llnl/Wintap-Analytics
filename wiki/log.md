@@ -333,3 +333,11 @@ Pages created: `work/improve-windows-process-collection/implementation_plan.md` 
 Pages updated: index.md (two new Work rows); log.md.
 Contradictions flagged: none.
 Next stage: dispatch the wintap Engineer for the P2.1 instruction document using the handoff prompt, then run the approve/implement/audit loop per unit.
+
+## [2026-08-17] update | improve-windows-process-collection: unit IDs renamed P2.x → wpc-nn
+
+Source: Architect decision in the wintap main session — the P-major numbering was judged unintuitive. New scheme combines the descriptive-slug pattern used by this wiki's Linux feature threads (kebab-case feature names, numbered steps, slices) with the semantic-prefix precedent already in ../wintap's architecture assessment (DEC-/OQ-/INV-).
+Scheme: `<feature-abbrev>-<nn>` unit IDs with a descriptive slug in filenames; this feature's abbreviation is `wpc` (windows-process-collection), units wpc-01…wpc-08. xUnit traits become `[Trait("Category", "wpc-<nn>")]`; one unit runs via `dotnet test --filter "Category=wpc-01"`, the whole feature via `Category~wpc`. Instruction docs `developer_docs/instructions/wpc-<nn>-<slug>.md`; audits `developer_docs/audits/wpc-<nn>-<slug>.md`. The wintap bootstrap unit P1.1 (merged, tested, audited) is grandfathered under the old naming.
+Pages updated: work/improve-windows-process-collection/implementation_plan.md and dev_handoff.md (all P2.1–P2.8 references renamed, feature abbreviation declared, whole-feature filter documented); index.md (row summaries and Last updated line).
+Contradictions flagged: none. ../wintap CLAUDE.md gains the unit-naming convention alongside its existing P1.1 examples.
+Next stage: dispatch the wintap Engineer for the wpc-01 instruction document using the handoff prompt, then run the approve/implement/audit loop per unit.
