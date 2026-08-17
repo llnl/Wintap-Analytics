@@ -18,6 +18,22 @@ tags: [feature-work, verification, wintap, etl, upload, cache]
 
 # Verification: Fix Upload Cache Deletion
 
+## Slice Completion Note
+
+This slice is complete enough to hand over for longer target-host validation on
+branch `grantj-rhel8-testing` in `Wintap-Analytics/` and `../wintap`.
+
+- The dead upload-delete path was replaced with inline delete-after-upload in
+  `CacheManager.upload()`.
+- Dead `UploadCompleted` interface/adapter plumbing was removed from the active
+  load path.
+- Cache-management hardening landed with the same slice: zero-byte cleanup,
+  empty partition-dir removal, scoped merge-hang recovery, guarded
+  `PostUpload()`, and raw-sensor-only prune accounting.
+- `lintap-dev` verification covered the edited Linux load path and confirmed
+  `CS0067` is gone; initial real-host checks looked good and a longer soak is
+  the remaining practical validation step.
+
 ## Test Commands
 
 1. `git checkout grantj-rhel8-testing` in `Wintap-Analytics/`, `../Lintap`, `../Wintappy`, and `../wintap`

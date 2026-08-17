@@ -147,5 +147,5 @@ authorization for sibling-repo changes per `AGENTS.md`.
 - [ ] Review follow-up: accumulation guard tolerant of files vanishing between listing and stat/delete (the uploader will delete concurrently once the upload fix lands), and guard failures reported distinctly from conversion failures
 - [ ] Live containerized-process fixture test (needs a container runtime on the test host)
 - [ ] systemd unit (uv-managed venv launcher) installs and survives reboot on a target host
-- [ ] 1h+ end-to-end run with S3 upload + local delete confirmed (blocked on [[wiki/work/fix-upload-cache-deletion/brief]] — delete-after-upload currently never fires)
+- [ ] 1h+ end-to-end run with S3 upload + local delete confirmed (unblocked by [[wiki/work/fix-upload-cache-deletion/verification]] on `grantj-rhel8-testing`; waiting on combined-branch soak/field confirmation)
 - [ ] verification.md filled in; durable facts promoted; log updated
