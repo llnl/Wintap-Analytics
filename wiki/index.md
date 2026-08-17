@@ -103,7 +103,9 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-windows-process-collection/brief]] | medium | Feature brief for replacing Security-log-based Windows process collection with a unified kernel-ETW sensor: true create times, restored stop coverage, snapshot refresh, SID/command-line enrichment, boot ETL ingestion, no schema/PidHash changes. |
 | [[wiki/work/improve-windows-process-collection/references]] | medium | Source map for the Windows process collection feature: current dual-path sensors, shared kernel session infrastructure, the validated sid-extraction-test POC (SID offsets, Global Logger boot procedure), and the harness/resolver pages it builds on. |
 | [[wiki/work/improve-windows-process-collection/design]] | medium | Design: one WindowsProcessSensor fusing boot ETL replay, live snapshot, classic kernel ProcessStart/End, and manifest ProcessStop metrics, with create-time canonicalization for PidHash integrity, per-field enrichment fallbacks, QA counters, and startup sequencing around the Global Logger boot session. |
+| [[wiki/work/improve-windows-process-collection/implementation_plan]] | medium | Three-slice plan mapped to wintap P2.1–P2.8 instruction units: SID helper, sensor core, snapshot refresh, enrichment, stop-metrics merge, wire-in/removal, opt-in boot ETL, and Windows validation harness, each with xUnit trait categories and a done checklist. |
+| [[wiki/work/improve-windows-process-collection/dev_handoff]] | medium | Handoff bridging the Analytics feature artifacts to the wintap Architect/Engineer/Developer loop: per-unit Engineer dispatch prompt, primary sources per unit, P2.1-first recommendation, testing gates, and closeout/audit duties. |
 
 ---
 
-*Last updated: 2026-08-13 (new feature started: improve-windows-process-collection — interview, brief, references, and design created)*
+*Last updated: 2026-08-13 (improve-windows-process-collection: implementation plan and dev handoff added)*
