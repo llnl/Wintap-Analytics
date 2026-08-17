@@ -103,8 +103,8 @@ Per unit, the Engineer should quote or reference into the instruction:
 wpc-01 (SID extraction helper). Smallest unit, pure logic, highest test
 leverage, zero integration risk — and it validates the port of the POC's
 core asset before the sensor work begins. Then proceed in plan order;
-wpc-02–wpc-05 are internally ordered by dependency (instance map before
-consumers of it).
+wpc-02–wpc-05 are internally ordered by dependency (resolver-backed sensor core
+before snapshot/enrichment/metrics).
 
 ## Non-Goals For This Slice (and feature)
 
@@ -123,7 +123,7 @@ consumers of it).
 - Every unit: `dotnet build -c Release` green and
   `dotnet test --filter "Category=wpc-<nn>"` green; full feature suite
   (`dotnet test --filter "Category~wpc"`) green at wpc-06.
-- Unit tests cover pure logic (offsets, canonicalization, instance map,
+- Unit tests cover pure logic (offsets, canonicalization, resolver fallback,
   correlation, dedup); ETW-session/elevation behavior is deliberately left to
   the wpc-08 harness — do not build heavy ETW test doubles.
 - wpc-06 additionally requires a documented manual smoke run (elevated,

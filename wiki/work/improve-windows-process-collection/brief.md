@@ -51,7 +51,9 @@ compounding defects:
 - Single unified Windows process sensor that owns Start, Stop, and Refresh
   end-to-end from kernel ETW (classic NT Kernel Logger Process events) on the
   existing shared `KernelSession`.
-- True kernel create times everywhere PidHash is computed.
+- Kernel ETW ProcessStart timestamps are the canonical live-start time for
+  PidHash computation; snapshot Refresh continues to use live process create
+  times and deduplicates against live Starts by PID + create-time tolerance.
 - Stop events restored to first-class: exit status, plus the rich resource
   metrics currently sourced by `KernelProcessSensor` (CPU cycles, IO counts,
   commit charge/peak, hard faults, token elevation).
@@ -79,7 +81,7 @@ compounding defects:
 ## User-Facing Behavior
 
 - Process Start/Stop/Refresh events keep their existing shape; data quality
-  improves: exact create times, complete stop coverage, populated
+  improves: ETW-grounded live Start times, complete stop coverage, populated
   `ParentPidHash` on stops, user + command line populated without audit
   policy.
 - On service start: snapshot of running processes emitted as Refresh; if a

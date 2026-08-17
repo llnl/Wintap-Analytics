@@ -24,8 +24,8 @@ tags: [feature-work, process-events, etw, windows-sensor, design]
 
 One new `WindowsProcessSensor` replaces `ProcessSensor` (Security-log) and
 `KernelProcessSensor` (manifest stop metrics). It fuses four sources into a
-single Start/Stop/Refresh stream with kernel-true create times and one PidHash
-per process instance:
+single Start/Stop/Refresh stream with ETW-grounded live Start times, exact
+snapshot Refresh create times, and one PidHash per process instance:
 
 | Source | Yields | When |
 | --- | --- | --- |
@@ -59,19 +59,21 @@ per process instance:
 
 All PidHash computation flows through one helper on the sensor:
 
-1. On ProcessStart, attempt `OpenProcess` + `GetProcessTimes` to read the
-   kernel create time; use it for PidHash. Fall back to the ETW event
-   timestamp when the process is already gone (short-lived).
-2. Snapshot refresh uses `GetProcessTimes` directly — same clock, same value.
-3. Boot ETL Starts use the replayed event timestamp (no live process to
-   query); these are the tree roots, and their children's ParentPidHash is
-   derived from the sensor's own instance table, not recomputed.
-4. Stop events never recompute create time from the stop-side payload: the
-   sensor keeps an in-memory instance map `PID -> (createTime, PidHash,
-   ParentPidHash)` populated by Start/Refresh/boot-replay, and stamps Stops
-   from it. This fixes today's missing `ParentPidHash` on stops. Misses fall
-   back to `ProcessResolver` lookup, then to hash-from-event-time (current
-   EventChannel fallback), and are counted.
+1. On live ProcessStart, use the ETW ProcessStart timestamp as the canonical
+   live-start time for PidHash. This preserves Wintap's long-standing ETW
+   ground-truth behavior and avoids per-process `OpenProcess` /
+   `GetProcessTimes` handle-open overhead on the hot path.
+2. Snapshot refresh uses `GetProcessTimes` directly and deduplicates/repairs
+   against live Start instances by PID + create-time tolerance.
+3. Boot ETL Starts use the replayed event timestamp (no live process to query);
+   these are the tree roots for early-boot lineage.
+4. Stop events never recompute create time from the stop-side payload. For the
+   initial implementation, `ProcessResolver` is the single hot-path process
+   identity store: Starts/Refreshes register there through `EventChannel.Send`,
+   and Stops resolve the PID at the Stop timestamp before emission. This fixes
+   today's missing Stop `PidHash` / `ParentPidHash` without introducing a
+   parallel sensor-owned PID instance map. Resolver misses fall back to
+   hash-from-event-time (current EventChannel fallback) and are counted.
 
 `ProcessResolver`'s start-time-tolerance repair (from
 fix-unbounded-process-table-growth) remains the safety net for residual
@@ -95,9 +97,10 @@ sub-millisecond skew between sources.
   (`NtQueryInformationProcess` → `RTL_USER_PROCESS_PARAMETERS.CommandLine`),
   best-effort with a single retry; count empties and fallback successes.
 
-**Stop:** classic Process/End provides PID + ExitStatus + timestamp; instance
-map provides PidHash/ParentPidHash/name/path; manifest ProcessStop (correlated
-by PID, nearest-in-time within a short window) contributes CPUCycleCount,
+**Stop:** classic Process/End provides PID + ExitStatus + timestamp;
+`ProcessResolver` provides PidHash/ParentPidHash/name/path for the PID active at
+that timestamp; manifest ProcessStop (correlated by PID, nearest-in-time within
+a short window) contributes CPUCycleCount,
 CommitCharge/Peak, HardFaultCount, Read/Write counts and KB,
 TokenElevationType. If the manifest event never arrives (drop), the Stop is
 emitted after the correlation window with metrics defaulted — stop coverage
@@ -127,14 +130,15 @@ Linux `ProcessRundownSensor`.
    before children).
 4. Replay the boot ETL (`ETWTraceEventSource` file mode, POC replay leg):
    emit Start events only for instances not already covered by a snapshot
-   Refresh (dedup key: PID + canonicalized create time within tolerance).
-   Replayed instances that are still alive enrich the instance map roots.
+    Refresh (dedup key: PID + canonicalized create time within tolerance).
+    Replayed instances that are still alive enrich resolver-backed lineage.
 5. `EventChannel.ClearProcessDB()` semantics are preserved: clear once before
    step 3 so the resolver rebuilds from Refresh, as today.
 
-Events arriving live during steps 3–4 are processed concurrently; the
-instance map is the dedup point (a process that starts during the snapshot
-appears once as Start, not also as Refresh — Start wins).
+Events arriving live during steps 3–4 are processed concurrently; the resolver
+and PID + create-time tolerance dedup rules are the consistency point (a process
+that starts during the snapshot appears once as Start, not also as Refresh —
+Start wins).
 
 ### Configuration
 
@@ -164,14 +168,15 @@ improvements of existing fields.
 
 ## Edge Cases
 
-- **Short-lived processes** (exit before enrichment): OpenProcess fails →
-  create time falls back to ETW timestamp; command-line fallback and token
-  fallback unavailable → fields default, counters increment. ETW field data
+- **Short-lived processes** (exit before enrichment): live Starts do not depend
+  on `OpenProcess`; the ETW ProcessStart timestamp is canonical, so Start
+  emission remains cheap and reliable. Command-line fallback and token fallback
+  may still be unavailable → fields default, counters increment. ETW field data
   (CommandLine, SID) still usually present — this is strictly better than the
   Security-log path.
-- **PID reuse during correlation windows:** instance map is keyed by PID but
-  stores create time; a new Start for a PID with a pending stop-metrics
-  correlation flushes the old instance immediately.
+- **PID reuse during correlation windows:** `ProcessResolver` remains the
+  PID-reuse-safe identity store keyed by PID + time. Stop-metrics correlation
+  must avoid overwriting identity with a parallel PID-only cache.
 - **Stops with no known start** (drops, processes older than any source):
   counted, emitted with resolver-fallback PidHash — current EventChannel
   behavior preserved.
@@ -208,9 +213,10 @@ improvements of existing fields.
 - **Global Logger arming** touches boot-path registry config; wrong values
   can fail the boot session (POC README documents the 32-byte padding
   gotcha). Mitigated by opt-in default and verify-before-stop check.
-- **Create-time skew** between `GetProcessTimes` and ETW timestamps larger
-  than expected → PidHash mismatches; mitigated by canonicalization-first
-  design and resolver tolerance repair; measured by acceptance criterion 2.
+- **Create-time skew** between snapshot `GetProcessTimes` values and ETW Start
+  timestamps larger than expected → Start/Refresh dedup and PidHash alignment
+  could diverge; mitigated by PID + create-time tolerance dedup/repair and
+  measured by acceptance criterion 2.
 - **Startup ordering regression:** other kernel-flag sensors already race the
   shared session (`Thread.Sleep` mitigations in the manager); inserting the
   boot-session stop must not widen that window. Keep it strictly before any

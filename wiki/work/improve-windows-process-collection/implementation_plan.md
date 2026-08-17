@@ -6,6 +6,7 @@ grounded_by:
   - wiki/work/improve-windows-process-collection/design.md
   - ../wintap/CLAUDE.md
   - ../wintap/tests/Wintap.Tests/Wintap.Tests.csproj
+  - ../wintap/developer_docs/audits/wpc-02-sensor-core.md
 policy: agent-editable
 last_validated: 2026-08-17
 repo_scope: cross-repo
@@ -51,21 +52,22 @@ Developer with xUnit tests tagged `[Trait("Category", "wpc-<nn>")]` in
 
 2. **wpc-02 — Sensor core.** New `WindowsProcessSensor` subscribing
    `KernelParser.Instance.EtwParser.ProcessStart/ProcessStop` on the shared
-   session; in-memory instance map `PID -> (createTime, PidHash,
-   ParentPidHash, name, path)`; create-time canonicalization helper
-   (`GetProcessTimes` first, ETW timestamp fallback); Start and Stop emission
-   with Stops stamped from the instance map (resolver fallback + counter on
-   miss). Tests: canonicalization fallback logic, instance-map PID-reuse
-   flush, stop-without-start fallback (behind an injectable clock/process
-   accessor seam — keep it minimal, no new abstraction beyond what the tests
-   need).
+   session; live Start create-time canonicalization from the ETW ProcessStart
+   timestamp (no per-Start `OpenProcess` / `GetProcessTimes` lookup); Start
+   emission registers through `EventChannel` / `ProcessResolver`; Stop emission
+   resolves identity through `ProcessResolver` on the hot path (counter +
+   hash-from-stop-time fallback on miss). No sensor-owned PID instance map in
+   this unit. Tests: ETW timestamp canonicalization, Stop resolver hit, Stop
+   resolver miss fallback, resolver-selected PID-reuse instance (behind minimal
+   injectable emit/resolver/clock seams — keep it minimal, no new abstraction
+   beyond what the tests need).
 
 3. **wpc-03 — Snapshot refresh.** Snapshot enumerator (exact create times,
    parent PID, path, command line via PEB, user via token) emitting Refresh
    events oldest-first; replaces `Initialize()` Security-log reconstruction;
    preserves `ClearProcessDB()`-before-Refresh ordering; seeds the same three
    synthetic system processes (PID 4 / 0 / -1) as today. Start-vs-Refresh
-   dedup through the instance map. Tests: parent-instance selection (latest
+    dedup through resolver-backed PID + create-time tolerance. Tests: parent-instance selection (latest
    create time preceding child's), dedup rule.
 
 4. **wpc-04 — Field enrichment.** SID→user via `LookupAccountSid` with bounded
@@ -80,7 +82,7 @@ Developer with xUnit tests tagged `[Trait("Category", "wpc-<nn>")]` in
    counters; correlate by PID nearest-in-time (initial window 5 s); Stop
    emission never blocks on the manifest event — metrics default and
    `manifest_metric_misses` increments after window expiry. Tests:
-   correlation window hit/miss/expiry, PID-reuse flush interaction.
+    correlation window hit/miss/expiry, PID-reuse resolver interaction.
 
 6. **wpc-06 — Wire-in and removal.** `WindowsSubscriptionManager` starts
    `WindowsProcessSensor` first (kernel flags already seed
@@ -135,9 +137,9 @@ not build heavy test doubles for it.
 ## Migration Or Compatibility Notes
 
 - No WintapMessage/ProcessObject schema or PidHash formula changes (hard
-  constraint; PidHash inputs get *more accurate*, so PidHashes for the same
-  process may differ across the upgrade boundary — same situation as any
-  sensor restart, handled by Refresh re-seeding).
+  constraint; live Start PidHash continues to use ETW process-start time as
+  Wintap's canonical source, while Refresh uses live create time and dedup /
+  tolerance repair handles residual cross-source skew).
 - `ClearProcessDB()`-then-Refresh startup contract preserved for
   `ProcessResolver`.
 - Esper EPL files unchanged.
@@ -156,8 +158,11 @@ not build heavy test doubles for it.
 
 - [x] wpc-01 SID helper + tests merged (2026-08-17, wintap develop-dave
       9862131; 9/9 tests passed, audit filed)
-- [ ] wpc-02 sensor core + tests merged
-- [ ] wpc-03 snapshot refresh + tests merged
+- [x] wpc-02 sensor core + tests complete (2026-08-17; new
+      `WindowsProcessSensor`, 5/5 wpc-02 tests passed, audit filed;
+      runtime wire-in deferred to wpc-06 as planned)
+- [x] wpc-03 snapshot refresh + tests merged (2026-08-17, wintap develop-dave
+      b500966 with wpc-02; 7/7 tests passed, audit filed)
 - [ ] wpc-04 enrichment + tests merged
 - [ ] wpc-05 stop-metrics merge + tests merged
 - [ ] wpc-06 wire-in, old paths deleted, Release build + full wpc suite green,
