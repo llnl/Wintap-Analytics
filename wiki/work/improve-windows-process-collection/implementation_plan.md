@@ -163,7 +163,8 @@ not build heavy test doubles for it.
       runtime wire-in deferred to wpc-06 as planned)
 - [x] wpc-03 snapshot refresh + tests merged (2026-08-17, wintap develop-dave
       b500966 with wpc-02; 7/7 tests passed, audit filed)
-- [ ] wpc-04 enrichment + tests merged
+- [x] wpc-04 enrichment + tests merged (2026-08-17, wintap develop-dave
+      9009d1d; 7/7 tests passed, audit filed)
 - [ ] wpc-05 stop-metrics merge + tests merged
 - [ ] wpc-06 wire-in, old paths deleted, Release build + full wpc suite green,
       smoke run documented

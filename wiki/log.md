@@ -435,3 +435,11 @@ Instructions written: none.
 Audit artifact: `../wintap/developer_docs/audits/wpc-02-sensor-core.md` (Status: Complete).
 Verification: `dotnet build "wintap\Wintap.csproj" -c Release -p:WarningLevel=0` passed; from `../wintap/tests/Wintap.Tests`, `dotnet test --filter "Category=wpc-02" --logger "console;verbosity=detailed"` selected and passed 5/5 tests. The audit records a verification-command deviation: repo-root `dotnet build -c Release` / root filtered test target `Wintap.sln`, which currently fails under .NET SDK MSBuild on the existing `Wintap-Workbench` website project (`MSB4249`), so project-scoped equivalents were used. The audit also records a narrow internal `genPidHash` test seam to avoid elevation-sensitive `StateManager` initialization; production still defaults to unchanged `ProcessHash.GenPidHash`.
 Open questions: none for wpc-02. Next unit is wpc-03 snapshot refresh.
+
+## [2026-08-17] instruction | [wintap] wpc-04 field enrichment instruction approved
+
+Decisions made: none. Architect requested and approved the wpc-04 instruction for Developer handoff. Scope is field enrichment on the already-landed `WindowsProcessSensor`: SID/user via wpc-01 helper, `LookupAccountSid` with bounded SID cache, token fallback for NoSid/Malformed, ETW command line with PEB fallback, and executable path via `QueryFullProcessImageName` with device-path translation fallback. The instruction preserves settled WPC constraints: no schema changes, no PidHash formula changes, TraceEvent stays 3.1.23, no new NuGet dependencies, resolver-backed sensor, runtime wire-in deferred to wpc-06, Stop metrics deferred to wpc-05, boot ETL deferred to wpc-07.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/log.md` only.
+Instructions written: `../wintap/developer_docs/instructions/wpc-04-field-enrichment.md` (Status: Approved — Architect approval 2026-08-17).
+Open questions: none for wpc-04 instruction handoff. Developer verification gate is `dotnet build -c Release` plus `dotnet test --filter "Category=wpc-04"`, with the documented project-scoped fallback if the known `Wintap-Workbench` `MSB4249` solution-level issue appears.
