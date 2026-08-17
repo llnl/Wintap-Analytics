@@ -103,3 +103,27 @@ Result: `Wintap.csproj` did not complete in this VM, but the failures are unrela
 - If this fix is accepted and merged, update
   `wiki/work/improve-pidstat-collector/implementation_plan.md` to note that its
   S3/delete-after-upload blocker is removed.
+
+## Independent Review (2026-08-17)
+
+Reviewed by the wiki-maintainer session after commit `../wintap` ecfa746.
+Independently re-verified: `Lintap.csproj` builds with 0 errors and zero
+CS0067 occurrences.
+
+Code-review assessment: all specified behaviors landed as designed —
+inline delete in `upload()` after the full uploader loop gated on
+`successfulUpload` (the multi-uploader "any success" policy preserved, with
+retained-for-retry logging on total failure); dead `UploadCompleted` event
+removed from `IUpload` and both adapters; zero-byte files deleted; empty
+partition directories cleaned bottom-up with the raw_sensor root protected
+and failures tolerated (the Windows lock/race criteria); merge-hang recovery
+scoped away from `raw_sensor` with protected-directory checks; `pruneCache()`
+delete-then-subtract (off-by-one fixed), cap measured against `raw_sensor/`
+only and configurable via `RawSensorMaxCacheSizeBytes`; single enumeration
+shared between the cycle check, prune, and upload; `PostUpload` loop guarded;
+failure logs at Warn.
+
+Review verdict: accepted for merge, with the dev's honestly-recorded gaps as
+post-merge follow-ups: a 3+ cycle live-uploader validation on a real target
+host, the `EnableWindowsTargeting` build (blocked by unrelated dependency
+issues in the VM), and the Windows service-mode run.

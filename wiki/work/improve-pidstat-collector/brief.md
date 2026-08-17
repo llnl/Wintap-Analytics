@@ -14,12 +14,15 @@ repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
 audience: mixed
-status: draft
+status: reviewed
 source_paths: wiki/work/improve-pidstat-collector/brief.md
 tags: [feature-work, lintap, pidstat, monitoring, s3]
 ---
 
 # Feature Brief: Improve pidstat Collector
+
+> **Feature closed 2026-08-17** on branch `grantj-rhel8-testing` with accepted reviews; durable facts promoted to [[wiki/component/sensor-upload-cache-pipeline]], [[wiki/repo/lintap-supporting-repo]], and [[wiki/repo/wintappy-pipeline-repo]]. Follow-ups tracked in implementation_plan.md: collector CPU investigation (needs multi-system data), small-file consolidation (assigned to fix-upload-cache-deletion next slice), target-host systemd/reboot check, live container fixture, S3 end-to-end (unblocked once the upload fix merges).
+
 
 ## Problem
 

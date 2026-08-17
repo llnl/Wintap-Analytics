@@ -149,3 +149,13 @@ authorization for sibling-repo changes per `AGENTS.md`.
 - [ ] systemd unit (uv-managed venv launcher) installs and survives reboot on a target host
 - [ ] 1h+ end-to-end run with S3 upload + local delete confirmed (unblocked by [[wiki/work/fix-upload-cache-deletion/verification]] on `grantj-rhel8-testing`; waiting on combined-branch soak/field confirmation)
 - [ ] verification.md filled in; durable facts promoted; log updated
+
+## Post-Slice-2 Field Follow-Ups (2026-08-17)
+
+- pidstat-collector.py may be using more CPU than expected on the RHEL 8 test
+  machine. Investigate after more data from more real systems — candidates:
+  per-sample /proc scan breadth (`-p ALL` equivalent), 5 s interval, container
+  cache misses. Not blocking merge.
+- pidstat parquet files are not merged before upload (field-observed;
+  design.md mechanism fact corrected 2026-08-17). Consolidation task assigned
+  to the upload feature's next slice: [[wiki/work/fix-upload-cache-deletion/brief]].

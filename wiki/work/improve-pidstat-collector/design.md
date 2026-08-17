@@ -228,13 +228,18 @@ behind a small interface so the choice stays swappable.
   in-progress-file convention: only completed data may carry the `.parquet`
   extension inside the swept tree.
   <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/CacheManager.cs §cleanup() -->
-- Small-file merging is already handled before upload (verified 2026-08-16):
-  serializer flush files (`SerializationIntervalSec`, shipped default 60 s)
-  are consolidated by `doMerge()`/`RawSensorWriter.MaterializeFromParquetGlob`
-  into one file per event type per upload cycle before the sweep runs; the
-  pidstat collector matches that granularity by construction (one file per
-  rotation window = one merge cycle), so no merge step is needed for pidstat.
-  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/Merge.cs §Start; ../wintap/wintap/core/etl/load/CacheManager.cs §uploader thread (doMerge before upload); ../wintap/wintap/core/etl/ETLConfig.json §SerializationIntervalSec -->
+- Small-file merging before upload covers the sensor's own serializer files
+  (`doMerge()` consolidates each type's flush files into one file per upload
+  cycle), **but not pidstat** — corrected 2026-08-17 by field observation:
+  pidstat files land in `raw_sensor/pidstat/` pre-partitioned and `doMerge()`
+  never touches them, so they accumulate as small per-window files
+  (12+/hour/host, more under upload backlog). The 2026-08-16 claim that "no
+  merge step is needed for pidstat" held only at single-cycle granularity.
+  Follow-up task recorded in [[wiki/work/fix-upload-cache-deletion/brief]]
+  (next slice): the upload cycle's merge step should consolidate small files
+  for the cycle generically for any event-type directory under `raw_sensor/`,
+  including pidstat.
+  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/Merge.cs §Start (serializer dirs only); field observation 2026-08-17 -->
 
 ### Collector loop
 

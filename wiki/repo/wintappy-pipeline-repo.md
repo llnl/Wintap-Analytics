@@ -52,6 +52,11 @@ DBT gold models are analyst-facing summaries: `process_registry_summary`, `proce
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/Architecture.md §Gold -->
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/OpenQuestions.md §In progress / high priority -->
 
+## pidstat Bronze Input (promoted 2026-08-17)
+
+The pidstat bronze model (`stg_pidstat_metrics`) reads typed parquet from `$WINTAP_DATA_ROOT/parquet/raw_sensor/pidstat/**/*.parquet` via `read_parquet(filename=true)` (`PIDSTAT_DATA_PATH` still overrides), carrying host-performance rows with `hostname` and container-attribution columns (`cgroup_path`, `pid_ns_inode`, `container_runtime`, `container_id`); when no files exist it builds a typed empty table. The former tab-CSV input is retired — bronze is parquet-only, and pre-2026-08 CSV datasets need one-time conversion. Producer side: [[wiki/repo/lintap-supporting-repo]] pidstat collector.
+<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/macros/pidstat.sql; ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql -->
+
 ## Legacy Python ETL
 
 Pre-DBT Python/DuckDB console commands (`rawtorolling`, `rawtostdview`, `ubersummary`) remain installed as package entry points and are explicitly kept only "as legacy/reference tooling while the DBT path is hardened"; the README instructs new work to use DBT instead.

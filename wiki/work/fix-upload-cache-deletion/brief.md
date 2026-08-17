@@ -14,12 +14,15 @@ repo_scope: wintap
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: developer
-status: draft
+status: reviewed
 source_paths: wiki/work/fix-upload-cache-deletion/brief.md
 tags: [feature-work, wintap, etl, upload, s3, cache, retention, long-running]
 ---
 
 # Feature Brief: Fix Upload Cache Deletion
+
+> **Feature closed 2026-08-17** on branch `grantj-rhel8-testing` with accepted reviews; durable facts promoted to [[wiki/component/sensor-upload-cache-pipeline]], [[wiki/repo/lintap-supporting-repo]], and [[wiki/repo/wintappy-pipeline-repo]]. Follow-ups tracked in verification.md and the Next Slice section: 3+ cycle live-uploader validation, Windows-targeting build and service-mode run, generic small-file consolidation.
+
 
 ## Problem
 
@@ -185,3 +188,18 @@ cross-feature context in [[wiki/work/improve-pidstat-collector/design]]
 - Durable facts promoted: the pidstat design's corrected mechanism note
   updated to point at the fixed behavior; upload/cache semantics recorded in
   a canonical page at closeout.
+
+## Next Slice (added 2026-08-17)
+
+Generic small-file consolidation in the upload cycle: the merge step
+currently consolidates only the sensor's serializer directories; files that
+land directly in `raw_sensor/<type>/` partitions (pidstat today, any future
+ride-along producer) accumulate as small per-window parquet files. The upload
+cycle should combine any small files for that cycle into a single file per
+`raw_sensor` event-type directory, generically — no per-type special cases.
+(Human wording 2026-08-17: "part of the upload cycle should make sure to
+combine any small files for that cycle into a single file, regardless of
+event type.") Schema note: consolidation must stay within each event-type
+directory since types have different schemas; "regardless of event type"
+means the mechanism applies uniformly to all type directories, not that
+types are mixed into one file.

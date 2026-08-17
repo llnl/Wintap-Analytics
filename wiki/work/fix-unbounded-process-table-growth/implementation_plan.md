@@ -75,3 +75,14 @@ Remaining before feature closeout:
 - [ ] Complete Windows runtime regression check on a host/run where Security-log startup replay is available; current host reported log wrap, so `ClearDB`/startup replay remains only partially exercised.
 - [ ] Review findings 2–3 fixed (uncached btime fallback; capped collision logging).
 - [ ] Closeout: promote durable facts to canonical pages — candidates: event-store "currentish" retention semantics, env knobs, and `process_retention_telemetry` (new component/data_model page + `wiki/event_type/process-events.md`); the `/proc/stat btime` hash-basis fact; the clone-sensor requirement for fork-without-exec live coverage (also feeds the lintap-process-creation-validation thread).
+
+## Field Watch Item (2026-08-17)
+
+Lintap CPU may still be trending upward over long runs on the RHEL 8 test
+machine (operator observation; needs more data from more systems before
+root-causing). Leading hypothesis remains DuckDB event_store size — this
+raises the priority of the open "DuckDB reclaim behavior" item above:
+DELETE alone may not reclaim space/plan efficiency, and periodic
+CHECKPOINT/compaction may be required. Correlate with pidstat data once
+multi-day datasets exist (the collector now ships parquet with per-process
+CPU, so the correlation analysis this feature always wanted is unblocked).
