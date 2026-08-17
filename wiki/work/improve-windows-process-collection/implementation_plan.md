@@ -154,7 +154,8 @@ not build heavy test doubles for it.
 
 ## Done Checklist
 
-- [ ] wpc-01 SID helper + tests merged
+- [x] wpc-01 SID helper + tests merged (2026-08-17, wintap develop-dave
+      9862131; 9/9 tests passed, audit filed)
 - [ ] wpc-02 sensor core + tests merged
 - [ ] wpc-03 snapshot refresh + tests merged
 - [ ] wpc-04 enrichment + tests merged
