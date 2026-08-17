@@ -334,6 +334,7 @@ Pages updated: index.md (two new Work rows); log.md.
 Contradictions flagged: none.
 Next stage: dispatch the wintap Engineer for the P2.1 instruction document using the handoff prompt, then run the approve/implement/audit loop per unit.
 
+<<<<<<< HEAD
 ## [2026-08-14] diagnostic | RHEL 8 field test: clone sensor attach, fork-without-exec signature, suspected fork storm
 
 Source: operator-reported Lintap logs from the first real-machine RHEL 8 test (2026-08-14), plus source inspection of CloneSensor.cs, BaseEbpfSensor.cs, clone_tracer.bpf.c, and ../Lintap/packaging/lintap-rpm/lintap.env.
