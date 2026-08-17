@@ -327,6 +327,13 @@ Interview (3 rounds, all decisions confirmed by human playback): kernel ETW (cla
 Motivation (all four confirmed): stops commented out on the Security-log path, fragile since-boot reconstruction (log-wrap "reboot required" — observed live on CHUMBUCKET2 2026-08-13), event-log-time PidHash corruption, and audit-policy dependency.
 Next stage: implementation_plan.md + dev_handoff.md, then implementation and verification.
 
+## [2026-08-13] feature-work | improve-windows-process-collection: implementation plan and dev handoff added
+
+Pages created: `work/improve-windows-process-collection/implementation_plan.md` (three slices mapped to wintap P2.1–P2.8 instruction units — slice 1 P2.1–P2.6: SID helper, sensor core, snapshot refresh, enrichment, stop-metrics merge, wire-in/removal; slice 2 P2.7: opt-in Global Logger boot ETL; slice 3 P2.8: Windows validation harness — each unit sized for one approved instruction document with xUnit tests tagged `[Trait("Category", "P2.x")]` and a done checklist); `work/improve-windows-process-collection/dev_handoff.md` (bridges the Analytics feature artifacts to the wintap Architect/Engineer/Developer loop per `../wintap/CLAUDE.md`: per-unit Engineer dispatch prompt with a P2.1 copy/paste example, primary sources per unit, P2.1-first recommendation, testing gates, and closeout/audit duties).
+Pages updated: index.md (two new Work rows); log.md.
+Contradictions flagged: none.
+Next stage: dispatch the wintap Engineer for the P2.1 instruction document using the handoff prompt, then run the approve/implement/audit loop per unit.
+
 ## [2026-08-14] diagnostic | RHEL 8 field test: clone sensor attach, fork-without-exec signature, suspected fork storm
 
 Source: operator-reported Lintap logs from the first real-machine RHEL 8 test (2026-08-14), plus source inspection of CloneSensor.cs, BaseEbpfSensor.cs, clone_tracer.bpf.c, and ../Lintap/packaging/lintap-rpm/lintap.env.
