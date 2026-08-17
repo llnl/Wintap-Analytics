@@ -52,7 +52,9 @@ tags: [feature-work, process-events, etw, references]
 - `../wintap/wintap/core/infrastructure/ProcessResolver.cs` — PID-reuse-safe
   resolution keyed by PID + start time; start-time-tolerance repair logic
   added by the fix-unbounded-process-table-growth feature (relevant to
-  cross-source create-time canonicalization).
+  cross-source create-time canonicalization). Architect decision 2026-08-17:
+  use `ProcessResolver` as the sole hot-path process identity store for wpc-02;
+  do not add a sensor-owned PID instance map.
 - `../wintap/wintap/core/shared/ProcessHash.cs` §GenPidHash(pid,
   fileTimeUtc) — the compatibility-frozen lineage key.
 - `../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs` — Linux
@@ -82,7 +84,7 @@ tags: [feature-work, process-events, etw, references]
 - TraceEvent 3.1.23 (`Microsoft.Diagnostics.Tracing.TraceEvent`) — shipped by
   Wintap; `ProcessTraceData` exposes `CommandLine`, `ImageFileName`,
   `ParentID`, `SessionID`, `ExitStatus` on classic kernel Process events.
-- Win32/NT snapshot APIs for exact create times and identity:
+- Win32/NT snapshot APIs for exact refresh create times and identity:
   `GetProcessTimes`/`OpenProcess`, `OpenProcessToken` (POC ground-truth leg),
   PEB read via `NtQueryInformationProcess` for command-line fallback.
 
@@ -111,6 +113,8 @@ tags: [feature-work, process-events, etw, references]
 - Classic kernel Process/End payload has `ExitStatus` but not the resource
   counters; the manifest provider's ProcessStop remains the source for those
   metrics inside the unified sensor (one sensor class, two subscriptions).
-- ETW ProcessStart event timestamp ≈ create time but may differ microseconds
-  from `GetProcessTimes`; PidHash canonicalization across sources is a design
-  concern (see design.md).
+- Architect decision 2026-08-17: for live Starts, ETW ProcessStart timestamp is
+  the canonical process-start time. Do not add per-Start `OpenProcess` /
+  `GetProcessTimes` lookups; avoid hot-path handle-open overhead. Snapshot
+  Refresh still uses live create times and deduplicates against live Starts by
+  PID + create-time tolerance (see design.md).

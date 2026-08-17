@@ -18,6 +18,9 @@ Master catalog of all pages. Updated by the agent on every ingest.
 |------|------------|---------|
 | [[wiki/decision/wiki-scope-cross-repo-wintap-focused]] | high | Records the decision that the wiki is cross-repo but prioritizes Wintap sensor internals, WintapAPI, Esper, and Wintap data analysis. |
 | [[wiki/decision/feature-work-artifacts]] | medium | Defines the optional feature-work module: store LLM-assisted feature briefs/design/verification under `wiki/work/<feature>/` and promote durable facts into canonical pages. |
+| [[wiki/decision/process-identity-attribution-contract]] | high | Migrated Wintap ADR locking the process identity and attribution contract: core-owned PidHash/ParentPidHash, flat event-time fields, durable Stop/parent backfill, and DuckDB as the starting substrate. |
+| [[wiki/decision/test-project-structure-and-first-test]] | high | Migrated Wintap ADR choosing per-target xUnit test projects, standing up `tests/Wintap.Tests/` first, and making the first test a real `WintapMessage` constructor assertion. |
+| [[wiki/decision/consolidate-developer-wiki-into-analytics-wiki]] | high | Records the decision to retire `../wintap/dave-wiki/`, make this Analytics wiki the single Wintap ecosystem knowledge base, and keep Wintap instructions/audits in `../wintap/developer_docs/`. |
 ## Concept
 
 | Page | Confidence | Summary |
@@ -105,7 +108,9 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-windows-process-collection/design]] | medium | Design: one WindowsProcessSensor fusing boot ETL replay, live snapshot, classic kernel ProcessStart/End, and manifest ProcessStop metrics, with create-time canonicalization for PidHash integrity, per-field enrichment fallbacks, QA counters, and startup sequencing around the Global Logger boot session. |
 | [[wiki/work/improve-windows-process-collection/implementation_plan]] | medium | Three-slice plan mapped to wintap wpc-01…wpc-08 instruction units: SID helper, sensor core, snapshot refresh, enrichment, stop-metrics merge, wire-in/removal, opt-in boot ETL, and Windows validation harness, each with xUnit trait categories and a done checklist. |
 | [[wiki/work/improve-windows-process-collection/dev_handoff]] | medium | Handoff bridging the Analytics feature artifacts to the wintap Architect/Engineer/Developer loop: per-unit Engineer dispatch prompt, primary sources per unit, wpc-01-first recommendation, testing gates, and closeout/audit duties. |
+| [[wiki/work/improve-windows-process-collection/sid-helper-notes-2026-08-17]] | medium | Migrated Wintap Engineer scratch notes for wpc-01: narrow SID-helper instruction scope, required feature context, payload-parser test seam, and hard no-schema/no-PidHash/no-TraceEvent-upgrade/no-dependency constraints. |
+| [[wiki/work/improve-windows-process-collection/sensor-core-notes-2026-08-17]] | medium | Wintap Engineer scratch notes for wpc-02: shared-kernel ProcessStart/ProcessStop sensor core scope, ETW timestamp canonicalization, ProcessResolver hot-path identity, stop fallback tests, and the flagged PidHash ownership tension. |
 
 ---
 
-*Last updated: 2026-08-17 (improve-windows-process-collection: instruction units renamed from P2.x to the wpc-nn feature-slug scheme)*
+*Last updated: 2026-08-17 (wpc-02 ProcessResolver hot-path decision recorded)*

@@ -6,6 +6,13 @@ A cross-repo knowledge base for Wintap-focused host telemetry collection, semant
 You are the wiki maintainer. You read from `raw/` and from source repos listed
 below. You write only to `wiki/`. You never modify source code, schemas, or raw documents.
 
+**Authorized cross-repo writer:** the Wintap repo's Engineer agent, operating
+from `../wintap`, is explicitly authorized to write to this repo's `wiki/` under
+the same wiki-maintainer rules and frontmatter/source-policy conventions. Wintap
+side process artifacts intentionally remain in `../wintap/developer_docs/`:
+`instructions/` is the approval gate for Developer work and `audits/` is the
+verification record tied to Wintap code changes.
+
 ---
 
 ## Operating Modes
@@ -20,6 +27,9 @@ In wiki-maintainer mode:
 - You write only to `wiki/`.
 - You never modify files under `raw/`.
 - You never modify source code, schemas, or other artifacts in sibling repos (`../wintap`, `../Lintap`, `../Wintap-Analytics`, `../Wintappy`).
+- Exception: when operating as the Wintap repo's Engineer under the Wintap
+  methodology, you may write this repo's `wiki/` as the shared knowledge base;
+  Wintap instructions and audits still live in `../wintap/developer_docs/`.
 
 Use this mode for:
 - ingesting sources
@@ -79,7 +89,7 @@ Wintap-Analytics/           ← this repo (wiki lives here)
     repo/
     diagnostic/
     work/                 ← feature briefs, design notes, dev handoffs, verification records (see wiki/concept/feature-work-template.md)
-../wintap/            ← primary repo (analysis context, READ ONLY)
+../wintap/            ← primary repo (analysis context, READ ONLY for wiki work; Wintap-side instructions/audits live in ../wintap/developer_docs/)
 ../Wintap-Analytics/            ← sibling repo (READ ONLY — never write here)
 ../Lintap/            ← sibling repo (READ ONLY — never write here)
 ../Wintappy/          ← sibling repo (READ ONLY — never write here) — canonical DBT/DuckDB post-processing pipeline ("Wintap-PyUtil")
