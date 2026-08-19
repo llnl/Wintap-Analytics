@@ -7,14 +7,14 @@ grounded_by:
   - ../wintap/wintap/platform/windows/sensor/etw/KernelProcessSensor.cs
   - ../sid-extraction-test/README.md
 policy: agent-editable
-last_validated: 2026-08-13
+last_validated: 2026-08-17
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: process
 audience: mixed
 status: draft
 source_paths: wiki/work/improve-windows-process-collection/interview.md
-tags: [feature-work, process-events, etw, windows-sensor, interview]
+tags: [feature-work, process-events, etw, windows-sensor, interview, metrics]
 ---
 
 # Feature Interview: Improve Windows Process Collection
@@ -167,3 +167,15 @@ fallback, boot ETL ingestion for early-boot coverage, rich stop metrics
 retained, no downstream schema or PidHash changes, verified by a Windows
 validation harness. Confirmed by the human 2026-08-13, with design.md
 requested in the same session.
+
+## Sealed — human estimates
+
+Retrofitted 2026-08-17 after the ROI/velocity mini-lab protocol was adopted;
+this section was **not** captured sealed at feature open. Treat these as
+broken-seal retrofit data, not independent sealed estimates.
+
+**Q: Estimated hours to build this feature solo, without AI (total only):**
+**A:** 3 weeks, recorded as 120 hours in `metrics.md` assuming 40-hour weeks.
+
+**Q: Predicted hours of your own attention with the AI workflow (total only):**
+**A:** Not captured.

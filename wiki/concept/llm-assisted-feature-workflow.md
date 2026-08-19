@@ -4,14 +4,14 @@ type: concept
 confidence: medium
 grounded_by: []
 policy: agent-editable
-last_validated: 2026-08-13
+last_validated: 2026-08-17
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
 audience: mixed
 status: draft
 source_paths: wiki/concept/llm-assisted-feature-workflow.md
-tags: [workflow, llm, requirements, design, verification, interview]
+tags: [workflow, llm, requirements, design, verification, interview, metrics]
 ---
 
 # LLM-Assisted Feature Workflow
@@ -95,6 +95,16 @@ the brief reflects actual intent rather than the agent's first guess.
 6. **Play back before writing.** Close with a short summary of what was
    decided, constrained, delegated, and deferred, and get the human's
    confirmation before generating `brief.md`.
+7. **Ask the two sealed estimate questions last.** After playback, ask exactly
+   two fixed metrics questions, both calendar-posed: (a) if the human had
+   started this feature solo, without AI, on the open date, on what date would
+   it realistically have been available (an accompanying effort amount's hours
+   reading becomes the throughput weight); (b) with the AI workflow, on what
+   date does the human predict the feature will be available. Record the
+   answers verbatim in the `## Sealed — human estimates` section of
+   `interview.md`. These are part of the hard three-question metrics budget in
+   [[wiki/decision/ai-velocity-roi-mini-lab]] (v2); if the human skips them,
+   move on — never re-ask.
 
 ### Question Areas
 

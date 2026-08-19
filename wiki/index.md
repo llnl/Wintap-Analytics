@@ -21,12 +21,15 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/decision/process-identity-attribution-contract]] | high | Migrated Wintap ADR locking the process identity and attribution contract: core-owned PidHash/ParentPidHash, flat event-time fields, durable Stop/parent backfill, and DuckDB as the starting substrate. |
 | [[wiki/decision/test-project-structure-and-first-test]] | high | Migrated Wintap ADR choosing per-target xUnit test projects, standing up `tests/Wintap.Tests/` first, and making the first test a real `WintapMessage` constructor assertion. |
 | [[wiki/decision/consolidate-developer-wiki-into-analytics-wiki]] | high | Records the decision to retire `../wintap/dave-wiki/`, make this Analytics wiki the single Wintap ecosystem knowledge base, and keep Wintap instructions/audits in `../wintap/developer_docs/`. |
+| [[wiki/decision/ai-velocity-roi-mini-lab]] | high | Per-feature velocity/ROI mini-lab, revised to v2 post-pilot (2026-08-19): headline time-to-availability (calendar lead time, weekends included) + throughput (counterfactual-hours per window), calendar-posed sealed estimates under the three-question ratchet, per-unit quality loop, attention proxy demoted to coverage-annotated diagnostic, never-gates rule. |
+| [[wiki/decision/platform-runtime-data-root-defaults]] | high | Records that unconfigured Wintap deployments use the OS defaults owned by Env.cs while explicit programmatic, environment, and JSON overrides remain supported. |
 ## Concept
 
 | Page | Confidence | Summary |
 |------|------------|---------|
-| [[wiki/concept/llm-assisted-feature-workflow]] | medium | Lightweight workflow for LLM-assisted feature work (interview → brief → references → design → spike → plan → handoff → verification → closeout), with the interactive interview protocol, when-to-use guidance, the invocation phrase, and the promote-to-canonical operating rule. |
-| [[wiki/concept/feature-work-template]] | medium | Full markdown skeletons for every `wiki/work/<feature-slug>/` artifact (interview, brief, references, design, spike, implementation plan, dev handoff, verification, research-thread index); only `brief.md` is required. |
+| [[wiki/concept/llm-assisted-feature-workflow]] | medium | Lightweight workflow for LLM-assisted feature work (interview → brief → references → design → spike → plan → handoff → verification → closeout), with the interactive interview protocol, sealed metrics questions, invocation phrase, and promote-to-canonical operating rule. |
+| [[wiki/concept/feature-work-template]] | medium | Full markdown skeletons for every `wiki/work/<feature-slug>/` artifact (interview, brief, references, design, spike, implementation plan, dev handoff, verification, metrics, research-thread index); only `brief.md` is required. |
+| [[wiki/concept/metrics-template]] | high | Defines the parseable `wiki/work/<feature-slug>/metrics.md` format for the AI velocity/ROI mini-lab (v2): lead-time fields with availability anchor, throughput weight, calendar-posed sealed estimates, per-unit estimate/actual rows, and a demoted coverage-annotated attention diagnostic block. |
 | [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 ## Component
 
@@ -44,7 +47,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
-| [[wiki/event_type/process-events]] | high | Defines Security-log-backed process Start/Stop/Refresh semantics, process-tree reconstruction, PidHash lineage, and ETL boundaries. |
+| [[wiki/event_type/process-events]] | high | Defines the unified WindowsProcessSensor semantics (2026-08): kernel-ETW Start/Stop on the shared session with ETW-canonical create times/PidHash, snapshot Refresh with dedup, SID/command-line/path enrichment fallbacks, manifest Stop-metric merge, opt-in boot-trace replay, QA counters, and ETL boundaries. |
 | [[wiki/event_type/file-events]] | high | Defines ETW FileIO producer behavior, file-key path resolution, feedback suppression, and 10-second aggregate ETL semantics. |
 | [[wiki/event_type/network-events]] | high | Defines TCP/UDP ETW producer behavior, endpoint fields, reversible TCP caveats, and 10-second network aggregate ETL semantics. |
 ## Pipeline
@@ -106,11 +109,14 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-windows-process-collection/brief]] | medium | Feature brief for replacing Security-log-based Windows process collection with a unified kernel-ETW sensor: true create times, restored stop coverage, snapshot refresh, SID/command-line enrichment, boot ETL ingestion, no schema/PidHash changes. |
 | [[wiki/work/improve-windows-process-collection/references]] | medium | Source map for the Windows process collection feature: current dual-path sensors, shared kernel session infrastructure, the validated sid-extraction-test POC (SID offsets, Global Logger boot procedure), and the harness/resolver pages it builds on. |
 | [[wiki/work/improve-windows-process-collection/design]] | medium | Design: one WindowsProcessSensor fusing boot ETL replay, live snapshot, classic kernel ProcessStart/End, and manifest ProcessStop metrics, with create-time canonicalization for PidHash integrity, per-field enrichment fallbacks, QA counters, and startup sequencing around the Global Logger boot session. |
-| [[wiki/work/improve-windows-process-collection/implementation_plan]] | medium | Three-slice plan mapped to wintap wpc-01…wpc-08 instruction units: SID helper, sensor core, snapshot refresh, enrichment, stop-metrics merge, wire-in/removal, opt-in boot ETL, and Windows validation harness, each with xUnit trait categories and a done checklist. |
+| [[wiki/work/improve-windows-process-collection/implementation_plan]] | medium | Plan mapped to wintap wpc-01…wpc-09 instruction units (wpc-08 harness skipped by Architect decision; wpc-09 final bug sweep) with xUnit trait categories; done checklist fully closed 2026-08-19. |
 | [[wiki/work/improve-windows-process-collection/dev_handoff]] | medium | Handoff bridging the Analytics feature artifacts to the wintap Architect/Engineer/Developer loop: per-unit Engineer dispatch prompt, primary sources per unit, wpc-01-first recommendation, testing gates, and closeout/audit duties. |
+| [[wiki/work/improve-windows-process-collection/metrics]] | medium | Closed velocity/ROI mini-lab record with v2 addendum: lead time 6 calendar days (anchored on the 2026-08-19 boot-replay-confirming smoke) vs. a reconstructed ~20-calendar-day solo counterfactual, throughput weight 120h, attention 3.47h retained as coverage-annotated diagnostic, retrofit/units-reconstruction caveats recorded honestly. |
 | [[wiki/work/improve-windows-process-collection/sid-helper-notes-2026-08-17]] | medium | Migrated Wintap Engineer scratch notes for wpc-01: narrow SID-helper instruction scope, required feature context, payload-parser test seam, and hard no-schema/no-PidHash/no-TraceEvent-upgrade/no-dependency constraints. |
 | [[wiki/work/improve-windows-process-collection/sensor-core-notes-2026-08-17]] | medium | Wintap Engineer scratch notes for wpc-02: shared-kernel ProcessStart/ProcessStop sensor core scope, ETW timestamp canonicalization, ProcessResolver hot-path identity, stop fallback tests, and the flagged PidHash ownership tension. |
+| [[wiki/work/improve-windows-process-collection/smoke-followups-2026-08-17]] | high | Out-of-scope smoke observations and their final disposition: wpc-09 fixed the boot-trace lifecycle, parent-warning, DuckDB escaping, and logger-tag items; SensSensor load failure and missing SignedS3UrlAdapter remain future candidates outside the feature. |
+| [[wiki/work/improve-windows-process-collection/verification]] | high | Closeout verification record (feature closed 2026-08-19): accepted manual validation evidence — wpc-06 elevated smoke PASS, wpc-07 reboot/overnight PASS, wpc-09 sweep fixes, final overnight smoke with boot replay confirmed — plus 54/54 wpc test state and the wpc-08 skip rationale. |
 
 ---
 
-*Last updated: 2026-08-17 (wpc-02 ProcessResolver hot-path decision recorded)*
+*Last updated: 2026-08-19 (wpc-09 complete; platform-owned runtime data-root defaults documented)*

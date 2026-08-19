@@ -4,14 +4,14 @@ type: concept
 confidence: medium
 grounded_by: []
 policy: agent-editable
-last_validated: 2026-08-13
+last_validated: 2026-08-19
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
 audience: mixed
 status: draft
 source_paths: wiki/concept/feature-work-template.md
-tags: [workflow, llm, template, feature-work]
+tags: [workflow, llm, template, feature-work, metrics]
 ---
 
 # Feature Work Template
@@ -37,6 +37,7 @@ wiki/work/<feature-slug>/
   implementation_plan.md   (optional)
   dev_handoff.md           (optional)
   verification.md          (optional)
+  metrics.md               (optional; velocity/ROI mini-lab — see [[wiki/concept/metrics-template]])
   index.md                 (optional; long-running research threads)
 ```
 
@@ -118,6 +119,24 @@ asking.>
 ## Playback Summary
 
 <The confirmed summary that seeded brief.md.>
+
+## Sealed — human estimates
+
+<Asked as the interview's final two questions, answers recorded as given.
+SEALED: any agent that will produce its own estimates (e.g. the Wintap
+Engineer at exploration start) must not read this section until feature
+close-out. See [[wiki/decision/ai-velocity-roi-mini-lab]] (v2). If the human
+declines or the questions were skipped, leave blank — missing data is fine.>
+
+**Q: If you had started this feature solo, without AI, on today's open date,
+on what date would it realistically have been available? (Calendar estimate —
+weekends and distractions absorbed. An effort amount, e.g. hours or weeks, may
+accompany the date; its hours reading becomes the throughput weight.)**
+**A:**
+
+**Q: With the AI workflow, on what date do you predict this feature will be
+available? (Calendar prediction, open date to availability.)**
+**A:**
 ```
 
 ## `brief.md`
@@ -307,7 +326,15 @@ canonical pages until findings are validated.>
 ## Open Research Questions
 ```
 
+## `metrics.md`
+
+Optional velocity/ROI mini-lab data file. Skeleton, field definitions, and
+lifecycle live in [[wiki/concept/metrics-template]]; protocol in
+[[wiki/decision/ai-velocity-roi-mini-lab]].
+
 ## Related
 
 - [[wiki/concept/llm-assisted-feature-workflow]] - process overview
 - [[wiki/decision/feature-work-artifacts]] - accepted organization
+- [[wiki/concept/metrics-template]] - velocity/ROI metrics file format
+- [[wiki/decision/ai-velocity-roi-mini-lab]] - metrics overlay protocol
