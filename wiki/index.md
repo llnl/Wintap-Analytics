@@ -4,6 +4,12 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
+## Rollup
+
+| Page | Confidence | Summary |
+|------|------------|---------|
+| [[wiki/metrics]] | high | Cross-feature Velocity rollup: one row per closed feature (lead time, solo estimate, Feature Velocity ± uncertainty, comparability flag, metrics link), seeded with the WPC pilot row; Portfolio Velocity pending N≥several with trailing window ≥ 4× median lead time. |
+
 ## Tension
 
 | Page | Confidence | Summary |
@@ -21,7 +27,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/decision/process-identity-attribution-contract]] | high | Migrated Wintap ADR locking the process identity and attribution contract: core-owned PidHash/ParentPidHash, flat event-time fields, durable Stop/parent backfill, and DuckDB as the starting substrate. |
 | [[wiki/decision/test-project-structure-and-first-test]] | high | Migrated Wintap ADR choosing per-target xUnit test projects, standing up `tests/Wintap.Tests/` first, and making the first test a real `WintapMessage` constructor assertion. |
 | [[wiki/decision/consolidate-developer-wiki-into-analytics-wiki]] | high | Records the decision to retire `../wintap/dave-wiki/`, make this Analytics wiki the single Wintap ecosystem knowledge base, and keep Wintap instructions/audits in `../wintap/developer_docs/`. |
-| [[wiki/decision/ai-velocity-roi-mini-lab]] | high | Per-feature velocity/ROI mini-lab, revised to v2 post-pilot (2026-08-19): headline time-to-availability (calendar lead time, weekends included) + throughput (counterfactual-hours per window), calendar-posed sealed estimates under the three-question ratchet, per-unit quality loop, attention proxy demoted to coverage-annotated diagnostic, never-gates rule. |
+| [[wiki/decision/ai-velocity-roi-mini-lab]] | high | Per-feature velocity/ROI mini-lab, revised to v2.1 (2026-08-19, post external review): headline **Velocity** = solo-hours / (5.714 × days) in Feature and Portfolio views, forced-counterfactual sealed Q1 under the three-question ratchet, point-plus-uncertainty reporting, frozen-criteria/availability-finality/comparability guardrails, per-unit quality loop, attention proxy as coverage-annotated diagnostic, never-gates rule. |
 | [[wiki/decision/platform-runtime-data-root-defaults]] | high | Records that unconfigured Wintap deployments use the OS defaults owned by Env.cs while explicit programmatic, environment, and JSON overrides remain supported. |
 ## Concept
 
@@ -29,7 +35,8 @@ Master catalog of all pages. Updated by the agent on every ingest.
 |------|------------|---------|
 | [[wiki/concept/llm-assisted-feature-workflow]] | medium | Lightweight workflow for LLM-assisted feature work (interview → brief → references → design → spike → plan → handoff → verification → closeout), with the interactive interview protocol, sealed metrics questions, invocation phrase, and promote-to-canonical operating rule. |
 | [[wiki/concept/feature-work-template]] | medium | Full markdown skeletons for every `wiki/work/<feature-slug>/` artifact (interview, brief, references, design, spike, implementation plan, dev handoff, verification, metrics, research-thread index); only `brief.md` is required. |
-| [[wiki/concept/metrics-template]] | high | Defines the parseable `wiki/work/<feature-slug>/metrics.md` format for the AI velocity/ROI mini-lab (v2): lead-time fields with availability anchor, throughput weight, calendar-posed sealed estimates, per-unit estimate/actual rows, and a demoted coverage-annotated attention diagnostic block. |
+| [[wiki/concept/metrics-template]] | high | Defines the parseable `wiki/work/<feature-slug>/metrics.md` format for the mini-lab (v2.1): leading human-readable Headline block, Feature Velocity + uncertainty fields on solo-hours terminology, availability anchor with frozen-criteria amendments, comparability flag, sealed forced-counterfactual estimates, per-unit estimate/actual rows, and the demoted coverage-annotated attention diagnostic. |
+| [[wiki/concept/velocity-metric]] | high | The approved Velocity pitch (2026-08-19) carried into the wiki: solo-FTE-equivalent unit, canonical formula solo-hours / (5.714 × days), Feature vs. Portfolio views and the parallelism dividend, calendar-time rationale, two-sealed-estimate uncertainty, guardrails, pilot illustration, and what Velocity is not. |
 | [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 ## Component
 
@@ -111,7 +118,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-windows-process-collection/design]] | medium | Design: one WindowsProcessSensor fusing boot ETL replay, live snapshot, classic kernel ProcessStart/End, and manifest ProcessStop metrics, with create-time canonicalization for PidHash integrity, per-field enrichment fallbacks, QA counters, and startup sequencing around the Global Logger boot session. |
 | [[wiki/work/improve-windows-process-collection/implementation_plan]] | medium | Plan mapped to wintap wpc-01…wpc-09 instruction units (wpc-08 harness skipped by Architect decision; wpc-09 final bug sweep) with xUnit trait categories; done checklist fully closed 2026-08-19. |
 | [[wiki/work/improve-windows-process-collection/dev_handoff]] | medium | Handoff bridging the Analytics feature artifacts to the wintap Architect/Engineer/Developer loop: per-unit Engineer dispatch prompt, primary sources per unit, wpc-01-first recommendation, testing gates, and closeout/audit duties. |
-| [[wiki/work/improve-windows-process-collection/metrics]] | medium | Closed velocity/ROI mini-lab record with v2 addendum: lead time 6 calendar days (anchored on the 2026-08-19 boot-replay-confirming smoke) vs. a reconstructed ~20-calendar-day solo counterfactual, throughput weight 120h, attention 3.47h retained as coverage-annotated diagnostic, retrofit/units-reconstruction caveats recorded honestly. |
+| [[wiki/work/improve-windows-process-collection/metrics]] | medium | Closed velocity/ROI mini-lab record with v2 and v2.1 addenda: lead time 6 calendar days (anchored on the 2026-08-19 boot-replay-confirming smoke), 120 solo-hours, **Feature Velocity 3.5 (uncertainty 2–7)** with retrofit/unsealed-pilot and willingness-only-comparability caveats, attention 3.47h retained as coverage-annotated diagnostic. |
 | [[wiki/work/improve-windows-process-collection/sid-helper-notes-2026-08-17]] | medium | Migrated Wintap Engineer scratch notes for wpc-01: narrow SID-helper instruction scope, required feature context, payload-parser test seam, and hard no-schema/no-PidHash/no-TraceEvent-upgrade/no-dependency constraints. |
 | [[wiki/work/improve-windows-process-collection/sensor-core-notes-2026-08-17]] | medium | Wintap Engineer scratch notes for wpc-02: shared-kernel ProcessStart/ProcessStop sensor core scope, ETW timestamp canonicalization, ProcessResolver hot-path identity, stop fallback tests, and the flagged PidHash ownership tension. |
 | [[wiki/work/improve-windows-process-collection/smoke-followups-2026-08-17]] | high | Out-of-scope smoke observations and their final disposition: wpc-09 fixed the boot-trace lifecycle, parent-warning, DuckDB escaping, and logger-tag items; SensSensor load failure and missing SignedS3UrlAdapter remain future candidates outside the feature. |
@@ -119,4 +126,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-19 (wpc-09 complete; platform-owned runtime data-root defaults documented)*
+*Last updated: 2026-08-19 (Velocity metric adopted — mini-lab v2.1, concept page, cross-feature rollup)*

@@ -125,13 +125,16 @@ asking.>
 <Asked as the interview's final two questions, answers recorded as given.
 SEALED: any agent that will produce its own estimates (e.g. the Wintap
 Engineer at exploration start) must not read this section until feature
-close-out. See [[wiki/decision/ai-velocity-roi-mini-lab]] (v2). If the human
-declines or the questions were skipped, leave blank — missing data is fine.>
+close-out. See [[wiki/decision/ai-velocity-roi-mini-lab]] (v2.1) and
+[[wiki/concept/velocity-metric]]. If the human declines or the questions were
+skipped, leave blank — missing data is fine.>
 
-**Q: If you had started this feature solo, without AI, on today's open date,
-on what date would it realistically have been available? (Calendar estimate —
-weekends and distractions absorbed. An effort amount, e.g. hours or weeks, may
-accompany the date; its hours reading becomes the throughput weight.)**
+**Q: If you had to build this exact scope alone, without AI, how many working
+hours would it take? And on what date would it realistically have been
+available? (Forced counterfactual — answer even if you would not have
+attempted it solo. The hours are the feature's solo-hours: the Velocity
+numerator and portfolio weight. The calendar date absorbs weekends and
+distractions.)**
 **A:**
 
 **Q: With the AI workflow, on what date do you predict this feature will be

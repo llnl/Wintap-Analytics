@@ -4,7 +4,7 @@ type: concept
 confidence: medium
 grounded_by: []
 policy: agent-editable
-last_validated: 2026-08-17
+last_validated: 2026-08-19
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -96,15 +96,17 @@ the brief reflects actual intent rather than the agent's first guess.
    decided, constrained, delegated, and deferred, and get the human's
    confirmation before generating `brief.md`.
 7. **Ask the two sealed estimate questions last.** After playback, ask exactly
-   two fixed metrics questions, both calendar-posed: (a) if the human had
-   started this feature solo, without AI, on the open date, on what date would
-   it realistically have been available (an accompanying effort amount's hours
-   reading becomes the throughput weight); (b) with the AI workflow, on what
-   date does the human predict the feature will be available. Record the
-   answers verbatim in the `## Sealed — human estimates` section of
-   `interview.md`. These are part of the hard three-question metrics budget in
-   [[wiki/decision/ai-velocity-roi-mini-lab]] (v2); if the human skips them,
-   move on — never re-ask.
+   two fixed metrics questions: (a) the forced counterfactual — if the human
+   had to build this exact scope alone, without AI, how many working hours
+   would it take, plus a realistic calendar availability date (the hours are
+   the feature's solo-hours: the Velocity numerator and portfolio weight);
+   (b) with the AI workflow, on what date does the human predict the feature
+   will be available. Record the answers verbatim in the
+   `## Sealed — human estimates` section of `interview.md`. These are part of
+   the hard three-question metrics budget in
+   [[wiki/decision/ai-velocity-roi-mini-lab]] (v2.1; metric definition in
+   [[wiki/concept/velocity-metric]]); if the human skips them, move on —
+   never re-ask.
 
 ### Question Areas
 
