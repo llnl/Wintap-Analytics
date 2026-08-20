@@ -227,3 +227,36 @@ days**, deliberately including the idle 2026-08-14→16 three-day weekend.
 - **Attention 3.47 h is a coverage-annotated diagnostic only** (claude-code
   sessions only; the OpenCode Engineering & Development harness channel was
   not mined), retained from v1 as the mechanism probe — it does not headline.
+
+## Velocity Addendum (2026-08-19) — v2.1 Feature Velocity
+
+Added under the v2.1 Velocity protocol ([[wiki/concept/velocity-metric]];
+[[wiki/decision/ai-velocity-roi-mini-lab]] Revision History), adopted the same
+day the feature closed. Computed per the canonical formula from the v2
+addendum's existing lead time (6 calendar days) and 120 solo-hours weight.
+Prior blocks are preserved unchanged; this block is authoritative for
+Velocity aggregation.
+
+```yaml
+# --- v2.1 Velocity addendum (authoritative for Velocity aggregation) ---
+solo_hours: 120
+feature_velocity: 3.5        # 120 / (5.714 × 6) = 3.5003 → 3.5
+velocity_uncertainty: "2-7"  # default ±2x band pending calibration (see caveats)
+comparability: willingness-only
+```
+
+- **Feature Velocity 3.5 (uncertainty 2–7):**
+  `120 solo-hours / (5.714 × 6 days) ≈ 3.5`.
+- **Pilot caveats carry over — illustrative, not evidentiary.** The 120
+  solo-hours figure is the retrofit, unsealed estimate (disclosed before
+  recording), and the AI estimate was anchored to the same source, so no
+  independent second estimate exists to form a two-estimate spread; the
+  uncertainty range is the default ±2× widening as stated in the approved
+  pitch's own asterisked pilot illustration.
+- **Comparability: willingness, not capability.** The close-out answer says
+  the UserSid reverse engineering and PEB command-line lookup would not have
+  been *attempted* solo — a willingness statement about scope the developer
+  was capable of building. Per the v2.1 comparability guardrail,
+  willingness-only answers do **not** exclude a feature from the fitted
+  trend: WPC stays in the trend as an annotated point.
+- Rollup row: [[wiki/metrics]].
