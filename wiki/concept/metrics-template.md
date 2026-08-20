@@ -1,12 +1,12 @@
 ---
-title: "Feature Metrics Template (Velocity/ROI Mini-Lab)"
+title: "Feature Metrics Template (Velocity)"
 type: concept
 confidence: high
 grounded_by:
   - ../Wintap-Analytics/wiki/decision/ai-velocity-roi-mini-lab.md
   - ../Wintap-Analytics/wiki/concept/velocity-metric.md
 policy: agent-editable
-last_validated: 2026-08-19
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -16,22 +16,27 @@ source_paths: wiki/concept/metrics-template.md
 tags: [workflow, metrics, llm, template, feature-work, velocity, roi, lead-time, solo-hours]
 ---
 
-# Feature Metrics Template (Velocity/ROI Mini-Lab)
+# Feature Metrics Template (Velocity)
 
-Defines `wiki/work/<feature-slug>/metrics.md`, the per-feature metrics file
-for the velocity/ROI mini-lab decided in
+Defines `wiki/work/<feature-slug>/metrics.md`, the per-feature Velocity results
+file governed by
 [[wiki/decision/ai-velocity-roi-mini-lab]]. The metric itself is defined in
 [[wiki/concept/velocity-metric]]. Read those pages for the protocol and
 rationale; this page defines only the file format. Methodology is never
 restated per feature — a rendered `metrics.md` links here and to the ADR.
 
-**This is the v2.1 field set (2026-08-19, Velocity protocol).** Headline:
-**Feature Velocity** = `solo_hours / (5.714 × lead_time_days)`, one decimal,
-with a stated uncertainty range. "Solo-hours" is the standing unit label
-(formerly "counterfactual-hours"). Attention remains a demoted,
-coverage-annotated diagnostic. Pre-v2.1 files (the WPC pilot) keep their
-earlier blocks and carry marked addenda; aggregation scripts prefer the
-newest block where several exist.
+**This is the v2.1 field set with the 2026-08-20 plain-language presentation
+convention.** The human-readable section is titled **Results** and leads with:
+
+- estimated delivery speed in multiples of one solo developer's pace;
+- a plausible range written as “about `<lo>×–<hi>× faster”;
+- a simple confidence label; and
+- one direct sentence explaining that confidence.
+
+The structured record still stores **Feature Velocity** =
+`solo_hours / (5.714 × lead_time_days)` and its canonical uncertainty field.
+“Solo-hours” is the standing unit label. Attention remains a demoted,
+coverage-annotated diagnostic.
 
 ## Lifecycle
 
@@ -54,13 +59,14 @@ newest block where several exist.
    (capability vs. willingness — see Field Definitions); fill per-unit
    `actual_hours` from audits where derivable; record the attention
    diagnostic **only if** the main session supplied one (with its coverage
-   annotation); write the Headline block and the prose tabulation; **append
+   annotation); write the plain-language Results block and the prose
+   tabulation; **append
    the feature's row to [[wiki/metrics]]**.
 
 Missing data at any stage is fine — never gate, never nag, never re-ask
 (see the ADR's never-gates rule).
 
-## Field Definitions (headline metrics)
+## Field Definitions (core metrics)
 
 - `ts_open` — the feature's `opened` date: interview / design kickoff.
   Queue/backlog wait before this is deliberately invisible.
@@ -84,7 +90,18 @@ Missing data at any stage is fine — never gate, never nag, never re-ask
 - `velocity_uncertainty` — the uncertainty range that travels with
   `feature_velocity`: the band implied by the two independently sealed
   solo-hours estimates (human + Engineer), widened to a default ±2× until
-  calibration data narrows it. E.g. `"2-7"` for a 3.5 point value.
+  calibration data narrows it. E.g. `"2-7"` for a 3.5 point value. In the
+  Results section, render this as **“Plausible range: about 2×–7× faster,”**
+  not the shorthand “uncertainty 2–7.”
+- **Results confidence** — a human-readable label, not an additional YAML
+  metric. Apply it consistently:
+  - **Low:** either estimate is retrospective, unsealed, anchored, missing, or
+    otherwise not an independent pair.
+  - **Medium:** both estimates were independently sealed, but the plausible
+    range still uses the default ±2× because calibration is limited.
+  - **High:** both estimates were independently sealed and accumulated
+    calibration evidence justifies a narrower range.
+  State the reason in one sentence; never imply statistical confidence.
 - `comparability` — `none` | `willingness-only` | `capability-exceeded`,
   derived from the close-out question. `capability-exceeded` (scope beyond
   what the developer could have built solo) flags the feature out of the
@@ -114,23 +131,30 @@ Standard work-artifact frontmatter first (see
 ```markdown
 # Feature Metrics: <Feature Name>
 
-Velocity/ROI mini-lab data per [[wiki/decision/ai-velocity-roi-mini-lab]]
+Velocity results governed by [[wiki/decision/ai-velocity-roi-mini-lab]]
 (v2.1); metric definition in [[wiki/concept/velocity-metric]].
 SEAL NOTE: `interview.md` `## Sealed — human estimates` must not be read by
 the estimating agent until close-out.
 
-## Headline
+## Results
 
 <Filled at close-out — the short human-readable block; every number repeats
 in the YAML below.>
 
-- **Feature Velocity:** <n.n> (uncertainty <lo>–<hi>)
-- **Lead time:** <n> calendar days (<ts_open> → <ts_available>)
-- **Solo estimate:** <n> solo-hours (sealed at open)
-- **Close-out answer:** <Q3 answer in one line, with the
-  capability-vs-willingness reading>
+- **Estimated delivery speed:** **<n.n>× one solo developer's pace**
+- **Plausible range:** **about <lo>×–<hi>× faster**
+- **Estimate confidence:** **<High | Medium | Low>**
+- **Why confidence is <label>:** <One direct sentence.>
+- **Delivered in:** **<n> calendar days** (<ts_open> → <ts_available>)
+- **Estimated solo effort:** **<n> hours**
 
-## Metrics Data
+<One short paragraph stating what acceptance evidence closed the feature and
+whether the capability-vs-willingness answer keeps it comparable.>
+
+## Technical Record
+
+The structured data below preserves the canonical fields used by the
+cross-feature rollup.
 
 ​```yaml
 feature_slug: <feature-slug>
@@ -139,7 +163,7 @@ status: open                    # open | closed
 opened: YYYY-MM-DD
 closed: null                    # YYYY-MM-DD at close-out
 
-# --- Headline: Feature Velocity (computed at close-out) ---
+# --- Feature Velocity (computed at close-out) ---
 ts_open: YYYY-MM-DD              # = opened; interview / design kickoff
 ts_available: null               # first Architect-accepted validation event vs. frozen criteria
 availability_anchor: ""          # dated artifact pointer + one-line why chosen
@@ -170,7 +194,7 @@ human_est_solo_hours: null           # forced-counterfactual solo estimate, hour
 human_est_solo_available_date: null  # realistic solo availability date (Q1 companion)
 human_est_ai_available_date: null    # predicted availability with the AI workflow (Q2)
 
-# --- Diagnostics (optional, never headline; filled at close-out) ---
+# --- Diagnostics (optional; never part of Results; filled at close-out) ---
 attention_hours: null            # 15-min-gap proxy, ONLY if main session supplied it
 attention_coverage: ""           # mandatory when attention_hours set, e.g. "claude-code sessions only"
 actual_api_cost_usd: null        # companion field; never folded into Velocity
@@ -182,9 +206,11 @@ findings: ""  # one free-text line
 ## Close-Out Tabulation
 
 <Filled at close-out: small estimates-vs-actuals table (human vs. AI vs.
-measured availability dates and solo-hours), and 2-3 sentences of
-interpretation. Prose goes here; every number must also exist in the YAML
-block above. Then append the feature's row to [[wiki/metrics]].>
+measured availability dates and solo-hours), followed by the calculation in
+plain language: “estimated <n.n>× one solo developer's pace; plausible range
+about <lo>×–<hi>×.” Explain limitations directly. Prose goes here; every
+number must also exist in the YAML block above. Then append the feature's row
+to [[wiki/metrics]].>
 ```
 
 (The zero-width characters guarding the inner fence are formatting armor for

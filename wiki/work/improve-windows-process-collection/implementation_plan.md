@@ -125,7 +125,7 @@ Developer with xUnit tests tagged `[Trait("Category", "wpc-<nn>")]` in
     [[wiki/work/improve-windows-process-collection/verification]].
 
 9. **wpc-09 — Minor bug sweep (final code unit).** Address findings from the
-   2026-08-18 overnight smoke before feature closeout: boot-trace arm/disarm
+   2026-08-18 overnight smoke-test before feature closeout: boot-trace arm/disarm
    lifecycle gaps, missing-parent warning triage/fix-or-annotation,
     process-name / DuckDB command-line escaping triage and fix if confirmed,
     the cosmetic QA-counter logger tag only if the wpc-07 rider did not already
@@ -216,7 +216,7 @@ than heavy registry/session test doubles.
       inserts parameterized, parent-warning annotated, logger tag fixed,
       platform-owned data-root defaults restored;
       19/19 wpc-09 tests, 64/64 wpc suite, 65/65 full test project, Release
-      build 0 errors, audit filed; final overnight smoke 2026-08-18→19 PASS
+      build 0 errors, audit filed; final overnight smoke-test 2026-08-18→19 PASS
       with boot replay confirmed end-to-end)
 - [x] verification.md complete; wiki/log.md closeout entry appended
       (2026-08-19)

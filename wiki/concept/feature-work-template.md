@@ -4,7 +4,7 @@ type: concept
 confidence: medium
 grounded_by: []
 policy: agent-editable
-last_validated: 2026-08-19
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -37,7 +37,7 @@ wiki/work/<feature-slug>/
   implementation_plan.md   (optional)
   dev_handoff.md           (optional)
   verification.md          (optional)
-  metrics.md               (optional; velocity/ROI mini-lab — see [[wiki/concept/metrics-template]])
+  metrics.md               (optional; plain-language Velocity results + technical record — see [[wiki/concept/metrics-template]])
   index.md                 (optional; long-running research threads)
 ```
 
@@ -331,13 +331,15 @@ canonical pages until findings are validated.>
 
 ## `metrics.md`
 
-Optional velocity/ROI mini-lab data file. Skeleton, field definitions, and
-lifecycle live in [[wiki/concept/metrics-template]]; protocol in
+Optional Velocity results file. It opens with a plain-language **Results**
+scorecard and keeps formulas and canonical YAML under **Technical Record**.
+Skeleton, field definitions, and lifecycle live in
+[[wiki/concept/metrics-template]]; protocol in
 [[wiki/decision/ai-velocity-roi-mini-lab]].
 
 ## Related
 
 - [[wiki/concept/llm-assisted-feature-workflow]] - process overview
 - [[wiki/decision/feature-work-artifacts]] - accepted organization
-- [[wiki/concept/metrics-template]] - velocity/ROI metrics file format
+- [[wiki/concept/metrics-template]] - Velocity Results and technical-record format
 - [[wiki/decision/ai-velocity-roi-mini-lab]] - metrics overlay protocol

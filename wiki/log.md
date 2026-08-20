@@ -512,7 +512,7 @@ Open questions: none for instruction approval; Developer must still record triag
 
 ## [2026-08-19] closeout | [wintap] improve-windows-process-collection feature closed
 
-Decisions made: Architect approved feature closeout. Outcome: the unified `WindowsProcessSensor` (kernel-ETW Start/Stop on the shared session, ETW-canonical PidHash, snapshot Refresh with dedup, SID/command-line/path enrichment with fallbacks, manifest Stop-metric merge, opt-in Global Logger boot-trace replay, QA counters) fully replaced the Security-log and KernelProcessSensor paths — no audit-policy dependency, no log-wrap failure mode. Final code state: wintap develop-dave `19e89dc` (wpc-07 + wpc-09), 54/54 wpc tests and 55/55 project-wide passing, Release build 0 errors. Final overnight smoke 2026-08-18→19 PASS with boot replay confirmed end-to-end (arm at shutdown, owned stop/disarm at startup, replay), resolving the wpc-09 audit's pending item; earlier blocker was an external Code42-AAT lock on the DuckDB event store, and `19e89dc` also fixed the contributing Windows runtime data-root fallback. wpc-08 formal harness remained skipped (Architect decision 2026-08-18; manual validation accepted).
+Decisions made: Architect approved feature closeout. Outcome: the unified `WindowsProcessSensor` (kernel-ETW Start/Stop on the shared session, ETW-canonical PidHash, snapshot Refresh with dedup, SID/command-line/path enrichment with fallbacks, manifest Stop-metric merge, opt-in Global Logger boot-trace replay, QA counters) fully replaced the Security-log and KernelProcessSensor paths — no audit-policy dependency, no log-wrap failure mode. Final code state: wintap develop-dave `19e89dc` (wpc-07 + wpc-09), 54/54 wpc tests and 55/55 project-wide passing, Release build 0 errors. Final overnight smoke-test 2026-08-18→19 PASS with boot replay confirmed end-to-end (arm at shutdown, owned stop/disarm at startup, replay), resolving the wpc-09 audit's pending item; earlier blocker was an external Code42-AAT lock on the DuckDB event store, and `19e89dc` also fixed the contributing Windows runtime data-root fallback. wpc-08 formal harness remained skipped (Architect decision 2026-08-18; manual validation accepted).
 Pages created: `work/improve-windows-process-collection/verification.md` (accepted manual validation evidence, test/build state, wpc-08 skip rationale).
 Pages updated: `work/improve-windows-process-collection/metrics.md` (mini-lab close-out: status closed; ts_design_end 2026-08-17, ts_final_audit 2026-08-18; actual_attention_hours 3.47 with proxy method record; human estimates unsealed; close-out answer recorded verbatim — feature only partially attempted solo, SID reverse engineering and PEB lookup not at all; ~120h est. vs 3.47h measured, retrofit seal-break and undercount caveats noted); `event_type/process-events.md` (durable semantics promoted from the feature work folder, regrounded to live `WindowsProcessSensor`/helper sources); `work/improve-windows-process-collection/implementation_plan.md` (done checklist closed: wpc-09 done, wpc-08 explicitly skipped, verification/promotion done); `work/improve-windows-process-collection/smoke-followups-2026-08-17.md` (final disposition: wpc-09 items resolved; SensSensor and SignedS3UrlAdapter remain future candidates outside the feature); `index.md`.
 Contradictions flagged: none.
@@ -521,7 +521,7 @@ Open questions: none for this feature. Remaining ecosystem follow-up candidates 
 ## [2026-08-19] decision | AI velocity/ROI mini-lab revised to v2 (scheduled post-pilot revision)
 
 What changed: headline metrics pivot to boundary/outcome measures — time-to-availability (raw calendar lead time, weekends included, feature open → first Architect-accepted validation artifact) plus throughput (counterfactual-hours delivered per window, weighted by sealed solo estimates); the two sealed interview questions are re-posed in calendar terms under the displacement ratchet; the 15-minute-gap attention proxy is demoted to an optional, coverage-annotated diagnostic (merge-then-cluster rule if ever multi-harness). See `wiki/decision/ai-velocity-roi-mini-lab.md` (Revision History).
-Pages updated: `wiki/decision/ai-velocity-roi-mini-lab.md` (v2 in place); `wiki/concept/metrics-template.md` (v2 field set); `wiki/concept/feature-work-template.md` (calendar-posed sealed Q1/Q2); `wiki/concept/llm-assisted-feature-workflow.md` (interview step 7 phrasing); `wiki/work/improve-windows-process-collection/metrics.md` (v2 addendum: lead time 6 calendar days 2026-08-13→19 anchored on the boot-replay-confirming final overnight smoke per brief criterion 6; solo counterfactual ~2026-09-02/20 calendar days flagged as a units reconstruction; throughput weight 120h; attention 3.47h kept as coverage-annotated diagnostic); `wiki/index.md`.
+Pages updated: `wiki/decision/ai-velocity-roi-mini-lab.md` (v2 in place); `wiki/concept/metrics-template.md` (v2 field set); `wiki/concept/feature-work-template.md` (calendar-posed sealed Q1/Q2); `wiki/concept/llm-assisted-feature-workflow.md` (interview step 7 phrasing); `wiki/work/improve-windows-process-collection/metrics.md` (v2 addendum: lead time 6 calendar days 2026-08-13→19 anchored on the boot-replay-confirming final overnight smoke-test per brief criterion 6; solo counterfactual ~2026-09-02/20 calendar days flagged as a units reconstruction; throughput weight 120h; attention 3.47h kept as coverage-annotated diagnostic); `wiki/index.md`.
 Wintap process docs: proposed diffs to `../wintap/.claude/agents/engineer.md` and `../wintap/CLAUDE.md` drafted for Architect review per the ADR ownership note — not applied.
 Contradictions flagged: none.
 Open questions: none for the revision itself; cross-harness attention adapters remain deferred until a feature routes significant attention through OpenCode.
@@ -541,3 +541,38 @@ Pages created: `wiki/concept/velocity-metric.md` (approved pitch carried faithfu
 Pages updated: `wiki/decision/ai-velocity-roi-mini-lab.md` (v2.1 revision; new Alternatives Considered: per-developer baselines rejected, directional-bias constant framing withdrawn, bands-never-decimals rejected, defect reopen rule rejected); `wiki/concept/metrics-template.md` (v2.1 field set: leading Headline block, `feature_velocity`/`velocity_uncertainty`/`comparability`/`criteria_amendments`, `throughput_weight_hours` → `solo_hours`, `ai_est_solo_hours` added, methodology as links); `wiki/concept/feature-work-template.md` and `wiki/concept/llm-assisted-feature-workflow.md` (forced-counterfactual Q1 / calendar Q2 phrasing); `wiki/work/improve-windows-process-collection/metrics.md` (Velocity addendum: 3.5, uncertainty 2–7, pilot and willingness-not-capability caveats — added, nothing erased); `wiki/index.md`.
 Wintap process docs: diffs to `../wintap/.claude/agents/engineer.md` and `../wintap/CLAUDE.md` redrafted against the final protocol and returned for Architect review — not applied, per the ADR ownership note.
 Contradictions flagged: none hard. Two v2 statements corrected in place: the raw throughput companion is superseded by normalized Portfolio Velocity (the solo-hour sum survives as its numerator), and v2's "hours are never compared against elapsed time" safety note was removed because the canonical formula compares them deliberately via the declared 5.714 unit.
+
+## [2026-08-20] maintenance | WPC metrics aligned to approved Velocity framing
+
+Pages updated: `wiki/work/improve-windows-process-collection/metrics.md`; `wiki/index.md`; `wiki/log.md`.
+Changes: Replaced the accumulated v1/v2/v2.1 narrative and multiple YAML blocks with the canonical single-block Velocity format; made Feature Velocity 3.5 (uncertainty 2–7) the headline; retained the 120 solo-hour, 6-calendar-day, availability-anchor, comparability, per-unit, cost, and attention evidence; explicitly classified the pilot as retrospective/unsealed and illustrative; removed the obsolete attention-based rough-ROI framing and kept 3.47 hours only as a coverage-annotated diagnostic.
+Decisions made: none — this is a conformance edit against the Architect-approved `wiki/concept/velocity-metric.md` definition.
+Contradictions flagged: none.
+
+## [2026-08-20] maintenance | WPC Velocity scorecard simplified
+
+Pages updated: `wiki/work/improve-windows-process-collection/metrics.md`; `wiki/index.md`; `wiki/log.md`.
+Changes: Reworded the feature headline as a plain-language scorecard: estimated delivery speed 3.5× one solo developer's pace, plausible range about 2×–7× faster, low confidence, and a direct explanation for that low confidence. Moved formula-oriented language into a clearly labeled Technical Record while preserving the canonical YAML fields and underlying evidence.
+Decisions made: none — presentation-only simplification; the approved metric and recorded values are unchanged.
+Contradictions flagged: none.
+
+## [2026-08-20] maintenance | Standardized overnight smoke-test wording
+
+Pages updated: WPC metrics, verification, implementation plan, smoke follow-ups, canonical process-event page, index, and historical log references.
+Changes: Replaced “overnight smoke” and “overnight smoke test” with the requested “overnight smoke-test” wording.
+Decisions made: none; terminology-only correction.
+Contradictions flagged: none.
+
+## [2026-08-20] maintenance | WPC metrics summary labeled Results
+
+Pages updated: `wiki/work/improve-windows-process-collection/metrics.md`; `wiki/log.md`.
+Changes: Renamed the plain-language scorecard heading from “Headline” to “Results” so the pilot document models the intended future presentation.
+Decisions made: none; presentation-only change.
+Contradictions flagged: none.
+
+## [2026-08-20] maintenance | Future feature metrics inherit simplified Results
+
+Pages updated: `wiki/concept/metrics-template.md`; `wiki/concept/velocity-metric.md`; `wiki/concept/feature-work-template.md`; `wiki/concept/llm-assisted-feature-workflow.md`; `wiki/index.md`; `wiki/log.md`.
+Changes: Made **Results** the standard reader-facing section for future feature metrics; it now reports estimated delivery speed as a multiple of one solo developer's pace, an “about X×–Y× faster” plausible range, a deterministic Low/Medium/High confidence label, and one direct confidence reason. Canonical formulas and YAML remain under **Technical Record**. Removed inherited “Headline” and reader-facing “uncertainty 2–7” wording from the concept templates and examples.
+Decisions made: Presentation convention only; the approved Velocity formula, fields, guardrails, and raw evidence are unchanged.
+Contradictions flagged: none.

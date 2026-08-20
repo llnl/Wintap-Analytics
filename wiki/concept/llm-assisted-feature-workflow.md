@@ -4,7 +4,7 @@ type: concept
 confidence: medium
 grounded_by: []
 policy: agent-editable
-last_validated: 2026-08-19
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -60,7 +60,7 @@ and handoff pages rather than the full artifact set. See
 | Plan implementation | Steps + verification checklist | `implementation_plan.md` |
 | Hand off to a dev agent | Copy/paste prompt + curated context for code-development mode | `dev_handoff.md` |
 | Implement and verify | Code changes + commands run + results | `verification.md` |
-| Close out | Promote durable facts into canonical pages + log follow-ups | Updated canonical pages and `wiki/log.md` |
+| Close out | Promote durable facts, record plain-language Velocity Results when enabled, and log follow-ups | Updated canonical pages, optional `metrics.md`, and `wiki/log.md` |
 
 ## Interview Stage
 

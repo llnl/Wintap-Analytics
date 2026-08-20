@@ -19,7 +19,7 @@ tags: [feature-work, process-events, etw, windows-sensor, follow-up, wpc]
 
 # 2026-08-17 wpc-06 smoke-run out-of-scope observations
 
-## 2026-08-18 overnight smoke validation and wpc-09 sweep findings
+## 2026-08-18 overnight smoke-test validation and wpc-09 sweep findings
 
 The Architect manually validated slice 2 on 2026-08-18 after a published local
 build, reboot, and overnight service run. Positive validation summary: the
@@ -102,7 +102,7 @@ The wpc-09 bug sweep (wintap develop-dave 19e89dc) resolved all four
 lifecycle gaps fixed with foreign-session safety, missing-parent warnings
 triaged as expected best-effort attribution and annotated, DuckDB
 command-line parser errors fixed via parameterized inserts, and the cosmetic
-QA-counter logger tag fixed. A follow-up overnight smoke (2026-08-18→19)
+QA-counter logger tag fixed. A follow-up overnight smoke-test (2026-08-18→19)
 passed with boot replay confirmed end-to-end; see
 [[wiki/work/improve-windows-process-collection/verification]].
 
