@@ -27,6 +27,31 @@ Pages created: diagnostic/dependency-inventory-and-update-status.md.
 Pages updated: index.md; log.md.
 Contradictions flagged: none.
 
+## [2026-06-30] methodology | [wintap] Methodology bootstrap
+
+Decisions made: Adopted the Architect / Engineer / Developer role-separated workflow with per-developer wikis to avoid git conflicts — each dev only edited their own wiki directory. Adapted from the OpenCode setup and the Karpathy LLM-wiki pattern. Verification gate: stand up xUnit first (unit P1.1). Role boundaries enforced via subagent tool limits plus instruction discipline. Instruction/design/audit docs live under `developer_docs/`.
+ADRs written or updated: none yet.
+Wiki pages updated: none yet — the Wintap-side wiki was empty and awaiting first ingest.
+Instructions written: none yet. Recommended next: P1.1 — stand up xUnit test project under `tests/`.
+Open questions: Where exactly should the xUnit project sit relative to the multi-target agents (Wintap/Lintap/Mactap)? What is the first behavior worth covering with tests?
+
+## [2026-06-30] decision | [wintap] P1.1 design settled (test harness)
+
+Decisions made: Resolved both open questions from the bootstrap entry. Open Question 1 (placement) resolved: per-target test projects mirroring the multi-target agents (`tests/Wintap.Tests/`, `tests/Lintap.Tests/`, `tests/Mactap.Tests/`), chosen by the Architect. Open Question 2 (first behavior) resolved: a real test against `WintapMessage` — construct it and assert `MessageType` matches the `MessageTypeEnum` passed to the constructor. Reconciliation: because `WintapMessage` lives in cross-platform `shared/WintapAPI` while the agent projects are OS-bound, P1.1 stands up only `tests/Wintap.Tests/` now, referencing `shared/WintapAPI`; Lintap/Mactap siblings are deferred to P1.2.
+ADRs written or updated: `wiki/decision/test-project-structure-and-first-test.md` (Accepted; migrated from `../wintap/dave-wiki/wiki/decisions/2026-06-30-test-project-structure-and-first-test.md`).
+Wiki pages updated: none beyond the ADR and log.
+Instructions written: `../wintap/developer_docs/instructions/P1.1-xunit-test-harness.md` (Status was Draft at the time of the original entry).
+Open questions: P1.2 owed — stand up `tests/Lintap.Tests/` and `tests/Mactap.Tests/` siblings; decide per sibling whether it references shared code vs. the OS-bound agent. When the first genuinely Windows-agent-specific behavior is tested, `tests/Wintap.Tests/` will additionally reference `wintap/Wintap.csproj` and its `dotnet test` becomes Windows-only.
+
+## [2026-06-30] decision | [wintap] Stage 0 locked (process identity & attribution contract)
+
+Decisions made: Locked the Stage 0 canonical contract from the architecture assessment. Core owns `PidHash`/`ParentPidHash` generation; sensors supply a flat event-time-knowable field list; Stop events resolve identity and backfill required fields including `ParentPidHash` from a durable store; DuckDB is the starting substrate for durable persistence and hot-path attribution lookups; invariants are mechanism-agnostic so tests survive a later substrate change.
+ADRs written or updated: `wiki/decision/process-identity-attribution-contract.md` (Accepted; migrated from `../wintap/dave-wiki/wiki/decisions/2026-06-30-process-identity-attribution-contract.md`).
+Wiki pages updated: none beyond the ADR and log.
+Assessment updated: `../wintap/documentation/design/architecture-assessment.md` — appended DEC-001..DEC-004 to the Decisions Log; reworded INV-001..INV-005; annotated OQ-001/OQ-002/OQ-004 as resolved and OQ-003/OQ-005 as deferred.
+Instructions written: none.
+Open questions / follow-up: Stage 1 contract tests recommended next; DEC-004 is evidence-gated and the memory-first optimization should be revisited only if measurement shows a throughput/latency ceiling.
+
 ## [2026-07-06] maintenance | LLM-wiki contract alignment
 
 Pages created: decision/feature-work-artifacts.md; concept/llm-assisted-feature-workflow.md; concept/feature-work-template.md; work/
@@ -314,3 +339,240 @@ Results: Windows `uv` test suite passed (`5 passed`); Wintap publish passed; ser
 Limitation: this host logged `Log wrap detected! Unable to build process tree, computer reboot required.`, so full Windows `ClearDB` + Security-log startup replay remains unverified; real-time capture, liveness reconciliation, retention deletion, and telemetry were verified.
 Pages updated: work/fix-unbounded-process-table-growth/verification.md (marked as `starting-point`); work/fix-unbounded-process-table-growth/implementation_plan.md; index.md; log.md.
 Contradictions flagged: none. Cross-feature note: the CPU-vs-table-size correlation step depends on pidstat collector data — pidstat slice 2 (systemd + Wintappy parquet migration) is still pending and unblocks the correlation study.
+
+## [2026-08-13] update | Interview stage added to LLM-assisted feature workflow
+
+Pages updated: `concept/llm-assisted-feature-workflow.md` (new Interview stage row in the stages table; new Interview Stage section defining the protocol — ground in wiki/repo context first, ask adaptive 2–4-question batches, classify answers as decision/constraint/delegated/deferred, stop when the brief can be stated without guessing, play back for confirmation before writing brief.md; invocation now runs the interview by default with a `(no interview)` opt-out); `concept/feature-work-template.md` (optional `interview.md` artifact added to the skeleton list plus a condensed-log template with Interview Log rounds, Decisions/Constraints/Delegations/Deferred sections, and Playback Summary); `AGENTS.md` (wiki-maintainer-mode invocation description now includes the interview step and opt-out); `index.md` (concept summaries refreshed).
+Contradictions flagged: none. Rationale: the workflow previously jumped straight from the invocation phrase to skeleton creation, leaving the agent to guess brief content; the interview makes context-building between human and AI an explicit first-class stage while keeping brief.md the single distilled source of truth.
+
+## [2026-08-13] feature | improve-windows-process-collection started via LLM-assisted feature workflow
+
+Pages created: `work/improve-windows-process-collection/interview.md`, `brief.md`, `references.md`, `design.md`. Pages updated: `index.md`; `log.md`.
+Interview (3 rounds, all decisions confirmed by human playback): kernel ETW (classic NT Kernel Logger Process events on the shared KernelSession) becomes the single real-time source for process lifecycle; the Security-log 4688/4689 path and the separate KernelProcessSensor are consolidated into one new WindowsProcessSensor (rich stop metrics retained via a manifest-provider subscription); Refresh moves from Security-log tree reconstruction to a live snapshot with exact create times; UserSID comes from the validated sid-extraction-test POC at C:\PUBLIC\sid-extraction-test (technique proven, drops in as-is); command line uses ProcessTraceData.CommandLine with live PEB fallback; boot-time coverage via Global Logger boot ETL ingestion is in scope (opt-in setting for slice 1); verification via a Windows adaptation of the sensor-neutral validation harness. Hard constraint: no WintapMessage/ProcessObject schema or PidHash changes; TraceEvent stays at 3.1.23.
+Motivation (all four confirmed): stops commented out on the Security-log path, fragile since-boot reconstruction (log-wrap "reboot required" — observed live on CHUMBUCKET2 2026-08-13), event-log-time PidHash corruption, and audit-policy dependency.
+Next stage: implementation_plan.md + dev_handoff.md, then implementation and verification.
+
+## [2026-08-13] feature-work | improve-windows-process-collection: implementation plan and dev handoff added
+
+Pages created: `work/improve-windows-process-collection/implementation_plan.md` (three slices mapped to wintap P2.1–P2.8 instruction units — slice 1 P2.1–P2.6: SID helper, sensor core, snapshot refresh, enrichment, stop-metrics merge, wire-in/removal; slice 2 P2.7: opt-in Global Logger boot ETL; slice 3 P2.8: Windows validation harness — each unit sized for one approved instruction document with xUnit tests tagged `[Trait("Category", "P2.x")]` and a done checklist); `work/improve-windows-process-collection/dev_handoff.md` (bridges the Analytics feature artifacts to the wintap Architect/Engineer/Developer loop per `../wintap/CLAUDE.md`: per-unit Engineer dispatch prompt with a P2.1 copy/paste example, primary sources per unit, P2.1-first recommendation, testing gates, and closeout/audit duties).
+Pages updated: index.md (two new Work rows); log.md.
+Contradictions flagged: none.
+Next stage: dispatch the wintap Engineer for the P2.1 instruction document using the handoff prompt, then run the approve/implement/audit loop per unit.
+
+## [2026-08-17] update | improve-windows-process-collection: unit IDs renamed P2.x → wpc-nn
+
+Source: Architect decision in the wintap main session — the P-major numbering was judged unintuitive. New scheme combines the descriptive-slug pattern used by this wiki's Linux feature threads (kebab-case feature names, numbered steps, slices) with the semantic-prefix precedent already in ../wintap's architecture assessment (DEC-/OQ-/INV-).
+Scheme: `<feature-abbrev>-<nn>` unit IDs with a descriptive slug in filenames; this feature's abbreviation is `wpc` (windows-process-collection), units wpc-01…wpc-08. xUnit traits become `[Trait("Category", "wpc-<nn>")]`; one unit runs via `dotnet test --filter "Category=wpc-01"`, the whole feature via `Category~wpc`. Instruction docs `developer_docs/instructions/wpc-<nn>-<slug>.md`; audits `developer_docs/audits/wpc-<nn>-<slug>.md`. The wintap bootstrap unit P1.1 (merged, tested, audited) is grandfathered under the old naming.
+Pages updated: work/improve-windows-process-collection/implementation_plan.md and dev_handoff.md (all P2.1–P2.8 references renamed, feature abbreviation declared, whole-feature filter documented); index.md (row summaries and Last updated line).
+Contradictions flagged: none. ../wintap CLAUDE.md gains the unit-naming convention alongside its existing P1.1 examples.
+Next stage: dispatch the wintap Engineer for the wpc-01 instruction document using the handoff prompt, then run the approve/implement/audit loop per unit.
+
+## [2026-08-17] instruction | [wintap] wpc-01 SID helper instruction drafted
+
+Decisions made: Architect approved the wpc-01 instruction for Developer handoff. Drafted the first implementation unit for the improve-windows-process-collection feature from the already-settled Analytics feature design. Kept the unit narrow: port the validated classic kernel ETW `ProcessTraceData` UserSID parser and add synthetic payload tests only; no sensor wiring, account-name lookup, token fallback, command-line fallback, or PidHash/process schema changes.
+ADRs written or updated: none.
+Wiki pages updated: none beyond this log.
+Instructions written: `../wintap/developer_docs/instructions/wpc-01-sid-helper.md` (Status: Approved — Architect approval 2026-08-17).
+Scratch notes: `wiki/work/improve-windows-process-collection/sid-helper-notes-2026-08-17.md` (migrated from `../wintap/dave-wiki/sources/2026-08-17-wpc-01-sid-helper-notes.md`).
+Open questions: none for wpc-01. The Developer can implement wpc-01 and verify with `dotnet build -c Release` plus `dotnet test --filter "Category=wpc-01"`.
+
+## [2026-08-17] audit | [wintap] wpc-01 SID helper completed
+
+Decisions made: none. Developer completed the approved wpc-01 unit as specified: added the classic kernel ETW `ProcessTraceData` UserSID extraction helper, added the internal payload-parser test seam, and added synthetic xUnit coverage for extracted SIDs, null-SID markers, and malformed payload guards. No sensor wiring, schema changes, PidHash/process hash changes, TraceEvent upgrade, or new NuGet dependencies were introduced.
+ADRs written or updated: none.
+Wiki pages updated: none beyond this log; no new architecture decision was made by the implementation.
+Instructions written: none.
+Audit artifact: `../wintap/developer_docs/audits/wpc-01-sid-helper.md` (Status: Complete).
+Verification: `dotnet build -c Release` passed from `../wintap/tests/Wintap.Tests`; `dotnet test --filter "Category=wpc-01"` passed with 9/9 tests selected and passing.
+Open questions: none for wpc-01. Next Windows process-collection unit can wire the helper into the chosen process sensor path.
+
+## [2026-08-17] maintenance | Consolidate Wintap developer wiki into Analytics wiki
+
+Decisions made: recorded the Architect-settled decision that `../Wintap-Analytics/wiki/` is the single Wintap ecosystem knowledge base, that `../wintap/dave-wiki/` is retired, that Wintap instructions/audits intentionally remain in `../wintap/developer_docs/`, and that the Wintap Engineer is authorized to write to `../Wintap-Analytics/wiki/`.
+ADRs written or updated: `wiki/decision/consolidate-developer-wiki-into-analytics-wiki.md`; migrated `wiki/decision/process-identity-attribution-contract.md`; migrated `wiki/decision/test-project-structure-and-first-test.md`.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/sid-helper-notes-2026-08-17.md`; `wiki/index.md`; `wiki/log.md`; `../Wintap-Analytics/AGENTS.md`; Wintap repo plumbing docs `../wintap/CLAUDE.md`, `../wintap/.claude/agents/engineer.md`, and `../wintap/.claude/agents/developer.md`; tombstoned `../wintap/dave-wiki/README.md`.
+Instructions written: none.
+Open questions: none. Historical `../wintap/developer_docs/instructions/` and `../wintap/developer_docs/audits/` files were intentionally not rewritten; stale `dave-wiki` references there are covered by the tombstone.
+
+## [2026-08-17] instruction | [wintap] wpc-02 sensor core instruction drafted
+
+Decisions made: none. Drafted the wpc-02 instruction from the already-settled improve-windows-process-collection design: add a new `WindowsProcessSensor` core that subscribes classic kernel ProcessStart/ProcessStop on the shared NT Kernel Logger parser, canonicalizes create time with `GetProcessTimes` first and ETW timestamp fallback, keeps an in-memory PID instance map, emits Start/Stop process events, and tests canonicalization fallback, PID-reuse replacement, and Stop-without-Start fallback paths through minimal internal seams.
+ADRs written or updated: none. Flagged a decision tension in the draft: the older process identity ADR says core owns PidHash/ParentPidHash generation, while the current WPC feature design and existing sensor practice require sensor-side PidHash population using the unchanged formula.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/sensor-core-notes-2026-08-17.md`; `wiki/index.md`; `wiki/log.md`.
+Instructions written: `../wintap/developer_docs/instructions/wpc-02-sensor-core.md` (Status: Draft; Architect approval pending).
+Open questions: Architect should explicitly approve or revise the flagged PidHash ownership tension before Developer handoff if the wording is not acceptable. The proposed verification gate is `dotnet build -c Release` plus `dotnet test --filter "Category=wpc-02"`.
+
+## [2026-08-17] decision | [wintap] wpc-02 live Start time canonicalized to ETW timestamp
+
+Decisions made: Architect selected option 1 for wpc-02 create-time canonicalization: use the classic kernel ETW ProcessStart timestamp as the canonical live Start time for `PidHash` generation. Do not perform `OpenProcess` / `GetProcessTimes` on every process create. Rationale: Wintap has used ETW as process-start ground truth for over 13 years, it has proven reliable, and per-create handle lookups add hot-path performance risk. Snapshot Refresh still uses live process create times and must deduplicate/repair against live Starts by PID + create-time tolerance in the later snapshot unit.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/brief.md`; `references.md`; `design.md`; `implementation_plan.md`; `sensor-core-notes-2026-08-17.md`; `wiki/index.md`; `wiki/log.md`.
+Instructions updated: `../wintap/developer_docs/instructions/wpc-02-sensor-core.md` revised to remove per-Start `GetProcessTimes`, remove the process-accessor test seam, and require ETW timestamp canonicalization tests.
+Open questions: wpc-02 instruction remains Draft / Architect approval pending as a whole.
+
+## [2026-08-17] decision | [wintap] wpc-02 uses ProcessResolver as sole hot-path identity store
+
+Decisions made: Architect selected `ProcessResolver` for the wpc-02 hot path instead of a sensor-owned in-memory PID map. Starts emit through `EventChannel.Send` so `ProcessResolver` registers the process instance. Stops resolve identity through `EventChannel.GetProcessHistory(pid, stopTimeUtc)` / `ProcessResolver` before emission; resolver misses are counted and fall back to hash-from-stop-time. Rationale: avoid introducing a parallel lifecycle cache when the project already has a PID-reuse-safe resolver designed for process identity.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/references.md`; `design.md`; `implementation_plan.md`; `dev_handoff.md`; `sensor-core-notes-2026-08-17.md`; `wiki/index.md`; `wiki/log.md`.
+Instructions updated: `../wintap/developer_docs/instructions/wpc-02-sensor-core.md` revised to remove the in-memory PID instance map requirement and replace PID-reuse map tests with resolver-selected-instance tests.
+Open questions: wpc-02 instruction remains Draft / Architect approval pending as a whole.
+
+## [2026-08-17] approval | [wintap] wpc-02 sensor core instruction approved
+
+Decisions made: Architect approved the revised wpc-02 instruction for Developer handoff. Final approved scope: new `WindowsProcessSensor` subscribing classic kernel ProcessStart/ProcessStop on the shared kernel parser; ETW ProcessStart timestamp is canonical for live Start `PidHash`; no per-Start `GetProcessTimes`; `ProcessResolver` is the sole hot-path identity store; Stop resolver misses are counted and fall back to hash-from-stop-time. No schema, PidHash formula, TraceEvent version, or NuGet dependency changes.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/sensor-core-notes-2026-08-17.md`; `wiki/log.md`.
+Instructions updated: `../wintap/developer_docs/instructions/wpc-02-sensor-core.md` (Status: Approved — Architect approval 2026-08-17).
+Open questions: none for wpc-02 instruction handoff. Developer verification gate is `dotnet build -c Release` plus `dotnet test --filter "Category=wpc-02"`.
+
+## [2026-08-17] audit | [wintap] wpc-02 sensor core completed
+
+Decisions made: none. Developer completed the approved wpc-02 unit: added `WindowsProcessSensor` core under `../wintap/wintap/platform/windows/sensor/etw/`, added shared-kernel ProcessStart/ProcessStop subscription, ETW-timestamp Start canonicalization, resolver-backed Stop identity stamping, Stop resolver miss counting, and hash-from-stop-time fallback. Runtime wire-in and old sensor deletion remain deferred to wpc-06 as planned.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/implementation_plan.md`; `wiki/work/improve-windows-process-collection/sensor-core-notes-2026-08-17.md`; `wiki/log.md`.
+Instructions written: none.
+Audit artifact: `../wintap/developer_docs/audits/wpc-02-sensor-core.md` (Status: Complete).
+Verification: `dotnet build "wintap\Wintap.csproj" -c Release -p:WarningLevel=0` passed; from `../wintap/tests/Wintap.Tests`, `dotnet test --filter "Category=wpc-02" --logger "console;verbosity=detailed"` selected and passed 5/5 tests. The audit records a verification-command deviation: repo-root `dotnet build -c Release` / root filtered test target `Wintap.sln`, which currently fails under .NET SDK MSBuild on the existing `Wintap-Workbench` website project (`MSB4249`), so project-scoped equivalents were used. The audit also records a narrow internal `genPidHash` test seam to avoid elevation-sensitive `StateManager` initialization; production still defaults to unchanged `ProcessHash.GenPidHash`.
+Open questions: none for wpc-02. Next unit is wpc-03 snapshot refresh.
+
+## [2026-08-17] instruction | [wintap] wpc-04 field enrichment instruction approved
+
+Decisions made: none. Architect requested and approved the wpc-04 instruction for Developer handoff. Scope is field enrichment on the already-landed `WindowsProcessSensor`: SID/user via wpc-01 helper, `LookupAccountSid` with bounded SID cache, token fallback for NoSid/Malformed, ETW command line with PEB fallback, and executable path via `QueryFullProcessImageName` with device-path translation fallback. The instruction preserves settled WPC constraints: no schema changes, no PidHash formula changes, TraceEvent stays 3.1.23, no new NuGet dependencies, resolver-backed sensor, runtime wire-in deferred to wpc-06, Stop metrics deferred to wpc-05, boot ETL deferred to wpc-07.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/log.md` only.
+Instructions written: `../wintap/developer_docs/instructions/wpc-04-field-enrichment.md` (Status: Approved — Architect approval 2026-08-17).
+Open questions: none for wpc-04 instruction handoff. Developer verification gate is `dotnet build -c Release` plus `dotnet test --filter "Category=wpc-04"`, with the documented project-scoped fallback if the known `Wintap-Workbench` `MSB4249` solution-level issue appears.
+
+## [2026-08-17] instructions | wpc-05 stop metrics merge draft
+
+Source: Wintap Engineer instruction-draft session for `improve-windows-process-collection` unit wpc-05, with context from `wiki/work/improve-windows-process-collection/{brief,design,implementation_plan,dev_handoff}.md`, prior audits `../wintap/developer_docs/audits/wpc-02-sensor-core.md`, `wpc-03-snapshot-refresh.md`, `wpc-04-field-enrichment.md`, and source inspection of `../wintap/wintap/platform/windows/sensor/etw/{WindowsProcessSensor,ProcessSensor,KernelProcessSensor}.cs` plus resolver/test references.
+Instruction written: `../wintap/developer_docs/instructions/wpc-05-stop-metrics-merge.md` as Draft/Pending approval. It scopes manifest `Microsoft-Windows-Kernel-Process` keyword `0x10` ProcessStop metrics correlation into resolver-backed kernel Stop emission, carries forward the old `parseUserModeProcessStop` metric list, requires wpc-05 tests, and preserves no-schema/no-PidHash/no-TraceEvent-upgrade/no-new-dependency constraints.
+Pages updated: `wiki/log.md` only.
+Notes: Implementation-plan checklist intentionally not updated; that remains closeout work after Developer implementation/audit.
+
+## [2026-08-17] approval | [wintap] wpc-05 stop metrics merge instruction approved
+
+Decisions made: Architect approved the wpc-05 instruction for Developer handoff. Scope is manifest `Microsoft-Windows-Kernel-Process` keyword `0x10` ProcessStop metric subscription and nearest-in-time PID correlation into resolver-backed kernel Stop emission, with a named 5-second window, non-blocking expiry/default emission, and `manifest_metric_misses` counting. The instruction preserves settled WPC constraints: no schema changes, no PidHash formula changes, TraceEvent stays 3.1.23, no new NuGet dependencies, no sensor-owned PID instance map, and runtime wire-in/removal deferred to wpc-06.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/log.md` only.
+Instructions updated: `../wintap/developer_docs/instructions/wpc-05-stop-metrics-merge.md` (Status: Approved — Architect approval 2026-08-17).
+Open questions: none for wpc-05 instruction handoff. Developer verification gate is `dotnet build -c Release` plus `dotnet test --filter "Category=wpc-05"`, with the documented project-scoped fallback if the known `Wintap-Workbench` `MSB4249` solution-level issue appears.
+
+## [2026-08-17] process | AI velocity/ROI mini-lab codified
+
+Decisions made: Architect-approved ROI/velocity mini-lab protocol recorded for the LLM-assisted feature workflow. The protocol uses sealed human and AI estimates at feature open, AI design/development and per-unit estimate splits, main-session 15-minute-gap attention-proxy actuals, a three-question hard cap with displacement ratchet, never-gates behavior, close-out reveal/tabulation, and one planned template revision after the next real feature trial.
+ADRs written or updated: `wiki/decision/ai-velocity-roi-mini-lab.md` (Accepted).
+Wiki pages updated: `wiki/concept/llm-assisted-feature-workflow.md`; `wiki/concept/feature-work-template.md`; `wiki/concept/metrics-template.md`; `wiki/index.md`; `wiki/log.md`.
+Wintap process docs updated for Architect review: `../wintap/.claude/agents/engineer.md`; `../wintap/CLAUDE.md`.
+Contradictions flagged: none. Notes: the Wintap-side process-doc edits are outside the standard directory-ownership table and are drafted for explicit Architect review, per the ADR ownership note.
+Open questions: none for codification; the next real feature is the live trial, after which templates get one planned revision pass.
+
+## [2026-08-17] metrics | [wintap] WPC velocity/ROI retrofit
+
+Decisions made: none. Retrofitted the current `improve-windows-process-collection` feature with mini-lab metrics after the protocol was adopted. The human estimate and reported Design-AI estimate both put solo, no-AI implementation at 3 weeks; recorded as 120 hours assuming 40-hour weeks. Because this was retrofitted after feature open and after the estimate was disclosed, the sealed/independent estimate discipline is explicitly marked broken for this feature.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/interview.md`; `wiki/work/improve-windows-process-collection/metrics.md`; `wiki/index.md`; `wiki/log.md`.
+Instructions written: none.
+Open questions: human predicted AI-attention estimate was not captured; main-session attention proxy, API cost, close-out question, and per-unit actual hours remain for close-out. Per-unit estimates for wpc-01 through wpc-06 are missing because they were already implemented before the retrofit; wpc-07 has a pre-implementation estimate, and wpc-08 should receive one when its instruction is drafted.
+
+## [2026-08-17] audit | [wintap] wpc-05 and wpc-06 completed — slice 1 of improve-windows-process-collection done
+
+Decisions made: none new. Developer completed the approved wpc-05 (stop-metrics merge) and wpc-06 (wire-in and legacy removal) units; both landed in wintap develop-dave commit 0f273e0 (2026-08-17). Slice 1 (wpc-01 through wpc-06) is complete: the unified `WindowsProcessSensor` is live as the sole Windows process lifecycle sensor — resolver-backed classic kernel ETW Start/Stop, snapshot Refresh with ClearProcessDB-then-Refresh preserved, SID/command-line/path enrichment, manifest-provider Stop metric merge, and QA counter interval/shutdown logging. Legacy `ProcessSensor.cs` (Security-log 4688/4689) and `KernelProcessSensor.cs` were deleted with their settings entries and dead references; no Security-log audit-policy dependency remains for process telemetry.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/implementation_plan.md` (Done Checklist: wpc-05 checked — 4/4 tests, audit filed; wpc-06 amended — elevated manual smoke executed by the Architect 2026-08-17, PASS with audit-policy evidence waived; both units in commit 0f273e0); `wiki/work/improve-windows-process-collection/smoke-followups-2026-08-17.md` (new — out-of-scope smoke observations as follow-up candidates: SensSensor null-value load failure, missing SignedS3UrlAdapter, parent-process resolution warnings, DuckDB unterminated-quote parser errors, cosmetic `[WindowsProcessSensor..ctor]` logger tag on QA lines); `wiki/log.md`.
+Audit artifacts: `../wintap/developer_docs/audits/wpc-05-stop-metrics-merge.md` (Complete; 4/4 wpc-05 tests passed); `../wintap/developer_docs/audits/wpc-06-wire-in-removal.md` (Complete; 35/35 wpc tests and 36/36 full test-project regression passed via the documented MSB4249 project-scoped fallback; smoke evidence includes wire-in ordering, Start/Stop/Refresh parquet flow, and parseable interval/shutdown QA counter lines, e.g. snapshot_count=489).
+Instructions written: `../wintap/developer_docs/instructions/wpc-07-boot-etl-coverage.md` (Status: Draft — Architect approval pending; slice 2 opt-in Global Logger boot ETL coverage).
+Open questions: Architect review of the wpc-07 draft, including the optional logger-tag rider and the `boot_replay_count` QA-counter addition. wpc-08 (validation harness, slice 3) remains after wpc-07.
+
+## [2026-08-18] closeout | [wintap] wpc-07 boot ETL coverage completed
+
+Decisions made: none new. wpc-07 is closed as complete: the opt-in Global Logger boot ETL coverage path was implemented in `../wintap`, with `EnableBootProcessTrace` defaulting off, startup detect/verify/stop/disarm ordered before `WindowsProcessSensor` and shared kernel session materialization, replay after snapshot + live subscription registration, resolver-backed replay dedup, and `boot_replay_count` QA counter output.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/implementation_plan.md` (wpc-07 checked complete with validation note); `wiki/log.md`.
+Audit artifact updated: `../wintap/developer_docs/audits/wpc-07-boot-etl-coverage.md` (post-implementation local validation section added).
+Verification: Developer-side verification passed before deployment: `dotnet build "wintap\Wintap.csproj" -c Release -p:WarningLevel=0`; `dotnet build "tests\Wintap.Tests\Wintap.Tests.csproj"`; `dotnet test "tests\Wintap.Tests\Wintap.Tests.csproj" --filter "Category=wpc-07"` (10/10); `--filter "Category~wpc"` (45/45); unfiltered test project (46/46). Architect then published/deployed locally, rebooted, and let the build run overnight; reported results looked good.
+Open questions: wpc-08 formal validation harness remains pending if detailed reproducible scoring artifacts are needed; no wpc-07 follow-up is open from this closeout.
+
+## [2026-08-18] instruction | [wintap] wpc-09 minor bug sweep drafted
+
+Decisions made: wpc-08 formal validation harness is skipped, without renumbering, because the Architect accepted manual slice-2 validation on 2026-08-18: process tree back to kernel-era roots, usernames present on all reviewed records, and a stable overnight run. wpc-09 is the final code unit before closeout.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/work/improve-windows-process-collection/smoke-followups-2026-08-17.md` (2026-08-18 overnight findings recorded); `wiki/work/improve-windows-process-collection/implementation_plan.md` (wpc-08 skip note and wpc-09 unit note); `wiki/work/improve-windows-process-collection/metrics.md` (sealed wpc-09 pre-implementation estimate); `wiki/log.md`.
+Instructions written: `../wintap/developer_docs/instructions/wpc-09-bug-sweep.md` (Status: Draft — Architect approval pending).
+Open questions: Developer must verify from logs whether the missing-parent warnings are fixable resolution gaps or expected unresolvable-parent races; Developer must verify whether process-name parsing errors share the DuckDB command-line escaping root before changing that path.
+
+## [2026-08-18] approval | [wintap] wpc-09 minor bug sweep instruction approved
+
+Decisions made: Architect approved the wpc-09 minor bug sweep instruction for Developer handoff. Scope remains limited to the final WPC code-unit sweep: boot-trace arm/disarm lifecycle fix, missing-parent warning triage/fix-or-annotation, process-name / DuckDB command-line escaping triage and fix if confirmed, and cosmetic QA-counter logger attribution only if still trivially broken.
+ADRs written or updated: none.
+Wiki pages updated: `wiki/log.md` only.
+Instructions updated: `../wintap/developer_docs/instructions/wpc-09-bug-sweep.md` (Status: Approved — Architect approval 2026-08-18).
+Open questions: none for instruction approval; Developer must still record triage dispositions and manual-smoke evidence in `developer_docs/audits/wpc-09-bug-sweep.md`.
+
+## [2026-08-19] closeout | [wintap] improve-windows-process-collection feature closed
+
+Decisions made: Architect approved feature closeout. Outcome: the unified `WindowsProcessSensor` (kernel-ETW Start/Stop on the shared session, ETW-canonical PidHash, snapshot Refresh with dedup, SID/command-line/path enrichment with fallbacks, manifest Stop-metric merge, opt-in Global Logger boot-trace replay, QA counters) fully replaced the Security-log and KernelProcessSensor paths — no audit-policy dependency, no log-wrap failure mode. Final code state: wintap develop-dave `19e89dc` (wpc-07 + wpc-09), 54/54 wpc tests and 55/55 project-wide passing, Release build 0 errors. Final overnight smoke-test 2026-08-18→19 PASS with boot replay confirmed end-to-end (arm at shutdown, owned stop/disarm at startup, replay), resolving the wpc-09 audit's pending item; earlier blocker was an external Code42-AAT lock on the DuckDB event store, and `19e89dc` also fixed the contributing Windows runtime data-root fallback. wpc-08 formal harness remained skipped (Architect decision 2026-08-18; manual validation accepted).
+Pages created: `work/improve-windows-process-collection/verification.md` (accepted manual validation evidence, test/build state, wpc-08 skip rationale).
+Pages updated: `work/improve-windows-process-collection/metrics.md` (mini-lab close-out: status closed; ts_design_end 2026-08-17, ts_final_audit 2026-08-18; actual_attention_hours 3.47 with proxy method record; human estimates unsealed; close-out answer recorded verbatim — feature only partially attempted solo, SID reverse engineering and PEB lookup not at all; ~120h est. vs 3.47h measured, retrofit seal-break and undercount caveats noted); `event_type/process-events.md` (durable semantics promoted from the feature work folder, regrounded to live `WindowsProcessSensor`/helper sources); `work/improve-windows-process-collection/implementation_plan.md` (done checklist closed: wpc-09 done, wpc-08 explicitly skipped, verification/promotion done); `work/improve-windows-process-collection/smoke-followups-2026-08-17.md` (final disposition: wpc-09 items resolved; SensSensor and SignedS3UrlAdapter remain future candidates outside the feature); `index.md`.
+Contradictions flagged: none.
+Open questions: none for this feature. Remaining ecosystem follow-up candidates live in `smoke-followups-2026-08-17.md` (SensSensor load failure, missing SignedS3UrlAdapter); deferred measurement of cmdline/SID fallback rates is available via QA counters whenever wanted.
+
+## [2026-08-19] decision | AI velocity/ROI mini-lab revised to v2 (scheduled post-pilot revision)
+
+What changed: headline metrics pivot to boundary/outcome measures — time-to-availability (raw calendar lead time, weekends included, feature open → first Architect-accepted validation artifact) plus throughput (counterfactual-hours delivered per window, weighted by sealed solo estimates); the two sealed interview questions are re-posed in calendar terms under the displacement ratchet; the 15-minute-gap attention proxy is demoted to an optional, coverage-annotated diagnostic (merge-then-cluster rule if ever multi-harness). See `wiki/decision/ai-velocity-roi-mini-lab.md` (Revision History).
+Pages updated: `wiki/decision/ai-velocity-roi-mini-lab.md` (v2 in place); `wiki/concept/metrics-template.md` (v2 field set); `wiki/concept/feature-work-template.md` (calendar-posed sealed Q1/Q2); `wiki/concept/llm-assisted-feature-workflow.md` (interview step 7 phrasing); `wiki/work/improve-windows-process-collection/metrics.md` (v2 addendum: lead time 6 calendar days 2026-08-13→19 anchored on the boot-replay-confirming final overnight smoke-test per brief criterion 6; solo counterfactual ~2026-09-02/20 calendar days flagged as a units reconstruction; throughput weight 120h; attention 3.47h kept as coverage-annotated diagnostic); `wiki/index.md`.
+Wintap process docs: proposed diffs to `../wintap/.claude/agents/engineer.md` and `../wintap/CLAUDE.md` drafted for Architect review per the ADR ownership note — not applied.
+Contradictions flagged: none.
+Open questions: none for the revision itself; cross-harness attention adapters remain deferred until a feature routes significant attention through OpenCode.
+
+## [2026-08-19] closeout | [wintap] wpc-09 final scope and verification complete
+
+Decisions made: Architect marked wpc-09 complete. The final sweep includes the boot-trace lifecycle, DuckDB parameterization, parent-warning annotation, QA logger attribution, and restoration of platform-owned runtime data-root defaults after the accidental Windows `C:\tmp\lintap-data` location contributed to external DuckDB contention.
+ADRs written or updated: `wiki/decision/platform-runtime-data-root-defaults.md` (Accepted).
+Wiki pages updated: `wiki/index.md`; `wiki/work/improve-windows-process-collection/implementation_plan.md`; `wiki/work/improve-windows-process-collection/verification.md`; `wiki/log.md`.
+Verification: Release build completed with 0 errors; `Category=wpc-09` 19/19 passed; `Category~wpc` 64/64 passed; full test project 65/65 passed. Architect reported the post-reboot Wintap retry operating successfully and directed completion.
+Open questions: none for wpc-09; existing implicit `/tmp` data is intentionally not migrated.
+
+## [2026-08-19] decision | Velocity metric adopted (mini-lab v2.1 after external review)
+
+Decisions made: Architect approved the final **Velocity** protocol (pitch approved 2026-08-19 after an external review cycle; authoritative source `../wintap/developer_docs/design/velocity-pitch-2026-08-19.md`). Headline: Velocity, dimensionless, unit solo-FTE equivalents, canonical formula `Velocity = solo-hours / (5.714 × days)`; 5.714 is a declared one-FTE capacity unit (no realism or conservatism claim, fixed once); two views one unit — Feature Velocity (speedup) and Portfolio Velocity (normalized delivered throughput; not an average — the gap is the parallelism dividend); "solo-hours" replaces "counterfactual-hours"; reporting is point values to one decimal with a stated uncertainty range (band from the two sealed estimates, default ±2×); sealed Q1 becomes a forced counterfactual (hours + realistic calendar date); guardrails adopted: frozen acceptance criteria, availability finality (defect-reopen rule rejected — ledger self-corrects forward), comparability flagging with the capability-vs-willingness distinction; cost stays a companion field.
+Pages created: `wiki/concept/velocity-metric.md` (approved pitch carried faithfully into the wiki); `wiki/metrics.md` (cross-feature Velocity rollup, seeded with the WPC row: 6 days, 120 h, Velocity 3.5 uncertainty 2–7, willingness-only flag, retrofit-pilot annotation; Portfolio Velocity pending N≥several with trailing window ≥ 4× median lead time).
+Pages updated: `wiki/decision/ai-velocity-roi-mini-lab.md` (v2.1 revision; new Alternatives Considered: per-developer baselines rejected, directional-bias constant framing withdrawn, bands-never-decimals rejected, defect reopen rule rejected); `wiki/concept/metrics-template.md` (v2.1 field set: leading Headline block, `feature_velocity`/`velocity_uncertainty`/`comparability`/`criteria_amendments`, `throughput_weight_hours` → `solo_hours`, `ai_est_solo_hours` added, methodology as links); `wiki/concept/feature-work-template.md` and `wiki/concept/llm-assisted-feature-workflow.md` (forced-counterfactual Q1 / calendar Q2 phrasing); `wiki/work/improve-windows-process-collection/metrics.md` (Velocity addendum: 3.5, uncertainty 2–7, pilot and willingness-not-capability caveats — added, nothing erased); `wiki/index.md`.
+Wintap process docs: diffs to `../wintap/.claude/agents/engineer.md` and `../wintap/CLAUDE.md` redrafted against the final protocol and returned for Architect review — not applied, per the ADR ownership note.
+Contradictions flagged: none hard. Two v2 statements corrected in place: the raw throughput companion is superseded by normalized Portfolio Velocity (the solo-hour sum survives as its numerator), and v2's "hours are never compared against elapsed time" safety note was removed because the canonical formula compares them deliberately via the declared 5.714 unit.
+
+## [2026-08-20] maintenance | WPC metrics aligned to approved Velocity framing
+
+Pages updated: `wiki/work/improve-windows-process-collection/metrics.md`; `wiki/index.md`; `wiki/log.md`.
+Changes: Replaced the accumulated v1/v2/v2.1 narrative and multiple YAML blocks with the canonical single-block Velocity format; made Feature Velocity 3.5 (uncertainty 2–7) the headline; retained the 120 solo-hour, 6-calendar-day, availability-anchor, comparability, per-unit, cost, and attention evidence; explicitly classified the pilot as retrospective/unsealed and illustrative; removed the obsolete attention-based rough-ROI framing and kept 3.47 hours only as a coverage-annotated diagnostic.
+Decisions made: none — this is a conformance edit against the Architect-approved `wiki/concept/velocity-metric.md` definition.
+Contradictions flagged: none.
+
+## [2026-08-20] maintenance | WPC Velocity scorecard simplified
+
+Pages updated: `wiki/work/improve-windows-process-collection/metrics.md`; `wiki/index.md`; `wiki/log.md`.
+Changes: Reworded the feature headline as a plain-language scorecard: estimated delivery speed 3.5× one solo developer's pace, plausible range about 2×–7× faster, low confidence, and a direct explanation for that low confidence. Moved formula-oriented language into a clearly labeled Technical Record while preserving the canonical YAML fields and underlying evidence.
+Decisions made: none — presentation-only simplification; the approved metric and recorded values are unchanged.
+Contradictions flagged: none.
+
+## [2026-08-20] maintenance | Standardized overnight smoke-test wording
+
+Pages updated: WPC metrics, verification, implementation plan, smoke follow-ups, canonical process-event page, index, and historical log references.
+Changes: Replaced “overnight smoke” and “overnight smoke test” with the requested “overnight smoke-test” wording.
+Decisions made: none; terminology-only correction.
+Contradictions flagged: none.
+
+## [2026-08-20] maintenance | WPC metrics summary labeled Results
+
+Pages updated: `wiki/work/improve-windows-process-collection/metrics.md`; `wiki/log.md`.
+Changes: Renamed the plain-language scorecard heading from “Headline” to “Results” so the pilot document models the intended future presentation.
+Decisions made: none; presentation-only change.
+Contradictions flagged: none.
+
+## [2026-08-20] maintenance | Future feature metrics inherit simplified Results
+
+Pages updated: `wiki/concept/metrics-template.md`; `wiki/concept/velocity-metric.md`; `wiki/concept/feature-work-template.md`; `wiki/concept/llm-assisted-feature-workflow.md`; `wiki/index.md`; `wiki/log.md`.
+Changes: Made **Results** the standard reader-facing section for future feature metrics; it now reports estimated delivery speed as a multiple of one solo developer's pace, an “about X×–Y× faster” plausible range, a deterministic Low/Medium/High confidence label, and one direct confidence reason. Canonical formulas and YAML remain under **Technical Record**. Removed inherited “Headline” and reader-facing “uncertainty 2–7” wording from the concept templates and examples.
+Decisions made: Presentation convention only; the approved Velocity formula, fields, guardrails, and raw evidence are unchanged.
+Contradictions flagged: none.
