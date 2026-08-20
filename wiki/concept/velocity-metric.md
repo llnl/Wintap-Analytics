@@ -5,7 +5,7 @@ confidence: high
 grounded_by:
   - ../wintap/developer_docs/design/velocity-pitch-2026-08-19.md
 policy: human-review-required
-last_validated: 2026-08-19
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -20,11 +20,27 @@ tags: [concept, metrics, velocity, llm, workflow, lead-time, throughput, solo-ho
 **2026-08-19 — Approved**
 **Author: David Frye (drafted with AI assistance)**
 
-> Wiki carry-over note: this page carries the Architect-approved pitch
-> faithfully. The authoritative source is
-> `../wintap/developer_docs/design/velocity-pitch-2026-08-19.md`; only the
-> closing pointer has been adapted into wiki links. Protocol mechanics live
-> in [[wiki/decision/ai-velocity-roi-mini-lab]] (v2.1).
+> Wiki carry-over note: the metric definition and protocol below come from the
+> Architect-approved pitch at
+> `../wintap/developer_docs/design/velocity-pitch-2026-08-19.md`. On 2026-08-20,
+> the Architect simplified the wiki's reader-facing presentation without
+> changing the formula or evidence. Protocol mechanics live in
+> [[wiki/decision/ai-velocity-roi-mini-lab]] (v2.1).
+
+## Wiki presentation convention
+
+The approved formula and technical fields below remain unchanged. Feature
+metrics documents present them in plain language under **Results**:
+
+- **Estimated delivery speed:** `<n.n>× one solo developer's pace`
+- **Plausible range:** `about <lo>×–<hi>× faster`
+- **Estimate confidence:** `High`, `Medium`, or `Low`
+- **Why confidence is <label>:** one direct sentence
+
+The structured field remains `velocity_uncertainty`; the reader-facing phrase
+“plausible range” replaces shorthand such as “uncertainty 2–7.” Technical
+details and the canonical YAML record belong under **Technical Record**. See
+[[wiki/concept/metrics-template]].
 
 ---
 
@@ -123,12 +139,12 @@ compensates three ways:
    therefore carries two independently sealed estimates; their spread is a
    per-feature uncertainty signal, and their long-run agreement with actuals
    is a running calibration check on both estimators.
-3. **Point values with stated uncertainty.** Feature Velocity is reported as
-   a point value to one decimal, annotated with its uncertainty — the range
-   implied by the two sealed estimates, widened to a default ±2× until
-   calibration data narrows it (e.g., *Velocity 3.5, uncertainty 2–7*). The
-   uncertainty travels with the number wherever it is quoted. **The product
-   is the trend across features, not any single point.**
+3. **Point values with an honest plausible range.** Feature Velocity is
+   calculated to one decimal. Its range comes from the two sealed estimates
+   and is widened to a default ±2× until calibration data narrows it. A 3.5
+   result is presented as *estimated delivery speed 3.5× one solo developer's
+   pace; plausible range about 2×–7× faster*. **The product is the trend
+   across features, not any single point.**
 
 ## Guardrails
 
@@ -182,7 +198,9 @@ bug sweep).
 | Feature opened | Thu 2026-08-13 |
 | First available (validation artifact) | 2026-08-19 |
 | Lead time | 6 calendar days (including a 3-day weekend with zero activity) |
-| **Feature Velocity** | **3.5** (uncertainty 2–7, pending calibration) |
+| **Estimated delivery speed** | **3.5× one solo developer's pace** |
+| **Plausible range** | **About 2×–7× faster** |
+| **Estimate confidence** | **Low** — retrospective, unsealed, and anchored |
 
 Note the weekend: under today's human-gated workflow those three days were
 idle, and they count against Velocity anyway. That is the metric working as
@@ -195,8 +213,8 @@ series should reveal over time.
   the same developer's own counterfactual. Comparing Velocity across people
   compares their estimating conventions, not their ability.
 - **It is not precise.** The numerator is an unverifiable counterfactual.
-  Every reported value carries its uncertainty; only the trend is
-  load-bearing.
+  Every result carries a plain-language plausible range and confidence reason;
+  only the trend is load-bearing.
 - **It is not gameable-proof.** Padding solo estimates inflates Velocity
   silently. The defenses are sealing, the independent second estimate, the
   running calibration check against predicted-vs-actual delivery dates, and

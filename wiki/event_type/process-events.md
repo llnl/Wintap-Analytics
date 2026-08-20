@@ -62,7 +62,7 @@ Stop resource counters (CPU cycles, commit charge/peak, hard faults, read/write 
 
 ### Boot-trace coverage — opt-in Global Logger replay
 
-With `EnableBootProcessTrace` (default **off**, fully inert when off), Wintap arms the Windows Global Logger at shutdown; at startup it verifies session ownership by configured ETL path, stops/disarms only owned sessions (foreign "NT Kernel Logger" sessions are never touched), and replays the boot ETL after snapshot + live subscription, emitting Starts for early-boot processes (smss/csrss/services lineage roots) not already covered by Refresh — dedup by PID + create-time tolerance, counted as `boot_replay_count`. Disabled startup still cleans up owned armed state. End-to-end arm/stop/disarm/replay was validated by an Architect overnight smoke 2026-08-18→19 ([[wiki/work/improve-windows-process-collection/verification]]).
+With `EnableBootProcessTrace` (default **off**, fully inert when off), Wintap arms the Windows Global Logger at shutdown; at startup it verifies session ownership by configured ETL path, stops/disarms only owned sessions (foreign "NT Kernel Logger" sessions are never touched), and replays the boot ETL after snapshot + live subscription, emitting Starts for early-boot processes (smss/csrss/services lineage roots) not already covered by Refresh — dedup by PID + create-time tolerance, counted as `boot_replay_count`. Disabled startup still cleans up owned armed state. End-to-end arm/stop/disarm/replay was validated by an Architect overnight smoke-test 2026-08-18→19 ([[wiki/work/improve-windows-process-collection/verification]]).
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/helpers/BootProcessTraceHelper.cs -->
 
 ### QA counters

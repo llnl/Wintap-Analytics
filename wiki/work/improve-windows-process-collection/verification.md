@@ -114,9 +114,9 @@ All four overnight-smoke findings were resolved (evidence in
 - Shared `/tmp/lintap-data` defaults removed; unconfigured deployments now use
   the platform roots owned by `Env.cs`, with pure precedence/platform tests.
 
-### Final overnight smoke with boot replay — PASS (2026-08-18 → 2026-08-19)
+### Final overnight smoke-test with boot replay — PASS (2026-08-18 → 2026-08-19)
 
-Architect ran an overnight smoke test after the wpc-09 bug-fix round; result
+Architect ran an overnight smoke-test after the wpc-09 bug-fix round; result
 good. **Boot replay is confirmed end-to-end**: Global Logger armed at
 shutdown, owned-session stop/disarm at startup, and boot events replayed
 into the live stream. This resolves the wpc-09 audit's pending item
@@ -134,7 +134,7 @@ plan) was skipped by Architect decision on 2026-08-18, without renumbering.
 Rationale: the manual slice-2 validation already demonstrated the feature's
 core acceptance behaviors — complete lineage to kernel-era roots, user
 identity on all reviewed records, and overnight stability — and the
-subsequent wpc-09 sweep plus the final boot-replay-confirming overnight smoke
+subsequent wpc-09 sweep plus the final boot-replay-confirming overnight smoke-test
 closed the remaining runtime unknowns. The harness remains available as
 future work if reproducible scoring artifacts (start/stop coverage rates,
 PidHash stability matrices, identity-context runs) are ever needed; the
