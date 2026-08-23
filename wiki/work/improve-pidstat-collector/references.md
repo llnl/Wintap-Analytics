@@ -5,9 +5,12 @@ confidence: medium
 grounded_by:
   - raw/Issues/Long_Running_Cleanup.md
   - ../Lintap/pidstat-collect.sh
-  - ../Wintappy/wintap_dbt/macros/pidstat.sql
+  - ../Wintappy/wintap_dbt/dbt_project.yml
+  - ../Wintappy/wintap_dbt/macros/paths.sql
+  - ../Wintappy/wintap_dbt/macros/raw_sources.sql
+  - ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
 policy: agent-editable
-last_validated: 2026-08-14
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -28,19 +31,23 @@ tags: [feature-work, references, lintap, pidstat]
 - `../Lintap/teletap/pidstat.sql`, `../Lintap/teletap/load-pidstat.sql` —
   earlier standalone DuckDB table definition and loader for the same format;
   useful as schema reference and to keep in sync if the format changes.
-- `../Wintappy/wintap_dbt/macros/pidstat.sql` — `pidstat_data_path()`
-  (`$PIDSTAT_DATA_PATH` defaulting to `$WINTAP_DATA_ROOT/pidstat`),
-  `pidstat_csv_glob()` (`<path>/**/*.csv` — already rotation-friendly), and
-  `pidstat_data_exists()` guard.
-- `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql` — hardcoded
-  tab delimiter, `header=false`, explicit column list (`date_col`, `Time`,
-  `UID`, `PID`, `%usr` … `command`), `ignore_errors=true`. The compatibility
-  contract any collector change must respect.
+- `../Wintappy/wintap_dbt/dbt_project.yml` — defines
+  `raw_sensor_dataset` from `WINTAP_DBT_RAW_SENSOR_DATASET` with fallback to
+  `WINTAP_DBT_DATASET`; pidstat now follows that same shared dataset-root
+  contract instead of a pidstat-only env var.
+- `../Wintappy/wintap_dbt/macros/paths.sql` — shared raw path builders,
+  partition glob narrowing, and `partition_filter()` logic used by pidstat and
+  the other raw events.
+- `../Wintappy/wintap_dbt/macros/raw_sources.sql` — shared optional-event
+  helpers such as `raw_event_exists()`.
+- `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql` — current
+  parquet bronze reader: shared `raw_event_exists('pidstat')`, shared
+  partitioned `parquet_scan(...)`, `filename=true`, container columns, and
+  typed-empty fallback when no pidstat parquet exists.
 - `../Wintappy/wintap_dbt/models/silver/pidstat_metrics.sql` — passthrough of
   bronze; downstream name analyses depend on.
 - `../Wintappy/wintap_dbt/README.md` (lines ~30, ~64) — documents
-  `PIDSTAT_DATA_PATH` and that pidstat CSV loading is optional (empty typed
-  table when absent).
+  the canonical `raw_sensor/pidstat` parquet input as an optional raw event.
 - `../wintap/wintap/core/etl/load/CacheManager.cs` and
   `../wintap/wintap/core/etl/load/adapters/` (`S3Adapter.cs`,
   `SignedS3UrlAdapter.cs`, `SMBFileShareAdapter.cs`, `base/Uploader.cs`) — the
@@ -89,5 +96,6 @@ tags: [feature-work, references, lintap, pidstat]
 - Observed volume baseline: 47454 pidstat lines in a ~1h quiet Multipass run
   (2s interval), i.e. roughly 1.1M lines/day per idle-ish host before S3
   compression considerations.
-- The DBT glob is already recursive (`**/*.csv`), so date/hour subdirectories
-  under the pidstat path would load today without macro changes.
+- Post-close bugfix, pidstat no longer has a dedicated DBT macro/override; it
+  is loaded through the same `raw_sensor_dataset` and partition-window helpers
+  as the other optional raw events.

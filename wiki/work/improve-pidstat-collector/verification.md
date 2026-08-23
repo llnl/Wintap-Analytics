@@ -5,7 +5,7 @@ confidence: medium
 grounded_by:
   - wiki/work/improve-pidstat-collector/implementation_plan.md
 policy: agent-editable
-last_validated: 2026-08-15
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -16,6 +16,19 @@ tags: [feature-work, verification, lintap, pidstat]
 ---
 
 # Verification: Improve pidstat Collector
+
+## Post-Close Follow-Up (2026-08-20)
+
+Source inspection of the current `../Wintappy` DBT files confirms the follow-up
+bugfix landed after feature closeout: the dedicated pidstat macro file is gone,
+`PIDSTAT_DATA_PATH` is removed from the documented/configured DBT path, and
+`stg_pidstat_metrics` now uses the shared raw-event helpers rooted at
+`WINTAP_DBT_RAW_SENSOR_DATASET` (`raw_event_exists('pidstat')`,
+`raw_sensor_partition_globs_sql('pidstat')`, and `partition_filter()`).
+
+Result: pidstat now behaves like the other optional `raw_sensor` events,
+including split-I/O/S3 dataset-root selection and day/hour partition-window
+narrowing.
 
 ## Slice 2 Completion Note
 
@@ -336,9 +349,10 @@ Code-review assessment of `pidstat-collector.py`:
   test; conversion is in-process duckdb with atomic `os.replace` and full
   traceback logging (review finding 4 absorbed as specified, likewise
   midnight and glued-record findings).
-- Wintappy migration matches spec: `read_parquet(filename=true)`, container
-  columns included, empty-input typed table preserved, `PIDSTAT_DATA_PATH`
-  override honored with the new `parquet/raw_sensor/pidstat` default.
+- Wintappy migration matches the shipped end state: `read_parquet(filename=true)`
+  was adopted first, container columns are included, the empty-input typed
+  table is preserved, and a later 2026-08-20 bugfix removed the pidstat-only
+  override so pidstat now uses the standard `raw_sensor_dataset` helpers.
 - Boundary check: no pidstat-slice-2 changes in `../wintap` (its new commits
   belong to the retention/eBPF thread).
 - The uv-managed venv launcher pivot (after the pinned `python3.11` proved

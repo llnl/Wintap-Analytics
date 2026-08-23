@@ -5,11 +5,11 @@ confidence: medium
 grounded_by:
   - raw/Issues/Long_Running_Cleanup.md
   - ../Lintap/pidstat-collect.sh
-  - ../Wintappy/wintap_dbt/macros/pidstat.sql
+  - ../Wintappy/wintap_dbt/dbt_project.yml
   - ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
   - ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs
 policy: agent-editable
-last_validated: 2026-08-14
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -22,6 +22,8 @@ tags: [feature-work, lintap, pidstat, monitoring, s3]
 # Feature Brief: Improve pidstat Collector
 
 > **Feature closed 2026-08-17** on branch `grantj-rhel8-testing` with accepted reviews; durable facts promoted to [[wiki/component/sensor-upload-cache-pipeline]], [[wiki/repo/lintap-supporting-repo]], and [[wiki/repo/wintappy-pipeline-repo]]. Follow-ups tracked in implementation_plan.md: collector CPU investigation (needs multi-system data), small-file consolidation (assigned to fix-upload-cache-deletion next slice), target-host systemd/reboot check, live container fixture, S3 end-to-end (unblocked once the upload fix merges).
+>
+> **Post-close Wintappy bugfix (2026-08-20):** the dedicated pidstat DBT macro and `PIDSTAT_DATA_PATH` override were removed. `stg_pidstat_metrics` now resolves `raw_sensor/pidstat` through `WINTAP_DBT_RAW_SENSOR_DATASET` and the shared raw-event helpers like the other optional raw models.
 
 
 ## Problem
@@ -138,10 +140,12 @@ without manual file handling.
 - `../wintap` upload path (`core/etl/load/CacheManager.cs`,
   `adapters/S3Adapter.cs`, `adapters/base/Uploader.cs`) — read/verify only; no
   changes expected since the sweep is type-agnostic.
-- `../Wintappy/wintap_dbt/macros/pidstat.sql` and
-  `models/bronze/stg_pidstat_metrics.sql` — coordinated change from tab-CSV to
-  parquet over the new layout (sibling repo; code changes need explicit
-  authorization).
+- `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql`,
+  `dbt_project.yml`, and the shared raw-source macros under
+  `wintap_dbt/macros/` — coordinated change from tab-CSV to parquet, followed
+  by the 2026-08-20 bugfix that removed pidstat-specific pathing so this model
+  now follows the same raw-event helpers as the other optional events (sibling
+  repo; code changes need explicit authorization).
 - This repo's validation harness docs, which already rely on pidstat capture
   during validation runs.
 

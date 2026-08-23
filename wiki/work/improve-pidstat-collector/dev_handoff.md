@@ -10,7 +10,7 @@ grounded_by:
   - wiki/work/improve-pidstat-collector/verification.md
   - wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec.md
 policy: agent-editable
-last_validated: 2026-08-14
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -107,11 +107,11 @@ a fork regression guard asserting the steady-state collector spawns no
 children beyond the single pidstat process.
 
 Then: systemd unit in ../Lintap/packaging/ (Restart=always, pinned
-interpreter); README update (Python collector usage, deps, -p ALL and env
-knobs); Wintappy DBT migration per plan step 7 (parquet macros with
-PIDSTAT_DATA_PATH override honored, read_parquet bronze with
-filename=true, empty-input typed table preserved, legacy-CSV path decided
-and recorded in design.md).
+ interpreter); README update (Python collector usage, deps, -p ALL and env
+ knobs); Wintappy DBT migration per plan step 7 (parquet bronze with
+ filename=true, empty-input typed table preserved, legacy-CSV path decided
+ and recorded in design.md; follow-up bugfix later removed the pidstat-only
+ override so pidstat now uses shared raw-event helpers).
 
 Environment expectations (verify before coding, report what is missing):
 - Sibling checkouts: ../Lintap, ../wintap, ../Wintappy.
@@ -158,8 +158,10 @@ only the S3-enabled end-to-end confirmation and closeout promotion remain.
 - `../Lintap/pidstat-collector.sh` and
   `../Lintap/tests/pidstat-collector-tests.sh` - the behavior spec to port
   (then retire the .sh collector).
-- `../Wintappy/wintap_dbt/macros/pidstat.sql` and
-  `models/bronze/stg_pidstat_metrics.sql` - the models being migrated.
+- `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql`,
+  `wintap_dbt/dbt_project.yml`, and the shared raw-source macros under
+  `wintap_dbt/macros/` - the consumer-side files that were migrated and later
+  aligned with the standard raw-event pathing.
 
 ## Non-Goals For This Slice
 

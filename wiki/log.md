@@ -410,3 +410,11 @@ Features closed: both briefs marked reviewed/closed with follow-ups tracked. Dur
 Operator field notes recorded: (1) pidstat-collector.py possible high CPU — investigate with multi-system data (pidstat plan follow-ups); (2) Lintap CPU possibly still trending up over long runs — watch; leading hypothesis duckdb event_store size, may need compaction (fix-unbounded plan field-watch item; raises priority of its open DuckDB-reclaim question); (3) pidstat parquet files are NOT merged before upload — 2026-08-16 mechanism fact corrected; generic per-cycle small-file consolidation for all raw_sensor type dirs queued as fix-upload-cache-deletion next slice; (4) attribution below.
 Attribution note (per human request): this branch and its features were implemented using Claude (Fable) for design/review/wiki-maintenance and opencode (gpt-5.4) for development.
 Contradictions flagged: one, resolved by correction — the 2026-08-16 "no merge step needed for pidstat" mechanism fact contradicted field observation; corrected in the pidstat design page with the consolidation task queued.
+
+## [2026-08-20] update | Wintappy pidstat raw_sensor-path bugfix documented
+
+Sources read: `../Wintappy/wintap_dbt/dbt_project.yml`; `../Wintappy/wintap_dbt/macros/paths.sql`; `../Wintappy/wintap_dbt/macros/raw_sources.sql`; `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql`; `../Wintappy/wintap_dbt/README.md`; `../Wintappy/Makefile`.
+Pages created: none.
+Pages updated: `repo/wintappy-pipeline-repo.md`; `work/improve-pidstat-collector/brief.md`; `work/improve-pidstat-collector/references.md`; `work/improve-pidstat-collector/design.md`; `work/improve-pidstat-collector/dev_handoff.md`; `work/improve-pidstat-collector/implementation_plan.md`; `work/improve-pidstat-collector/verification.md`; `index.md`; `log.md`.
+Summary: documented the follow-up bugfix that removed `PIDSTAT_DATA_PATH` and the dedicated pidstat DBT macro/override in Wintappy. `stg_pidstat_metrics` now resolves `raw_sensor/pidstat` from `WINTAP_DBT_RAW_SENSOR_DATASET` through the shared raw-event helpers and uses the same day/hour partition-window narrowing as the other optional raw events.
+Contradictions flagged: none.

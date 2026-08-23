@@ -107,4 +107,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-17 (features closed: improve-pidstat-collector + fix-upload-cache-deletion; durable facts promoted; branch grantj-rhel8-testing PRs prepared)*
+*Last updated: 2026-08-20 (documented Wintappy pidstat raw_sensor-path bugfix; features remain closed: improve-pidstat-collector + fix-upload-cache-deletion)*

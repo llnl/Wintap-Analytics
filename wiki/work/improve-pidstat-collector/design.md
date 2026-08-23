@@ -14,7 +14,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/shared/Utilities.cs
   - ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
 policy: agent-editable
-last_validated: 2026-08-15
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -278,11 +278,13 @@ what was dropped.
 
 ### Wintappy coordinated change
 
-- `pidstat_data_path()` / `pidstat_parquet_glob()` macros become parquet-oriented:
-  default glob `$WINTAP_DATA_ROOT/parquet/raw_sensor/pidstat/**/*.parquet`, with
-  `PIDSTAT_DATA_PATH` still honored for overrides.
-- `stg_pidstat_metrics` becomes a `read_parquet` passthrough (casting already
-  done at collection time); the silver model is unchanged.
+- `stg_pidstat_metrics` became a parquet bronze reader with `filename=true`
+  provenance and typed-empty fallback.
+- Follow-up bugfix 2026-08-20: the dedicated pidstat DBT macros/override were
+  removed. pidstat now resolves `raw_sensor/pidstat` from
+  `WINTAP_DBT_RAW_SENSOR_DATASET` through Wintappy's shared `raw_sensor`
+  path/existence helpers and shares the same day/hour partition-window
+  narrowing as the other optional raw events.
 
 ## Data Model Or Schema Changes
 

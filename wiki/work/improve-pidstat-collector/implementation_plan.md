@@ -6,7 +6,7 @@ grounded_by:
   - wiki/work/improve-pidstat-collector/brief.md
   - wiki/work/improve-pidstat-collector/design.md
 policy: agent-editable
-last_validated: 2026-08-15
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -17,6 +17,8 @@ tags: [feature-work, implementation, lintap, pidstat]
 ---
 
 # Implementation Plan: Improve pidstat Collector
+
+> Historical plan, updated 2026-08-20 with the shipped Wintappy follow-up bugfix: the dedicated pidstat DBT macro and `PIDSTAT_DATA_PATH` override were removed after closeout. pidstat now resolves from `WINTAP_DBT_RAW_SENSOR_DATASET` through the same shared raw-event helpers as the other optional `raw_sensor` events.
 
 ## Scope
 
@@ -75,12 +77,12 @@ authorization for sibling-repo changes per `AGENTS.md`.
    two new guards — the midnight/window-date case, and a fork regression
    test asserting steady-state child processes == the single pidstat
    (e.g., `/proc/stat processes` delta vs. pidstat-only baseline).
-7. **Wintappy DBT change**: parquet-oriented pidstat macros
-   (`raw_sensor/pidstat/**/*.parquet` default, `PIDSTAT_DATA_PATH` still
-   honored) and `read_parquet` bronze model with `filename=true` provenance;
-   legacy-CSV migration — recommended: keep bronze parquet-only and add a
-   one-time DuckDB conversion script for existing CSV datasets (dev may choose
-   a temporary union instead if cleaner). *(Slice 2.)*
+7. **Wintappy DBT change**: parquet bronze for pidstat with `filename=true`
+   provenance, then a follow-up bugfix removing the pidstat-only path macros so
+   pidstat uses `WINTAP_DBT_RAW_SENSOR_DATASET` and the shared
+   `raw_sensor/pidstat/dayPK=/hourPK=/` helpers like the other optional events;
+   legacy-CSV migration remains a one-time conversion for older datasets.
+   *(Slice 2, plus follow-up bugfix.)*
 8. **Verification runs** (record in `verification.md`): shellcheck (install
    it or run in a container); rotation + kill test rerun after the parser
    fixes; DBT build over rotated parquet output including the empty-input
@@ -99,8 +101,10 @@ authorization for sibling-repo changes per `AGENTS.md`.
   (deleted), `../Lintap/tests/` (pytest port), `../Lintap/pyproject.toml`
   (duckdb dependency), `../Lintap/packaging/…` (new unit),
   `../Lintap/README.md`.
-- `../Wintappy/wintap_dbt/macros/pidstat.sql`,
   `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql`,
+  `../Wintappy/wintap_dbt/dbt_project.yml`,
+  `../Wintappy/wintap_dbt/macros/paths.sql`,
+  `../Wintappy/wintap_dbt/macros/raw_sources.sql`,
   `../Wintappy/wintap_dbt/README.md`.
 - This wiki: work-folder artifacts, then canonical pages at closeout.
 
@@ -122,8 +126,9 @@ authorization for sibling-repo changes per `AGENTS.md`.
 - Existing tab-CSV pidstat datasets (e.g., the validation thread's one-hour
   dataset) predate the format change; convert once with DuckDB or keep a
   temporary legacy union in bronze — decide in step 6.
-- `PIDSTAT_DATA_PATH` override behavior must keep working for ad-hoc analysis
-  layouts.
+- Post-close bugfix (2026-08-20): `PIDSTAT_DATA_PATH` no longer exists in the
+  Wintappy DBT path. pidstat now follows the same `WINTAP_DBT_RAW_SENSOR_DATASET`
+  contract and day/hour narrowing as the other raw events.
 
 ## Rollback Plan
 
@@ -142,7 +147,7 @@ authorization for sibling-repo changes per `AGENTS.md`.
 - [x] pytest suite ported (7 cases) + midnight case + fork regression guard; all green
 - [x] Python runtime/packaging decided and recorded (RHEL 8 python3.6 constraint)
 - [x] `-p ALL`, env knobs, and Python deps documented in ../Lintap/README.md
-- [x] Wintappy DBT updated (parquet macros/bronze, legacy-CSV path decided); fixture test green
+- [x] Wintappy DBT updated (parquet bronze, legacy-CSV path decided, and 2026-08-20 follow-up bugfix removed the pidstat-only macro/override so pidstat now uses the canonical raw_sensor helpers); fixture test green
 - [x] Slice 2 reviewed and accepted (2026-08-16; pytest 12/12 independently re-verified, stat-field offsets checked against proc(5), Wintappy migration verified against spec)
 - [ ] Review follow-up: accumulation guard tolerant of files vanishing between listing and stat/delete (the uploader will delete concurrently once the upload fix lands), and guard failures reported distinctly from conversion failures
 - [ ] Live containerized-process fixture test (needs a container runtime on the test host)
