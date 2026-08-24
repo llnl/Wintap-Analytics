@@ -483,3 +483,9 @@ Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.m
 Files updated: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`; `extras/lintap-runtime-diagnostics/README.md`.
 Changes: removed hardcoded DuckDB PATH and hardcoded `/root/main.duckdb`; added `--db` override; added upfront required/optional command reporting in `requirements.txt`; added DuckDB CLI discovery across PATH and common install locations; added automatic live-DB lock probing and snapshot fallback that copies `main.duckdb` plus `main.duckdb.wal` when present into `duckdb/snapshot/` before running read-only queries; updated manifest and summary notes to record source/query DB paths.
 Validation: `bash -n extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh` passed; `--help` output verified.
+
+## [2026-08-24] review | Initial FileOps poller optimization note captured
+
+Source: simple source inspection of `../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`, `file_ops_tracer.bpf.c`, `file_ops_tracepoint.bpf.c`, and field diagnostics where `FileOps-Poller` remained the dominant hot thread after pidstat/telemetry fixes.
+Result: recorded a future-todo note, explicitly marked as an initial review rather than a decided design. Main hypothesis: reduce ring-buffer volume by emitting fd-based file operations only for tracked fds in eBPF, then consider earlier pseudo-path/data-root/parquet filtering and optional op-class toggles.
+Pages updated: `work/fix-unbounded-process-table-growth/implementation_plan.md`; `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.

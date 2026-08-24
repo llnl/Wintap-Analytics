@@ -340,3 +340,23 @@ dotnet build wintap/Lintap.csproj
 Result: build passed with existing warnings and `0` errors.
 
 Expected field behavior after deploying/restarting Lintap: fewer `python3.12`/runtime-worker-style process rows, fewer stale open rows caused by thread IDs, lower `reconciled_closed` totals for thread-heavy processes, and reduced CloneSensor/EventChannel work. Fork/vfork-only processes should still be represented because the filter only drops explicit `CLONE_THREAD` events.
+
+## Initial FileOps Review (2026-08-24)
+
+This is only a simple initial review of the `FileOps-Poller` hotspot, not yet a committed implementation slice.
+
+Findings from source inspection:
+
+- `FileOpsSensor` already filters pseudo paths (`/sys`, `/proc`, `/dev`), Lintap data-root feedback, `.etl`, and parquet outputs in managed code.
+- The eBPF tracer still emits every `read`, `write`, `close`, and file-backed `mmap` event into the ring buffer before those managed filters run.
+- `FileOpsSensor` then tries to resolve fd-to-path mappings or falls back to `/proc/<pid>/fd/<fd>`, so ring-buffer traffic and callback/path-resolution work happen even for events that are later dropped.
+- Field diagnostics after the pidstat and telemetry fixes still showed `FileOps-Poller` as the dominant hot thread.
+
+Future optimization ideas to validate, in likely priority order:
+
+1. Emit `read` / `write` / `mmap` / `close` only for tracked fds in eBPF instead of emitting all fd operations and dropping unresolved ones later.
+2. Move pseudo-path, data-root, and parquet-feedback filters earlier, ideally into pathname-bearing eBPF paths (`open`, `unlink`) so those events never hit the ring buffer.
+3. Make noisy operation classes configurable (`read`, `close`, `mmap`) if analytics can tolerate a narrower file-event set.
+4. Add explicit FileOps drop/emit counters so later tuning is measurable instead of inferred from CPU alone.
+
+Treat this note as a future todo and a starting hypothesis list, not a final design.
