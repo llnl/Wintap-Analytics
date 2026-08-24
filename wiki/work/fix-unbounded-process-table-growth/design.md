@@ -52,6 +52,15 @@ CREATE TABLE IF NOT EXISTS process_retention_telemetry (
 )
 ```
 
+After the 2026-08-23 field diagnostic, telemetry is written aggregate-first by
+default: one row per `observed_at` / `metric_name` / `process_name` per sweep,
+with `metric_value` carrying the count and `pid_hash` left `NULL`. Per-`pid_hash`
+detail rows are now opt-in through
+`WINTAP_PROCESS_RETENTION_TELEMETRY_DETAIL_ENABLED=true` for short debugging
+runs only. Telemetry rows are pruned by
+`WINTAP_PROCESS_RETENTION_TELEMETRY_RETENTION_SEC`, defaulting to 24 hours, so
+the QA table cannot become a second unbounded event-store table.
+
 ## Interfaces And User Experience
 
 - New env-configurable knobs, all read via `ConfigManager`:
@@ -60,6 +69,8 @@ CREATE TABLE IF NOT EXISTS process_retention_telemetry (
   - `WINTAP_PROCESS_SWEEP_INTERVAL_SEC` default `300`
   - `WINTAP_PROCESS_EXIT_RETENTION_SEC` default `3600`
   - `WINTAP_PROCESS_RECONCILE_MIN_AGE_SEC` default `60`
+  - `WINTAP_PROCESS_RETENTION_TELEMETRY_RETENTION_SEC` default `86400`
+  - `WINTAP_PROCESS_RETENTION_TELEMETRY_DETAIL_ENABLED` default `false`
 - Validation harness script now accepts the sweep/retention env overrides and uses the shared summarizer so telemetry is included in summaries.
 
 ## Edge Cases
@@ -79,7 +90,7 @@ CREATE TABLE IF NOT EXISTS process_retention_telemetry (
 
 - Maintenance still runs on a request path, so an overly aggressive sweep interval can add latency spikes.
 - The pruned-row cache is memory-only, so retention misses across restart boundaries are still best-effort only.
-- This slice does not yet measure DuckDB reclaim behavior beyond row-count reduction; `VACUUM`/`CHECKPOINT` work remains open.
+- This slice does not yet measure DuckDB reclaim behavior beyond row-count reduction; `VACUUM`/`CHECKPOINT` work remains open. The telemetry table now has its own retention window, but existing multi-million-row deployments still need a restart/sweep and may need DuckDB compaction to reclaim file size.
 
 ## Alternatives Considered
 

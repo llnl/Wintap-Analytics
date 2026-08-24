@@ -373,3 +373,48 @@ Findings (minor, none blocking):
 
 Review verdict: slice 2 accepted. Remaining checklist items are operational
 verification plus the closeout promotion — the feature is code-complete.
+
+## Field Noise Mitigation (2026-08-23)
+
+Follow-up from the `spk16.llnl.gov` long-running Lintap diagnostic: the live
+pidstat collector had been manually launched with `PIDSTAT_ROTATE_INTERVAL_SEC=10`,
+causing frequent DuckDB parquet conversions. The copied Lintap event-store DB
+showed many short-lived `python3.12` process rows parented to the collector
+process, consistent with conversion-time DuckDB/Python worker-thread churn being
+observed by Lintap's clone sensor.
+
+Changes made in `../Lintap`:
+
+- `pidstat-collector.py` now clamps rotation to
+  `PIDSTAT_MIN_ROTATE_INTERVAL_SEC`, defaulting to `300` seconds. Operators can
+  explicitly lower the floor for tests, but the default prevents accidental
+  10-second production rotation.
+- `pidstat-collector.py` now reuses one DuckDB connection for parquet conversion
+  instead of opening/closing a connection per rotation.
+- DuckDB conversion defaults to `PIDSTAT_DUCKDB_THREADS=1` and applies that
+  setting on the persistent connection to reduce conversion worker-thread churn.
+- Startup logging now reports `min_rotate` and `duckdb_threads` so live logs show
+  whether the quieting controls are active.
+- Package env defaults and README files document `PIDSTAT_MIN_ROTATE_INTERVAL_SEC=300`
+  and `PIDSTAT_DUCKDB_THREADS=1`.
+
+Validation:
+
+```bash
+cd ../Lintap
+uv run --group dev pytest tests/test_pidstat_collector.py
+```
+
+Result: `14 passed`.
+
+Operational note for the current live host: after updating the deployed
+`/usr/lib/lintap/pidstat-collector.py`, restart the manually launched collector
+without the `PIDSTAT_ROTATE_INTERVAL_SEC=10` override, or include
+`PIDSTAT_MIN_ROTATE_INTERVAL_SEC=300 PIDSTAT_DUCKDB_THREADS=1` in the environment.
+
+Post-restart check using `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260823T223445Z` confirmed the collector-side mitigation reduced noise:
+
+- Manual collector command used `PIDSTAT_MIN_ROTATE_INTERVAL_SEC=300` and `PIDSTAT_DUCKDB_THREADS=1`.
+- System fork-rate sample dropped to effectively zero over the 10-second diagnostic window (`processes_delta_10s=4`).
+- `python3.12` disappeared from the current top process-row producers; open `python3.12` rows dropped from `1117` in the pre-mitigation DB copy to `31` in the post-mitigation DB copy.
+- Lintap CPU remained high (`ps` around 8.5 cores; `perf stat` sampled 9.4 CPUs), so the remaining high-CPU issue is no longer explained primarily by pidstat collector conversion churn.

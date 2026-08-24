@@ -418,3 +418,68 @@ Pages created: none.
 Pages updated: `repo/wintappy-pipeline-repo.md`; `work/improve-pidstat-collector/brief.md`; `work/improve-pidstat-collector/references.md`; `work/improve-pidstat-collector/design.md`; `work/improve-pidstat-collector/dev_handoff.md`; `work/improve-pidstat-collector/implementation_plan.md`; `work/improve-pidstat-collector/verification.md`; `index.md`; `log.md`.
 Summary: documented the follow-up bugfix that removed `PIDSTAT_DATA_PATH` and the dedicated pidstat DBT macro/override in Wintappy. `stg_pidstat_metrics` now resolves `raw_sensor/pidstat` from `WINTAP_DBT_RAW_SENSOR_DATASET` through the shared raw-event helpers and uses the same day/hour partition-window narrowing as the other optional raw events.
 Contradictions flagged: none.
+
+## [2026-08-23] diagnostic | Lintap runtime high-CPU collector utility
+
+Context: current field host has `/usr/lib/lintap/Lintap` running for six days at roughly 8.5 CPU cores, with all major sensors enabled and default process-retention settings. Non-root inspection could not read `/var/log/lintap/event_store/main.duckdb`, service environment, file descriptors, or full journals.
+Files created: `extras/lintap-runtime-diagnostics/README.md`; `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`.
+Purpose: root-run, read-only diagnostic bundle for pidhash/process-table runtime performance work. It collects service/process/thread samples, redacted config, journals, filesystem summaries, fork-rate data, optional perf/dotnet/pidstat samples, and read-only DuckDB summaries/`EXPLAIN ANALYZE` output for process-table and retention telemetry investigation.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-23] diagnostic | spk16 Lintap high-CPU field findings
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260823T205648Z` root-run diagnostics using a copied DuckDB event-store database.
+Findings: `process` table retention is working at field scale (`64,742` rows after six days), but `process_retention_telemetry` has grown to `16,190,964` per-identity rows and is now the unbounded table. Runtime CPU remained high (`8.5` cores by `ps`, `13.9-15.2` CPUs by `perf stat`) across many native `Lintap` threads and sensor pollers. Fork rate was low (`~3/sec`), ruling out the earlier pidstat shell fork storm. Schema output showed no `process` indexes and pidhash lookup plans used sequential scans over ~64k rows. Process rows/telemetry were dominated by short-lived monitor commands and `python3.12` rows parented to the pidstat collector, suggesting clone/thread events are being registered as process rows.
+Recommended fixes: aggregate and retain/prune `process_retention_telemetry`; filter `CloneSensor` thread clones (`CLONE_THREAD`) so thread IDs do not pollute the pidhash process table; evaluate `process_id, create_time` indexing after reducing telemetry/thread-clone churn.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-23] fix | pidstat collector conversion noise mitigation
+
+Source: spk16 field diagnostic showed many short-lived `python3.12` process rows parented to the pidstat collector while it was manually running with `PIDSTAT_ROTATE_INTERVAL_SEC=10`.
+Files changed: `../Lintap/pidstat-collector.py`; `../Lintap/tests/test_pidstat_collector.py`; `../Lintap/README.md`; `../Lintap/packaging/lintap-rpm/lintap.env`; `../Lintap/packaging/lintap-deb/lintap.env`; `../Lintap/packaging/lintap-rpm/README.md`; `../Lintap/packaging/lintap-deb/README.md`.
+Fix: clamp rotation to `PIDSTAT_MIN_ROTATE_INTERVAL_SEC` default `300`, add `PIDSTAT_DUCKDB_THREADS=1`, reuse one DuckDB connection for parquet conversion, and log the effective quieting settings at startup. This reduces collector-induced process/clone noise before addressing broader CloneSensor thread filtering.
+Validation: `uv run --group dev pytest tests/test_pidstat_collector.py` in `../Lintap` passed (`14 passed`).
+Pages updated: `work/improve-pidstat-collector/verification.md`; `log.md`.
+
+## [2026-08-23] diagnostic | pidstat mitigation post-restart check
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260823T223445Z` after restarting the manual pidstat collector with `PIDSTAT_MIN_ROTATE_INTERVAL_SEC=300` and `PIDSTAT_DUCKDB_THREADS=1`.
+Results: collector-induced noise dropped materially: fork-rate sample was effectively zero (`processes_delta_10s=4`), `python3.12` disappeared from the current top process-row producers, and open `python3.12` rows fell from `1117` to `31`. Lintap CPU improved by `perf stat` sample (`13.9-15.2` CPUs before to `9.4` CPUs after) but remained high by `ps` (`~8.5` cores). `process` remained bounded (`47,135` rows), while `process_retention_telemetry` still grew to `16,362,388` rows, adding ~171k rows over ~98 minutes.
+Conclusion: pidstat conversion churn is mitigated, but the remaining high-CPU/runtime-quality work should move to `../wintap`: aggregate/prune `process_retention_telemetry`, filter `CloneSensor` thread clones, then reassess process lookup indexing.
+Pages updated: `work/improve-pidstat-collector/verification.md`; `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-23] fix | process retention telemetry bounded
+
+Files changed: `../wintap/wintap/core/infrastructure/ProcessResolver.cs`; `../wintap/shared/ai/wintap_mcp_server/wintap_mcp_server.csproj`.
+Fix: `process_retention_telemetry` now writes aggregate rows by default instead of one row per process identity; per-`pid_hash` detail is opt-in via `WINTAP_PROCESS_RETENTION_TELEMETRY_DETAIL_ENABLED=true`. Added `WINTAP_PROCESS_RETENTION_TELEMETRY_RETENTION_SEC` with a 24-hour default and prunes old telemetry rows every maintenance sweep. Startup logging includes the telemetry retention/detail settings.
+Build fix: MCP publish had failed because generated files under `shared/ai/wintap_mcp_server/mcp_temp/obj` were included by the MCP project source glob, causing duplicate assembly attributes. The MCP project now excludes `mcp_temp/**` alongside direct `obj/**` and `bin/**`.
+Validation: direct MCP publish passed; `dotnet build wintap/Lintap.csproj` in `../wintap` passed with existing warnings and `0` errors.
+Pages updated: `work/fix-unbounded-process-table-growth/design.md`; `work/fix-unbounded-process-table-growth/implementation_plan.md`; `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-24] validation | spk16 post-RPM telemetry bounding check
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260824T013652Z` after building/installing the new RPM with the telemetry aggregation fix and running for about 2.5 hours.
+Results: Lintap PID `1918289` sampled at `1.211` CPUs by `perf stat` (vs. `9.4` after pidstat mitigation and `13.9-15.2` before). Fork rate was quiet (`5` process creations over 10 seconds). `process` table remained bounded at `47,648` rows. `process_retention_telemetry` was reduced to `4,721` aggregate rows, with aggregate totals preserved in `metric_value`. Copied DuckDB size was `19.0 MiB`, down from ~`761 MiB` before the telemetry fix. Process lookup plans still used sequential scans over ~47k rows but query times were small in the copied DB.
+Conclusion: process-retention telemetry aggregation/retention fixed the runaway telemetry table and materially reduced Lintap runtime CPU on the field host. Remaining follow-ups: CloneSensor thread-clone filtering and optional lookup indexing.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-24] diagnostic | process lookup index low leverage in field snapshot
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260824T033731Z`.
+Findings: Lintap remained stable at `1.471` CPUs by `perf stat`; `process` had `48,628` rows and `process_retention_telemetry` had `9,459` aggregate rows. The copied DB included `idx_process_process_id_create_time` on `(process_id, create_time)`, but representative pidhash lookup plans still used sequential scans over ~48k rows, with copied-DB query times around `0.012-0.025s`. Hot threads were sensor pollers (`CloneProcess`, `FileOps`, `ExitProcess`, `ExecveProcess`) rather than telemetry/DB churn.
+Conclusion: additional DuckDB indexing is not the next highest-leverage fix. Prefer CloneSensor thread-clone filtering or an in-memory current-process map if further CPU reduction is needed.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-24] fix | CloneSensor filters thread clones
+
+Files changed: `../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs`.
+Fix: CloneSensor now skips clone events with `CLONE_THREAD` (`0x00010000`) before reading `/proc` or emitting process `Start` rows. Unknown clone flags (`0`) and the vfork sentinel remain accepted to preserve fork/vfork/process-like clone coverage.
+Rationale: field diagnostics showed thread IDs being registered as processes, polluting the pidhash/process table and increasing stale-open reconciliation work.
+Validation: `dotnet build wintap/Lintap.csproj` in `../wintap` passed with existing warnings and `0` errors.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-24] maintenance | Lintap runtime diagnostics utility cleanup
+
+Files updated: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`; `extras/lintap-runtime-diagnostics/README.md`.
+Changes: removed hardcoded DuckDB PATH and hardcoded `/root/main.duckdb`; added `--db` override; added upfront required/optional command reporting in `requirements.txt`; added DuckDB CLI discovery across PATH and common install locations; added automatic live-DB lock probing and snapshot fallback that copies `main.duckdb` plus `main.duckdb.wal` when present into `duckdb/snapshot/` before running read-only queries; updated manifest and summary notes to record source/query DB paths.
+Validation: `bash -n extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh` passed; `--help` output verified.
