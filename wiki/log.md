@@ -489,3 +489,11 @@ Validation: `bash -n extras/lintap-runtime-diagnostics/collect-lintap-diagnostic
 Source: simple source inspection of `../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`, `file_ops_tracer.bpf.c`, `file_ops_tracepoint.bpf.c`, and field diagnostics where `FileOps-Poller` remained the dominant hot thread after pidstat/telemetry fixes.
 Result: recorded a future-todo note, explicitly marked as an initial review rather than a decided design. Main hypothesis: reduce ring-buffer volume by emitting fd-based file operations only for tracked fds in eBPF, then consider earlier pseudo-path/data-root/parquet filtering and optional op-class toggles.
 Pages updated: `work/fix-unbounded-process-table-growth/implementation_plan.md`; `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-24] feature | optimize-fileops-poller created and handed off
+
+Source: full design/engineering analysis of `../wintap` FileOps path (`FileOpsSensor.cs`, both `file_ops_*.bpf.c` tracers, `BaseEbpfSensor.cs` poll loop, `EventChannel.Send`, `ProcessHash`, tracers `Makefile`), extending the 2026-08-24 initial review.
+Key findings: non-regular-file fds (sockets/pipes) always miss the fd cache, pay an uncached `/proc` readlink per syscall, and are emitted as `socket:[N]` File rows; Wintap's own I/O is fully processed then discarded; per-event `GenPidHash` is dead (overwritten in `EventChannel.Send`) or wrong (DirectParquetSink); `_fdToPath` never evicts on process exit (leak + PID-reuse misattribution); kernel timestamps are discarded; `file_ops_tracer.bpf.o` is not actually CO-RE despite its name.
+Plan: seven `fop-nn` slices, measurement-first (counters/baseline), then userspace dead-work removal, kernel self-PID filter, wakeup batching, CO-RE `S_ISREG`/superblock-magic filtering (gated on a human socket/pipe-row decision), compact fd-op records, fd-cache eviction + kernel timestamps. No-loss constraint enforced by a standing A/B differential test; aggregation explicitly deferred per human direction. Work proceeds on `grantj-rhel8-testing` in both repos.
+Pages created: `work/optimize-fileops-poller/{brief,references,design,implementation_plan,dev_handoff,verification}.md`.
+Pages updated: `work/fix-unbounded-process-table-growth/implementation_plan.md` (future-todo item spun off); `index.md`; `log.md`.

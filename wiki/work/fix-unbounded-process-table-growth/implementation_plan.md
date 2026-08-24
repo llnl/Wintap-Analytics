@@ -75,7 +75,7 @@ Remaining before feature closeout:
 - [ ] DuckDB reclaim behavior measured (DELETE vs. compaction), including the existing multi-million-row telemetry table after pruning.
 - [ ] Complete Windows runtime regression check on a host/run where Security-log startup replay is available; current host reported log wrap, so `ClearDB`/startup replay remains only partially exercised.
 - [ ] Review findings 2–3 fixed (uncached btime fallback; capped collision logging).
-- [ ] Future FileOps-Poller review item (initial review only, 2026-08-24): test whether FileOps can reduce event volume earlier by emitting `read`/`write`/`mmap`/`close` only for tracked fds in eBPF, plus optional earlier pathname filtering for pseudo paths / data-root / parquet noise.
+- [x] Future FileOps-Poller review item — spun off 2026-08-24 into its own feature [[wiki/work/optimize-fileops-poller/brief]] after full source analysis; the tracked-fd hypothesis was demoted to an alternative (fidelity holes: pre-existing/inherited/dup'd fds) in favor of a stateless CO-RE regular-file filter plus self-PID filtering, userspace dead-work removal, and stage counters.
 - [ ] Closeout: promote durable facts to canonical pages — candidates: event-store "currentish" retention semantics, env knobs, and `process_retention_telemetry` (new component/data_model page + `wiki/event_type/process-events.md`); the `/proc/stat btime` hash-basis fact; the clone-sensor requirement for fork-without-exec live coverage (also feeds the lintap-process-creation-validation thread).
 
 ## Field Watch Item (2026-08-17)
