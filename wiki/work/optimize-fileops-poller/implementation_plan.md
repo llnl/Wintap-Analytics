@@ -7,7 +7,7 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile
 policy: agent-editable
-last_validated: 2026-08-24
+last_validated: 2026-08-25
 repo_scope: cross-repo
 implementation_area: wintap-api
 event_domain: file
@@ -178,6 +178,16 @@ recorded in [[wiki/work/optimize-fileops-poller/verification]].
       recorded in verification.md, including the measured socket/pipe share.
 - [ ] fop-02 dead-work removal landed; A/B differential clean; allocation/CPU
       delta recorded.
+- [x] fop-01/fop-02 code slice built locally: kernel/user counters, userspace
+      dead-work removal, and differential harness are implemented. Full field
+      baseline and deployed A/B run remain pending before these slices are
+      accepted.
+- [x] Expanded no-loss reduction slice landed in the working branch and was
+      deployed to the RHEL8 field host: self-PID filtering, wakeup batching,
+      CO-RE regular-file fd filtering, compact tagged records, 16 MiB ring
+      buffer, and kernel pseudo-path filtering are all active in the deployed
+      build. Full acceptance remains pending because the overnight run still
+      showed sustained ring-buffer loss.
 - [ ] fop-03 self-PID filter landed in both variants; self rows absent from
       stream; counter shows kernel-side drops.
 - [ ] fop-04 wakeup batching landed; context-switch/CPU delta recorded;
@@ -189,6 +199,9 @@ recorded in [[wiki/work/optimize-fileops-poller/verification]].
 - [ ] fop-07 fd-cache eviction + kernel timestamps landed; churn and
       timestamp tests pass.
 - [ ] Field measurement vs. fop-01 baseline shows the CPU win; recorded.
+- [ ] Deep-analysis handoff completed: overnight counters interpreted, next
+      no-loss reduction ranked, and the follow-on slice selected from evidence
+      rather than intuition.
 - [ ] Closeout: promote durable facts — new FileOps sensor component page
       (pipeline stages, per-tier filters, counters, config), file-events
       event_type update if stream content changed, fidelity-gap backlog

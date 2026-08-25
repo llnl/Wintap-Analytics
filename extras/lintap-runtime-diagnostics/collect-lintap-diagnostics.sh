@@ -32,6 +32,7 @@ DB_PATH_OVERRIDE=""
 LINTAP_PID=""
 SAMPLE_SECONDS=10
 CREATE_TAR=1
+INSTALL_ROOT=""
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
@@ -113,6 +114,18 @@ run_shell() {
 
 have() {
   command -v "$1" >/dev/null 2>&1
+}
+
+first_readable_file() {
+  local candidate
+  for candidate in "$@"; do
+    if [ -n "$candidate" ] && [ -r "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+
+  return 1
 }
 
 resolve_duckdb() {
@@ -216,11 +229,52 @@ detect_lintap_pid() {
   pgrep -o -f '/usr/lib/lintap/Lintap|(^|/)Lintap( |$)' 2>/dev/null || true
 }
 
+detect_install_root() {
+  local cmdline_raw
+  local cmdline_text
+  local token
+
+  if [ -n "$INSTALL_ROOT" ]; then
+    printf '%s\n' "$INSTALL_ROOT"
+    return
+  fi
+
+  if [ -n "$LINTAP_PID" ] && [ -L "/proc/$LINTAP_PID/cwd" ]; then
+    readlink -f "/proc/$LINTAP_PID/cwd" 2>/dev/null || true
+    return
+  fi
+
+  if [ -n "$LINTAP_PID" ] && [ -r "/proc/$LINTAP_PID/cmdline" ]; then
+    cmdline_raw=$(tr '\0' '\n' <"/proc/$LINTAP_PID/cmdline" 2>/dev/null || true)
+    cmdline_text=$(printf '%s\n' "$cmdline_raw" | sed '/^$/d')
+    while IFS= read -r token; do
+      case "$token" in
+        */Lintap.dll)
+          dirname "$token"
+          return
+          ;;
+      esac
+    done <<EOF
+$cmdline_text
+EOF
+  fi
+
+  for token in /usr/lib/lintap /opt/lintap; do
+    if [ -d "$token" ]; then
+      printf '%s\n' "$token"
+      return
+    fi
+  done
+
+  printf '\n'
+}
+
 DATA_ROOT=$(parse_data_root)
 LINTAP_PID=$(detect_lintap_pid)
 SOURCE_DB_PATH="${DB_PATH_OVERRIDE:-$DATA_ROOT/event_store/main.duckdb}"
 DB_PATH="$SOURCE_DB_PATH"
 DUCKDB_BIN="$(resolve_duckdb 2>/dev/null || true)"
+INSTALL_ROOT=$(detect_install_root)
 
 cat >"$OUTDIR/manifest.txt" <<EOF
 created_utc=$TIMESTAMP
@@ -230,12 +284,13 @@ data_root=$DATA_ROOT
 source_db_path=$SOURCE_DB_PATH
 db_path=$DB_PATH
 lintap_pid=$LINTAP_PID
+install_root=$INSTALL_ROOT
 sample_seconds=$SAMPLE_SECONDS
 EOF
 
 log "Writing diagnostics to $OUTDIR"
 
-REQUIRED_COMMANDS=(date hostname id mkdir pgrep ps systemctl journalctl ls du find sort tar sed awk grep tr cp timeout stat top vmstat free df bash)
+REQUIRED_COMMANDS=(date hostname id mkdir pgrep ps systemctl journalctl ls du find sort tar sed awk grep tail tr cp timeout stat top vmstat free df bash dirname readlink sha256sum)
 if ! write_requirements_report "$OUTDIR/requirements.txt" "${REQUIRED_COMMANDS[@]}"; then
   log "ERROR: missing required diagnostic commands. See $OUTDIR/requirements.txt"
   printf '\nMissing required commands. See: %s\n' "$OUTDIR/requirements.txt" >&2
@@ -286,6 +341,10 @@ if [ -n "$LINTAP_PID" ] && [ -d "/proc/$LINTAP_PID" ]; then
       >"$OUTDIR/proc/lintap-environ.redacted" 2>&1 || true
   fi
 
+  run_cmd "$OUTDIR/proc/lintap-exe.txt" readlink -f "/proc/$LINTAP_PID/exe"
+  run_cmd "$OUTDIR/proc/lintap-cwd.txt" readlink -f "/proc/$LINTAP_PID/cwd"
+  run_shell "$OUTDIR/proc/lintap-cmdline.txt" "tr '\\0' '\\n' < '/proc/$LINTAP_PID/cmdline'"
+
   run_cmd "$OUTDIR/proc/lintap-fd-list.txt" ls -l "/proc/$LINTAP_PID/fd"
   if have lsof; then
     run_cmd "$OUTDIR/proc/lintap-lsof.txt" lsof -p "$LINTAP_PID"
@@ -314,10 +373,62 @@ run_cmd "$OUTDIR/journal/lintap-last-2h.txt" journalctl -u lintap --since '-2 ho
 run_cmd "$OUTDIR/journal/lintap-warnings-last-24h.txt" journalctl -u lintap --since '-24 hours' -p warning --no-pager
 run_cmd "$OUTDIR/journal/lintap-pidstat-last-2h.txt" journalctl -u lintap-pidstat --since '-2 hours' --no-pager
 run_cmd "$OUTDIR/journal/lintap-boot-summary.txt" journalctl -u lintap -b --no-pager -n 400
+
+LOG_DIR="$DATA_ROOT/Logs"
+LINTAP_LOG="$LOG_DIR/Lintap.log"
+run_cmd "$OUTDIR/filesystem/lintap-log-dir-list.txt" ls -lah "$LOG_DIR"
+if [ -r "$LINTAP_LOG" ]; then
+  run_shell "$OUTDIR/journal/lintap-file-log-recent.txt" "tail -400 '$LINTAP_LOG'"
+  run_shell "$OUTDIR/journal/lintap-file-log-fileops.txt" "grep -E 'FileOps.*(loaded eBPF object|sensor started|kernel self PID filter|counters|failed to load|fileops_stats|filter_pids)' '$LINTAP_LOG' | tail -200"
+  run_shell "$OUTDIR/journal/lintap-file-log-fileops-counters.txt" "grep -E 'FileOps counters' '$LINTAP_LOG' | tail -80"
+  run_shell "$OUTDIR/journal/lintap-file-log-process-retention.txt" "grep -E 'ProcessResolver.*(retention|maintenance metrics|deleted .*telemetry)' '$LINTAP_LOG' | tail -200"
+  run_shell "$OUTDIR/journal/lintap-file-log-warnings-errors.txt" "grep -E '\\[(Warn|Error)\\]|[[:space:]](Warn|Error):' '$LINTAP_LOG' | tail -200"
+else
+  printf 'Lintap file log is not readable: %s\n' "$LINTAP_LOG" >"$OUTDIR/journal/lintap-file-log-missing.txt"
+fi
+
 run_cmd "$OUTDIR/filesystem/data-root-list.txt" ls -lah "$DATA_ROOT"
 run_cmd "$OUTDIR/filesystem/data-root-du.txt" du -h -d 4 "$DATA_ROOT"
 run_shell "$OUTDIR/filesystem/parquet-counts.txt" "find '$DATA_ROOT' -type f \\( -name '*.parquet' -o -name '*.parquet.active' \\) -printf '%h\n' 2>/dev/null | sort | uniq -c | sort -nr | head -100"
 run_shell "$OUTDIR/filesystem/recent-files.txt" "find '$DATA_ROOT' -type f -printf '%TY-%Tm-%Td %TH:%TM:%TS %s %p\n' 2>/dev/null | sort -r | head -200"
+
+log "Collecting deployed install tree diagnostics"
+if [ -n "$INSTALL_ROOT" ] && [ -d "$INSTALL_ROOT" ]; then
+  run_cmd "$OUTDIR/filesystem/install-root-list.txt" ls -lah "$INSTALL_ROOT"
+
+  if [ -d "$INSTALL_ROOT/tracers" ]; then
+    run_cmd "$OUTDIR/filesystem/install-tracers-list.txt" ls -lah "$INSTALL_ROOT/tracers"
+    run_shell "$OUTDIR/filesystem/install-tracers-sha256.txt" "find '$INSTALL_ROOT/tracers' -maxdepth 1 -type f -name '*.bpf.o' -print0 | sort -z | xargs -0 -r sha256sum"
+    run_shell "$OUTDIR/filesystem/install-tracers-stat.txt" "find '$INSTALL_ROOT/tracers' -maxdepth 1 -type f -name '*.bpf.o' -print0 | sort -z | xargs -0 -r stat"
+  else
+    printf 'Tracer directory is missing: %s\n' "$INSTALL_ROOT/tracers" >"$OUTDIR/filesystem/install-tracers-missing.txt"
+  fi
+
+  LINTAP_DLL=$(first_readable_file "$INSTALL_ROOT/Lintap.dll" "$INSTALL_ROOT/lintap/Lintap.dll")
+  if [ -n "${LINTAP_DLL:-}" ]; then
+    run_cmd "$OUTDIR/filesystem/install-lintap-dll-stat.txt" stat "$LINTAP_DLL"
+    run_cmd "$OUTDIR/filesystem/install-lintap-dll-sha256.txt" sha256sum "$LINTAP_DLL"
+  fi
+
+  ETL_CONFIG=$(first_readable_file "$INSTALL_ROOT/ETLConfig.json" "$INSTALL_ROOT/lintap/ETLConfig.json")
+  if [ -n "${ETL_CONFIG:-}" ]; then
+    redact_file "$ETL_CONFIG" "$OUTDIR/config/install-root-ETLConfig.json.redacted"
+    run_cmd "$OUTDIR/filesystem/install-etlconfig-stat.txt" stat "$ETL_CONFIG"
+  fi
+else
+  printf 'Install root could not be determined from the running process or common locations.\n' >"$OUTDIR/filesystem/install-root-missing.txt"
+fi
+
+log "Collecting optional BPF runtime diagnostics"
+if have bpftool; then
+  run_cmd "$OUTDIR/runtime/bpftool-version.txt" bpftool version
+  run_cmd "$OUTDIR/runtime/bpftool-prog-show.txt" bpftool prog show
+  run_cmd "$OUTDIR/runtime/bpftool-map-show.txt" bpftool map show
+  run_cmd "$OUTDIR/runtime/bpftool-link-show.txt" bpftool link show
+  run_shell "$OUTDIR/runtime/bpftool-fileops-filtered.txt" "bpftool prog show | grep -i 'file\|open\|unlink\|read\|write\|mmap'"
+else
+  printf 'bpftool not installed\n' >"$OUTDIR/runtime/bpftool-missing.txt"
+fi
 
 log "Collecting DuckDB event_store diagnostics"
 if [ -r "$SOURCE_DB_PATH" ]; then
@@ -551,6 +662,11 @@ Key files to inspect first:
   runtime/ps-lintap-threads.txt
   runtime/top-lintap-threads.txt
   runtime/fork-rate.txt
+  journal/lintap-file-log-fileops.txt
+  journal/lintap-file-log-fileops-counters.txt
+  filesystem/install-tracers-sha256.txt
+  runtime/bpftool-prog-show.txt
+  runtime/bpftool-map-show.txt
   duckdb/process-summary.out
   duckdb/telemetry-summary.out
   duckdb/schema.out

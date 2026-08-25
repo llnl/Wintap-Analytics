@@ -532,3 +532,28 @@ Key findings: non-regular-file fds (sockets/pipes) always miss the fd cache, pay
 Plan: seven `fop-nn` slices, measurement-first (counters/baseline), then userspace dead-work removal, kernel self-PID filter, wakeup batching, CO-RE `S_ISREG`/superblock-magic filtering (gated on a human socket/pipe-row decision), compact fd-op records, fd-cache eviction + kernel timestamps. No-loss constraint enforced by a standing A/B differential test; aggregation explicitly deferred per human direction. Work proceeds on `grantj-rhel8-testing` in both repos.
 Pages created: `work/optimize-fileops-poller/{brief,references,design,implementation_plan,dev_handoff,verification}.md`.
 Pages updated: `work/fix-unbounded-process-table-growth/implementation_plan.md` (future-todo item spun off); `index.md`; `log.md`.
+
+## [2026-08-24] code | optimize-fileops-poller fop-01/fop-02 code slice
+
+Files changed in `../wintap`: `FileOpsSensor.cs`, `LibBpf.cs`, `file_ops_tracer.bpf.c`, `file_ops_tracepoint.bpf.c`.
+Files created in this repo: `validation/fileops-differential/README.md`, `compare_fileops.py`, `fileops_workload.py`.
+Implemented: kernel emitted/ring-fail counters by FileOps op class in both tracer variants; userspace consumed/emitted/drop/fallback counters and periodic logs; removed dead per-event FileOps `GenPidHash`; memoized successful `/proc/<pid>/fd` fallback paths; skipped `/proc` fallback for close events; direct scalar decode before string materialization; deterministic file workload and parquet A/B comparator that fails on missing regular-file tuples.
+Validation: tracer `make clean && make` passed; `dotnet build wintap/Lintap.csproj` passed with existing warnings and 0 errors; Python harness syntax passed; comparator positive and negative synthetic parquet smoke tests passed.
+Limitations: deployed fop-01 counter baseline and live A/B differential remain pending.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-24] fix | FileOps verifier failure on unlink path
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260824T212523Z` showed the deployed fop build failed verifier on `t_unlinkat` with `R8 invalid mem access 'inv'`, so FileOps did not load and the low CPU sample was not a valid optimization result.
+Files changed: `../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c`; `../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracepoint.bpf.c`; `../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile`; `../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Fix: split pathname emission into saved-buffer and raw-user-pointer helpers; unlink/unlinkat now use `bpf_probe_read_user_str()` via `emit_file_event_user()`. Completed the compact tagged record format for fd vs path events and moved `file_ops_tracer.bpf.o` into the CO-RE Makefile tier.
+Validation: `make clean && make` in the tracer directory passed, including CO-RE `file_ops_tracer.bpf.o`; `dotnet build wintap/Lintap.csproj` passed with existing warnings and `0` errors.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] code | optimize-fileops-poller expanded deployment and diagnostics
+
+Source: continued work on `../wintap` FileOps path plus live RHEL8 validation using `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T033307Z` (smoke) and `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T142601Z` (overnight).
+Files changed in `../wintap`: `FileOpsSensor.cs`, `LibBpf.cs`, `file_ops_tracer.bpf.c`, `file_ops_tracepoint.bpf.c`, `tracers/Makefile`. Files changed in this repo: `extras/lintap-runtime-diagnostics/{collect-lintap-diagnostics.sh,README.md}`, `work/optimize-fileops-poller/{verification,dev_handoff,implementation_plan}.md`, `log.md`.
+Implemented and validated in the deployed build: self-PID kernel filter and counters; CO-RE regular-file fd filtering; compact tagged fd vs path records; wakeup batching with `force_wakeup_total`; 16 MiB FileOps ring buffer; kernel pseudo-path filtering and `pseudo_drop_total`; deployed-build fingerprinting and optional `bpftool` capture in the diagnostics bundle.
+Results: smoke test proved the new build was live, with FileOps attached, 16 MiB ring buffer visible in `bpftool`, and first-minute `ring_fail_total=0` while `pseudo_drop_total` and `nonregular_drop_total` were already large. Overnight validation showed the same deployed hashes remained installed and that the feature made a substantial practical improvement in observability and early-drop volume reduction, but sustained ring-buffer loss still accumulated under long-running host load (`open`, `read`, `close`, `mmap` still rising materially).
+Pages updated: `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.

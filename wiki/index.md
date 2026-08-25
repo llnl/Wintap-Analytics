@@ -114,9 +114,9 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/optimize-fileops-poller/references]] | high | Source map for the FileOps optimization: sensor/tracer/poll-loop hot paths, two-tier Makefile build, EventChannel PidHash-overwrite proof, CO-RE fd-inode traversal idiom, and validation-harness patterns. |
 | [[wiki/work/optimize-fileops-poller/design]] | medium | Full design: per-event cost inventory, socket/pipe and self-feedback volume analysis, changes K1–K4/U1–U6 with per-change no-loss arguments, tracked-fd-map alternative rejected, fidelity-gap backlog (rename, pread, io_uring). |
 | [[wiki/work/optimize-fileops-poller/implementation_plan]] | medium | Seven fop-nn slices sequenced measurement-first (counters/baseline → userspace dead work → kernel filters → record split → fd-cache eviction), with per-slice test requirements including the A/B no-loss differential. |
-| [[wiki/work/optimize-fileops-poller/dev_handoff]] | medium | Dev handoff authorizing ../wintap changes on grantj-rhel8-testing: first slice fop-01+fop-02 (counters/baseline + dead-work removal + differential harness), testing bar, and the socket/pipe decision gate before fop-05. |
-| [[wiki/work/optimize-fileops-poller/verification]] | medium | Verification stub: standing build/differential/field-measurement commands and the fop-01 baseline checklist (idle/workload/network-busy counters, burst drops, fd-cache churn); no results yet. |
+| [[wiki/work/optimize-fileops-poller/dev_handoff]] | medium | Current deep-analysis handoff for the already-expanded FileOps feature: summarizes what is deployed, points to the smoke and overnight diagnostics bundles, and asks the next agent to rank the next no-loss reduction from evidence. |
+| [[wiki/work/optimize-fileops-poller/verification]] | medium | Verification ledger for the FileOps feature: build/harness commands, deployed smoke-test proof, overnight field results, deployed hashes, and a grounded summary of what improved versus what still loses under sustained load. |
 
 ---
 
-*Last updated: 2026-08-24 (new feature: optimize-fileops-poller — FileOps event-volume reduction with no information loss, handed off for fop-01+fop-02)*
+*Last updated: 2026-08-25 (optimize-fileops-poller verification and deep-analysis handoff updated after smoke-test and overnight RHEL8 diagnostics)*
