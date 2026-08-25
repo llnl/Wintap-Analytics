@@ -62,6 +62,15 @@ emit-first semantics. The OSS sensor survey stays deferred by explicit
 direction. Next work: fop-12, then fop-11 per the proposal + review
 conditions.
 
+**Milestone wrap-up (late 2026-08-25):** `fop-12` is now implemented and field-
+reviewed through the `fd=0` and `dirfd`/`cwd` follow-ons, but it is still not
+accepted as the hard precondition for `fop-11`. The newest evidence says
+`resolved_dirfd` materially helps while `resolved_cwd` is negligible, yet
+`relative_open_resolve_miss` and the `(relative)` prefix bucket remain too high
+to safely aggregate on `(pid, path, op)`. Treat `fop-11` as still blocked.
+Milestone closeout + next-fix hypotheses are captured in
+[[wiki/work/optimize-fileops-poller/milestone-2026-08-25-phase2-wrapup]].
+
 ## Copy/Paste Prompt
 
 Use this prompt to hand the work to a code-development or deep-analysis agent:
@@ -117,28 +126,22 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     loss signal is the bounded userspace sender queue under some load phases.
     fop-08 full acceptance still owes a differential-harness rerun.
 
-    Goal for the next pass (human-approved 2026-08-25): implement fop-12,
-    then fop-11, per the implementation plan's Phase 2 section.
+    Goal for the next pass: treat fop-12 as partially successful but still
+    incomplete, and do not start fop-11 until the remaining relative/openat
+    identity gap is addressed. Use the milestone wrap-up page plus
+    verification.md to decide the next narrow design step.
 
-    fop-12 scope (precondition): resolve relative/openat paths to absolute at
-    open time — ground-truth accuracy is the goal, and fop-11 aggregation
-    keys must not conflate distinct files. Recommended mechanism: readlink
-    /proc/<pid>/fd/<fd> at open-exit for non-absolute paths, pre-enqueue,
-    while the producer is alive (bpf_d_path is unavailable on RHEL8 4.18
-    tracepoints). Record the chosen resolution point and its failure modes.
-    A full ranked analysis (R1/R2/R3), plus additional accuracy and
-    performance win candidates found during it (A1-A5, P1-P4: path
-    lowercasing bug, kernel timestamps, dev:ino identity emission, mmap
-    ActivityType, sender cost-split sampling), is in this document's section
-    "fop-12 Resolution Analysis + Additional Win Candidates (2026-08-25)" —
-    read it before designing the slice. All decisions are now closed:
-    A1-A3/P3 decided (see below); A4 decided as a deferred future feature;
-    and R1 is approved in its BASE form only (2026-08-25) — resolve
-    relative/openat paths, do NOT canonicalize absolute-path opens (the
-    full-canonicalization extension was explicitly declined for now).
-    No stream-content sign-offs remain open for this pass.
+    fop-12 current state (precondition): base R1, the `fd=0` fix, and the
+    `dirfd`/`cwd` follow-on are all implemented. The latest evidence says the
+    dominant remaining unresolved class is non-`AT_FDCWD` relative opens whose
+    base directory fd path cannot be recovered cheaply enough in userspace by
+    decode time. The next step is no longer "implement fop-12" but "design the
+    next narrow fix for the unresolved path-identity floor." Read the
+    milestone wrap-up page and verification.md first. Keep the existing human
+    decisions: do NOT canonicalize absolute-path opens, and keep A4 (distinct
+    `Mmap`) out of this pass.
 
-    fop-11 scope (amended direction, 2026-08-25): short-interval aggregation
+    fop-11 scope (amended direction, 2026-08-25, still blocked): short-interval aggregation
     to the (pid, path, op) level with repeat count, grouped totals (bytes
     etc.), and min/max timestamps — acceptable for ALL op classes. Emit-first
     semantics: the first distinct occurrence in a window emits immediately
@@ -155,7 +158,9 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     Layer choice per the designer review: userspace pre-enqueue dedup first
     (reuse the fop-10 measurement dictionary; no verifier spike needed);
     kernel promotion only if ring pressure or poller CPU returns. Sampling
-    remains excluded. Sequencing open-first is fine but is not a boundary.
+    remains excluded. Sequencing open-first is fine but is not a boundary. Do
+    not start this slice until the path-identity precondition is explicitly
+    re-cleared.
 
     Also approved 2026-08-25, fold into these slices where they fit
     naturally: A1 platform-aware path-case policy function (Windows

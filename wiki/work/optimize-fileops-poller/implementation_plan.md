@@ -222,6 +222,23 @@ recorded in [[wiki/work/optimize-fileops-poller/verification]].
       attribution data and the duplicate-open evidence needed to write a
       concrete `fop-11` proposal for design review; see
       [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]].
+- [x] fop-12 local code slice built: relative/openat `open` paths are now
+      resolved to absolute paths pre-enqueue via `/proc/<pid>/fd/<fd>` when
+      possible; Linux path case is preserved instead of lowercased; File event
+      time now uses the kernel monotonic timestamp converted to wallclock; the
+      differential comparator was aligned to preserve Linux case. Deployment
+      and field-host validation are now recorded in verification; acceptance
+      remains pending because the relative-path miss floor stayed high.
+- [x] fop-12 follow-on local code slice built: `open` / `openat` path records
+      now also carry `dirfd`, userspace fallback resolution now tries opened-fd
+      then `cwd` / `dirfd`-base joins pre-enqueue, and reason-split resolution
+      counters are logged. Deployment and field-host validation are now
+      recorded in verification; acceptance remains pending because `dirfd`
+      helps but the `(relative)` bucket and miss floor remain too large.
+- [x] Milestone — phase-2 wrap-up recorded: queue/ring behavior improved,
+      `fop-10` justified the `fop-11` design direction, and `fop-12` recovered
+      a meaningful `dirfd` slice but is still not accepted. Next pass stays
+      focused on the remaining relative/openat identity gap before `fop-11`.
 - [ ] Closeout: promote durable facts — new FileOps sensor component page
       (pipeline stages, per-tier filters, counters, config), file-events
       event_type update if stream content changed, fidelity-gap backlog
@@ -283,7 +300,10 @@ fop-07 remains open from phase 1):
       absolute path directly); `bpf_d_path` is not available on RHEL8 4.18
       tracepoints. Also improves fd-cache attribution for subsequent
       read/write events. Dev chooses the exact resolution point; record
-      rationale.
+      rationale. Local code/build, deployment, and field validation are now
+      complete and recorded; acceptance is still pending because the remaining
+      `relative_open_resolve_miss` floor and `(relative)` bucket are too large
+      for safe aggregation keys.
 
 ### Phase-2 future tasks (not slices yet)
 

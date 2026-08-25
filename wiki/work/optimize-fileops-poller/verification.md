@@ -784,6 +784,419 @@ Pending validation:
 - Review the resulting top-comm / top-prefix / duplicate-open numbers to decide
   whether the gated `fop-11` aggregation candidate is justified.
 
+## fop-12 Local Code Slice — 2026-08-25
+
+Implemented the approved precondition slice in `../wintap` plus the naturally
+paired accuracy fixes already approved in the handoff.
+
+Code changes:
+
+- `FileOpsSensor` now resolves relative/openat `open` paths to absolute paths
+  pre-enqueue via `readlink /proc/<pid>/fd/<fd>` when the raw open path is not
+  absolute and the returned fd is available.
+- Successful relative-path resolution is now counted separately from resolution
+  misses in the 60s `FileOps counters` log (`resolve=[...]`).
+- Linux File paths are no longer lowercased during normalization; Windows-only
+  lowercasing remains the policy. This avoids conflating distinct Linux files
+  that differ only by case.
+- File event time now uses the kernel monotonic timestamp (`TimestampNs`)
+  converted to wallclock rather than `DateTime.UtcNow` at dequeue.
+- The differential comparator in
+  `validation/fileops-differential/compare_fileops.py` was aligned to preserve
+  Linux path case as well.
+
+Not yet folded into this slice:
+
+- A3 `s_dev` / `i_ino` emission
+- P3 sampled sender cost-split timing
+
+Commands run:
+
+```bash
+cd ../wintap && dotnet build wintap/Lintap.csproj
+cd ../wintap && dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests
+cd Wintap-Analytics && python3 -m py_compile validation/fileops-differential/compare_fileops.py
+```
+
+Results:
+
+- `dotnet build wintap/Lintap.csproj` passed with `0` errors.
+- Targeted resolver tests passed: `4 passed`.
+- Comparator syntax check passed.
+
+Pending validation:
+
+- Deploy this slice.
+- Confirm that `resolve=[relative_open_resolved=...,relative_open_resolve_miss=...]`
+  appears in the FileOps 60s log.
+- Measure whether the `(relative)` top-prefix bucket collapses in the deployed
+  `fop-10` measurement output.
+- Re-run the differential harness against Linux-case-preserving output before
+  treating fop-12 as accepted.
+
+## Field-Host Non-Root Smoke Workload Session (Deployed fop-12 Build) — 2026-08-25
+
+Ran another repeated deterministic FileOps workload session after deploying the
+ `fop-12` absolute-path precondition slice.
+
+- Session directory: `/tmp/fileops-phase2-smoke/session-20260825T224052Z`
+- Host: `spk16.llnl.gov`
+- Session window: `2026-08-25T22:40:52Z` to `2026-08-25T22:48:14Z`
+- Build note recorded in session artifact:
+  `deployed-fop-12-absolute-path-precondition`
+- Correlation note recorded in session artifact:
+  `FileOps-counters,pidstat-collector`
+- Pattern: 5 repeated deterministic FileOps workload runs
+- Per run parameters: `--files 24 --rounds 4`
+- Per-run status: all 5 runs exited `0`
+
+Use this session as the next diagnostics-correlation anchor when reviewing the
+ first root-run bundle from the deployed `fop-12` build.
+
+## Root-Run Diagnostics Bundle Review (First Deployed fop-12 Build) — 2026-08-25
+
+Bundle reviewed:
+
+- `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T225502Z`
+
+Deployment/runtime proof:
+
+- `manifest.txt` shows `lintap_pid=3405711`, `install_root=/usr/lib/lintap`.
+- The copied smoke artifact session is present under
+  `runtime/fileops-phase2-smoke/session-20260825T224052Z`, matching the
+  post-`fop-12` workload session above.
+
+What improved:
+
+1. **The new `resolve=[...]` section is present in the FileOps counters log.**
+   The deployment is definitely running the `fop-12` code.
+2. **Kernel ring loss stayed at `0`.**
+   All reviewed FileOps counter lines continue to show `ring_fail_total=0`.
+3. **Queue drops stayed at `0` throughout the sampled window.**
+   Even with substantial queue depth/high-water in some intervals, no drop was
+   recorded in this bundle.
+
+Representative queue/cpu picture:
+
+- `3:49:31 PM`: `depth=96932`, `high_water=96978`, `drops=0`
+- `3:50:31 PM`: `depth=19271`, `high_water=115640`, `drops=0`
+- `3:55:16 PM` sampled `pidstat`: `FileOps-Sender` about `91%`,
+  `FileOps-Poller` about `0%`
+- `ps-lintap-threads.txt`: `FileOps-Sender` `33.2%`, `FileOps-Poller` `0.4%`
+
+What did **not** improve enough yet:
+
+1. **Relative-path resolution is only partially successful.**
+   The new counters show many relative-open resolution misses still remain.
+   Examples:
+   - `3:40:30 PM`: `relative_open_resolved=1734`,
+     `relative_open_resolve_miss=9012`
+   - `3:45:31 PM`: `relative_open_resolved=1261`,
+     `relative_open_resolve_miss=9185`
+   - `3:55:31 PM`: `relative_open_resolved=1357`,
+     `relative_open_resolve_miss=9841`
+2. **`(relative)` remains a top prefix bucket.**
+   The expectation for `fop-12` was that this bucket would shrink materially.
+   It did not. Examples:
+   - `3:40:30 PM`: `(relative):total=9152,open=9013`
+   - `3:45:31 PM`: `(relative):total=9205,open=8960`
+   - `3:55:31 PM`: `(relative):total=10291,open=9843`
+
+Interpretation:
+
+- The deployed `fop-12` slice successfully added the necessary observability
+  and did not regress queue/ring behavior in this sampled window.
+- But it did **not** yet achieve the intended absolute-path precondition for a
+  large portion of relative opens. The misses are too numerous for us to claim
+  aggregation keys are reliably absolute today.
+- The most likely reading is that many relative/openat cases do not have a
+  still-open fd target at the time userspace resolves, or are otherwise not
+  represented by the current open-exit/fd path we assumed.
+
+Pidstat collector correlation:
+
+- The workload session window was `22:40:52Z` to `22:48:14Z`.
+- In local service timestamps, the pidstat collector wrote parquet at:
+  - `15:40:02`
+  - `15:45:02`
+  - `15:50:02`
+- So this workload window overlaps the `15:45` collector flush directly and is
+  bounded by the `15:40` and `15:50` pidstat parquet writes.
+
+Current verdict for `fop-12`:
+
+- **Partially successful / not yet accepted.**
+- Accepted aspects: path-case policy, kernel timestamps, new resolution
+  counters, and no observed queue/ring regression in this bundle.
+- Not accepted yet: the absolute-path precondition itself, because the
+  remaining relative-path miss volume is still high and the `(relative)` bucket
+  remains a major top-prefix class.
+
+## Field-Host Non-Root Smoke Workload Session (Deployed fd=0 Fix, Short) — 2026-08-25
+
+Ran a shortened repeated deterministic FileOps workload session after deploying
+ the `fd=0` resolution/caching fix.
+
+- Session directory: `/tmp/fileops-phase2-smoke/session-20260825T231857Z`
+- Host: `spk16.llnl.gov`
+- Session window: `2026-08-25T23:18:57Z` to `2026-08-25T23:22:38Z`
+- Build note recorded in session artifact:
+  `deployed-fd0-fix-short-smoke`
+- Correlation note recorded in session artifact:
+  `FileOps-counters,pidstat-collector`
+- Pattern: 3 repeated deterministic FileOps workload runs
+- Per run parameters: `--files 24 --rounds 4`
+- Per-run status: all 3 runs exited `0`
+
+Use this short session as the next diagnostics-correlation anchor to evaluate
+ whether the `fd=0` bug fix materially increases `relative_open_resolved` and
+ reduces the `(relative)` top-prefix bucket.
+
+## Root-Run Diagnostics Bundle Review (Post `fd=0` Fix, Short Smoke) — 2026-08-25
+
+Bundle reviewed:
+
+- `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T232323Z`
+
+Deployment/runtime proof:
+
+- `manifest.txt` shows `lintap_pid=3432760`, `install_root=/usr/lib/lintap`.
+- The copied smoke artifact session is present under
+  `runtime/fileops-phase2-smoke/session-20260825T231857Z`, matching the short
+  post-`fd=0` workload session above.
+
+What improved:
+
+1. **The `fd=0` fix appears to have increased relative-path resolution in at
+   least some intervals.**
+   Compared with the first `fop-12` bundle, the strongest sampled interval now
+   shows much larger absolute resolution counts:
+   - prior `fop-12` example: `relative_open_resolved=1734`,
+     `relative_open_resolve_miss=9012`
+   - post-`fd=0` example (`4:18:57 PM`): `relative_open_resolved=10654`,
+     `relative_open_resolve_miss=23424`
+2. **Queue/ring behavior remained healthy in this short sample.**
+   - `ring_fail_total` stayed `0`.
+   - queue `drops=0` throughout the reviewed intervals.
+3. **The deployed build still carries the new `resolve=[...]` and
+   `measure=[...]` sections, so both `fop-10` and `fop-12` observability are
+   intact.**
+
+What did not improve enough yet:
+
+1. **`(relative)` is still a major top-prefix bucket.**
+   Examples from this bundle:
+   - `4:18:57 PM`: `(relative):total=23743,open=23424`
+   - `4:19:57 PM`: `(relative):total=15277,open=15118`
+   - `4:22:30 PM`: `(relative):total=8340,open=8195`
+   - `4:23:30 PM`: `(relative):total=14838,open=11839`
+2. **Resolution misses remain very high even after the bug fix.**
+   Examples:
+   - `4:19:57 PM`: `relative_open_resolve_miss=15118`
+   - `4:21:30 PM`: `relative_open_resolve_miss=8597`
+   - `4:22:30 PM`: `relative_open_resolve_miss=8195`
+   - `4:23:30 PM`: `relative_open_resolve_miss=11835`
+
+Interpretation:
+
+- The `fd=0` fix was worth doing and likely recovered a real slice of missed
+  resolution opportunity.
+- But it is **not** sufficient by itself to make relative/openat paths reliably
+  absolute before aggregation.
+- The remaining miss volume is still too large for us to declare `fop-12`
+  accepted as the absolute-path precondition for `fop-11`.
+- That points back to the next likely follow-on: carry more open-time context
+  such as `dirfd` so userspace can fall back to `cwd` / `dirfd`-base joins when
+  the newly opened fd is already gone.
+
+Pidstat collector correlation:
+
+- The short workload session window was `23:18:57Z` to `23:22:38Z`.
+- In local service timestamps, the pidstat collector wrote parquet at:
+  - `16:20:02`
+- The diagnostics bundle does not include a later pidstat write inside the
+  exact short window, so this bundle is more useful for FileOps counter
+  correlation than for direct pidstat time-bucket comparison.
+
+Current verdict for the `fd=0` follow-up:
+
+- **Improvement confirmed, but not enough.**
+- Keep the `fd=0` fix, but continue with a richer `fop-12` follow-on if the
+  goal remains “absolute-path ground truth before aggregation.”
+
+## fop-12 Follow-On Local Code Slice (dirfd / cwd fallback) — 2026-08-25
+
+Implemented the next `fop-12` follow-on in `../wintap` to recover more
+absolute paths when the newly opened fd is already gone by userspace decode.
+
+Code changes:
+
+- `file_ops_tracer.bpf.c` and `file_ops_tracepoint.bpf.c` now carry `dirfd` in
+  open/openat path records.
+- `FileOpsSensor` now resolves relative/openat paths pre-enqueue with this
+  branch order:
+  1. `readlink /proc/<pid>/fd/<opened-fd>`
+  2. if that fails and `dirfd == AT_FDCWD`, resolve `/proc/<pid>/cwd` and join
+     the raw relative path
+  3. if that fails and `dirfd >= 0`, resolve `/proc/<pid>/fd/<dirfd>` and join
+     the raw relative path
+- Added reason-split resolution counters to the 60s FileOps log:
+  - `resolved_fd`
+  - `resolved_dirfd`
+  - `resolved_cwd`
+  - `opened_fd_lookup_miss`
+  - `dirfd_lookup_miss`
+  - `cwd_lookup_miss`
+  - `unsupported_dirfd`
+
+Commands run:
+
+```bash
+cd ../wintap/wintap/platform/linux/sensor/ebpf/tracers && make clean && make
+cd ../wintap && dotnet build wintap/Lintap.csproj
+cd ../wintap && dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests
+```
+
+Results:
+
+- Tracer rebuild passed.
+- `dotnet build wintap/Lintap.csproj` passed with `0` errors.
+- Targeted resolver tests passed: `4 passed`.
+
+Pending validation:
+
+- Deploy this slice.
+- Compare `resolved_dirfd` / `resolved_cwd` against prior bundles to see which
+  fallback branch contributes real recovery.
+- Re-check whether `(relative)` materially collapses in `prefix_top` after this
+  richer fallback is live.
+
+## Field-Host Non-Root Smoke Workload Session (Deployed dirfd/cwd Fallback Build, Short) — 2026-08-25
+
+Ran a shortened repeated deterministic FileOps workload session after deploying
+ the `dirfd` / `cwd` fallback follow-on.
+
+- Session directory: `/tmp/fileops-phase2-smoke/session-20260825T234052Z`
+- Host: `spk16.llnl.gov`
+- Session window: `2026-08-25T23:40:52Z` to `2026-08-25T23:44:33Z`
+- Build note recorded in session artifact:
+  `deployed-dirfd-cwd-fallback-short-smoke`
+- Correlation note recorded in session artifact:
+  `FileOps-counters,pidstat-collector`
+- Pattern: 3 repeated deterministic FileOps workload runs
+- Per run parameters: `--files 24 --rounds 4`
+- Per-run status: all 3 runs exited `0`
+
+Use this short session as the next diagnostics-correlation anchor to evaluate
+ whether `resolved_dirfd` / `resolved_cwd` materially reduce
+ `relative_open_resolve_miss` and shrink `(relative)` in `prefix_top`.
+
+## Root-Run Diagnostics Bundle Review (Deployed dirfd/cwd Fallback Build, Short Smoke) — 2026-08-25
+
+Bundle reviewed:
+
+- `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T234559Z`
+
+Deployment/runtime proof:
+
+- `manifest.txt` shows `lintap_pid=3451743`, `install_root=/usr/lib/lintap`.
+- The copied smoke artifact session is present under
+  `runtime/fileops-phase2-smoke/session-20260825T234052Z`, matching the short
+  post-`dirfd`/`cwd` workload session above.
+
+What improved:
+
+1. **The new reason-split resolution counters are present and clearly show a
+   real `dirfd` contribution.**
+   The deployed build is definitely running the new follow-on code, and the
+   recovery is coming primarily from `dirfd`, not `cwd`:
+   - `4:40:59 PM`: `resolved_fd=1362`, `resolved_dirfd=958`, `resolved_cwd=0`
+   - `4:41:59 PM`: `resolved_fd=1528`, `resolved_dirfd=918`, `resolved_cwd=0`
+   - `4:42:59 PM`: `resolved_fd=1368`, `resolved_dirfd=807`, `resolved_cwd=0`
+   - `4:44:31 PM`: `resolved_fd=871`, `resolved_dirfd=548`, `resolved_cwd=0`
+   - `4:46:31 PM`: `resolved_fd=1486`, `resolved_dirfd=931`, `resolved_cwd=1`
+2. **Relative-open recovery is better than the earlier `fd=0`-only short-smoke
+   bundle.**
+   In the low-backlog intervals aligned with this short smoke window, resolved
+   counts moved up while misses came down:
+   - post-`fd=0` short-smoke examples:
+     - `4:19:57 PM`: `relative_open_resolved=1371`,
+       `relative_open_resolve_miss=15118`
+     - `4:21:30 PM`: `relative_open_resolved=1300`,
+       `relative_open_resolve_miss=8597`
+     - `4:22:30 PM`: `relative_open_resolved=1468`,
+       `relative_open_resolve_miss=8195`
+   - post-`dirfd`/`cwd` short-smoke examples:
+     - `4:41:59 PM`: `relative_open_resolved=2446`,
+       `relative_open_resolve_miss=7997`
+     - `4:42:59 PM`: `relative_open_resolved=2175`,
+       `relative_open_resolve_miss=8268`
+     - `4:44:31 PM`: `relative_open_resolved=1419`,
+       `relative_open_resolve_miss=8814`
+3. **Queue/ring behavior remained healthy during the correlated smoke window.**
+   - `ring_fail_total=0` throughout the reviewed counter lines.
+   - queue `drops=0` throughout the reviewed counter lines.
+   - Queue depth still fell back to `0` by `4:44:31 PM`, so this bundle does
+     not show a regression in no-loss-ish behavior.
+
+What did not improve enough yet:
+
+1. **`resolved_cwd` is effectively negligible.**
+   The new counters show almost all additional recovery comes from the `dirfd`
+   branch; `cwd` contributes `0` in the smoke-window lines and only `1` in the
+   later `4:46:31 PM` line.
+2. **`(relative)` is still a major top-prefix bucket.**
+   Representative examples:
+   - `4:40:59 PM`: `(relative):total=10727,open=8081`
+   - `4:41:59 PM`: `(relative):total=8162,open=7998`
+   - `4:42:59 PM`: `(relative):total=8439,open=8269`
+   - `4:44:31 PM`: `(relative):total=8966,open=8814`
+3. **Resolution misses remain too high to treat path identity as reliably
+   absolute.**
+   Representative examples:
+   - `4:40:59 PM`: `relative_open_resolve_miss=8081`
+   - `4:41:59 PM`: `relative_open_resolve_miss=7997`
+   - `4:42:59 PM`: `relative_open_resolve_miss=8268`
+   - `4:44:31 PM`: `relative_open_resolve_miss=8814`
+4. **The miss-side reason counters show the remaining gap is now mostly
+   `dirfd` lookup failure.**
+   In the smoke-window lines, `dirfd_lookup_miss` is essentially the same size
+   as `relative_open_resolve_miss`, while `cwd_lookup_miss` stays near zero.
+   That means the follow-on improved recovery, but the dominant unresolved class
+   is still “we have a non-`AT_FDCWD` relative open and cannot recover the base
+   directory fd path in userspace at decode time.”
+
+Interpretation:
+
+- This follow-on was worth doing. The bundle confirms that carrying `dirfd`
+  recovers a meaningful additional slice of absolute paths.
+- The new evidence also narrows the remaining problem: `cwd` fallback is not a
+  significant contributor in this workload, while `dirfd`-base recovery helps
+  but still leaves a large unresolved floor.
+- The path-quality picture is better than the first `fop-12` deployment and
+  better than the `fd=0`-only short-smoke bundle, but it is still not strong
+  enough to call `fop-12` accepted as the hard precondition for `fop-11`
+  aggregation.
+
+Pidstat collector correlation:
+
+- The short workload session window was `23:40:52Z` to `23:44:33Z`.
+- In local service timestamps, the reviewed FileOps counter lines overlapping
+  that window are `4:40:59 PM`, `4:41:59 PM`, `4:42:59 PM`, and `4:44:31 PM`.
+- The bundle's thread pidstat sample starts later at `4:46:11 PM`, so it is
+  useful for the post-window hot-thread picture rather than exact within-window
+  matching.
+- That later pidstat still shows the same steady-state hotspot pattern:
+  `FileOps-Sender` around `66-98%` while `FileOps-Poller` remains near `0%`.
+
+Current verdict for the `dirfd` / `cwd` follow-on:
+
+- **Improvement confirmed, but still not enough to accept `fop-12`.**
+- Keep this change, because `resolved_dirfd` is materially helping.
+- But the remaining `relative_open_resolve_miss` floor and persistent
+  `(relative)` prefix bucket still block declaring path identity good enough for
+  the gated `fop-11` aggregation step.
+
 ## Field-Host Non-Root Smoke Workload Session (Deployed fop-10 Build) — 2026-08-25
 
 Ran another repeated deterministic FileOps workload session after deploying the

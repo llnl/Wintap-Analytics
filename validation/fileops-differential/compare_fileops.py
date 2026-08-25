@@ -36,9 +36,11 @@ def pick_column(columns: set[str], candidates: tuple[str, ...]) -> str:
 
 
 def normalize_path(path: str) -> str:
-    path = (path or "").strip().lower()
+    path = (path or "").strip()
     if path.endswith(" (deleted)"):
         path = path[: -len(" (deleted)")]
+    if sys.platform.startswith("win"):
+        path = path.lower()
     return str(PurePosixPath(path)) if path.startswith("/") else path
 
 

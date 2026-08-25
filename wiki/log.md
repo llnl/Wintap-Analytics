@@ -680,6 +680,30 @@ Based on the deployed `fop-10` evidence, the feature reached a new milestone: `f
 Pages created: `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`.
 Pages updated: `work/optimize-fileops-poller/brief.md`; `work/optimize-fileops-poller/design.md`; `work/optimize-fileops-poller/implementation_plan.md`; `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.
 
+## [2026-08-25] code | fileops fop-12 absolute-path precondition slice
+
+Files changed in `../wintap`: `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`. Files changed in `Wintap-Analytics`: `validation/fileops-differential/compare_fileops.py`; `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+Implemented: pre-enqueue relative/openat `open` path resolution through `/proc/<pid>/fd/<fd>` when possible; logged resolution success/miss counters; Linux path-case preservation instead of unconditional lowercasing; File event time sourced from kernel monotonic timestamps converted to wallclock; comparator aligned to preserve Linux case.
+Validation: `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests); `python3 -m py_compile validation/fileops-differential/compare_fileops.py` passed.
+Open follow-up: deploy, confirm new resolution counters in the 60s FileOps log, verify relative-prefix collapse in `fop-10` measurement output, and rerun the differential harness on Linux-case-preserving output.
+
+## [2026-08-25] review | first deployed fop-12 bundle shows resolution counters but relative-path bucket still large
+
+Reviewed first deployed `fop-12` diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T225502Z`. Outcome: the new `resolve=[relative_open_resolved=...,relative_open_resolve_miss=...]` section is present and `ring_fail_total` remains `0`; queue drops also stayed `0` in the sampled window. However, the absolute-path precondition is not yet met: relative-open resolution misses remain high (roughly `8.4k-9.8k` per sampled interval) and `(relative)` remains a top path-prefix bucket (`~8.6k-10.3k` total, mostly opens). The deployment therefore improved observability and preserved performance, but did not yet solve relative/openat identity conflation well enough to call `fop-12` accepted.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] review | post-fd0 short bundle improves resolution counts but relative bucket remains large
+
+Reviewed short post-`fd=0` diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T232323Z`. Outcome: queue drops stayed `0` and kernel `ring_fail_total` stayed `0`; the `fd=0` fix appears to raise relative-path resolution counts in at least some intervals (for example `relative_open_resolved=10654` with `relative_open_resolve_miss=23424` at `4:18:57 PM`, versus prior examples closer to `1.3k-1.7k` resolves). However, `(relative)` remains a major top-prefix bucket (`~8.3k-23.7k` total in reviewed lines) and miss volume is still too high to accept `fop-12` as complete. This confirms the bug fix was necessary but not sufficient, and points toward a next follow-on that preserves more open-time context such as `dirfd` for fallback absolute-path reconstruction.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] code | fileops fop-12 follow-on dirfd and cwd fallback
+
+Files changed in `../wintap`: `wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c`; `wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracepoint.bpf.c`; `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Implemented: open/openat path records now carry `dirfd`; relative-path resolution now tries opened-fd first, then `cwd` or `dirfd`-base joins pre-enqueue; reason-split resolution counters were added so the next deployed bundle can show exactly which fallback path is recovering absolute paths and which misses remain.
+Validation: tracer `make clean && make` passed; `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests).
+Open follow-up: deploy and compare `resolved_fd` vs `resolved_dirfd` vs `resolved_cwd`, and verify whether the `(relative)` top-prefix bucket finally shrinks materially.
+
 ## [2026-08-25] review | fop-11 proposal designer review completed
 
 Reviewed [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]] and
@@ -788,3 +812,19 @@ option (if ever taken, carry both paths as a schema addition). With A1-A4 and
 P3 already decided, no stream-content sign-offs remain open; the dev handoff
 prompt is fully unblocked for the fop-12 → fop-11 implementation pass.
 Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] milestone | fileops phase-2 wrap-up recorded; fop-11 stays blocked on path identity
+
+Closed the current phase-2 implementation burst with a milestone wrap-up after
+reviewing the deployed `fop-12` follow-ons through bundle
+`/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T234559Z`. Outcome:
+queue/ring behavior remains materially better than the pre-phase-2 state,
+`fop-10` successfully justified the `fop-11` design direction, and the latest
+`dirfd`/`cwd` follow-on proved a real `dirfd` recovery contribution while also
+showing that `cwd` is negligible. However, `relative_open_resolve_miss` and the
+`(relative)` prefix bucket remain too large to accept `fop-12` as the hard
+precondition for `fop-11`. A dedicated milestone page now captures the landed
+work, strongest supporting evidence, and the best current fix hypotheses for
+the next design pass.
+Pages created: `work/optimize-fileops-poller/milestone-2026-08-25-phase2-wrapup.md`.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.
