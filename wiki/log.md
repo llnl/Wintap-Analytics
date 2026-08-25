@@ -557,3 +557,69 @@ Files changed in `../wintap`: `FileOpsSensor.cs`, `LibBpf.cs`, `file_ops_tracer.
 Implemented and validated in the deployed build: self-PID kernel filter and counters; CO-RE regular-file fd filtering; compact tagged fd vs path records; wakeup batching with `force_wakeup_total`; 16 MiB FileOps ring buffer; kernel pseudo-path filtering and `pseudo_drop_total`; deployed-build fingerprinting and optional `bpftool` capture in the diagnostics bundle.
 Results: smoke test proved the new build was live, with FileOps attached, 16 MiB ring buffer visible in `bpftool`, and first-minute `ring_fail_total=0` while `pseudo_drop_total` and `nonregular_drop_total` were already large. Overnight validation showed the same deployed hashes remained installed and that the feature made a substantial practical improvement in observability and early-drop volume reduction, but sustained ring-buffer loss still accumulated under long-running host load (`open`, `read`, `close`, `mmap` still rising materially).
 Pages updated: `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] feature | optimize-fileops-poller enters phase 2 (deep analysis)
+
+Decision: stay in this feature rather than opening a new one. The original scope
+(fop-01..fop-06 substance: counters, dead-work removal, self-PID filter, CO-RE
+regular-file filter, kernel pseudo-path filter, compact records, wakeup batching,
+16 MiB ring buffer) reached its current deployed state implemented with opencode
+gpt-5.5 and gpt-5.4; the feature now continues as a deep-analysis phase.
+Evidence constraint: raw runtime diagnostics are no longer readable in this
+environment (security); analysis used only wiki-recorded summary statistics plus
+read-only `../wintap` source.
+
+Deep analysis (`work/optimize-fileops-poller/deep-analysis-2026-08-25.md`):
+sustained overnight ring loss (~778 reserve failures/s across open/read/close/
+mmap/write over the 9,121s counter window) is a steady-state userspace consumer
+shortfall, not kernel emission or burst behavior. Root cause: the single
+FileOps-Poller thread processes each surviving event synchronously through
+`EventChannel.Send`, which runs a per-event DuckDB query under the process-global
+`_dbLock` (plus a second query on miss) and a synchronous Esper `SendEventBean`,
+with no queue between the ring buffer and that work (~12-25ms/lookup from the
+2026-08-24 diagnostic implies a ~40-80 events/s ceiling). The 16 MiB ring
+(~300k compact records) absorbs the smoke-test minute, then saturates. Ranked
+next no-loss slices: fop-08 (bounded in-process queue + in-memory pid→pid_hash
+current-process cache) front-runner, fop-09 (hoist per-event config lookups),
+fop-10 (top-N per-comm/prefix aggregate counters for path-class attribution),
+fop-07 still open; fentry/`bpf_d_path` stays deferred. Next slice selection
+pending human sign-off.
+
+Human decision recorded (2026-08-25): non-regular-file fd rows (`socket:[N]`,
+`pipe:[N]`, `anon_inode:[N]`, ttys) are permanently dropped from the File
+stream, ratifying the deployed CO-RE filter; pipe/anon_inode I/O invisibility
+recorded as a fidelity gap (candidate future op class); the BTF-less fallback
+tier stays as-is with the tier content difference documented.
+
+Pages created: `work/optimize-fileops-poller/deep-analysis-2026-08-25.md`.
+Pages updated: `work/optimize-fileops-poller/{brief,design,implementation_plan,dev_handoff,verification}.md`; `index.md`; `log.md`.
+
+## [2026-08-25] direction | fileops phase-2 strategy discussion recorded
+
+Human direction after reviewing the deep analysis: (1) the userspace workflow
+optimizations (fop-08 queue + in-memory cache) are endorsed — memory spend on
+queues is acceptable and helps spikes; (2) in-kernel short-interval aggregation
+of file events by (pid, op class, identity) is now open for consideration,
+amending the 2026-08-24 no-aggregation direction — motivated by suspected high
+same-(pid,path) open/openat redundancy and by the fact that Esper aggregates
+later in the pipeline anyway; recorded as gated candidate fop-11, with fop-10
+extended to measure the open duplicate ratio first; (3) future task saved: an
+OSS sensor survey (Falco/Sysdig, Tetragon, Tracee, Elastic ebpf, Sysmon for
+Linux, osquery) on how peer projects handle event-volume and ring-drop
+pressure.
+Pages updated: `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] approval | fileops phase-2 plan approved and handed off
+
+Human approved the full phase-2 plan: sequence fop-08 (+fop-09) → fop-10 →
+fop-11 go/no-go. `dev_handoff.md` rewritten as the phase-2 dev handoff: the
+copy/paste prompt now targets implementing fop-08 (in-memory pid→pid_hash
+current-process cache replacing the per-event DuckDB query under `_dbLock`,
+plus a bounded in-process queue between the ring callback and resolve/Esper
+with depth/drop counters) and fop-09 (hoist per-event config lookups), with
+acceptance criteria tied to the ~778/s ring_fail baseline from the deep
+analysis and the standing no-loss differential gate. fop-11 aggregation stays
+gated (fop-10 duplicate-ratio evidence + separate human go/no-go + verifier
+spike + redefined differential contract). OSS sensor survey remains a parallel
+future research task.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `index.md`; `log.md`.

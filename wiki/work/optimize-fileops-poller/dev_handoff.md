@@ -20,6 +20,28 @@ tags: [feature-work, file-events, ebpf, linux-sensor, dev-handoff]
 
 # Dev Handoff: Optimize FileOps Poller Event Volume
 
+## Phase 2 Status (2026-08-25)
+
+The original scope was implemented to its current deployed state with
+opencode gpt-5.5 and gpt-5.4. The feature stays open as phase 2 rather than
+being closed or forked into a new feature. The deep analysis this handoff
+called for was completed 2026-08-25 — see
+[[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]]. Root cause of
+the sustained overnight ring-buffer loss: the userspace consumer ceiling
+(per-event DuckDB resolution under a process-global lock plus a synchronous
+Esper send, all on the single poller thread), not kernel emission volume.
+
+**Human approval received 2026-08-25** for the phase-2 plan and sequencing:
+**fop-08 (+ fop-09) → fop-10 measurement → fop-11 go/no-go**. Two direction
+updates came with it: (1) in-kernel short-interval aggregation is reopened as
+gated candidate fop-11 (amending the 2026-08-24 no-aggregation direction),
+motivated by suspected high same-(pid,path) open/openat redundancy and by the
+fact that Esper aggregates later in the pipeline anyway; (2) additional memory
+spend on userspace queues is explicitly acceptable — it is wanted for spike
+absorption. An OSS sensor survey (Falco/Sysdig, Tetragon, Tracee, Elastic
+ebpf, Sysmon for Linux, osquery) is saved as a future research task, runnable
+in parallel.
+
 ## Copy/Paste Prompt
 
 Use this prompt to hand the work to a code-development or deep-analysis agent:
@@ -40,10 +62,12 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     - wiki/work/optimize-fileops-poller/dev_handoff.md
     - wiki/work/optimize-fileops-poller/verification.md
 
-    Also read these diagnostics bundles directly:
-
-    - /tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T033307Z
-    - /tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T142601Z
+    Evidence base: the summary statistics recorded in verification.md and
+    deep-analysis-2026-08-25.md. The raw diagnostics bundles
+    (/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T033307Z and
+    -20260825T142601Z) are no longer readable in this environment — by
+    security constraint, only the summary statistics recorded in the wiki
+    are available.
 
     Current state: this feature is no longer at the original fop-01/fop-02
     handoff stage. The branch and deployed RHEL8 host already include:
@@ -59,30 +83,50 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     - kernel pseudo-path filtering for open/openat/unlink/unlinkat
     - improved diagnostics bundle support in Wintap-Analytics
 
-    Goal for the next pass: perform a deep analysis of the completed work and
-    identify the next highest-yield no-loss FileOps volume reduction. Use the
-    overnight counter data as the primary evidence base.
+    Also read the root-cause analysis before coding:
 
-    Required output from this pass:
+    - wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25.md
 
-    1. A precise summary of what has already landed in code and what has only
-       been partially accepted.
-    2. A quantified interpretation of the overnight counter trends
-       (ring_fail_total, self_drop_total, nonregular_drop_total,
-       pseudo_drop_total, force_wakeup_total).
-    3. A ranked shortlist of the next no-loss reduction options, with expected
-       upside, fidelity risk, and implementation complexity.
-    4. A recommendation on whether to stay incremental in the current tracer/
-       userspace design or pivot to a more structural change such as
-       fentry/`bpf_d_path`.
-    5. Concrete verification criteria for the next slice, reusing the existing
-       differential harness and diagnostics collector.
+    Goal for the next pass (human-approved 2026-08-25): implement fop-08 and
+    fop-09 per the implementation plan's Phase 2 section — raise the userspace
+    consumer ceiling. Do NOT start fop-11 (aggregation); it is gated on
+    fop-10 measurement data and a separate human go/no-go.
+
+    fop-08 scope:
+
+    1. In-memory pid→pid_hash / process-identity cache for the File event
+       path: maintained by ProcessResolver (populated at registration,
+       evicted on exit/prune), consulted by EventChannel.Send instead of the
+       per-event DuckDB SELECT under _dbLock; DB lookup remains only as the
+       miss fallback. Cache hit/miss counters in the 60s log.
+    2. Bounded in-process queue between the FileOps ring-buffer callback and
+       resolve/Esper: the callback does decode+filter+enqueue only; a worker
+       thread drains into resolve+Esper. Generous default capacity (memory
+       spend approved), explicit depth gauge and drop counter in the 60s log,
+       documented drop policy. Shutdown must drain within the existing 2s
+       PollingThread.Join budget or document the revised budget.
+
+    fop-09 scope: hoist the five per-event ConfigManager.GetValue lookups in
+    EventChannel.Send into fields cached at startup.
+
+    Acceptance for this pass:
+
+    1. Builds: tracers make clean && make; dotnet build wintap/Lintap.csproj
+       with 0 errors.
+    2. Differential harness clean on regular-file tuples (no-loss gate).
+    3. On the field host, under comparable load: ring_fail_total growth rate
+       collapses versus the ~778/s baseline recorded in the deep analysis;
+       queue depth/drop counters visible and bounded; FileOps-Poller thread
+       CPU share drops. Record summary statistics in verification.md.
+    4. Counter reconciliation: kernel emitted ≈ userspace consumed + ring
+       drops + queue drops.
 
     Constraints:
 
     - Preserve the no-loss contract for regular-file telemetry.
-    - Do not introduce aggregation or sampling unless the human explicitly
-      changes the feature scope.
+    - Do not introduce aggregation or sampling in fop-08/09/10; aggregation
+      is reserved for fop-11 and starts only after its gates are met
+      (fop-10 duplicate-ratio evidence + explicit human go/no-go).
     - Do not commit or copy raw event data, sample payloads, or sensitive host
       artifacts into the repo. It is allowed and encouraged to record summary
       statistics, ratios, counter deltas, event counts, representative metric
@@ -180,24 +224,44 @@ started:
 - compact records and a larger ring buffer improved early burst behavior
 - diagnostics can now prove exactly what was deployed and live
 
-But the host is still not at a no-loss steady state. The next useful task is
-not another generic cleanup pass; it is a focused analysis of the surviving
-regular-file volume that still drives `ring_fail_total` upward overnight.
+But the host is still not at a no-loss steady state. The deep analysis
+(2026-08-25) traced the remaining loss to the userspace consumer ceiling, and
+the phase-2 work below attacks that ceiling first.
 
-## Recommended Next Task
+## Approved Phase-2 Work (human sign-off 2026-08-25)
 
-Do a deep-analysis pass before choosing the next code change.
+The four handoff questions — smoke-vs-overnight loss, dominant surviving
+classes, next minimal no-loss change, incremental vs structural — are answered
+in [[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]]. The human
+approved the resulting plan in full. Sequence:
 
-Questions that analysis should answer:
+1. **fop-08 — raise the consumer ceiling (next code slice, approved).**
+   Bounded in-process queue between the ring-buffer callback and
+   resolve/Esper, plus an in-memory pid→pid_hash current-process cache that
+   eliminates the per-event DuckDB query under the global `_dbLock`. Memory
+   spend on the queue is explicitly acceptable — spike absorption is a goal,
+   not a side effect. Loss accounting must get better, not worse: queue
+   depth and drops are counted and logged.
+2. **fop-09 — hoist per-event config lookups (approved, trivial).** Bundle
+   with fop-08 or land immediately after.
+3. **fop-10 — attribution + redundancy measurement (approved).** Top-N
+   per-comm / per-path-prefix emit counters plus the open/openat
+   duplicate-ratio statistic (repeats of same (pid, path) within a short
+   window). Summary statistics only — no raw event data. This produces the
+   evidence for the fop-11 gate.
+4. **fop-11 — in-kernel short-interval aggregation (gated candidate).**
+   Emit-first-then-count: first occurrence of a distinct (pid, op, identity)
+   emits immediately as today; repeats increment a bounded LRU map and flush
+   as per-interval summary counts (count, first/last ts, summed bytes).
+   Gates before implementation: (a) fop-10 duplicate-ratio numbers prove the
+   win, (b) explicit human go/no-go on the information tradeoff (per-repeat
+   timestamps collapse to counts within the interval), (c) RHEL8 verifier
+   spike for the in-kernel path-hash/map pattern, (d) redefined differential
+   contract (distinct-tuple equality + count conservation) and a File schema
+   repeat-count field flagged to downstream consumers.
 
-1. Why does the first-minute smoke test show no ring-fail while the overnight
-   run still loses millions of events?
-2. Which surviving regular-file classes likely dominate the remaining
-   `open`/`read`/`close`/`mmap` pressure?
-3. What is the next minimal no-loss change with the highest expected return?
-4. Is it still worth staying incremental in the current tracer/userspace
-   design, or is it time to consider a more structural move such as
-   fentry/`bpf_d_path`?
+Future task (parallel, research-only): the OSS sensor survey recorded in the
+implementation plan's Phase-2 future tasks.
 
 ## Testing Expectations For Any Follow-On Code Slice
 

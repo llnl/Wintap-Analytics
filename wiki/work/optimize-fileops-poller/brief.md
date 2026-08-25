@@ -9,7 +9,7 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/shared/BaseEbpfSensor.cs
   - ../wintap/wintap/core/infrastructure/EventChannel.cs
 policy: agent-editable
-last_validated: 2026-08-24
+last_validated: 2026-08-25
 repo_scope: cross-repo
 implementation_area: wintap-api
 event_domain: file
@@ -101,8 +101,9 @@ No new user-visible features. Operators should observe lower Lintap CPU
 (especially the `FileOps-Poller` thread), unchanged File event content for
 regular files, fewer ring-buffer overflow drops under bursts, and new
 periodic counter log lines (emitted/dropped per stage and op class).
-Depending on the Open Questions decisions, `socket:[N]`/`pipe:[N]` path rows
-disappear from the File stream.
+Per the 2026-08-25 socket/pipe decision (see Open Questions),
+`socket:[N]`/`pipe:[N]`/`anon_inode:[N]` path rows disappear from the File
+stream on CO-RE-tier hosts; BTF-less fallback-tier hosts still emit them.
 
 ## Acceptance Criteria
 
@@ -154,13 +155,19 @@ See [[wiki/work/optimize-fileops-poller/references]].
 
 ## Open Questions
 
-- **Socket/pipe rows (decision needed before fop-05):** today
-  `read`/`write`/`close` on sockets and pipes are emitted as File events with
-  paths like `socket:[12345]`. The design position is that these are
-  mislabeled noise (no real path; socket activity is NetworkSensor's domain)
-  and dropping them is noise reduction, not information loss — but this is a
-  stream-content change and needs analytics-side sign-off.
-  <!-- REVIEW NEEDED: confirm analytics does not consume socket:/pipe: File rows -->
+- **Socket/pipe rows — DECIDED 2026-08-25 (human sign-off): drop them.**
+  Non-regular-file fd rows (`socket:[N]`, `pipe:[N]`, `anon_inode:[N]`, ttys)
+  are permanently dropped from the File event stream, ratifying the CO-RE
+  `is_regular_fd` filter already deployed in the expanded slice. Analytics
+  does not consume these rows; socket visibility remains NetworkSensor's
+  domain. Two accompanying decisions:
+  - **Recorded gap:** pipe/anon_inode I/O (not covered by NetworkSensor)
+    becomes invisible — added to the fidelity-gap backlog in
+    [[wiki/work/optimize-fileops-poller/design]] as a possible future op
+    class.
+  - **Fallback tier stays as-is:** the non-CO-RE (BTF-less) tracepoint tier
+    keeps emitting these rows; the tier content difference is accepted and
+    documented rather than patched with a userspace filter.
 - Should the userspace pseudo-path (`/sys`, `/proc`, `/dev`) filter remain
   after the kernel-side superblock-magic filter lands, as a belt-and-braces
   check on the fallback tracer path? (Design says yes; cheap.)

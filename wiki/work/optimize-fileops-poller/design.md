@@ -10,7 +10,7 @@ grounded_by:
   - ../wintap/wintap/core/infrastructure/EventChannel.cs
   - ../wintap/wintap/core/shared/ProcessHash.cs
 policy: agent-editable
-last_validated: 2026-08-24
+last_validated: 2026-08-25
 repo_scope: cross-repo
 implementation_area: wintap-api
 event_domain: file
@@ -224,6 +224,13 @@ spot — deletes are covered, renames are not), `pread64`/`pwrite64`,
 failed access attempts are security-relevant and cheap to keep as an op
 class). These are information *gains* to weigh against the volume they add,
 after this feature lands its counters.
+
+Added by the 2026-08-25 socket/pipe decision: **pipe/anon_inode I/O** is now
+invisible on CO-RE-tier hosts (dropped by the `is_regular_fd` filter, per the
+human sign-off recorded in [[wiki/work/optimize-fileops-poller/brief]] §Open
+Questions). Unlike sockets, pipe and anon_inode activity is not covered by
+NetworkSensor, so this is a real coverage gap — recorded here as a candidate
+future op class if IPC visibility is later wanted.
 
 ## Open Questions
 

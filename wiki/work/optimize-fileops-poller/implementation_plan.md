@@ -192,17 +192,74 @@ recorded in [[wiki/work/optimize-fileops-poller/verification]].
       stream; counter shows kernel-side drops.
 - [ ] fop-04 wakeup batching landed; context-switch/CPU delta recorded;
       shutdown drain verified.
-- [ ] Socket/pipe row decision recorded in brief.md (human sign-off).
+- [x] Socket/pipe row decision recorded in brief.md (2026-08-25 human
+      sign-off: drop ratified; pipe/anon_inode visibility gap recorded in the
+      design fidelity-gap backlog; fallback tier left unchanged).
 - [ ] fop-05 CO-RE filter landed (spike accepted by RHEL8 verifier); Makefile
       tier move done; fallback path exercised and unchanged.
 - [ ] fop-06 small records landed; burst drop counters reduced vs. baseline.
 - [ ] fop-07 fd-cache eviction + kernel timestamps landed; churn and
       timestamp tests pass.
 - [ ] Field measurement vs. fop-01 baseline shows the CPU win; recorded.
-- [ ] Deep-analysis handoff completed: overnight counters interpreted, next
-      no-loss reduction ranked, and the follow-on slice selected from evidence
-      rather than intuition.
+- [x] Deep-analysis handoff completed (2026-08-25): overnight counters
+      interpreted, next no-loss reduction ranked, and the follow-on slice
+      selected from evidence rather than intuition (fop-08 front-runner) —
+      see [[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]].
 - [ ] Closeout: promote durable facts — new FileOps sensor component page
       (pipeline stages, per-tier filters, counters, config), file-events
       event_type update if stream content changed, fidelity-gap backlog
       pointer — and update `wiki/log.md`.
+
+## Phase 2 — Deep Analysis (2026-08-25)
+
+The original-scope implementation reached its current deployed state —
+implemented with opencode gpt-5.5 and gpt-5.4. The feature continues in a
+deep-analysis phase rather than being closed or forked into a new feature.
+Analysis artifact:
+[[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]].
+
+The analysis concluded the sustained overnight ring-buffer loss is a
+userspace consumer-throughput ceiling (per-event DuckDB resolution under the
+global `_dbLock` plus a synchronous Esper send on the single poller thread),
+not kernel emission volume. Phase-2 slices, ranked by the analysis and
+**approved by human sign-off 2026-08-25** with the sequence fop-08 (+fop-09)
+→ fop-10 → fop-11 go/no-go (fop-11 remains gated on its own conditions;
+fop-07 remains open from phase 1):
+
+- [ ] fop-08 — decouple the poller from per-event resolution: bounded
+      in-process queue between the ring-buffer callback and resolve/Esper,
+      plus an in-memory pid→pid_hash current-process cache that eliminates
+      the per-event DuckDB query under `_dbLock`.
+- [ ] fop-09 — hoist the five per-event `ConfigManager.GetValue` calls in
+      `EventChannel.Send` into cached fields.
+- [ ] fop-10 — Q2 measurement slice: top-N per-comm / per-path-prefix
+      aggregate emit counters in the 60s `FileOps counters` log (summary
+      statistics only; no raw event data). Extended 2026-08-25 per human
+      direction: also measure the **open/openat duplicate ratio** — repeats of
+      the same (pid, path) open within a short window — to quantify the
+      redundancy hypothesis behind fop-11.
+- [ ] fop-11 — in-kernel short-interval aggregation (CANDIDATE, gated):
+      aggregate file events by (pid, op class, path/fd identity) over a short
+      interval in kernel — emit the first occurrence immediately (unchanged
+      latency for distinct activity), count repeats in a bounded LRU map, and
+      flush per-interval summary counts. Amends the 2026-08-24 "no
+      aggregation" direction: the human signaled openness on 2026-08-25
+      (noting Esper aggregates later in the pipeline anyway and suspecting
+      high same-(pid,path) open/openat redundancy). Gated on: (a) fop-10
+      redundancy numbers proving the win, (b) explicit human sign-off on the
+      information tradeoff (per-repeat timestamps collapse to count +
+      first/last within the interval), (c) an RHEL8 verifier spike for the
+      in-kernel path-hash/map pattern, and (d) a redefined differential
+      contract (distinct-tuple equality + count conservation instead of
+      per-event equality).
+
+### Phase-2 future tasks (not slices yet)
+
+- [ ] OSS sensor survey (requested 2026-08-25): review how other open-source
+      eBPF/host sensors handle file-event volume and ring-buffer drop
+      pressure — candidates: Falco/Sysdig (drop accounting, consumer design),
+      Cilium Tetragon (in-kernel filtering/rate-limiting policies), Aqua
+      Tracee, Elastic ebpf/Agent, Sysmon for Linux, osquery. Deliverable: a
+      wiki concept page comparing their kernel-side reduction, aggregation,
+      and userspace consumption architectures against Lintap's, with
+      adoptable patterns ranked.

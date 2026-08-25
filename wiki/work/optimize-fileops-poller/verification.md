@@ -355,3 +355,36 @@ Recommended starting artifacts for that next analysis pass:
 - `wiki/work/optimize-fileops-poller/verification.md`
 - `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T033307Z`
 - `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T142601Z`
+
+## Phase 2 Deep Analysis — 2026-08-25
+
+The deep-analysis pass was performed from recorded summary statistics only:
+the raw runtime diagnostics bundles are not readable in this environment by
+security constraint, so the evidence base is the counter summaries above plus
+read-only source review of `../wintap`.
+
+Key numbers (deltas over the ~9,121s overnight window between the recorded
+4:06:53 AM and 6:38:54 AM counter snapshots):
+
+- `ring_fail_total` rates: `open` ≈ 330/s, `read` ≈ 243/s, `close` ≈ 93/s,
+  `mmap` ≈ 84/s, `write` ≈ 29/s — ≈ 778/s total sustained loss.
+- `open pseudo_drop_total` ≈ 810/s dropped in-kernel before the ring.
+
+Conclusion: the loss is a steady-state userspace consumer shortfall, not a
+burst problem. Every surviving event pays a synchronous DuckDB query under
+the process-global `_dbLock` plus a synchronous Esper send on the single
+poller thread; the 2026-08-24 diagnostic's ~0.012–0.025s per process lookup
+implies a consumption ceiling of roughly 40–80 events/s. The 16 MiB ring
+buffer (~300k compact-record capacity) absorbs the first minutes — hence the
+clean smoke test — then fills and stays saturated overnight.
+
+Next-slice ranking and the full reasoning are recorded in
+[[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]] (fop-08
+front-runner: decouple the poller from per-event resolution plus an
+in-memory pid→pid_hash cache).
+
+The socket/pipe stream-content question was decided 2026-08-25 (human
+sign-off): the drop of non-regular-file fd rows is ratified; the resulting
+pipe/anon_inode visibility gap is recorded in the design fidelity-gap
+backlog; the BTF-less fallback tier is left unchanged and the tier content
+difference is documented rather than patched.
