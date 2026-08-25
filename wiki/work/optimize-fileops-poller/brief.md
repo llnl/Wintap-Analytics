@@ -203,6 +203,9 @@ Summarized here; full requirements in
   rationale.
 - Counters are documented and their baseline values captured in
   [[wiki/work/optimize-fileops-poller/verification]].
+- If aggregation is reconsidered, a review-ready concrete proposal exists and is
+  explicitly accepted before coding. That proposal now exists as
+  [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]].
 - Durable facts promoted to canonical pages: a FileOps sensor component page
   (pipeline stages, filters, counters, config), and updates to the
   file-events event_type page if stream semantics changed.

@@ -205,6 +205,23 @@ recorded in [[wiki/work/optimize-fileops-poller/verification]].
       interpreted, next no-loss reduction ranked, and the follow-on slice
       selected from evidence rather than intuition (fop-08 front-runner) —
       see [[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]].
+- [x] fop-08/fop-09 code slice built locally: `ProcessResolver` now maintains
+      an in-memory active-process cache for File-event pid-hash lookup,
+      `FileOpsSensor` now decouples ring-buffer decode/filter from
+      resolve/Esper with a bounded in-process queue (`drop_newest`, depth /
+      high-water / drop counters logged every ~60s), and `EventChannel.Send`
+      now uses startup-cached config flags instead of per-event lookups. Full
+      acceptance remains pending the differential rerun and field-host
+      measurement/counter reconciliation.
+- [x] fop-10 local code slice built: `FileOpsSensor` now logs bounded summary
+      measurements in the 60s `FileOps counters` line for top-N emitted
+      process-name buckets, top-N emitted path-prefix buckets, and the
+      short-window same-`(pid,path)` open duplicate ratio. Deployed and field-
+      host measurement are now recorded in verification.
+- [x] Milestone — fop-11 review gate reached: `fop-10` now provides both the
+      attribution data and the duplicate-open evidence needed to write a
+      concrete `fop-11` proposal for design review; see
+      [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]].
 - [ ] Closeout: promote durable facts — new FileOps sensor component page
       (pipeline stages, per-tier filters, counters, config), file-events
       event_type update if stream content changed, fidelity-gap backlog
@@ -232,12 +249,14 @@ fop-07 remains open from phase 1):
       the per-event DuckDB query under `_dbLock`.
 - [ ] fop-09 — hoist the five per-event `ConfigManager.GetValue` calls in
       `EventChannel.Send` into cached fields.
-- [ ] fop-10 — Q2 measurement slice: top-N per-comm / per-path-prefix
+- [x] fop-10 — Q2 measurement slice: top-N per-comm / per-path-prefix
       aggregate emit counters in the 60s `FileOps counters` log (summary
       statistics only; no raw event data). Extended 2026-08-25 per human
       direction: also measure the **open/openat duplicate ratio** — repeats of
       the same (pid, path) open within a short window — to quantify the
-      redundancy hypothesis behind fop-11.
+      redundancy hypothesis behind fop-11. Local code/build, deployment, and
+      field-host collection are complete; review data is recorded in
+      verification.
 - [ ] fop-11 — in-kernel short-interval aggregation (CANDIDATE, gated):
       aggregate file events by (pid, op class, path/fd identity) over a short
       interval in kernel — emit the first occurrence immediately (unchanged

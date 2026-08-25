@@ -42,6 +42,14 @@ absorption. An OSS sensor survey (Falco/Sysdig, Tetragon, Tracee, Elastic
 ebpf, Sysmon for Linux, osquery) is saved as a future research task, runnable
 in parallel.
 
+**Post-fop-10 milestone (2026-08-25):** the deployed measurement slice now has
+enough evidence to support a concrete `fop-11` review proposal rather than an
+abstract candidate. See
+[[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]]. The key gate
+evidence is now recorded in verification: high duplicate-open ratios across
+multiple intervals plus surviving queue-loss under some later load phases even
+after sender-path improvements.
+
 ## Copy/Paste Prompt
 
 Use this prompt to hand the work to a code-development or deep-analysis agent:

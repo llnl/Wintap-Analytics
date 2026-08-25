@@ -623,3 +623,59 @@ gated (fop-10 duplicate-ratio evidence + separate human go/no-go + verifier
 spike + redefined differential contract). OSS sensor survey remains a parallel
 future research task.
 Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `index.md`; `log.md`.
+
+## [2026-08-25] code | fileops phase-2 local fop-08/fop-09 slice
+
+Files changed in `../wintap`: `wintap/core/infrastructure/IProcessResolver.cs`; `wintap/core/infrastructure/ProcessResolver.cs`; `wintap/core/infrastructure/EventChannel.cs`; `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Implemented: in-memory active-process cache for File-event pid-hash lookup; bounded FileOps sender queue between the ring callback and resolve/Esper; startup-cached `EventChannel` config/env flags; 60s queue depth/high-water/drop logging and File-event process-cache hit/miss logging; queue capacity knob `WINTAP_FILEOPS_MAX_QUEUE_EVENTS` (default `131072`).
+Validation: `make clean && make` for tracers passed; `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests).
+Pages updated: `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+Open follow-up: rerun the no-loss differential harness, deploy to the RHEL8 field host, capture queue/counter reconciliation, and verify whether overnight `ring_fail_total` growth collapses versus the ~778/s baseline.
+
+## [2026-08-25] test | fileops phase-2 field-host non-root smoke workload session
+
+Environment: deployed field host `spk16.llnl.gov`, but without root access from this shell.
+Validation change: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh` now copies `/tmp/fileops-phase2-smoke` into the diagnostics bundle when present.
+Workload run: repeated deterministic FileOps stimulus using `validation/fileops-differential/fileops_workload.py`, session `/tmp/fileops-phase2-smoke/session-20260825T165200Z`, spanning `2026-08-25T16:52:00Z` to `2026-08-25T16:59:22Z`, 5 runs total, each with `--files 24 --rounds 4`, all exiting `0`.
+Limitation: the existing parquet validator `devtools/file_capture_smoke_test.py` is not usable as this non-root user on the deployed host because default data-root discovery hits `PermissionError` on `/var/log/lintap`.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] review | fileops phase-2 deployed bundle shows queue saturation instead of ring saturation
+
+Reviewed root-run diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T172341Z` after the fop-08/fop-09 deployment. Outcome: `ring_fail_total=0` across all recorded FileOps op classes, `FileOps-Poller` is no longer hot, and `FileOps-Sender` is now the dominant CPU thread; however the new bounded userspace queue reaches capacity (`high_water=131072`) and records substantial per-minute drops (examples: `21567`, `47564`, `78368`, `50144`). The copied `/tmp/fileops-phase2-smoke` session is present in the bundle and aligns with the recorded workload window. This changes the active loss signal from kernel ring drops to userspace queue drops while confirming that the decoupling moved work off the poller as intended.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] code | fileops queue follow-on pre-enqueue identity stamping
+
+Files changed in `../wintap`: `wintap/core/infrastructure/EventChannel.cs`; `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Implemented: File events now try to capture current-process identity from the active-process cache before entering the bounded sender queue, and `EventChannel.Send` skips sender-thread re-resolution for File events that already carry `PidHash` + `ProcessName`. Motivation came directly from bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T172341Z`, where sender-thread cache misses rose sharply once queue backlog deepened.
+Validation: `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests).
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] review | fileops post-identity-stamping bundle removes queue drops in capture window
+
+Reviewed root-run diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T184934Z` against prior queue-saturation bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T172341Z`. Outcome: `ring_fail_total` remains `0`, and unlike the earlier bundle the bounded userspace queue records `drops=0` throughout the captured window even when depth rises above `100k` (`depth=102547`, `high_water=103187`). File-event process-cache behavior under backlog is materially healthier (for example `hit=54026,miss=4834` at the deepest recorded backlog versus prior collapse cases like `hit=139,miss=8388`). `FileOps-Sender` remains the dominant CPU thread, but the immediate loss mode improved from frequent queue drops to no observed queue drops during this collection.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] code | fileops fop-10 measurement slice
+
+Files changed in `../wintap`: `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Implemented: bounded 60s FileOps measurement summaries for top-N emitted process-name buckets, top-N emitted path-prefix buckets, and the same-`(pid,path)` short-window open duplicate ratio. Summary state is bounded and logs coarse path-prefix buckets only, not raw paths.
+Validation: tracer `make clean && make` passed; `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests).
+Pages updated: `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] review | later pre-fop-10 bundle shows queue drops returned
+
+Reviewed additional same-build bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T203648Z` after the more encouraging `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T184934Z` snapshot. Outcome: kernel `ring_fail_total` still stayed `0`, but userspace queue saturation returned in multiple intervals, including substantial drop bursts (`30591`, `91570`, `385435`, `448425`, `1960545`). `FileOps-Sender` remained the dominant hot thread while `FileOps-Poller` stayed cold, confirming again that the current failure mode is sender-path/queue loss rather than ring loss. This downgrades the earlier zero-drop bundle from “likely stable” to “good short-window sample” and reinforces the need for `fop-10` attribution data before choosing the next reduction step.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] review | first deployed fop-10 bundle provides attribution and duplicate-open evidence
+
+Reviewed first deployed `fop-10` diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T210710Z`. Outcome: the new `measure=[...]` section is present in the `FileOps counters` log and reports top process-name buckets, top path-prefix buckets, and the same-`(pid,path)` short-window open duplicate ratio. The duplicate-open ratio is consistently high across sampled intervals (roughly `52.7%` to `83.7%`, commonly `60-80%`), with dominant surviving emitters including `rpm`, `systemd`, `splunkd`, `git`, `setroubleshoot*`, and dominant prefixes `/lib64`, `/usr`, `(relative)`, `/opt`, `/var` or `/`. Kernel `ring_fail_total` stayed `0`; queue drops were `0` in most sampled intervals but did recur later (`2:07:32 PM` interval: `depth=130909`, `high_water=131072`, `drops=39731`). The smoke-workload session `/tmp/fileops-phase2-smoke/session-20260825T205219Z` overlaps the pidstat collector flush schedule (`13:55:02` inside the session window, bounded by `13:50:02` and `14:00:02` writes), giving a practical correlation anchor for future pidstat analysis.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] milestone | fileops fop-11 proposal prepared for designer review
+
+Based on the deployed `fop-10` evidence, the feature reached a new milestone: `fop-11` is no longer just a gated candidate but now has a concrete review-ready proposal. New artifact: `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`, recommending emit-first short-interval aggregation of repeat `open` / `openat` activity only, with bounded kernel state and a revised distinct-tuple-plus-count-conservation differential contract. Related feature pages updated to point at the proposal and to mark the `fop-10` review gate as reached.
+Pages created: `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`.
+Pages updated: `work/optimize-fileops-poller/brief.md`; `work/optimize-fileops-poller/design.md`; `work/optimize-fileops-poller/implementation_plan.md`; `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.

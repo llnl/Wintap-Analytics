@@ -388,3 +388,513 @@ sign-off): the drop of non-regular-file fd rows is ratified; the resulting
 pipe/anon_inode visibility gap is recorded in the design fidelity-gap
 backlog; the BTF-less fallback tier is left unchanged and the tier content
 difference is documented rather than patched.
+
+## fop-08/fop-09 Local Code Slice — 2026-08-25
+
+Implemented the approved phase-2 consumer-ceiling slice in `../wintap`.
+
+Code changes:
+
+- `ProcessResolver` now maintains an in-memory active-process cache keyed by
+  PID and populated on process registration. The cache is evicted on stop,
+  stale-open reconciliation, and retention pruning, and is updated if the
+  resolver repairs a live PID hash.
+- `EventChannel.Send` now consults that current-process cache for File events
+  before falling back to the per-event DuckDB lookup under `_dbLock`.
+- `EventChannel.Send` now hoists the per-event config/env gates into startup-
+  cached fields for `WINTAP_ENABLE_DIRECT_PARQUET`,
+  `WINTAP_SKIP_PROCESS_RESOLVE`, `WINTAP_SKIP_PARENT_PROCESS_RESOLVE`,
+  `WINTAP_SKIP_PROCESS_REGISTER`, and `WINTAP_SKIP_ESPER_SEND`.
+- `FileOpsSensor` now decodes/filters on the poller thread and enqueues into a
+  bounded in-process queue drained by a dedicated sender thread that performs
+  `EventChannel.Send`.
+- Queue observability added to the existing 60s `FileOps counters` log:
+  current depth, high-water mark, drop count, configured capacity, and fixed
+  `drop_newest` policy. File-event process-cache hit/miss counters are also
+  surfaced in that log.
+- New queue capacity knob: `WINTAP_FILEOPS_MAX_QUEUE_EVENTS` (default
+  `131072`).
+
+Commands run:
+
+```bash
+cd ../wintap/wintap/platform/linux/sensor/ebpf/tracers && make clean && make
+cd ../wintap && dotnet build wintap/Lintap.csproj
+cd ../wintap && dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests
+```
+
+Results:
+
+- eBPF tracer rebuild passed.
+- `dotnet build wintap/Lintap.csproj` passed with existing warnings and `0`
+  errors.
+- Targeted resolver tests passed: `4 passed`.
+
+Known limitations / follow-up for acceptance:
+
+- The standing no-loss differential harness was not rerun in this local slice.
+- No field-host deployment or overnight measurement has been performed yet, so
+  there is not yet evidence that `ring_fail_total` growth collapsed versus the
+  ~778/s overnight baseline.
+- Shutdown drain budget is now effectively revised for FileOps from the prior
+  single 2s poller join to a two-stage stop path: up to 2s for the poller join
+  in `BaseEbpfSensor.Stop()` plus up to 2s for the FileOps sender-thread join
+  during `OnStopping()`. This needs field confirmation under backlog.
+
+## Field-Host Non-Root Smoke Workload Session — 2026-08-25
+
+Context: after deployment, this environment was confirmed to be the deployed
+field host itself, but without root access. That means the existing parquet-
+based `devtools/file_capture_smoke_test.py` cannot read the deployed default
+data root under `/var/log/lintap` and fails at path discovery with
+`PermissionError` before it can validate output. For this host/user context,
+the reliable non-root stimulus path is the deterministic workload generator,
+with root-side diagnostics collection used later to observe sensor response.
+
+Diagnostics collector improvement:
+
+- `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh` now copies
+  `/tmp/fileops-phase2-smoke` into the diagnostics bundle when present, so the
+  next root-run collection captures the exact stimulus session timestamps and
+  workload manifests.
+
+Workload session run locally:
+
+- Session directory: `/tmp/fileops-phase2-smoke/session-20260825T165200Z`
+- Host: `spk16.llnl.gov`
+- Session window: `2026-08-25T16:52:00Z` to `2026-08-25T16:59:22Z`
+- Pattern: 5 repeated deterministic FileOps workload runs, spaced across the
+  session.
+- Per run parameters: `--files 24 --rounds 4`
+- Per-run status: all 5 runs exited `0`
+
+Representative commands:
+
+```bash
+python3 validation/fileops-differential/fileops_workload.py \
+  --work-dir "/tmp/fileops-phase2-smoke/session-20260825T165200Z/run-1/workload" \
+  --manifest "/tmp/fileops-phase2-smoke/session-20260825T165200Z/run-1/workload-manifest.json" \
+  --files 24 \
+  --rounds 4
+
+python3 devtools/file_capture_smoke_test.py --timeout 90 --poll-interval 5 \
+  --file-dir "/tmp/fileops-phase2-smoke/trial/file-dir"
+```
+
+Results:
+
+- Deterministic workload generation succeeded for all 5 runs.
+- The parquet-based smoke validator is not usable as this non-root user on the
+  deployed host because `/var/log/lintap` is permission-restricted; the script
+  currently raises `PermissionError` while probing the default data root.
+- The next root-run diagnostics bundle should include the workload session
+  under `runtime/fileops-phase2-smoke/`, allowing direct correlation between
+  the stimulus window above and the `FileOps counters` / thread-CPU evidence.
+
+## Root-Run Diagnostics Bundle Review — 2026-08-25
+
+Bundle reviewed:
+
+- `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T172341Z`
+
+Deployment/runtime proof:
+
+- `manifest.txt` shows `lintap_pid=3202938`, `install_root=/usr/lib/lintap`,
+  and a root-run collection on the deployed host.
+- The copied smoke artifact session is present under
+  `runtime/fileops-phase2-smoke/session-20260825T165200Z`, matching the
+  non-root workload session recorded above.
+
+Key findings:
+
+1. **Kernel ring-buffer loss collapsed to zero in this capture.**
+   Every recorded `FileOps counters` line in the bundle shows
+   `ring_fail_total=0` for `open`, `read`, `write`, `close`, `mmap`, and
+   `unlink`.
+2. **The bottleneck moved from the poller/ring to the new userspace sender
+   queue.**
+   - Early intervals looked healthy: at `9:35:01 AM`, queue
+     `depth=4170,high_water=48782,drops=0`.
+   - By `9:52:39 AM`, the queue was effectively full:
+     `depth=130479,high_water=131072,drops=21567`.
+   - Subsequent one-minute intervals continued to show queue saturation and
+     non-zero drop counts, including:
+     - `9:55:39 AM`: `drops=47564`
+     - `9:59:39 AM`: `drops=78368`
+     - `10:04:39 AM`: `drops=50144`
+   - Queue depth repeatedly sat near capacity (`~128k-131k`).
+3. **CPU shifted off `FileOps-Poller` and onto `FileOps-Sender`, exactly as the
+   decoupling design intended.**
+   - `runtime/ps-lintap-threads.txt` shows `FileOps-Poller` at only `0.1%`
+     while `FileOps-Sender` is the dominant thread at `67.1%`.
+   - `runtime/pidstat-lintap-thread.txt` shows the same pattern over samples:
+     `FileOps-Sender` at roughly `66%`, `93%`, `98%`, `95%` CPU while
+     `FileOps-Poller` remains `0%`.
+4. **The process cache helps, but under backlog it is not sufficient to prevent
+   sender saturation.**
+   - Healthy intervals show large cache wins, e.g. `9:49:39 AM`
+     `process_cache:hit=103906,miss=3717`.
+   - Under saturated backlog the miss share rises sharply, e.g. `9:59:39 AM`
+     `process_cache:hit=139,miss=8388`, which is consistent with queued File
+     events being processed after many short-lived producer processes have
+     already exited and been evicted from the active-process cache.
+
+Interpretation:
+
+- `fop-08` succeeded at its first goal: the ring no longer overflows in this
+  measurement window, and the poller thread is no longer the hot thread.
+- But the current configuration does **not** yet satisfy the no-loss goal for
+  regular-file telemetry, because the replacement bounded queue now drops in
+  userspace once it fills.
+- The sender thread remains the consumer ceiling. The queue is acting as a
+  shock absorber and as explicit loss accounting, but not yet as a full fix.
+- The cache-miss behavior under deep backlog suggests that sender-side process
+  resolution still becomes expensive once queued events outlive the active
+  process cache entries.
+
+Updated phase-2 reading from this bundle:
+
+- `fop-08` materially improved failure mode and observability:
+  ring loss -> queue loss, and poller hot thread -> sender hot thread.
+- The next pass should treat queue drops, not ring drops, as the active loss
+  signal for this design.
+- `fop-10`-style attribution remains useful, but there is also a fresh
+  consumer-path question to answer: whether the next minimal win is more queue
+  headroom, less sender-side work per event, or both.
+
+## Queue-Follow-On Local Code Slice — 2026-08-25
+
+Based on the deployed-bundle review above, implemented the next minimal
+consumer-path improvement in `../wintap`:
+
+- `FileOpsSensor` now tries to stamp File events with current-process identity
+  from the active-process cache before enqueue.
+- `EventChannel.Send` now trusts pre-populated File-event identity and skips
+  re-resolving that event on the sender thread when `PidHash` and
+  `ProcessName` are already present.
+
+Rationale:
+
+- In the deployed bundle, queue saturation coincided with sharply worse
+  File-event process-cache hit rates on the sender thread, consistent with
+  short-lived producer processes exiting before their queued File events were
+  finally drained.
+- Pre-enqueue stamping targets exactly that failure mode: resolve while the
+  producer is still active, then carry the identity through backlog instead of
+  paying a later miss.
+
+Commands run:
+
+```bash
+cd ../wintap && dotnet build wintap/Lintap.csproj
+cd ../wintap && dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests
+```
+
+Results:
+
+- `dotnet build wintap/Lintap.csproj` passed with `0` errors.
+- Targeted resolver tests passed again: `4 passed`.
+
+Pending validation:
+
+- Redeploy and collect another short root-run diagnostics bundle.
+- Compare queue depth / high-water / drops and `process_cache:hit/miss` against
+  bundle `20260825T172341Z`.
+- Success signal for this slice: materially fewer sender-side cache misses and
+  reduced queue-drop accumulation under comparable load, while `ring_fail_total`
+  remains `0`.
+
+## Field-Host Non-Root Smoke Workload Session (Post Identity-Stamping Deploy) — 2026-08-25
+
+Ran a second repeated deterministic FileOps workload session after deploying the
+ pre-enqueue File-event identity-stamping change.
+
+- Session directory: `/tmp/fileops-phase2-smoke/session-20260825T184056Z`
+- Host: `spk16.llnl.gov`
+- Session window: `2026-08-25T18:40:56Z` to `2026-08-25T18:48:17Z`
+- Build note recorded in session artifact:
+  `post-pre-enqueue-identity-stamping-deploy`
+- Pattern: 5 repeated deterministic FileOps workload runs
+- Per run parameters: `--files 24 --rounds 4`
+- Per-run status: all 5 runs exited `0`
+
+Use this session as the next diagnostics-correlation anchor when reviewing the
+ next root-run bundle against `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T172341Z`.
+
+## Root-Run Diagnostics Bundle Review (Post Identity-Stamping Deploy) — 2026-08-25
+
+Bundle reviewed:
+
+- `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T184934Z`
+
+Deployment/runtime proof:
+
+- `manifest.txt` shows `lintap_pid=3271282`, `install_root=/usr/lib/lintap`.
+- The copied smoke artifact session is present under
+  `runtime/fileops-phase2-smoke/session-20260825T184056Z`, matching the
+  post-deploy non-root workload session above.
+
+Comparison target:
+
+- Prior bundle with queue-saturation behavior:
+  `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T172341Z`
+
+Key findings versus the prior bundle:
+
+1. **Kernel ring-buffer remains healthy.**
+   - As in the prior bundle, every recorded interval still shows
+     `ring_fail_total=0` for all FileOps op classes.
+   - The ring fix held while testing the follow-on improvement.
+
+2. **The userspace queue no longer drops in this capture window.**
+   - In the prior bundle, the queue repeatedly saturated and dropped, including:
+     - `9:52:39 AM`: `drops=21567`
+     - `9:55:39 AM`: `drops=47564`
+     - `9:59:39 AM`: `drops=78368`
+     - `10:04:39 AM`: `drops=50144`
+   - In the new bundle, every recorded interval shows `drops=0`.
+   - Queue depth still rises substantially under load, but stays below the hard
+     failure mode seen before. Highest recorded depth/high-water in this bundle:
+     `depth=102547,high_water=103187` at `11:49:30 AM`.
+
+3. **Backlog-time process attribution is materially healthier.**
+   - In the prior saturated bundle, a deep-backlog interval showed sender-side
+     cache collapse, e.g. `9:59:39 AM`:
+     `process_cache:hit=139,miss=8388`.
+   - In the new bundle, even the deepest recorded backlog interval (`11:49:30 AM`)
+     still shows strong cache usage:
+     `process_cache:hit=54026,miss=4834`.
+   - Other intervals are similarly healthy, e.g.:
+     - `11:44:30 AM`: `hit=80515,miss=5100`
+     - `11:46:30 AM`: `hit=53005,miss=2578`
+   - This is consistent with the intended effect of pre-enqueue File-event
+     identity stamping: resolve while the producer is still live, then carry
+     that identity through backlog instead of rediscovering it later.
+
+4. **`FileOps-Sender` is still the dominant thread, but the loss mode improved.**
+   - `runtime/ps-lintap-threads.txt` shows `FileOps-Sender` at `56.8%` and
+     `FileOps-Poller` at `0.2%`.
+   - `runtime/pidstat-lintap-thread.txt` still shows `FileOps-Sender` as the
+     hot thread in the sample window (examples: `49.02%`, `63.00%`, `71.00%`,
+     `99.00%`).
+   - Even so, the crucial operational difference from the prior bundle is that
+     sender saturation no longer translated into queue drops during this
+     collection window.
+
+Interpretation:
+
+- The pre-enqueue identity-stamping follow-on appears to have produced a real
+  improvement.
+- Relative to bundle `20260825T172341Z`, this new bundle shows:
+  - same `ring_fail_total=0` success,
+  - zero queue drops instead of repeated queue-drop bursts,
+  - much healthier File-event process-cache hit behavior under backlog.
+- The sender thread remains the main consumer hotspot, so the feature is not at
+  final closeout yet, but this slice moved the system materially closer to a
+  no-loss steady state.
+
+Current verdict for this follow-on slice:
+
+- **Accepted as an improvement in the active failure mode.**
+- Remaining question before closeout: whether longer-duration comparable load
+  reintroduces queue drops, or whether this queue/no-drop behavior is stable
+  enough to proceed to the next measurement slice (`fop-10`) without another
+  immediate sender-path optimization.
+
+## Root-Run Diagnostics Bundle Review (Later Same Build) — 2026-08-25
+
+Additional same-build bundle reviewed:
+
+- `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T203648Z`
+
+Key finding:
+
+- The zero-queue-drop behavior seen in bundle `20260825T184934Z` was **not**
+  stable over a later observation window. Kernel ring loss still stayed at `0`,
+  but userspace queue saturation returned hard.
+
+Representative evidence from `journal/lintap-file-log-fileops-counters.txt`:
+
+- `12:17:31 PM`: `depth=119439`, `drops=30591`
+- `12:19:31 PM`: `depth=131053`, `drops=91570`
+- `12:41:33 PM`: `depth=84287`, `drops=385435`
+- `12:42:33 PM`: `depth=131071`, `drops=448425`
+- `12:43:36 PM`: `depth=30129`, `drops=1960545`
+
+Important nuance:
+
+- Even in this worse snapshot, `ring_fail_total` remained `0` for all recorded
+  FileOps op classes. The active loss signal stayed in the bounded userspace
+  queue, not in the kernel ring.
+- `FileOps-Poller` remained cold while `FileOps-Sender` remained the dominant
+  hot thread (`56.6%` in `ps-lintap-threads.txt`; `28-34%` in the sampled
+  `pidstat` window, with Clone/Exit also hot there).
+- The worst queue-drop spikes coincided with extreme userspace consumption
+  bursts, especially for `read` and `write`. The largest example is the
+  `12:43:36 PM` interval with `write:consumed=1820145` and
+  `process_cache:hit=2034769,miss=7746`.
+
+Interpretation update:
+
+- The pre-enqueue identity-stamping change helped, but it did **not** make the
+  queue-loss problem disappear under all observed host conditions.
+- The `184934Z` bundle should therefore be read as a better short-window sample,
+  not as proof of stable no-loss steady state.
+- This strengthens the value of `fop-10`: we need attribution data and the
+  duplicate-open measurement before deciding whether the next move should be
+  another sender-path optimization, more queue headroom, or the gated
+  aggregation candidate.
+
+## fop-10 Local Code Slice — 2026-08-25
+
+Implemented the approved measurement slice in `../wintap`.
+
+Code changes:
+
+- `FileOpsSensor` now records bounded summary emit measurements for the 60s
+  `FileOps counters` log.
+- Added top-N emitted process-name (`comm`) buckets.
+- Added top-N emitted path-prefix buckets using coarse normalized prefixes
+  (`/tmp`, `/var`, `/usr`, `/home/*`, etc.) rather than raw full paths.
+- Added same-`(pid,path)` short-window open duplicate measurement, reported as
+  total opens, repeat count, repeat percent, and window size.
+- The measurement state is bounded: aggregate buckets are capped, duplicate
+  tracking uses a bounded recent-open map with pruning, and only summary
+  statistics are logged.
+
+Commands run:
+
+```bash
+cd ../wintap/wintap/platform/linux/sensor/ebpf/tracers && make clean && make
+cd ../wintap && dotnet build wintap/Lintap.csproj
+cd ../wintap && dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests
+```
+
+Results:
+
+- Tracer rebuild passed.
+- `dotnet build wintap/Lintap.csproj` passed with `0` errors.
+- Targeted resolver tests passed: `4 passed`.
+
+Pending validation:
+
+- Deploy this slice.
+- Capture a short root-run diagnostics bundle and confirm the new
+  `measure=[...]` section appears in the `FileOps counters` log.
+- Review the resulting top-comm / top-prefix / duplicate-open numbers to decide
+  whether the gated `fop-11` aggregation candidate is justified.
+
+## Field-Host Non-Root Smoke Workload Session (Deployed fop-10 Build) — 2026-08-25
+
+Ran another repeated deterministic FileOps workload session after deploying the
+ `fop-10` measurement slice.
+
+- Session directory: `/tmp/fileops-phase2-smoke/session-20260825T205219Z`
+- Host: `spk16.llnl.gov`
+- Session window: `2026-08-25T20:52:19Z` to `2026-08-25T20:59:41Z`
+- Build note recorded in session artifact:
+  `deployed-fop-10-measurement-slice`
+- Correlation note recorded in session artifact:
+  `FileOps-counters,pidstat-collector`
+- Pattern: 5 repeated deterministic FileOps workload runs
+- Per run parameters: `--files 24 --rounds 4`
+- Per-run status: all 5 runs exited `0`
+
+Use this session as the next diagnostics-correlation anchor when reviewing the
+ first root-run bundle from the deployed `fop-10` build.
+
+## Root-Run Diagnostics Bundle Review (First Deployed fop-10 Build) — 2026-08-25
+
+Bundle reviewed:
+
+- `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T210710Z`
+
+Deployment/runtime proof:
+
+- `manifest.txt` shows `lintap_pid=3341237`, `install_root=/usr/lib/lintap`.
+- The copied smoke artifact session is present under
+  `runtime/fileops-phase2-smoke/session-20260825T205219Z`, matching the
+  `fop-10` workload session above.
+
+Measurement visibility:
+
+- The new `measure=[...]` section is present in the `FileOps counters` log as
+  intended.
+- It includes all three requested `fop-10` outputs:
+  - top emitted process-name buckets (`comm_top`)
+  - top emitted path-prefix buckets (`prefix_top`)
+  - short-window open duplicate ratio (`open_dup`)
+
+Representative measurement readout:
+
+1. `1:43:49 PM` interval:
+   - `comm_top`: `rpm` dominates (`total=17562`), then `systemd`, `splunkd`,
+     `awk`, `sed`.
+   - `prefix_top`: `/lib64` and `/usr` dominate, followed by `(relative)`,
+     `/opt`, `/var`.
+   - `open_dup`: `total=15229`, `repeat=8030`, `repeat_pct=52.7`.
+2. `1:45:30 PM` interval:
+   - `comm_top`: `systemd` dominates (`total=20188`), then `splunkd`, `sed`,
+     `awk`, `sh`.
+   - `prefix_top`: `(relative)` dominates, then `/usr`, `/lib64`, `/`, `/opt`.
+   - `open_dup`: `total=24714`, `repeat=20377`, `repeat_pct=82.5`.
+3. `1:48:31 PM` interval:
+   - `comm_top`: `rpm`, `systemd`, `setroubleshootd`, `splunkd`,
+     `setroubleshootprivileged.py` dominate.
+   - `prefix_top`: `/lib64`, `/usr`, `(relative)`, `/`, `/opt` dominate.
+   - `open_dup`: `total=30143`, `repeat=18200`, `repeat_pct=60.4`.
+4. `1:58:32 PM` interval:
+   - `comm_top`: `rpm`, `systemd`, `setroubleshootd`, `splunkd`,
+     `setroubleshootprivileged.py` dominate.
+   - `prefix_top`: `/usr`, `/lib64`, `(relative)`, `/`, `/opt` dominate.
+   - `open_dup`: `total=25194`, `repeat=15576`, `repeat_pct=61.8`.
+
+What the new measurements say:
+
+- The surviving File stream is not dominated by one single long-lived research
+  workload. It is shared across package-management / system-maintenance style
+  activity (`rpm`, `systemd`, `setroubleshoot*`) and application/service reads
+  (`splunkd`, `git`, Falcon sensor helpers).
+- The hottest path-prefixes are consistently library and system-tree paths:
+  `/lib64`, `/usr`, plus substantial `(relative)` opens.
+- The duplicate-open ratio is persistently high, not marginal. Across the
+  sampled intervals it ranges roughly from `52.7%` up to `83.7%`, with many
+  intervals in the `60-80%` band.
+
+Queue/ring state in the same bundle:
+
+- Kernel ring loss remained `0` throughout the reviewed lines.
+- Queue drops were `0` for most of the sampled deployment window, but not all:
+  the `2:07:32 PM` interval shows renewed queue saturation with
+  `depth=130909`, `high_water=131072`, `drops=39731`.
+- This means `fop-10` succeeded as a measurement slice, but the current
+  userspace queue-loss problem still exists under at least some later load
+  phases.
+
+Pidstat collector correlation:
+
+- The workload session window was `20:52:19Z` to `20:59:41Z`.
+- In local service timestamps, the pidstat collector wrote parquet at:
+  - `13:50:02`
+  - `13:55:02`
+  - `14:00:02`
+- So the workload window overlaps the `13:55` collector flush directly and sits
+  between the `13:50` and `14:00` flush boundaries. That gives a practical
+  anchor for future correlation with pidstat-derived CPU/process activity, even
+  though this diagnostics bundle does not itself summarize those parquet rows.
+
+Interpretation for the next decision:
+
+- `fop-10` produced real gating evidence for `fop-11`.
+- The duplicate-open ratio is high enough to justify serious consideration of
+  short-interval duplicate suppression/aggregation as the next candidate.
+- The path-prefix and comm attribution also suggest that much of the surviving
+  load is library/system-tree churn rather than a single bespoke workload,
+  which makes targeted one-off filters less attractive than a more structural
+  duplicate-reduction step.
+
+Milestone reached:
+
+- `fop-10` moved `fop-11` from “candidate” to “review-ready proposal.” The
+  concrete designer-review artifact is
+  [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]].

@@ -419,6 +419,16 @@ else
   printf 'Install root could not be determined from the running process or common locations.\n' >"$OUTDIR/filesystem/install-root-missing.txt"
 fi
 
+log "Collecting optional FileOps smoke artifacts"
+FILEOPS_SMOKE_DIR=/tmp/fileops-phase2-smoke
+if [ -d "$FILEOPS_SMOKE_DIR" ]; then
+  mkdir -p "$OUTDIR/runtime/fileops-phase2-smoke"
+  run_cmd "$OUTDIR/runtime/fileops-phase2-smoke/list.txt" ls -lahR "$FILEOPS_SMOKE_DIR"
+  cp -pr "$FILEOPS_SMOKE_DIR/." "$OUTDIR/runtime/fileops-phase2-smoke/" 2>/dev/null || true
+else
+  printf 'FileOps smoke artifact directory not present: %s\n' "$FILEOPS_SMOKE_DIR" >"$OUTDIR/runtime/fileops-phase2-smoke-missing.txt"
+fi
+
 log "Collecting optional BPF runtime diagnostics"
 if have bpftool; then
   run_cmd "$OUTDIR/runtime/bpftool-version.txt" bpftool version

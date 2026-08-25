@@ -117,7 +117,8 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/optimize-fileops-poller/dev_handoff]] | medium | Phase-2 handoff for the FileOps feature, approved 2026-08-25: fop-08 consumer-ceiling fix (queue + in-memory cache) is the next code slice, then fop-09/fop-10, with gated fop-11 in-kernel aggregation and an OSS sensor survey as future work. |
 | [[wiki/work/optimize-fileops-poller/verification]] | medium | Verification ledger for the FileOps feature: build/harness commands, deployed smoke-test proof, overnight field results, deployed hashes, and the phase-2 analysis summary of sustained ring loss from recorded counter statistics. |
 | [[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]] | medium | Phase-2 root-cause analysis of sustained FileOps ring-buffer loss: ~778 events/s reserve failures traced to the single-threaded consumer's per-event DuckDB query under a global lock plus synchronous Esper send, with ranked no-loss next slices (fop-08 decoupling front-runner) and answers to the four handoff questions. |
+| [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]] | medium | Concrete designer-review proposal for the gated fop-11 step: emit-first short-interval aggregation of repeat `open` / `openat` activity, based on fop-10 duplicate-open evidence and paired with a revised count-conservation differential contract. |
 
 ---
 
-*Last updated: 2026-08-25 (optimize-fileops-poller phase 2: deep analysis completed, socket/pipe decision recorded, fop-08+ candidate slices added)*
+*Last updated: 2026-08-25 (optimize-fileops-poller milestone: fop-10 deployed evidence recorded, fop-11 proposal prepared for designer review)*

@@ -232,6 +232,24 @@ Questions). Unlike sockets, pipe and anon_inode activity is not covered by
 NetworkSensor, so this is a real coverage gap — recorded here as a candidate
 future op class if IPC visibility is later wanted.
 
+## fop-11 Proposal Status
+
+`fop-10` has now supplied the missing duplicate-open evidence: deployed
+measurement intervals showed same-`(pid,path)` open repeat rates roughly in the
+`52.7%` to `83.7%` range, commonly `60-80%`. That is strong enough to justify a
+concrete `fop-11` review proposal rather than keeping aggregation as a vague
+candidate.
+
+The current review proposal is recorded in
+[[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]]. The proposed
+first implementation is intentionally narrower than “aggregate everything”:
+
+- aggregate repeat `open` / `openat` only
+- emit the first distinct event immediately
+- compress only short-window repeats into summary records
+- change the validation contract from per-event equality to distinct-tuple
+  equality plus count conservation
+
 ## Open Questions
 
 Tracked in [[wiki/work/optimize-fileops-poller/brief]] §Open Questions
