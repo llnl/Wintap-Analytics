@@ -1,5 +1,5 @@
 ---
-title: "Windows Sensor Sweep Queue (Defects and Findings from windows-sensor-health-check)"
+title: "Windows Sensor Sweep Queue (Defects and Findings from Windows Sensor Features)"
 type: diagnostic
 confidence: high
 grounded_by:
@@ -13,6 +13,7 @@ grounded_by:
   - ../wintap/tests/Wintap.Tests/EventChannelHealthWireInTests.cs
   - ../wintap/tests/Wintap.Tests/WindowsStateManagerDriveMapTests.cs
   - ../Wintap-Analytics/wiki/work/windows-sensor-health-check/design.md
+  - ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/verification.md
 policy: agent-editable
 last_validated: 2026-08-25
 repo_scope: wintap
@@ -32,7 +33,8 @@ per-sensor sweep feature** the Architect scoped at the health-check feature's
 open (interview, 2026-08-24): "sweep through all non-process sensors for
 Windows, evaluate them for efficiency and accuracy, fix any obvious bugs."
 Fixing these was explicitly a non-goal of the health-check feature; the
-health check exists to make them visible.
+health check exists to make them visible. Later features append here too
+(items 13–14 from `improve-windows-registry-collection`'s live verification).
 
 Sources: the feature's exploration/grounding passes
 ([[wiki/work/windows-sensor-health-check/design]]), the shc-02/shc-03 test
@@ -169,8 +171,40 @@ a drop-in; the anchor-run finding (item 4) shows raw FILETIME-style
 `EventTime` values in samples, which the sweep may want to humanize too.
 <!-- GROUND_TRUTH: ../Wintap-Analytics/wiki/work/windows-sensor-health-check/design.md §Alternatives Considered -->
 
+## Findings from improve-windows-registry-collection live verification (2026-08-25)
+
+Recorded from the Architect-run wrc-07 live verification
+([[wiki/work/improve-windows-registry-collection/verification]], 2026-08-25,
+branch build `develop-wrc`). Queued here rather than handled in the wrc
+feature: registry capture, canary health, and serialization were healthy in
+the same run — these are adjacent-domain observations. Architect's verdict:
+"The remaining concern is short-lived-process attribution rather than
+registry capture or serialization."
+
+### 13. Short-lived-process attribution burstiness on registry events
+
+Process attribution of registry events is still bursty: unresolved registry
+events ranged from 13/1,314 to 239/1,839 per batch, often dominated by one
+short-lived PID. This is **process-tree/attribution-domain** work, NOT
+registry capture — the registry events arrive correctly (full paths, decoded
+data) but the owning process cannot be resolved before egress.
+Cross-reference: the **ptr (process-tree-recovery) feature's territory**
+(merged in `../wintap` 2026-08-22/23; its wiki fold-in is still owed per
+`log.md`) — root-cause there or in the sweep, not in wrc.
+<!-- GROUND_TRUTH: ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/verification.md §Live verification — Architect-run record -->
+
+### 14. `stop_without_start` growth 3 → 19 over the observation window
+
+Same run: the manifest metric `stop_without_start` rose from 3 to 19 —
+occasional stop events arriving without a matching process record.
+**Monitoring item, not currently severe** (Architect assessment: "Warrants
+monitoring; not currently severe"). Likely related to item 13's short-lived
+process races; evaluate together when root-causing.
+<!-- GROUND_TRUTH: ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/verification.md §Live verification — Architect-run record -->
+
 ## Related
 
 - [[wiki/work/windows-sensor-health-check/design]] — grounding and provenance for items 6–12
 - [[wiki/work/windows-sensor-health-check/verification]] — anchor-run evidence for item 4
+- [[wiki/work/improve-windows-registry-collection/verification]] — Architect-run record behind items 13–14
 - [[wiki/component/sensor-health-monitor]] — the shipped health-check layer these findings flow from
