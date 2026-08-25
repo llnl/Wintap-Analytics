@@ -83,9 +83,13 @@ or that carry no real file information:
 
 ## Non-Goals
 
-- **Aggregation or sampling of read/write events** (e.g., short-cycle
-  count/byte rollups). Explicitly deferred by human direction 2026-08-24:
-  first exhaust reductions with no information loss.
+- ~~**Aggregation or sampling of read/write events**~~ — the 2026-08-24
+  deferral was amended by human direction on 2026-08-25 after fop-10 measured
+  52.7–83.7% duplicate-open ratios: **aggregation to the (pid, path, op)
+  level with grouped totals (bytes etc.) and min/max timestamps over short
+  intervals is now acceptable**, for all op classes, with emit-first
+  semantics for distinct activity. Sampling remains out. See
+  [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]].
 - New syscall coverage (`rename`, `pread64`/`pwrite64`, `readv`/`writev`,
   `openat2`, `sendfile`, io_uring). Recorded as a fidelity-gap backlog in
   [[wiki/work/optimize-fileops-poller/design]] for a follow-on feature.

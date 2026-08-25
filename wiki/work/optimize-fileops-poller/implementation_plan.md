@@ -257,28 +257,55 @@ fop-07 remains open from phase 1):
       redundancy hypothesis behind fop-11. Local code/build, deployment, and
       field-host collection are complete; review data is recorded in
       verification.
-- [ ] fop-11 — in-kernel short-interval aggregation (CANDIDATE, gated):
-      aggregate file events by (pid, op class, path/fd identity) over a short
-      interval in kernel — emit the first occurrence immediately (unchanged
-      latency for distinct activity), count repeats in a bounded LRU map, and
-      flush per-interval summary counts. Amends the 2026-08-24 "no
-      aggregation" direction: the human signaled openness on 2026-08-25
-      (noting Esper aggregates later in the pipeline anyway and suspecting
-      high same-(pid,path) open/openat redundancy). Gated on: (a) fop-10
-      redundancy numbers proving the win, (b) explicit human sign-off on the
-      information tradeoff (per-repeat timestamps collapse to count +
-      first/last within the interval), (c) an RHEL8 verifier spike for the
-      in-kernel path-hash/map pattern, and (d) a redefined differential
-      contract (distinct-tuple equality + count conservation instead of
-      per-event equality).
+- [ ] fop-11 — short-interval aggregation (APPROVED with conditions,
+      2026-08-25): gates (a)/(b) are met — fop-10 measured 52.7–83.7%
+      duplicate-open ratios and the human accepted the information tradeoff,
+      amending the 2026-08-24 direction to: **aggregation to the
+      (pid, path, op) level with grouped totals (bytes etc.) and min/max
+      timestamps over short intervals is acceptable**, for all op classes,
+      not just open/openat (open-first remains sensible sequencing, not a
+      boundary). Emit-first semantics stand. Hard conditions from the
+      designer review recorded in
+      [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]]
+      §Designer Review: absolute-path identity (see fop-12, a precondition),
+      and summary-record identity stamped at first occurrence. Layer choice
+      per that review: userspace pre-enqueue dedup first (reusing the fop-10
+      measurement dictionary; no verifier spike needed), kernel promotion
+      later only if ring pressure or poller CPU returns. Revised differential
+      contract: op-scoped distinct-tuple equality + count conservation +
+      byte-total conservation, decidable only on drop-free runs.
+- [ ] fop-12 — absolute-path ground truth (precondition for fop-11 keys,
+      human-directed 2026-08-25): resolve relative/`openat` paths to absolute
+      at open time so File telemetry records accurate ground truth and
+      aggregation keys cannot conflate distinct files. Recommended mechanism:
+      readlink `/proc/<pid>/fd/<fd>` at open-exit for non-absolute paths
+      (pre-enqueue, while the producer is alive — the fd handle yields the
+      absolute path directly); `bpf_d_path` is not available on RHEL8 4.18
+      tracepoints. Also improves fd-cache attribution for subsequent
+      read/write events. Dev chooses the exact resolution point; record
+      rationale.
 
 ### Phase-2 future tasks (not slices yet)
 
-- [ ] OSS sensor survey (requested 2026-08-25): review how other open-source
-      eBPF/host sensors handle file-event volume and ring-buffer drop
-      pressure — candidates: Falco/Sysdig (drop accounting, consumer design),
-      Cilium Tetragon (in-kernel filtering/rate-limiting policies), Aqua
-      Tracee, Elastic ebpf/Agent, Sysmon for Linux, osquery. Deliverable: a
-      wiki concept page comparing their kernel-side reduction, aggregation,
-      and userspace consumption architectures against Lintap's, with
-      adoptable patterns ranked.
+- [ ] Mmap as a first-class File activity type (approved 2026-08-25 as a
+      future feature enhancement, deliberately NOT in fop-12/fop-11): stop
+      collapsing op 5 → `Read` at decode; introduce a distinct `Mmap`
+      ActivityType so code-loading is distinguishable from data reads in the
+      recorded stream (`file.epl` groups by activityType, so today
+      mmap+read of the same file merge into one "Read" row, and mmap's
+      mapped-length bytes pollute read byte sums). Stream-content change:
+      ship with a downstream note for Wintappy models and analytics keying
+      on activityType, and update the differential comparator's op mapping
+      in the same slice.
+
+- [ ] OSS sensor survey (requested 2026-08-25; deliberately deferred by human
+      direction later that day — "wait a bit longer, improvements still
+      coming"): review how other open-source eBPF/host sensors handle
+      file-event volume and ring-buffer drop pressure — candidates:
+      Falco/Sysdig (drop accounting, consumer design), Cilium Tetragon
+      (in-kernel filtering/rate-limiting policies), Aqua Tracee, Elastic
+      ebpf/Agent, Sysmon for Linux, osquery. Deliverable: a wiki concept page
+      comparing their kernel-side reduction, aggregation, and userspace
+      consumption architectures against Lintap's, with adoptable patterns
+      ranked. Natural trigger: after fop-11/fop-12 land and are measured,
+      when comparing aggregation designs answers concrete questions.

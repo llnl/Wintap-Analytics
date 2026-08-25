@@ -679,3 +679,101 @@ Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
 Based on the deployed `fop-10` evidence, the feature reached a new milestone: `fop-11` is no longer just a gated candidate but now has a concrete review-ready proposal. New artifact: `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`, recommending emit-first short-interval aggregation of repeat `open` / `openat` activity only, with bounded kernel state and a revised distinct-tuple-plus-count-conservation differential contract. Related feature pages updated to point at the proposal and to mark the `fop-10` review gate as reached.
 Pages created: `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`.
 Pages updated: `work/optimize-fileops-poller/brief.md`; `work/optimize-fileops-poller/design.md`; `work/optimize-fileops-poller/implementation_plan.md`; `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.
+
+## [2026-08-25] review | fop-11 proposal designer review completed
+
+Reviewed [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]] and
+the revised validation/semantic contract. Verdict: approved in principle —
+the fop-10 evidence is sound (the duplicate measurement uses the same
+(pid, path) key and 1000 ms window the proposal specifies, so the 52.7-83.7%
+repeat ratios directly predict the design's win). Two hard conditions:
+(1) relative-path opens must be excluded from aggregation (or keyed by
+dirfd/cwd) — the (relative) bucket conflates distinct files and would break
+the emit-first guarantee; (2) summary-record process identity must be stamped
+at first-occurrence, not resolved at flush, to avoid reintroducing the
+resolve-after-exit failure fop-08 fixed. One recommended re-scoping: implement
+dedup in userspace pre-enqueue first (ring_fail is now 0 everywhere, loss is
+queue-side, poller has idle headroom, and the fop-10 measurement dictionary is
+the needed structure) — kernel promotion stays available later. Contract
+notes: op-scope the revised rule, require drop-free runs for count
+conservation, spec the repeat-metadata schema and comparator changes in the
+spike. Review recorded in the proposal page §Designer Review.
+Pages updated: `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`; `log.md`.
+
+## [2026-08-25] direction | fop-11 human review response: scope expanded, fop-12 added
+
+Human response to the fop-11 designer review: (1) relative-path handling
+upgraded from "exclude from aggregation" to "resolve to absolute" — accurate
+ground truth is the sensor's purpose; recorded as new precondition slice
+fop-12 (recommended: readlink /proc/<pid>/fd/<fd> at open-exit, pre-enqueue);
+(2) summary-record identity-at-first-occurrence condition accepted;
+(3) aggregation direction formally amended: (pid, path, op)-level aggregation
+with grouped totals (bytes etc.) and min/max timestamps over short intervals
+is acceptable for ALL op classes (2026-08-24 "no aggregation" non-goal struck
+in brief.md; sampling still excluded; emit-first semantics stand) — this also
+brings the read/write burst loss mode inside fop-11's reach; (4) the OSS
+sensor survey (Tetragon/Tracee/Sysdig et al.) stays deliberately deferred —
+"improvements still coming"; natural trigger recorded as post-fop-11/12.
+Dev handoff copy/paste prompt retargeted from fop-08/09 (deployed) to
+fop-12 → fop-11 with the amended contract (count + byte-total conservation on
+drop-free runs).
+Pages updated: `work/optimize-fileops-poller/{fop-11-proposal-2026-08-25,brief,implementation_plan,dev_handoff}.md`; `log.md`.
+
+## [2026-08-25] analysis | fop-12 resolution options + additional win candidates
+
+Source analysis of the relative-path resolution problem, recorded as
+suggestions in `work/optimize-fileops-poller/dev_handoff.md` §"fop-12
+Resolution Analysis + Additional Win Candidates". Ranked options: R1 readlink
+`/proc/<pid>/fd/<fd>` at poller decode pre-enqueue (open-exit already emits
+the returned fd; kernel resolves symlinks/dot-segments/dirfd in one call;
+count misses, never hide them), R2 cwd/dirfd lexical join as fallback only
+(openat_state lacks dirfd today; chdir race; symlink-unsafe `..` collapse),
+R3 kernel-side not viable on RHEL8 4.18 (`bpf_d_path` is fentry/LSM-only).
+Deeper wins found: A1 `NormalizeFilePath` lowercases paths on a
+case-sensitive filesystem (`FileOpsSensor.cs:895`) — accuracy bug conflating
+distinct files, fix also removes a per-event allocation; A2 kernel timestamps
+still unused, needed for fop-11 min/max accuracy; A3 emit (s_dev, i_ino) —
+CO-RE tier already reads `f_inode`, giving collision-free aggregation
+identity and fd/PID-reuse validation; A4 mmap is collapsed into Read at
+decode, erasing load/execution signal; P3 sampled sender cost-split
+measurement to steer post-dedup optimization. A1/A4 and optional
+full-canonicalization flagged as stream-content changes needing human
+sign-off.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] analysis | Esper-layer findings reframe fop-11; A1-A3/P3 decided
+
+Human decisions recorded: A1 path lowercasing becomes a platform-policy
+function (Windows lowercases, Linux preserves case; single extraction point,
+expandable); A2 kernel timestamps and A3 (s_dev, i_ino) emission and P3
+sender cost-split sampling approved; A4 (distinct Mmap activity type)
+explained further, sign-off still pending.
+
+Esper-stream analysis (human-requested): `file.epl` already aggregates File
+events into 10s batches grouped by (path, PidHash, PID, activityType,
+ProcessName) with count(*)/sum(bytes)/min-max(eventTime), and `default.epl`
+excludes File from per-event pass-through — so File telemetry is
+aggregate-only on disk today, and fop-11 (sub-batch interval, compositional
+accumulators) becomes a pure performance change at the parquet output. New
+fop-11 hard conditions: File schema repeat-count field (default 1) +
+first/last timestamps; file.epl switches count(*) → sum(count field) and
+min/max over the new fields. Also noted: the comparator already measures the
+aggregated rows (count conservation = asserting eventCount balance), A2
+improves the accuracy of the existing firstSeen/lastSeen columns, and PidHash
+stamping quality directly shapes output row grouping.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`; `log.md`.
+
+## [2026-08-25] handoff | A4 decided; phase-2 fop-12/fop-11 dev handoff finalized
+
+A4 (distinct Mmap activity type) approved by human sign-off as its own future
+feature enhancement, deliberately deferred — not part of fop-12/fop-11;
+recorded in the implementation plan's Phase-2 future tasks with the
+downstream/comparator notes. Dev handoff for the next phase finalized: the
+copy/paste prompt targets fop-12 (absolute-path ground truth via fd readlink,
+pre-enqueue) then fop-11 (short-interval (pid, path, op) aggregation,
+emit-first, userspace-first) with the Esper composition rules as hard
+conditions (schema repeat-count + first/last timestamps, file.epl
+count(*) → sum(count), sub-batch interval), plus approved companions A1
+(platform path-case policy), A2 (kernel timestamps), A3 (dev:ino emission),
+and P3 (sender cost-split sampling).
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.

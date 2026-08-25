@@ -50,6 +50,18 @@ evidence is now recorded in verification: high duplicate-open ratios across
 multiple intervals plus surviving queue-loss under some later load phases even
 after sender-path improvements.
 
+**Review + human response (2026-08-25):** the proposal passed designer review
+(approved in principle; see the proposal's §Designer Review) and the human
+responded with three direction updates recorded in §Human Review Response:
+relative paths get **resolved to absolute** (new precondition slice fop-12 —
+ground-truth accuracy is the goal), summary-record identity is stamped at
+first occurrence, and the aggregation direction is formally amended —
+**(pid, path, op)-level aggregation with grouped totals and min/max
+timestamps over short intervals is acceptable for all op classes**, with
+emit-first semantics. The OSS sensor survey stays deferred by explicit
+direction. Next work: fop-12, then fop-11 per the proposal + review
+conditions.
+
 ## Copy/Paste Prompt
 
 Use this prompt to hand the work to a code-development or deep-analysis agent:
@@ -95,46 +107,84 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
 
     - wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25.md
 
-    Goal for the next pass (human-approved 2026-08-25): implement fop-08 and
-    fop-09 per the implementation plan's Phase 2 section — raise the userspace
-    consumer ceiling. Do NOT start fop-11 (aggregation); it is gated on
-    fop-10 measurement data and a separate human go/no-go.
+    Also read, in order — they carry the current decisions:
 
-    fop-08 scope:
+    - wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md
+      (including §Designer Review and §Human Review Response)
 
-    1. In-memory pid→pid_hash / process-identity cache for the File event
-       path: maintained by ProcessResolver (populated at registration,
-       evicted on exit/prune), consulted by EventChannel.Send instead of the
-       per-event DuckDB SELECT under _dbLock; DB lookup remains only as the
-       miss fallback. Cache hit/miss counters in the 60s log.
-    2. Bounded in-process queue between the FileOps ring-buffer callback and
-       resolve/Esper: the callback does decode+filter+enqueue only; a worker
-       thread drains into resolve+Esper. Generous default capacity (memory
-       spend approved), explicit depth gauge and drop counter in the 60s log,
-       documented drop policy. Shutdown must drain within the existing 2s
-       PollingThread.Join budget or document the revised budget.
+    Prior state: fop-08/fop-09/fop-10 are implemented and deployed. The ring
+    no longer overflows (ring_fail_total=0 in all recent bundles); the active
+    loss signal is the bounded userspace sender queue under some load phases.
+    fop-08 full acceptance still owes a differential-harness rerun.
 
-    fop-09 scope: hoist the five per-event ConfigManager.GetValue lookups in
-    EventChannel.Send into fields cached at startup.
+    Goal for the next pass (human-approved 2026-08-25): implement fop-12,
+    then fop-11, per the implementation plan's Phase 2 section.
+
+    fop-12 scope (precondition): resolve relative/openat paths to absolute at
+    open time — ground-truth accuracy is the goal, and fop-11 aggregation
+    keys must not conflate distinct files. Recommended mechanism: readlink
+    /proc/<pid>/fd/<fd> at open-exit for non-absolute paths, pre-enqueue,
+    while the producer is alive (bpf_d_path is unavailable on RHEL8 4.18
+    tracepoints). Record the chosen resolution point and its failure modes.
+    A full ranked analysis (R1/R2/R3), plus additional accuracy and
+    performance win candidates found during it (A1-A5, P1-P4: path
+    lowercasing bug, kernel timestamps, dev:ino identity emission, mmap
+    ActivityType, sender cost-split sampling), is in this document's section
+    "fop-12 Resolution Analysis + Additional Win Candidates (2026-08-25)" —
+    read it before designing the slice. A1-A3/P3 are decided (see below);
+    A4 is decided as a deferred future feature; only the optional
+    full-canonicalization extension of R1 still needs human sign-off before
+    changing stream content.
+
+    fop-11 scope (amended direction, 2026-08-25): short-interval aggregation
+    to the (pid, path, op) level with repeat count, grouped totals (bytes
+    etc.), and min/max timestamps — acceptable for ALL op classes. Emit-first
+    semantics: the first distinct occurrence in a window emits immediately
+    and unchanged; only repeats fold into per-interval summary records.
+    Hard conditions: summary-record process identity is stamped at first
+    occurrence (never resolved at flush); absolute-path keys via fop-12;
+    and the Esper composition rules from the handoff's "Esper-Layer
+    Findings" section — File schema gains an explicit repeat-count field
+    (default 1) and first/last timestamps, file.epl switches from count(*)
+    to sum(<count field>) and takes min/max over the new timestamp fields,
+    and the aggregation interval stays well under the 10s Esper batch.
+    Honoring those rules makes fop-11 a pure performance change at the
+    parquet output (File rows are already 10s aggregates on disk today).
+    Layer choice per the designer review: userspace pre-enqueue dedup first
+    (reuse the fop-10 measurement dictionary; no verifier spike needed);
+    kernel promotion only if ring pressure or poller CPU returns. Sampling
+    remains excluded. Sequencing open-first is fine but is not a boundary.
+
+    Also approved 2026-08-25, fold into these slices where they fit
+    naturally: A1 platform-aware path-case policy function (Windows
+    lowercases, Linux preserves case; single extraction point), A2 kernel
+    timestamps, A3 (s_dev, i_ino) emission in CO-RE records, P3 sampled
+    sender cost-split measurement. A4 (distinct Mmap activity type) is
+    approved but deliberately deferred to its own future feature enhancement
+    — do NOT fold it into these slices; keep mmap collapsing to Read for now
+    so stream content stays stable through fop-12/fop-11.
 
     Acceptance for this pass:
 
-    1. Builds: tracers make clean && make; dotnet build wintap/Lintap.csproj
-       with 0 errors.
-    2. Differential harness clean on regular-file tuples (no-loss gate).
-    3. On the field host, under comparable load: ring_fail_total growth rate
-       collapses versus the ~778/s baseline recorded in the deep analysis;
-       queue depth/drop counters visible and bounded; FileOps-Poller thread
-       CPU share drops. Record summary statistics in verification.md.
-    4. Counter reconciliation: kernel emitted ≈ userspace consumed + ring
-       drops + queue drops.
+    1. Builds: tracers make clean && make (if touched); dotnet build
+       wintap/Lintap.csproj with 0 errors.
+    2. Revised differential contract holds on drop-free harness runs:
+       op-scoped distinct-tuple equality, count conservation, and byte-total
+       conservation for aggregated op classes; strict per-event parity for
+       any op class not yet aggregated. compare_fileops.py must learn the
+       summary-record shape and count/byte columns.
+    3. Schema recorded before coding: repeat-metadata field names, count=1
+       default for non-aggregated rows, downstream note (Esper,
+       DirectParquetSink, Wintappy models).
+    4. Field measurement: queue depth/high-water/drops versus the fop-10-era
+       bundles under comparable load; ring_fail_total stays 0. Record summary
+       statistics only.
 
     Constraints:
 
-    - Preserve the no-loss contract for regular-file telemetry.
-    - Do not introduce aggregation or sampling in fop-08/09/10; aggregation
-      is reserved for fop-11 and starts only after its gates are met
-      (fop-10 duplicate-ratio evidence + explicit human go/no-go).
+    - Emit-first is non-negotiable: distinct activity keeps per-event
+      immediacy; only repeats aggregate.
+    - No sampling; no silent drops — every reduction is counted and logged.
     - Do not commit or copy raw event data, sample payloads, or sensitive host
       artifacts into the repo. It is allowed and encouraged to record summary
       statistics, ratios, counter deltas, event counts, representative metric
@@ -270,6 +320,174 @@ approved the resulting plan in full. Sequence:
 
 Future task (parallel, research-only): the OSS sensor survey recorded in the
 implementation plan's Phase-2 future tasks.
+
+## fop-12 Resolution Analysis + Additional Win Candidates (2026-08-25)
+
+Source-grounded suggestions for the implementing agent. File/line references
+are to `../wintap` as of this writing; re-verify before relying on them.
+
+### Relative-path resolution options, ranked
+
+**R1 — readlink `/proc/<pid>/fd/<fd>` at decode, pre-enqueue (recommended).**
+The open-exit programs already emit the returned fd in the record
+(`file_ops_tracer.bpf.c` §t_open_exit/§trace_openat call
+`emit_file_event_saved(pid, st.filename, fd, ...)`), so userspace has
+(pid, fd, raw path) at decode with no tracer change. The kernel resolves
+everything — symlinks, `.`/`..`, dirfd-relative lookups — in one readlink,
+and the poller thread has ample headroom (0.1–0.2% CPU). It MUST run
+pre-enqueue on the poller, never on the sender: under queue backlog the
+sender processes events after producers exit (the same timing argument as
+identity stamping). Failure modes to count, not hide: fd closed before the
+poller decodes (open→close faster than ring delivery) or producer already
+exited → readlink fails. Fallback: keep the raw relative path plus a
+resolution-status marker, and log resolved/miss counters in the 60s line so
+the miss rate is a measured number.
+
+**R2 — cwd/dirfd join (fallback only, if R1's measured miss rate is
+material).** readlink `/proc/<pid>/cwd` and lexically join the relative path.
+Weaknesses: `openat_state` does not capture the dirfd today (struct holds
+only filename+flags — a tracer change would be needed for non-AT_FDCWD
+opens); a chdir between syscall and readlink races; lexical `..` collapse is
+wrong across symlinks. A short-TTL per-pid cwd cache would halve its syscall
+cost if it is ever needed.
+
+**R3 — kernel-side resolution: not viable on RHEL8 4.18.** `bpf_d_path` is
+restricted to fentry/LSM/iterator program types and unavailable to these
+tracepoints; manual dentry walks are verifier-hostile. This reconfirms the
+deferred fentry migration as the only kernel path — unchanged.
+
+**Decision to record during implementation:** R1 yields the *canonical
+target* path (symlinks resolved), which is the desired ground truth for
+relative opens. Optional extension for human sign-off: canonicalize ALL
+opens through the same readlink (~one cheap syscall per surviving open,
+negligible at observed rates) for uniform path identity — but that changes
+stream content for absolute symlink paths (e.g. `/etc/alternatives/*`), and
+the as-requested path has security value of its own (symlink-mediated access
+looks different from direct access). If taken, consider carrying both
+(schema addition).
+
+### Deeper accuracy wins found during this analysis
+
+- **A1 — Platform-aware path-case policy (DECIDED 2026-08-25).**
+  `NormalizeFilePath` ends with `ToLowerInvariant()` (`FileOpsSensor.cs:895`).
+  Linux filesystems are case-sensitive: `/tmp/A` and `/tmp/a` are distinct
+  files conflated in the emitted stream, the data-root filter, fop-11 dedup
+  keys, and the differential comparator identity. Human direction: the
+  lowercasing exists specifically for Windows filesystems — make it
+  configurable via a platform-policy function/global (stub: Windows →
+  lowercase, Linux → preserve case) that can grow richer over time (e.g.
+  per-mount case sensitivity). Apply the same policy consistently to the
+  `_dataRootLower` comparison and `compare_fileops.py`. On Linux this also
+  deletes a per-event string allocation. Note: `file.epl` groups by
+  `file.path`, so the policy defines aggregation identity on both platforms —
+  keep it in one place.
+- **A2 — Kernel timestamps (fop-07 U5), urgency raised by fop-11.**
+  `TimestampNs` is still decoded nowhere; EventTime is `DateTime.UtcNow` at
+  poller decode (`FileOpsSensor.cs:275`). Decode-time stamping is close to
+  arrival time, but ring/wakeup batching adds up to ~100ms and fop-11's
+  min/max repeat timestamps and grouped intervals should be real syscall
+  times, not dequeue times. The once-computed monotonic→wallclock offset is
+  cheap; do it in or before fop-11.
+- **A3 — Emit (s_dev, i_ino) in records.** The CO-RE tier already reads
+  `f_inode` for `is_regular_fd` (`file_ops_tracer.bpf.c:240`); `i_ino` and
+  the superblock `s_dev` are two more `BPF_CORE_READ`s, +12–16B on the
+  compact record. Payoffs: collision-free aggregation identity
+  ((pid, dev:ino, op) needs no path hashing at all), validation/repair of
+  `_fdToPath` entries against fd/PID reuse, robustness across hard links and
+  renames, and attribution for fd ops whose open was never seen. Strong
+  companion to fop-11/fop-12; CO-RE tier only.
+- **A4 — Stop collapsing mmap into Read.** Decode maps op 5 → `Read`
+  (`FileOpsSensor.cs:263`). File-backed mmap is loading/execution-relevant
+  signal — and the measured churn is dominated by library trees (`/lib64`,
+  `/usr`) — so the collapse erases exactly the distinction that load
+  represents. The Esper layer makes the cost/benefit concrete: `file.epl`
+  groups output rows by `(file.path, PidHash, PID, activityType,
+  ProcessName)`, so today a process that maps AND byte-reads the same file
+  produces one merged "Read" row — "was this file executed/loaded or read as
+  data?" is unanswerable from the recorded stream. A distinct `Mmap`
+  activity type costs at most one extra aggregated row per (pid, path) per
+  10s batch — negligible volume — and recovers a signal class security
+  analytics care about (code loading vs data access). `bytesRequested` for
+  mmap rows is the mapped length, which also stops polluting read byte sums.
+  **DECIDED 2026-08-25 (human sign-off): approved — but as its own future
+  feature enhancement, implemented later, NOT part of the fop-12/fop-11
+  slices.** Recorded in the implementation plan's Phase-2 future tasks; the
+  downstream note (Wintappy models keying on activityType) goes with it.
+- **A5 — comm truncation.** Kernel `comm` is 16 bytes; identity stamping
+  already substitutes the resolved process name on cache hits — record the
+  remaining stamp-miss gap as known, no action proposed.
+
+### Deeper performance wins
+
+- **P1 —** fop-11 pre-enqueue dedup remains the big sender lever: it cuts
+  queue volume and per-event Esper sends by the measured repeat share
+  (52.7–83.7% of opens; read/write repeats now also in scope per the amended
+  direction).
+- **P2 —** A1 doubles as a perf fix (one fewer allocation per event on the
+  hot decode path).
+- **P3 — Measure the sender-side cost split before optimizing it further.**
+  Add sampled per-stage timing (every Nth event) for stamp-hit vs
+  resolve-miss vs `SendEventBean` to the 60s log. Whether the next lever
+  after dedup is Esper-side batching or more resolve work should be decided
+  from this number, not intuition.
+- **P4 —** Queue drop policy is `drop_newest`; under saturation `drop_oldest`
+  favors recency instead of history. Either is defensible — record the choice
+  as deliberate in the component page at closeout.
+
+### Esper-Layer Findings (2026-08-25) — fop-11 is a pure perf change at the output
+
+Extending the analysis into the Esper stream and its aggregation queries
+(human-requested) produced the most important reframing of this phase:
+
+**File telemetry is already aggregate-only on disk.** In the deployed
+configuration (DirectParquetSink off), File events reach parquet exclusively
+through `file.epl`, which batches into 10-second windows and groups by
+`(file.path, PidHash, PID, activityType, ProcessName)`, emitting
+`count(*) as eventCount`, `sum(bytesRequested)`, `min(eventTime) as
+firstSeen`, `max(eventTime) as lastSeen`. `default.epl` explicitly excludes
+`File` from per-event pass-through.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/file.epl; ../wintap/wintap/core/etl/esper/default.epl -->
+
+Consequences:
+
+1. **The fop-11 information tradeoff largely evaporates.** Per-repeat rows
+   and per-repeat timestamps already die in the 10s time_batch today; the
+   recorded output has always been count/sum/min/max-shaped. A pre-enqueue
+   aggregation at (pid, path, op) with count, byte totals, and min/max
+   timestamps over an interval ≤ the Esper batch (1s « 10s) composes
+   losslessly with `file.epl` — sums of sums, min of mins, max of maxes —
+   meaning **fop-11 changes the parquet output not at all** when the
+   composition rules below are honored. The emit-first rule still matters for
+   any *live* Esper consumers (plugins/user EPL see the stream pre-batch),
+   which is why it stays.
+2. **Composition rules — these become fop-11 hard conditions:**
+   - `count(*)` counts rows: a summary row worth N repeats would count as 1.
+     The File schema needs an explicit repeat-count field (default 1) and
+     `file.epl` must switch to `sum(<count field>)`.
+   - `min/max(eventTime)` over rows would return summary-emission times: the
+     schema needs first/last timestamps on the event (e.g. eventTime = first
+     occurrence + a lastSeen field) and `file.epl` min/max updated to use
+     them.
+   - `sum(bytesRequested)` composes only if summary rows carry summed bytes
+     (already planned in the amended direction).
+3. **The comparator is closer to done than assumed.** It already compares
+   distinct tuples of the *aggregated* parquet rows — per-event parity at the
+   parquet level never existed. Count conservation reduces to asserting the
+   existing `eventCount` column (and byte sums) balance between baseline and
+   candidate.
+4. **A2 (kernel timestamps) upgrades existing output accuracy, not just
+   fop-11's:** today's `firstSeen`/`lastSeen` columns record userspace decode
+   times, so their accuracy already degrades under any poller lag; kernel
+   timestamps fix a live column, not a future one.
+5. **Perf mechanics of the win:** every File event currently pays Esper
+   filter evaluation + group-by hash + accumulator update inside synchronous
+   `SendEventBean` on the sender thread. Pre-enqueue dedup cuts Esper input
+   rows by the measured repeat share (52.7–83.7% of opens) on top of the
+   queue/stamping work it already saves — the Esper group-by then aggregates
+   mostly-unique rows.
+6. **PidHash quality shapes group identity:** `file.epl` groups by PidHash,
+   so identity stamping (fop-08 follow-on) also protects output row quality —
+   a resolve-miss fragments or merges grouped rows, not just a column value.
 
 ## Testing Expectations For Any Follow-On Code Slice
 
