@@ -6,8 +6,9 @@ grounded_by:
   - ../Wintap-Analytics/wiki/decision/ai-velocity-roi-mini-lab.md
   - ../Wintap-Analytics/wiki/concept/velocity-metric.md
   - ../Wintap-Analytics/wiki/work/improve-windows-process-collection/metrics.md
+  - ../Wintap-Analytics/wiki/work/windows-sensor-health-check/metrics.md
 policy: agent-editable
-last_validated: 2026-08-19
+last_validated: 2026-08-25
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -30,6 +31,7 @@ attached. The trend across features, not any single point, is the product.
 | Feature | Lead time (days) | Solo estimate (h) | Feature Velocity (± uncertainty) | Comparability flag | Metrics |
 |---|---|---|---|---|---|
 | improve-windows-process-collection | 6 | 120 | **3.5** (2–7) — retrofit/unsealed pilot; illustrative, not evidence | willingness-only: UserSid/PEB work would not have been *attempted* solo but was within capability — **not excluded** from the trend | [[wiki/work/improve-windows-process-collection/metrics]] |
+| windows-sensor-health-check | 1 | 40 | **7.0** (3.5–17) — first fully valid dual-sealed point; 1-day denominator makes it calendar-noisy | none: Q3 "Yes" — plain counterfactual, capability not exceeded; included in the fitted trend | [[wiki/work/windows-sensor-health-check/metrics]] |
 
 ## Portfolio Velocity
 

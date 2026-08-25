@@ -46,6 +46,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/component/wintap-api-shared-data-model]] | high | Canonical page for the WintapMessage envelope, domain objects, plugin contracts, and EventChannel enrichment boundary. |
 | [[wiki/component/wintap-recorder]] | high | Captures WintapRecorder recording-session control, registry mode flags, Parquet monitoring, and merge behavior. |
 | [[wiki/component/plugin-and-mcp-samples]] | high | Documents plugin discovery/contracts, sample event subscriber behavior, and research/POC MCP SQL tooling caveats. |
+| [[wiki/component/sensor-health-monitor]] | high | Canonical page for the always-on Windows egress QA layer (shc feature, closed 2026-08-25): InspectForHealth hook on both egress branches + MemoryMap bypass, five constant-time checks, six-stream 5 s liveness watchdog, aggregated Wintap.log reporting, config keys, and the shc-03 QueryDosDevice drive-map/fromNative accuracy fix. |
 ## Data_model
 
 | Page | Confidence | Summary |
@@ -90,6 +91,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 |------|------------|---------|
 | [[wiki/diagnostic/nesper-repro]] | high | Documents the standalone Fedora/shared-mount NEsper repro and the evidence that Bad IL range failures are output-location related. |
 | [[wiki/diagnostic/dependency-inventory-and-update-status]] | medium | Inventories Python, npm, and .NET dependency manifests across the ecosystem and records observed update availability with tooling caveats. |
+| [[wiki/diagnostic/windows-sensor-sweep-queue]] | high | Consolidated defect/finding queue the follow-on Windows sensor sweep feature opens from: WintapLogger BackgroundWorker sync-context capture and live-log truncation, Env.SetDataRoot test-fixture guidance, the health check's first live catch (PID=-1 Refresh → ProcessName=Unknown), ungated Registry emit sites, dead Serializer.Listen, WintapAlert self-PID drop, TranslateTransientPath authority bug, QueryDosDevice consolidation, MemoryMap reroute question, eventtime_invalid candidate. |
 ## Work
 
 | Page | Confidence | Summary |
@@ -123,7 +125,13 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-windows-process-collection/sensor-core-notes-2026-08-17]] | medium | Wintap Engineer scratch notes for wpc-02: shared-kernel ProcessStart/ProcessStop sensor core scope, ETW timestamp canonicalization, ProcessResolver hot-path identity, stop fallback tests, and the flagged PidHash ownership tension. |
 | [[wiki/work/improve-windows-process-collection/smoke-followups-2026-08-17]] | high | Out-of-scope smoke observations and their final disposition: wpc-09 fixed the boot-trace lifecycle, parent-warning, DuckDB escaping, and logger-tag items; SensSensor load failure and missing SignedS3UrlAdapter remain future candidates outside the feature. |
 | [[wiki/work/improve-windows-process-collection/verification]] | high | Closeout verification record (feature closed 2026-08-19): accepted manual validation evidence — wpc-06 elevated smoke PASS, wpc-07 reboot/overnight PASS, wpc-09 sweep fixes, final overnight smoke-test with boot replay confirmed — plus 54/54 wpc test state and the wpc-08 skip rationale. |
+| [[wiki/work/windows-sensor-health-check/interview]] | high | Interview record for the health-check feature: egress-choke-point placement, aggregated low-noise reporting, all-Windows-sensor coverage, full-stream constant-time checks, and the Round 2 log-only redirection; carries the (now unsealed) human estimates. |
+| [[wiki/work/windows-sensor-health-check/brief]] | high | Feature brief with the nine frozen acceptance criteria (re-frozen under amendment #2): egress hook on both branches + MemoryMap bypass, five definitive checks, six-stream liveness, aggregated log reporting, capped samples, kill switch, extensibility, no schema changes, verification. |
+| [[wiki/work/windows-sensor-health-check/design]] | high | Design record: EventChannel.Send grounding, unknown-sentinel and path-form ground truth, the shc-03 diskpart→QueryDosDevice insert with the fromNative guard fix, check engine/liveness/reporting architecture, and the sweep-scope findings now consolidated into the sweep queue. |
+| [[wiki/work/windows-sensor-health-check/implementation_plan]] | high | Three units (execution order shc-01 → shc-03 → shc-02) with the shc abbreviation declaration; done checklist fully closed 2026-08-25 (shc-02 audit missing — external harness; recorded per never-gates). |
+| [[wiki/work/windows-sensor-health-check/verification]] | high | Verification record: shc-01 33/33, shc-03 27/27 + fromNative translation tests, shc-02 egress integration (65/65 feature suite independently re-run), and the 2026-08-25 availability-anchor live run recorded verbatim (lead time 1 day). |
+| [[wiki/work/windows-sensor-health-check/metrics]] | high | First fully valid dual-sealed Velocity point: 40 solo-hours in 1 calendar day = **Feature Velocity 7.0** (uncertainty 3.5–17), comparability none (Q3 "Yes"); human AI-date prediction hit its optimistic edge; per-unit actuals and API cost missing data. |
 
 ---
 
-*Last updated: 2026-08-20 (future feature metrics inherit plain-language Results and Technical Record sections)*
+*Last updated: 2026-08-25 (windows-sensor-health-check closed: canonical sensor-health-monitor page, windows-sensor-sweep-queue diagnostic, feature work pages indexed, rollup row appended)*
