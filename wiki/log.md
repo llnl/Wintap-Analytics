@@ -777,3 +777,14 @@ count(*) → sum(count), sub-batch interval), plus approved companions A1
 (platform path-case policy), A2 (kernel timestamps), A3 (dev:ino emission),
 and P3 (sender cost-split sampling).
 Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] decision | R1 approved in base form; all fop-12/fop-11 sign-offs closed
+
+Human sign-off: fop-12 implements base R1 only — fd-readlink resolution for
+relative/openat paths; absolute-path opens keep their as-requested form. The
+full-canonicalization extension (resolving all opens, surfacing symlink
+targets) was explicitly declined for now and remains a documented future
+option (if ever taken, carry both paths as a schema addition). With A1-A4 and
+P3 already decided, no stream-content sign-offs remain open; the dev handoff
+prompt is fully unblocked for the fop-12 → fop-11 implementation pass.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.

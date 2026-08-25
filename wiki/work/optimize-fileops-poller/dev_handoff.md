@@ -131,10 +131,12 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     lowercasing bug, kernel timestamps, dev:ino identity emission, mmap
     ActivityType, sender cost-split sampling), is in this document's section
     "fop-12 Resolution Analysis + Additional Win Candidates (2026-08-25)" —
-    read it before designing the slice. A1-A3/P3 are decided (see below);
-    A4 is decided as a deferred future feature; only the optional
-    full-canonicalization extension of R1 still needs human sign-off before
-    changing stream content.
+    read it before designing the slice. All decisions are now closed:
+    A1-A3/P3 decided (see below); A4 decided as a deferred future feature;
+    and R1 is approved in its BASE form only (2026-08-25) — resolve
+    relative/openat paths, do NOT canonicalize absolute-path opens (the
+    full-canonicalization extension was explicitly declined for now).
+    No stream-content sign-offs remain open for this pass.
 
     fop-11 scope (amended direction, 2026-08-25): short-interval aggregation
     to the (pid, path, op) level with repeat count, grouped totals (bytes
@@ -356,15 +358,15 @@ restricted to fentry/LSM/iterator program types and unavailable to these
 tracepoints; manual dentry walks are verifier-hostile. This reconfirms the
 deferred fentry migration as the only kernel path — unchanged.
 
-**Decision to record during implementation:** R1 yields the *canonical
-target* path (symlinks resolved), which is the desired ground truth for
-relative opens. Optional extension for human sign-off: canonicalize ALL
-opens through the same readlink (~one cheap syscall per surviving open,
-negligible at observed rates) for uniform path identity — but that changes
-stream content for absolute symlink paths (e.g. `/etc/alternatives/*`), and
-the as-requested path has security value of its own (symlink-mediated access
-looks different from direct access). If taken, consider carrying both
-(schema addition).
+**DECIDED 2026-08-25 (human sign-off): base R1 only.** Resolve
+relative/openat paths via fd-readlink; absolute-path opens keep today's
+as-requested form. The optional extension — canonicalizing ALL opens through
+the same readlink for uniform identity — was considered and explicitly NOT
+taken now: it changes stream content for absolute symlink paths (e.g.
+`/etc/alternatives/*`), and the as-requested path has security value of its
+own (symlink-mediated access looks different from direct access). It remains
+a documented future option; if ever taken, carry both paths (schema
+addition).
 
 ### Deeper accuracy wins found during this analysis
 
