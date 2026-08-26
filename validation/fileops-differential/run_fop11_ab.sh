@@ -8,10 +8,16 @@
 # count-conserving comparator. Leaves the service running with aggregation
 # ON regardless of outcome.
 #
+# Upload adapters (S3 etc.) are disabled in the deployed ETLConfig.json for
+# the duration of the run and restored on exit: delete-after-upload removes
+# raw_sensor parquet moments after doMerge materializes it, and startup
+# clearRawSensor() wipes the tree on every restart while an adapter is
+# enabled — either one races the harvest to the data.
+#
 # Usage (as root on the field host):
 #   ./run_fop11_ab.sh [--work-dir DIR] [--files N] [--rounds N]
 #                     [--dir-churn N] [--data-root DIR] [--results-dir DIR]
-#                     [--harvest-timeout SEC]
+#                     [--harvest-timeout SEC] [--etl-config PATH]
 #
 # Exit codes: 0 = PASS, 1 = comparator FAIL, 2 = vacuous/no data,
 #             3 = run invalid (serializer backlog during a phase),
@@ -29,6 +35,12 @@ HARVEST_TIMEOUT=600
 SIMULATE_DIR=""
 ENV_FILE=/etc/lintap/lintap.env
 AGG_FLAG_LINE='WINTAP_FILEOPS_AGG_ENABLED=false'
+ETL_CONFIG=""
+ETL_CONFIG_BACKUP=""
+INTERVAL_ADDED=0
+# Merge cadence during the test: doMerge() is what moves serializer flush
+# files into raw_sensor/, and it runs once per upload interval (default 300s).
+INTERVAL_LINE='WINTAP_ETL_UPLOAD_INTERVAL_SEC=60'
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -39,6 +51,7 @@ while [ $# -gt 0 ]; do
     --data-root) DATA_ROOT=${2:?}; shift 2 ;;
     --results-dir) RESULTS_DIR=${2:?}; shift 2 ;;
     --harvest-timeout) HARVEST_TIMEOUT=${2:?}; shift 2 ;;
+    --etl-config) ETL_CONFIG=${2:?}; shift 2 ;;
     --simulate) SIMULATE_DIR=${2:?}; shift 2 ;;  # internal: fixture-driven plumbing test
     -h|--help) grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 4 ;;
@@ -104,6 +117,51 @@ elif "$MODERN_PY" -c 'import duckdb' 2>/dev/null; then
   PYRUN_WORKLOAD=("$MODERN_PY")
 else
   die "need uv (not found in PATH or /home/\${SUDO_USER}/.local/bin) or a python >= 3.8 with the duckdb package"
+fi
+
+# ---------- uploader quiesce ----------
+# With any upload adapter enabled, the sensor deletes raw_sensor parquet
+# after successful upload AND wipes the whole tree at startup — both race
+# the harvest. Disable adapters for the run; cleanup restores them.
+
+if [ -z "$SIMULATE_DIR" ]; then
+  if [ -z "$ETL_CONFIG" ]; then
+    # ETLConfig.json lives next to the lintap binary (assembly directory).
+    for tok in $(systemctl show -p ExecStart lintap 2>/dev/null | grep -oE '/[^ ;"]+'); do
+      if [ -f "$(dirname "$tok")/ETLConfig.json" ]; then
+        ETL_CONFIG="$(dirname "$tok")/ETLConfig.json"
+        break
+      fi
+    done
+  fi
+  [ -z "$ETL_CONFIG" ] && ETL_CONFIG=$(find /opt /usr/local /usr/lib -maxdepth 4 -name ETLConfig.json 2>/dev/null | head -1)
+  [ -n "$ETL_CONFIG" ] && [ -f "$ETL_CONFIG" ] || die "cannot locate deployed ETLConfig.json (pass --etl-config PATH); enabled upload adapters would delete parquet before harvest"
+  ENABLED_ADAPTERS=$("$MODERN_PY" -c 'import json,sys;print(",".join(a["Name"] for a in json.load(open(sys.argv[1])).get("Adapters",[]) if a.get("Enabled")))' "$ETL_CONFIG") \
+    || die "cannot parse $ETL_CONFIG"
+  if [ -n "$ENABLED_ADAPTERS" ]; then
+    ETL_CONFIG_BACKUP="$RESULTS_DIR/ETLConfig.json.orig"
+    cp "$ETL_CONFIG" "$ETL_CONFIG_BACKUP" || die "cannot back up $ETL_CONFIG"
+    "$MODERN_PY" - "$ETL_CONFIG" <<'PY' || die "failed to disable adapters in $ETL_CONFIG"
+import json, sys
+path = sys.argv[1]
+with open(path) as f:
+    cfg = json.load(f)
+for adapter in cfg.get("Adapters", []):
+    adapter["Enabled"] = False
+with open(path, "w") as f:
+    json.dump(cfg, f, indent=2)
+PY
+    log "upload adapters disabled for the run: $ENABLED_ADAPTERS (backup: $ETL_CONFIG_BACKUP)"
+  else
+    log "no enabled upload adapters in $ETL_CONFIG — nothing to quiesce"
+  fi
+  if grep -q '^WINTAP_ETL_UPLOAD_INTERVAL_SEC=' "$ENV_FILE" 2>/dev/null; then
+    log "WARNING: pre-existing WINTAP_ETL_UPLOAD_INTERVAL_SEC in $ENV_FILE left as-is; merge cadence governs how fast rows reach raw_sensor"
+  else
+    printf '%s\n' "$INTERVAL_LINE" >>"$ENV_FILE"
+    INTERVAL_ADDED=1
+    log "merge cadence override for the run: $INTERVAL_LINE"
+  fi
 fi
 
 # ---------- helpers ----------
@@ -211,8 +269,9 @@ PYEOF
     log "  $phase harvest poll: $count rows"
     if [ "$count" -gt 0 ] && [ "$count" -eq "$prev" ]; then
       stable=$((stable + 1))
-      # two consecutive identical nonzero counts = flush settled
-      [ "$stable" -ge 1 ] && { echo "$count" >"$RESULTS_DIR/$phase.rowcount"; return 0; }
+      # settled = count unchanged across a full merge cycle (60s = 3 polls;
+      # 1 poll in simulation, where fixtures are written atomically)
+      [ "$stable" -ge "$STABLE_NEED" ] && { echo "$count" >"$RESULTS_DIR/$phase.rowcount"; return 0; }
     else
       stable=0
     fi
@@ -225,19 +284,37 @@ PYEOF
 }
 
 flush_boundary() {
-  # Force the serializer/parquet writer to emit pending rows: restart the
-  # service with the CURRENT env (no mode change).
+  # Wait out one serializer flush (60s cadence) plus one merge cycle (60s
+  # override) so workload rows materialize into raw_sensor/. Deliberately
+  # NOT a restart: shutdown discards the serializer's in-progress .active
+  # file, and startup wipes raw_sensor/ whenever an uploader is enabled.
   if [ -n "$SIMULATE_DIR" ]; then sleep 3; return 0; fi
-  log "flush boundary: restarting lintap"
-  systemctl restart lintap || die "flush restart failed"
-  sleep 15
+  log "flush boundary: waiting 90s for serializer flush + merge cycle"
+  sleep 90
 }
 
-# Always leave the host with aggregation ON, even on failure/interrupt.
+# Always leave the host in production config (aggregation ON, uploaders
+# restored, merge cadence restored), even on failure/interrupt.
 cleanup() {
-  if [ -z "$SIMULATE_DIR" ] && grep -q "^${AGG_FLAG_LINE}\$" "$ENV_FILE" 2>/dev/null; then
-    log "cleanup: removing kill-switch and restarting (aggregation back ON)"
+  [ -n "$SIMULATE_DIR" ] && return 0
+  local changed=0
+  if grep -q "^${AGG_FLAG_LINE}\$" "$ENV_FILE" 2>/dev/null; then
+    log "cleanup: removing kill-switch (aggregation back ON)"
     sed -i "\%^${AGG_FLAG_LINE}\$%d" "$ENV_FILE"
+    changed=1
+  fi
+  if [ "$INTERVAL_ADDED" -eq 1 ] && grep -q "^${INTERVAL_LINE}\$" "$ENV_FILE" 2>/dev/null; then
+    log "cleanup: removing merge-cadence override"
+    sed -i "\%^${INTERVAL_LINE}\$%d" "$ENV_FILE"
+    changed=1
+  fi
+  if [ -n "$ETL_CONFIG_BACKUP" ] && [ -f "$ETL_CONFIG_BACKUP" ]; then
+    log "cleanup: restoring upload adapters in $ETL_CONFIG (NB: startup clearRawSensor wipes un-uploaded raw_sensor parquet from the test window)"
+    cp "$ETL_CONFIG_BACKUP" "$ETL_CONFIG" || log "WARNING: restore failed — restore manually from $ETL_CONFIG_BACKUP"
+    changed=1
+  fi
+  if [ "$changed" -eq 1 ]; then
+    log "cleanup: restarting lintap with production config"
     systemctl restart lintap || true
   fi
 }
@@ -248,7 +325,7 @@ trap cleanup EXIT INT TERM
 PHASE_INVALID=0
 LAST_PHASE_END_FT=0
 # 10s margin real, 1s in simulation (fixtures are written seconds apart).
-if [ -n "$SIMULATE_DIR" ]; then MARGIN_FT=10000000; else MARGIN_FT=100000000; fi
+if [ -n "$SIMULATE_DIR" ]; then MARGIN_FT=10000000; STABLE_NEED=1; else MARGIN_FT=100000000; STABLE_NEED=3; fi
 
 run_phase() { # $1 = off|on  $2 = agg false|true
   local phase=$1 agg=$2
@@ -292,9 +369,9 @@ run_phase on true || HARVEST_FAIL=1
 # cleanup trap already restored aggregation ON; verify state for the record.
 if [ "$HARVEST_FAIL" -ne 0 ]; then
   {
-    echo "VERDICT: NO-DATA (harvest failed; see phase logs above)"
-    echo "Check: serializer backlog (invalid-phases.txt), parquet flush cadence,"
-    echo "and whether the upload pipeline deletes parquet before harvest."
+    echo "VERDICT: NO-DATA (harvest failed; see phase logs and diag lines above)"
+    echo "Check: serializer backlog (invalid-phases.txt), the diag breakdown"
+    echo "(no files vs prefix miss vs window miss), and Lintap.log merge lines."
   } | tee "$RESULTS_DIR/summary.txt"
   exit 2
 fi
