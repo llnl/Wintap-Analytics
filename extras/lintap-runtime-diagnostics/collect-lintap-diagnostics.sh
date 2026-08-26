@@ -386,6 +386,15 @@ if [ -r "$LINTAP_LOG" ]; then
   # miss-cause split (miss_producer_dead/alive), and dir-index health
   # (dir_open_*, dir_index_size/evictions) are reviewable at a glance.
   run_shell "$OUTDIR/journal/lintap-file-log-fileops-resolve.txt" "grep -E 'FileOps counters' '$LINTAP_LOG' | awk 'match(\$0, /resolve=\\[[^]]*\\]/) { print substr(\$0, 1, 20), substr(\$0, RSTART, RLENGTH) }' | tail -120"
+  # fop-11 triage views: aggregation health (first_emits/repeats_folded gives
+  # the live fold ratio; cap_bypass and summary_enqueue_fail must stay ~0;
+  # entries bounded) and the P3 sampled sender cost (send_sample_avg_us is
+  # the number that decides any post-fop-11 sender work).
+  run_shell "$OUTDIR/journal/lintap-file-log-fileops-agg.txt" "grep -E 'FileOps counters' '$LINTAP_LOG' | awk 'match(\$0, /agg=\\[[^]]*\\]/) { print substr(\$0, 1, 20), substr(\$0, RSTART, RLENGTH) }' | tail -120"
+  run_shell "$OUTDIR/journal/lintap-file-log-fileops-sender.txt" "grep -E 'FileOps counters' '$LINTAP_LOG' | awk 'match(\$0, /sender=\\[[^]]*\\]/) { print substr(\$0, 1, 20), substr(\$0, RSTART, RLENGTH) }' | tail -120"
+  # Esper/EPL health: a silently failed file.epl compile/deploy would break
+  # File serialization while every sensor counter still looks healthy.
+  run_shell "$OUTDIR/journal/lintap-file-log-esper-errors.txt" "grep -iE 'esper|epl|statement' '$LINTAP_LOG' | grep -iE 'warn|error|fail|exception' | tail -100"
   run_shell "$OUTDIR/journal/lintap-file-log-process-retention.txt" "grep -E 'ProcessResolver.*(retention|maintenance metrics|deleted .*telemetry)' '$LINTAP_LOG' | tail -200"
   run_shell "$OUTDIR/journal/lintap-file-log-warnings-errors.txt" "grep -E '\\[(Warn|Error)\\]|[[:space:]](Warn|Error):' '$LINTAP_LOG' | tail -200"
 else
@@ -667,6 +676,57 @@ UNION ALL
 SELECT 'process_retention_telemetry' AS table_name, count(*) AS rows FROM process_retention_telemetry;
 "
 
+# fop-11 Esper/parquet output sanity: verify the file.epl composition change
+# end-to-end. Under load, sum(eventCount) exceeding row count proves
+# aggregation composed through Esper; firstSeen/lastSeen must be sane
+# FileTime values (no zeros). On a pre-fop-11 build the eventCount query
+# fails with a column error — that failure is itself informative.
+collect_fileops_parquet_sanity() {
+  local out_file="$OUTDIR/duckdb/fileops-parquet-sanity.txt"
+  if [ -z "${DUCKDB_BIN:-}" ]; then
+    printf 'duckdb CLI not found\n' >"$out_file"
+    return
+  fi
+
+  local file_list
+  file_list=$(find "$DATA_ROOT/parquet" -type f -iname '*file*.parquet' -mmin -360 -printf '%T@ %p\n' 2>/dev/null \
+    | sort -nr | head -20 | cut -d' ' -f2- \
+    | awk '{ gsub(/'\''/, "'\'''\''"); printf "'\''%s'\'',", $0 }' | sed 's/,$//')
+  if [ -z "$file_list" ]; then
+    printf 'no recent File parquet found under %s/parquet (last 6h)\n' "$DATA_ROOT" >"$out_file"
+    return
+  fi
+
+  {
+    printf 'files (newest 20, last 6h):\n%s\n\n' "$file_list" | tr ',' '\n'
+    printf -- '--- fop-11 composition check ---\n'
+    timeout 60 "$DUCKDB_BIN" -c "
+.mode markdown
+WITH data AS (SELECT * FROM read_parquet([$file_list], union_by_name=true))
+SELECT count(*) AS rows,
+       sum(eventCount) AS raw_events,
+       sum(CASE WHEN eventCount > 1 THEN 1 ELSE 0 END) AS aggregated_rows,
+       max(eventCount) AS max_event_count,
+       sum(bytesRequested) AS bytes_total,
+       min(firstSeen) AS min_first_seen,
+       max(lastSeen) AS max_last_seen,
+       sum(CASE WHEN firstSeen IS NULL OR firstSeen <= 0 THEN 1 ELSE 0 END) AS zero_first_seen_rows
+FROM data;
+"
+    printf -- '\n--- basic shape (works on any build) ---\n'
+    timeout 60 "$DUCKDB_BIN" -c "
+.mode markdown
+WITH data AS (SELECT * FROM read_parquet([$file_list], union_by_name=true))
+SELECT count(*) AS rows, count(DISTINCT path) AS distinct_paths,
+       min(firstSeen) AS min_first_seen, max(lastSeen) AS max_last_seen
+FROM data;
+"
+  } >"$out_file" 2>&1
+}
+
+log "Collecting FileOps parquet output sanity"
+collect_fileops_parquet_sanity
+
 log "Creating summary"
 cat >"$OUTDIR/SUMMARY.txt" <<EOF
 Lintap runtime diagnostics collected at $TIMESTAMP UTC
@@ -679,6 +739,11 @@ Key files to inspect first:
   runtime/fork-rate.txt
   journal/lintap-file-log-fileops.txt
   journal/lintap-file-log-fileops-counters.txt
+  journal/lintap-file-log-fileops-agg.txt
+  journal/lintap-file-log-fileops-sender.txt
+  journal/lintap-file-log-fileops-resolve.txt
+  journal/lintap-file-log-esper-errors.txt
+  duckdb/fileops-parquet-sanity.txt
   filesystem/install-tracers-sha256.txt
   runtime/bpftool-prog-show.txt
   runtime/bpftool-map-show.txt

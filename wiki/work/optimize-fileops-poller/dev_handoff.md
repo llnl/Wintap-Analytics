@@ -198,6 +198,14 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     parallel slices remain available: fop-13c (mnt_ns index keying), F2/F4
     hardening (comparator matcher count-consumption; more DIR_OPEN tests).
 
+    Process constraint (policy, 2026-08-25): the field-side clone is
+    READ-ONLY — no commits from that system. Field bundle reviews come back
+    as summaries and are transcribed into verification.md/log.md on the
+    dev side by the wiki maintainer. Design diagnostics extraction so the
+    collector bundle itself carries everything a review needs (that is what
+    the agg=/sender=/resolve= triage extracts, the esper-errors extract, and
+    duckdb/fileops-parquet-sanity.txt are for).
+
     fop-11 scope (amended direction, 2026-08-25, still blocked): short-interval aggregation
     to the (pid, path, op) level with repeat count, grouped totals (bytes
     etc.), and min/max timestamps — acceptable for ALL op classes. Emit-first

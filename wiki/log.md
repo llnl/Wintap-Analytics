@@ -959,3 +959,23 @@ index.md footer refreshed to the current feature state. Wiki now carries the
 complete fop-12/fop-13 record: gap analysis, implementation, field feedback,
 review-finding dispositions, closeout, and the fop-11 local slice.
 Pages updated: `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.
+
+## [2026-08-25] maintenance | collector carries the full fop-11 acceptance evidence; field-side read-only policy recorded
+
+Human direction: the field-side clone stays read-only (policy) — no commits
+from that system; bundle reviews continue arriving as summaries and are
+transcribed here. Consequence: the diagnostics bundle must carry everything a
+review needs. `collect-lintap-diagnostics.sh` extended accordingly:
+timestamped `agg=[...]` and `sender=[...]` triage extracts (fold ratio,
+cap_bypass/summary_enqueue_fail health, P3 send_sample_avg_us), an
+esper-errors extract (a silently failed file.epl deploy would break File
+output while sensor counters look healthy), and
+`duckdb/fileops-parquet-sanity.txt` — newest File parquet queried for
+rows vs sum(eventCount) (composition proof), aggregated-row count,
+firstSeen/lastSeen sanity, and zero-firstSeen rows, with a build-agnostic
+fallback query. Validated: bash -n, awk extracts against synthetic log
+lines, and the sanity SQL against synthetic parquet (3 rows → 6 raw events,
+1 aggregated row). SUMMARY.txt key-files list updated. A rerun of the
+collector on the field host now yields the remaining fop-11 acceptance
+evidence except the A/B differential (which needs the kill-switch run).
+Pages updated: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`; `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
