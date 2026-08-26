@@ -48,7 +48,7 @@ def main() -> int:
     # Background noise outside the prefix, both phases.
     rows.append((999, "/var/unrelated/background.log", "Write", 1, ft))
 
-    out_dir = Path(args.data_root) / "parquet"
+    out_dir = Path(args.data_root) / "raw_sensor" / "raw_process_file"
     out_dir.mkdir(parents=True, exist_ok=True)
     out = out_dir / f"raw-File-sim-{args.phase}-{ft}.parquet"
 

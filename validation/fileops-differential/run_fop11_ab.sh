@@ -53,7 +53,7 @@ die() { echo "FATAL: $*" >&2; exit 4; }
 if [ -n "$SIMULATE_DIR" ]; then
   DATA_ROOT="$SIMULATE_DIR/dataroot"
   ENV_FILE="$SIMULATE_DIR/lintap.env"
-  mkdir -p "$DATA_ROOT/parquet" "$SIMULATE_DIR"
+  mkdir -p "$DATA_ROOT/raw_sensor/raw_process_file" "$SIMULATE_DIR"
   touch "$ENV_FILE"
 else
   [ "$(id -u)" -eq 0 ] || die "must run as root (parquet under the data root is root-readable only)"
@@ -114,8 +114,11 @@ filetime_now() {
 }
 
 serializer_drop_lines() {
-  [ -r "$LINTAP_LOG" ] || { echo 0; return; }
-  grep -ci 'serializer.*dropped=' "$LINTAP_LOG" 2>/dev/null || echo 0
+  # NB: grep -c prints "0" AND exits nonzero on no match, so a trailing
+  # "|| echo 0" would emit a second line and break -gt comparisons.
+  local n
+  n=$(grep -ci 'serializer.*dropped=' "$LINTAP_LOG" 2>/dev/null)
+  echo "${n:-0}"
 }
 
 set_agg() { # $1 = false|true
@@ -163,8 +166,9 @@ harvest() { # $1 = phase, $2 = start_filetime, $3 = end_filetime
     count=$("${PYRUN[@]}" - "$DATA_ROOT" "$WORK_DIR" "$start_ft" "$end_ft" "$out" <<'PYEOF'
 import duckdb, glob, sys
 data_root, prefix, start_ft, end_ft, out = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5]
-files = [f for f in glob.glob(f"{data_root}/**/*.parquet", recursive=True)
-         if "file" in f.rsplit("/", 1)[-1].lower()]
+# File events only: other event types under the data root lack a 'path'
+# column and would poison the union (binder error on the WHERE clause).
+files = glob.glob(f"{data_root}/raw_sensor/raw_process_file/**/*.parquet", recursive=True)
 if not files:
     print(0)
     raise SystemExit(0)
