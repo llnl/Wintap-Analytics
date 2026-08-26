@@ -74,12 +74,21 @@ COMPARATOR="$SCRIPT_DIR/compare_fileops.py"
 [ -r "$COMPARATOR" ] || die "comparator not found: $COMPARATOR"
 
 # Python-with-duckdb runner: prefer uv, fall back to system python3.
-if command -v uv >/dev/null 2>&1; then
-  PYRUN=(uv run --with duckdb python3)
+# Under sudo, root's secure_path usually lacks the invoking user's
+# ~/.local/bin — discover their uv binary explicitly.
+UV_BIN=$(command -v uv 2>/dev/null || true)
+if [ -z "$UV_BIN" ] && [ -n "${SUDO_USER:-}" ]; then
+  for cand in "/home/$SUDO_USER/.local/bin/uv" "/home/$SUDO_USER/.cargo/bin/uv"; do
+    [ -x "$cand" ] && { UV_BIN=$cand; break; }
+  done
+fi
+if [ -n "$UV_BIN" ]; then
+  log "using uv: $UV_BIN"
+  PYRUN=("$UV_BIN" run --with duckdb python3)
 elif python3 -c 'import duckdb' 2>/dev/null; then
   PYRUN=(python3)
 else
-  die "need either uv or python3 with the duckdb package"
+  die "need uv (not found in PATH or /home/\${SUDO_USER}/.local/bin) or python3 with the duckdb package"
 fi
 
 # ---------- helpers ----------
