@@ -1076,3 +1076,14 @@ at close: fop-01..fop-13d complete and field-accepted; fop-11 deployed and
 healthy pending its two gates; fop-14 candidate awaiting decision; deferred
 future tasks unchanged (Mmap activity type, OSS sensor survey).
 Pages updated: `work/optimize-fileops-poller/{dev_handoff,verification,implementation_plan}.md`; `index.md`; `log.md`.
+
+## [2026-08-26] code | comparator gains cross-run A/B flags for the fop-11 gate
+
+Pre-A/B gap found: the comparator keyed tuples by (pid, path, op), so two
+separate executions (different PIDs, different background activity) could
+never compare cleanly. Added --ignore-pid (collapse the pid key) and
+--path-prefix (restrict to the deterministic workload's work dir), verified
+with a synthetic cross-run scenario (fails without the flags, clean with
+them). The fop-11 kill-switch A/B procedure uses both flags with the SAME
+work-dir path for both runs so workload paths are identical across runs.
+Pages updated: `validation/fileops-differential/compare_fileops.py`; `log.md`.

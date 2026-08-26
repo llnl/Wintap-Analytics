@@ -129,7 +129,7 @@ def match_relative_upgrades(
     return matched, unmatched
 
 
-def load_tuples(parquet_glob: str) -> tuple[Counter[tuple[int, str, str]], Counter[tuple[int, str, str]], Counter[str]]:
+def load_tuples(parquet_glob: str, ignore_pid: bool = False, path_prefix: str | None = None) -> tuple[Counter[tuple[int, str, str]], Counter[tuple[int, str, str]], Counter[str]]:
     connection = duckdb.connect()
     try:
         columns = list_columns(connection, parquet_glob)
@@ -159,10 +159,16 @@ def load_tuples(parquet_glob: str) -> tuple[Counter[tuple[int, str, str]], Count
         path = normalize_path(str(raw_path or ""))
         op = str(raw_op or "").lower()
         weight = max(int(raw_count or 1), 1)
+        # Cross-run A/B: two separate executions have different PIDs and
+        # different background activity; --ignore-pid collapses the pid key
+        # and --path-prefix restricts to the deterministic workload's files.
+        tuple_pid = 0 if ignore_pid else int(pid)
         if is_regular_candidate(path):
-            regular[(int(pid), path, op)] += weight
+            if path_prefix and not path.startswith(path_prefix):
+                continue
+            regular[(tuple_pid, path, op)] += weight
         elif is_relative_candidate(path):
-            relative[(int(pid), path, op)] += weight
+            relative[(tuple_pid, path, op)] += weight
         else:
             if not path:
                 noise["empty"] += 1
@@ -181,6 +187,19 @@ def main() -> int:
     parser.add_argument("--candidate", required=True, help="Candidate raw_process_file parquet glob")
     parser.add_argument("--json-out", help="Optional summary JSON path")
     parser.add_argument(
+        "--ignore-pid",
+        action="store_true",
+        help="Key tuples by (path, op) only — required for cross-run A/B "
+        "where the two captures come from separate executions with "
+        "different PIDs.",
+    )
+    parser.add_argument(
+        "--path-prefix",
+        help="Only compare regular-file tuples whose normalized path starts "
+        "with this prefix (e.g. the deterministic workload's work dir) — "
+        "excludes unrelated background host activity from a cross-run A/B.",
+    )
+    parser.add_argument(
         "--fail-on-unmatched-relative",
         action="store_true",
         help="Also fail when a baseline relative-path tuple has no candidate "
@@ -189,8 +208,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    baseline, baseline_relative, baseline_noise = load_tuples(args.baseline)
-    candidate, candidate_relative, candidate_noise = load_tuples(args.candidate)
+    baseline, baseline_relative, baseline_noise = load_tuples(args.baseline, args.ignore_pid, args.path_prefix)
+    candidate, candidate_relative, candidate_noise = load_tuples(args.candidate, args.ignore_pid, args.path_prefix)
     missing = baseline - candidate
     added = candidate - baseline
     upgraded_relative, unmatched_relative = match_relative_upgrades(
