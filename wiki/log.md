@@ -979,3 +979,17 @@ lines, and the sanity SQL against synthetic parquet (3 rows → 6 raw events,
 collector on the field host now yields the remaining fop-11 acceptance
 evidence except the A/B differential (which needs the kill-switch run).
 Pages updated: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`; `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] ingest | dev/field workflow promoted to canonical wiki page
+
+Human direction: project context recorded in agent memory (~/.claude) must
+also live in the wiki — the wiki is the shared knowledge base, agent memory
+is a private pointer. Promoted the dev/field process knowledge to
+`wiki/workflow/lintap-dev-field-workflow.md`: the lintap-dev / spk16 split,
+the field-side read-only policy and dev-side transcription process, the
+self-sufficient-diagnostics principle, pull-only deploys with on-host tracer
+rebuilds, push mechanics (dev VM has no credentials; the human pushes), and
+the agent-memory mirroring policy itself. The agent memory file now points
+at the wiki page as canonical.
+Pages created: `workflow/lintap-dev-field-workflow.md`.
+Pages updated: `index.md`; `log.md`.
