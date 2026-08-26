@@ -381,6 +381,11 @@ if [ -r "$LINTAP_LOG" ]; then
   run_shell "$OUTDIR/journal/lintap-file-log-recent.txt" "tail -400 '$LINTAP_LOG'"
   run_shell "$OUTDIR/journal/lintap-file-log-fileops.txt" "grep -E 'FileOps.*(loaded eBPF object|sensor started|kernel self PID filter|counters|failed to load|fileops_stats|filter_pids)' '$LINTAP_LOG' | tail -200"
   run_shell "$OUTDIR/journal/lintap-file-log-fileops-counters.txt" "grep -E 'FileOps counters' '$LINTAP_LOG' | tail -80"
+  # fop-13 triage view: timestamp + the resolve=[...] section only, so the
+  # relative-open recovery mix (resolved_fd/dir_index/dirfd/cwd), the
+  # miss-cause split (miss_producer_dead/alive), and dir-index health
+  # (dir_open_*, dir_index_size/evictions) are reviewable at a glance.
+  run_shell "$OUTDIR/journal/lintap-file-log-fileops-resolve.txt" "grep -E 'FileOps counters' '$LINTAP_LOG' | awk 'match(\$0, /resolve=\\[[^]]*\\]/) { print substr(\$0, 1, 20), substr(\$0, RSTART, RLENGTH) }' | tail -120"
   run_shell "$OUTDIR/journal/lintap-file-log-process-retention.txt" "grep -E 'ProcessResolver.*(retention|maintenance metrics|deleted .*telemetry)' '$LINTAP_LOG' | tail -200"
   run_shell "$OUTDIR/journal/lintap-file-log-warnings-errors.txt" "grep -E '\\[(Warn|Error)\\]|[[:space:]](Warn|Error):' '$LINTAP_LOG' | tail -200"
 else

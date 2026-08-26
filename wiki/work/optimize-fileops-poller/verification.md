@@ -1311,3 +1311,99 @@ Milestone reached:
 - `fop-10` moved `fop-11` from “candidate” to “review-ready proposal.” The
   concrete designer-review artifact is
   [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]].
+
+## fop-13a/fop-13b Local Code Slice — 2026-08-25
+
+Implemented the gap-analysis fix ([[wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25]])
+in `../wintap` plus the harness updates in this repo.
+
+Code changes in `../wintap`:
+
+- `file_ops_tracer.bpf.c` (CO-RE tier):
+  - New `FILE_OP_DIR_OPEN=7` internal record class: `O_DIRECTORY` opens are no
+    longer discarded at open-exit; un-flagged opens of directories are also
+    detected via `i_mode` and rerouted to `DIR_OPEN`.
+  - Path records now carry the opened object's `(s_dev, i_ino)` and, for
+    non-`AT_FDCWD` relative opens, the dirfd base directory's `(s_dev, i_ino)`
+    captured at event time.
+  - Compact fd records (read/write/close/mmap) now carry the file's
+    `(s_dev, i_ino)` — `is_regular_fd` was refactored to `fd_to_inode` +
+    `is_regular_fd_info` so identity comes from the traversal the filter
+    already performs (no second fd-table walk).
+  - Open-exit handlers no longer copy the 264-byte `openat_state` to the BPF
+    stack (stack-limit fix found at build time): they read the map value
+    directly and delete the entry after emission (same-thread key ownership).
+- `file_ops_tracepoint.bpf.c` (fallback tier): identity fields added zeroed so
+  the wire format stays identical across tiers; behavior unchanged
+  (`O_DIRECTORY` opens still dropped, no inode reads — documented tier
+  difference).
+- `FileOpsSensor.cs`:
+  - fop-13a: final relative-open misses are now split by cause via one
+    `/proc/<pid>` existence check — `miss_producer_dead` vs
+    `miss_producer_alive`.
+  - fop-13b: global bounded dir-identity index
+    (`(s_dev, i_ino) → absolute dir path`, FIFO-bounded at 16,384 entries,
+    eviction counted) learned from `DIR_OPEN` records; relative `DIR_OPEN`
+    paths resolve through their own fd readlink then the base-dir index.
+    `DIR_OPEN` records never become WintapMessages.
+  - Resolution chain gains the race-free dir-index step between the opened-fd
+    readlink and the `/proc` dirfd fallback:
+    fd readlink → **dir-index by kernel-captured (s_dev, i_ino)** → dirfd
+    readlink → cwd → miss.
+  - New 60s `resolve=[...]` counters: `resolved_dir_index`, `dir_index_miss`,
+    `miss_producer_dead`, `miss_producer_alive`, `dir_open_consumed`,
+    `dir_open_indexed`, `dir_open_unresolved`, `dir_index_size`,
+    `dir_index_evictions`; kernel summary now includes the `dir_open` op class.
+
+Changes in `Wintap-Analytics`:
+
+- `validation/fileops-differential/compare_fileops.py`: relative→absolute
+  upgrade matching. Relative-path tuples (previously invisible noise) are now
+  tracked; a baseline relative tuple matches when the candidate has the same
+  relative tuple or an absolute tuple (same pid+op) ending in `/<relative>`.
+  New summary fields `baseline/candidate/matched/unmatched_relative_tuples`
+  plus samples; `--fail-on-unmatched-relative` opt-in gate (strict
+  absolute-tuple failure behavior unchanged by default).
+- `validation/fileops-differential/fileops_workload.py`: new deterministic
+  dirfd-relative scenario — opens an `O_DIRECTORY` handle and reads a file by
+  relative name through it; manifest records the expected absolute path.
+
+Commands run (lintap-dev VM, arm64; `.bpf.o` artifacts are gitignored and the
+field host rebuilds its own):
+
+```bash
+cd ../wintap/wintap/platform/linux/sensor/ebpf/tracers && make clean && make
+cd ../wintap && dotnet build wintap/Lintap.csproj
+cd ../wintap && dotnet test tests/Wintap.Tests/Wintap.Tests.csproj \
+  --filter "FullyQualifiedName~ProcessResolverTests|FullyQualifiedName~WintapMessageTests|FullyQualifiedName~ProcessTreeRecoveryGapTests"
+python3 -m py_compile validation/fileops-differential/compare_fileops.py validation/fileops-differential/fileops_workload.py
+uv run --with duckdb python <synthetic comparator scenarios>
+python3 validation/fileops-differential/fileops_workload.py --files 2 --rounds 2 ...
+```
+
+Results:
+
+- Tracer `make clean && make` passed for both tiers after the stack-limit fix
+  (first build attempt failed with "BPF stack limit exceeded" in the open-exit
+  handlers; resolved by eliminating the on-stack `openat_state` copy).
+- `dotnet build wintap/Lintap.csproj` passed with existing warnings, `0` errors.
+- Linux-relevant test classes passed `10/10`. Known pre-existing failures on
+  this Linux/arm64 host (verified present without this change via stash):
+  `WindowsProcessSidExtractionTests` and Windows-path-expectation cases in
+  `WindowsProcessSensorTests`/`RuntimeDataRootTests`.
+- Comparator synthetic scenarios passed: upgrade-matched rc=0, lost-relative
+  report-only rc=0 with `unmatched_relative_tuples=1`, lost-relative gated
+  rc=1, missing-regular still rc=1.
+- Workload smoke run produced the `dirfd_relative` manifest section.
+
+Pending field validation (acceptance per the gap analysis):
+
+- Rebuild tracers on the RHEL8 field host, deploy, and capture bundles.
+- `relative_open_resolve_miss` drops by an order of magnitude vs. the
+  20260825T234559Z baseline (~8k/min), with the residual explained by
+  `dir_index_miss`; `(relative)` leaves the top-5 prefix buckets.
+- `miss_producer_dead` share confirms (or corrects) the producer-lifetime
+  diagnosis from fop-13a data.
+- `ring_fail_total` stays 0 and queue drops do not regress with `dir_open`
+  volume measured via the new `dir_open` kernel/user counters.
+- A/B differential rerun including the dirfd-relative workload scenario.

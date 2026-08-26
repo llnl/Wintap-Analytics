@@ -38,6 +38,32 @@ def main() -> int:
             path.unlink()
             manifest["files"].append(str(path))
 
+    # fop-13 scenario: dirfd-relative opens through an explicit O_DIRECTORY
+    # handle. The DIR_OPEN record teaches the sensor's dir-identity index and
+    # the relative opens must resolve to absolute paths under work_dir.
+    rel_dir = work_dir / "relbase"
+    rel_dir.mkdir(exist_ok=True)
+    rel_target = rel_dir / "relative-target.dat"
+    rel_target.write_bytes(payload)
+    dir_fd = os.open(str(rel_dir), os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        for _ in range(args.rounds):
+            fd = os.open("relative-target.dat", os.O_RDONLY, dir_fd=dir_fd)
+            try:
+                os.read(fd, 64)
+            finally:
+                os.close(fd)
+        manifest["files"].append(str(rel_target))
+        manifest["dirfd_relative"] = {
+            "base_dir": str(rel_dir),
+            "relative_name": "relative-target.dat",
+            "expected_absolute": str(rel_target),
+        }
+    finally:
+        os.close(dir_fd)
+        rel_target.unlink()
+        rel_dir.rmdir()
+
     # Negative/noise cases: these should not be required in regular-file parity.
     try:
         Path("/proc/self/stat").read_text(encoding="utf-8")

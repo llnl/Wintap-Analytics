@@ -71,6 +71,25 @@ to safely aggregate on `(pid, path, op)`. Treat `fop-11` as still blocked.
 Milestone closeout + next-fix hypotheses are captured in
 [[wiki/work/optimize-fileops-poller/milestone-2026-08-25-phase2-wrapup]].
 
+**Gap analysis complete (2026-08-25):** the miss floor is diagnosed as
+structural — all fop-12 fallbacks are decode-time `/proc` reads racing
+millisecond-lived producers (`dirfd_lookup_miss ≈ relative_open_resolve_miss`
+proves both readlinks die together), and the tracer discards the
+`O_DIRECTORY` opens that would teach userspace what dirfds point at. The fix
+is **fop-13**: a measurement micro-slice (13a), then kernel-time directory
+identity + file dev:ino in one record-format slice (13b), after which fop-11
+unblocks on the dev:ino aggregation key independent of the residual path
+tail. Full analysis, ranked fixes, non-fixes, and acceptance criteria:
+[[wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25]].
+
+**fop-13 implemented locally (2026-08-25):** both slices are coded, built,
+and locally tested — DIR_OPEN records, the dir-identity index, file/dirfd
+(s_dev, i_ino) emission, the miss-cause split, comparator upgrade matching,
+the dirfd-relative workload scenario, and a `resolve=` triage extract in the
+diagnostics collector. See verification.md §fop-13a/fop-13b Local Code Slice.
+**Next: rebuild tracers on the RHEL8 field host, deploy, and run the
+acceptance measurements** against the 20260825T234559Z baseline.
+
 ## Copy/Paste Prompt
 
 Use this prompt to hand the work to a code-development or deep-analysis agent:
@@ -126,20 +145,37 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     loss signal is the bounded userspace sender queue under some load phases.
     fop-08 full acceptance still owes a differential-harness rerun.
 
-    Goal for the next pass: treat fop-12 as partially successful but still
-    incomplete, and do not start fop-11 until the remaining relative/openat
-    identity gap is addressed. Use the milestone wrap-up page plus
-    verification.md to decide the next narrow design step.
+    Goal for the next pass: fop-13 is implemented locally (2026-08-25) —
+    deploy it and run the field acceptance. Read
+    wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25.md for
+    the diagnosis and acceptance criteria, and verification.md
+    §fop-13a/fop-13b Local Code Slice for exactly what landed.
 
-    fop-12 current state (precondition): base R1, the `fd=0` fix, and the
-    `dirfd`/`cwd` follow-on are all implemented. The latest evidence says the
-    dominant remaining unresolved class is non-`AT_FDCWD` relative opens whose
-    base directory fd path cannot be recovered cheaply enough in userspace by
-    decode time. The next step is no longer "implement fop-12" but "design the
-    next narrow fix for the unresolved path-identity floor." Read the
-    milestone wrap-up page and verification.md first. Keep the existing human
-    decisions: do NOT canonicalize absolute-path opens, and keep A4 (distinct
-    `Mmap`) out of this pass.
+    Deployment steps (RHEL8 field host):
+    1. Rebuild tracers ON THE HOST (make clean && make in
+       wintap/platform/linux/sensor/ebpf/tracers — .bpf.o objects are
+       gitignored; never deploy objects built elsewhere) and rebuild/install
+       Lintap.
+    2. Run the deterministic workload (now includes the dirfd-relative
+       scenario) and collect a short smoke bundle, then a longer bundle.
+       The collector now emits journal/lintap-file-log-fileops-resolve.txt
+       with a timestamped resolve=[...] triage view.
+
+    Acceptance vs the 20260825T234559Z baseline (~8k relative misses/min):
+    1. relative_open_resolve_miss drops by an order of magnitude, with the
+       residual explained by dir_index_miss.
+    2. (relative) leaves the top-5 prefix_top buckets.
+    3. miss_producer_dead/alive confirms (or corrects) the producer-lifetime
+       diagnosis — record the split either way.
+    4. ring_fail_total stays 0; queue drops do not regress; dir_open volume
+       is measured via the new dir_open kernel/user counters.
+    5. A/B differential rerun; use --fail-on-unmatched-relative for the
+       dirfd-relative scenario's tuples.
+
+    fop-11 unblocks after fop-13b field acceptance via the dev:ino key
+    (split contract for identity-less rows), independent of the residual
+    path-quality tail. Keep the existing human decisions: do NOT canonicalize
+    absolute-path opens, and keep A4 (distinct `Mmap`) out of this pass.
 
     fop-11 scope (amended direction, 2026-08-25, still blocked): short-interval aggregation
     to the (pid, path, op) level with repeat count, grouped totals (bytes

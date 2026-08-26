@@ -828,3 +828,62 @@ work, strongest supporting evidence, and the best current fix hypotheses for
 the next design pass.
 Pages created: `work/optimize-fileops-poller/milestone-2026-08-25-phase2-wrapup.md`.
 Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.
+
+## [2026-08-25] analysis | fop-12 gap diagnosed; fop-13 fix designed
+
+Reviewed the deployed fop-12 work in `../wintap` (commit "Complete fop-12
+path recovery") and the milestone evidence. Diagnosis: the ~8k/min
+`relative_open_resolve_miss` floor is structural — all fop-12 fallbacks
+(opened-fd readlink, cwd, dirfd readlink) read decode-time `/proc` state
+while the dominant relative-open producers (`sed`, `awk`, `sh`, `rpm`
+helpers) live milliseconds; `dirfd_lookup_miss ≈ relative_open_resolve_miss`
+proves both readlinks die together. Structural root cause in the tracer:
+O_DIRECTORY opens are discarded at open-exit (the records that would teach
+userspace dirfd→path) and directory-fd closes are dropped by is_regular_fd
+(so any dirfd knowledge must be identity-keyed, not (pid,fd)-keyed).
+Fix recorded as fop-13 in `work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25.md`:
+fop-13a miss-cause counter split (measurement-first), fop-13b kernel-time
+identity in one record-format slice — dirfd (s_dev,i_ino) stamping, internal
+DIR_OPEN records feeding a global (s_dev,i_ino)→dir-path LRU index, and file
+dev:ino emission (approved A3) so fop-11 can aggregate on (pid, dev:ino, op)
+independent of path quality. Non-fixes recorded (latency shaving, more cwd,
+retro-resolution). fop-11 unblocks on the dev:ino track after fop-13b.
+Pages created: `work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25.md`.
+Pages updated: `work/optimize-fileops-poller/{implementation_plan,dev_handoff}.md`; `index.md`; `log.md`.
+
+## [2026-08-25] code | fop-13a/fop-13b implemented locally
+
+Files changed in `../wintap`: `FileOpsSensor.cs`, `file_ops_tracer.bpf.c`,
+`file_ops_tracepoint.bpf.c`. Files changed in this repo:
+`validation/fileops-differential/{compare_fileops.py,fileops_workload.py}`.
+Implemented per the gap analysis: DIR_OPEN internal records (O_DIRECTORY opens
+no longer discarded; un-flagged directory opens detected via i_mode), file and
+dirfd (s_dev, i_ino) captured in-kernel at event time, a global bounded
+dir-identity index in userspace giving a race-free resolution step that works
+after producer exit, miss-cause counter split (producer-dead vs alive), new
+resolve/dir_open counters in the 60s log, comparator relative→absolute upgrade
+matching with an opt-in gate, and a deterministic dirfd-relative workload
+scenario. Build-time find: the open-exit handlers hit the BPF stack limit with
+the new locals; fixed by removing the 264-byte openat_state stack copy
+(read map value directly, delete after emit).
+Validation: both tracer tiers build; Lintap builds with 0 errors;
+Linux-relevant test classes 10/10 (Windows-specific test failures verified
+pre-existing on this host); comparator synthetic scenarios 4/4; workload smoke
+run clean. Field deployment, counter baselining vs 20260825T234559Z, and the
+A/B differential remain pending (RHEL8 host rebuilds its own .bpf.o — objects
+are gitignored).
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.
+
+## [2026-08-25] maintenance | diagnostics resolve-triage extract + fop-13 handoff refresh
+
+`extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh` now emits
+`journal/lintap-file-log-fileops-resolve.txt` — a timestamped extract of just
+the `resolve=[...]` counter section so the fop-13 recovery mix, miss-cause
+split, and dir-index health are reviewable at a glance (the full counter lines
+were already captured; awk extraction verified against a synthetic log line;
+`bash -n` passed). `dev_handoff.md` refreshed: fop-13 marked implemented
+locally, copy/paste prompt retargeted from "implement fop-13" to "deploy on
+the RHEL8 host and run field acceptance," including the rebuild-on-host rule
+for the gitignored .bpf.o objects and the acceptance checklist vs the
+20260825T234559Z baseline.
+Pages updated: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`; `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.

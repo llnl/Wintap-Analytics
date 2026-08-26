@@ -303,7 +303,39 @@ fop-07 remains open from phase 1):
       rationale. Local code/build, deployment, and field validation are now
       complete and recorded; acceptance is still pending because the remaining
       `relative_open_resolve_miss` floor and `(relative)` bucket are too large
-      for safe aggregation keys.
+      for safe aggregation keys. Root cause of the floor diagnosed 2026-08-25:
+      all fallbacks are decode-time `/proc` reads racing millisecond-lived
+      producers — see [[wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25]];
+      the fix is fop-13.
+- [x] fop-13a — miss-cause counter split: final relative-open misses now split
+      into `miss_producer_dead` vs `miss_producer_alive` via one `/proc/<pid>`
+      existence check (2026-08-25 local code slice; field data pending —
+      deployed counters will validate the producer-lifetime diagnosis).
+- [ ] fop-13b — kernel-time directory identity + file dev:ino (one slice,
+      shared record-format change; CO-RE tier): (1) stamp non-`AT_FDCWD`
+      relative-open path records with the dirfd's `(s_dev, i_ino)` (same fdt
+      traversal `is_regular_fd` already runs); (2) stop discarding
+      `O_DIRECTORY` opens — emit them as internal `DIR_OPEN` records (no
+      WintapMessage) feeding a global bounded LRU index
+      `(s_dev, i_ino) → absolute dir path`, giving a race-free resolution
+      step that works after producer exit; (3) emit the opened file's
+      `(s_dev, i_ino)` on open and fd records (approved A3) so fop-11 can key
+      aggregation on `(pid, dev:ino, op)` independent of path quality. New
+      counters: `resolved_dir_index`, `dir_index_miss`, `dir_open_emitted`.
+      Acceptance: order-of-magnitude drop in `relative_open_resolve_miss` vs
+      the 20260825T234559Z baseline (~8k/min), `(relative)` out of top-5
+      prefixes, ring/queue health unchanged, comparator gains a
+      relative→absolute matching mode for the transition. Full analysis and
+      non-fixes: [[wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25]].
+      fop-11 unblocks on the dev:ino track (with the split contract for
+      identity-less rows) once fop-13b is deployed, independent of the
+      residual path-quality tail.
+      **Local code slice built 2026-08-25:** DIR_OPEN records + dir-identity
+      index + file/dirfd (s_dev, i_ino) emission + comparator upgrade matching
+      and dirfd-relative workload scenario are all implemented; both tracer
+      tiers and Lintap build clean, Linux-relevant tests and comparator
+      synthetic scenarios pass. Field deployment/acceptance pending — see
+      verification.md §fop-13a/fop-13b Local Code Slice.
 
 ### Phase-2 future tasks (not slices yet)
 

@@ -119,6 +119,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]] | medium | Phase-2 root-cause analysis of sustained FileOps ring-buffer loss: ~778 events/s reserve failures traced to the single-threaded consumer's per-event DuckDB query under a global lock plus synchronous Esper send, with ranked no-loss next slices (fop-08 decoupling front-runner) and answers to the four handoff questions. |
 | [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]] | medium | Concrete designer-review proposal for the gated fop-11 step: emit-first short-interval aggregation of repeat `open` / `openat` activity, based on fop-10 duplicate-open evidence and paired with a revised count-conservation differential contract. |
 | [[wiki/work/optimize-fileops-poller/milestone-2026-08-25-phase2-wrapup]] | medium | Phase-2 milestone closeout: summarizes what landed, the strongest deployed evidence, why fop-12 is still not accepted, and the best current next-fix hypotheses for the design follow-up. |
+| [[wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25]] | medium | Root-cause diagnosis of the fop-12 relative-open miss floor (decode-time /proc reads racing millisecond-lived producers; O_DIRECTORY opens discarded in-kernel) with the ranked fop-13 fix: kernel-time directory identity index plus file dev:ino as the fop-11 aggregation key. |
 
 ---
 
