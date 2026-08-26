@@ -993,3 +993,16 @@ the agent-memory mirroring policy itself. The agent memory file now points
 at the wiki page as canonical.
 Pages created: `workflow/lintap-dev-field-workflow.md`.
 Pages updated: `index.md`; `log.md`.
+
+## [2026-08-25] handoff | bundle reviewer prompt added for the fop-11 collector
+
+The field-side reviewer's guidance predated the collector update, so a
+dedicated reviewer prompt was added to dev_handoff.md (§Bundle Reviewer
+Prompt): maps each new bundle file to its acceptance question with expected
+healthy values — agg fold ratio (50-80% expected under load) and health
+counters, P3 sender headroom arithmetic, queue deltas vs fop-13-era bundles,
+resolve regression bounds, the esper-errors stop-ship rule, and the
+parquet-sanity composition proof (raw_events > rows; the eventCount
+column-error signature identifies a pre-fop-11 build). Output contract:
+transcription-ready summary statistics only, per the read-only field policy.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.

@@ -104,6 +104,61 @@ See verification.md §fop-11 Local Code Slice. **Next: deploy on the RHEL8
 host (no tracer changes this slice — Lintap rebuild/install only) and run
 the fop-11 field acceptance below.**
 
+## Bundle Reviewer Prompt (fop-11 collector, 2026-08-25)
+
+Use this prompt for the field-side reviewer processing bundles produced by
+the updated `collect-lintap-diagnostics.sh`. The reviewer runs on the
+read-only field host: output must be a transcription-ready summary
+(summary statistics, ranges, and deltas only — no raw event payloads).
+
+    You are reviewing a Lintap runtime diagnostics bundle on the read-only
+    field host. Produce a summary suitable for dev-side transcription into
+    the wiki: bundle id, lintap_pid, installed hashes, then findings as
+    summary statistics only (counts, rates, ranges, per-interval deltas).
+    Do not include raw event data or file contents beyond counter lines.
+
+    Review these bundle files, each against its question:
+
+    1. journal/lintap-file-log-fileops-agg.txt — aggregation health.
+       Report: enabled/window_ms; the fold ratio per interval
+       (repeats_folded / (first_emits + repeats_folded)) and its range
+       (expectation from fop-10: roughly 50-80% during load);
+       cap_bypass and summary_enqueue_fail (both must be 0 or near-0 —
+       nonzero is a finding); entries trend across the bundle (bounded,
+       not ratcheting); bytes_clamped (nonzero is worth noting).
+    2. journal/lintap-file-log-fileops-sender.txt — P3 sender cost.
+       Report the send_sample_avg_us range and samples count. Sanity-check
+       headroom: (first_emits + summaries) per interval / 60 gives the
+       sender's required events/s; compare against 1e6/send_sample_avg_us
+       as its approximate capacity. State the margin.
+    3. Queue section of the counters lines — depth, high_water, drops vs
+       capacity, compared against the fop-13-era bundles (high_water was
+       27k-44k in the first fop-11 bundles vs ~437k pre-aggregation).
+       Any nonzero drops= is a finding.
+    4. journal/lintap-file-log-fileops-resolve.txt — path identity must not
+       regress: miss levels (0-131/min range expected), resolved_dir_index
+       share, miss_producer_dead/alive split, dir_index size/evictions.
+    5. journal/lintap-file-log-esper-errors.txt — MUST contain no file.epl
+       compile/deploy failures. Any Esper statement error here is a
+       stop-ship finding: it means File serialization may be broken while
+       every sensor counter still looks healthy.
+    6. duckdb/fileops-parquet-sanity.txt — the end-to-end composition
+       proof. Healthy: raw_events > rows under load (sum(eventCount)
+       exceeding row count proves aggregation composed through Esper);
+       aggregated_rows > 0; zero_first_seen_rows = 0; min_first_seen and
+       max_last_seen are plausible current FileTime values. If the
+       composition query fails with an eventCount column error, the
+       deployed build predates fop-11 — report that prominently.
+    7. kernel=[...] — ring_fail_total must stay 0 for all op classes;
+       report dir_open emitted volume.
+
+    Close with: overall verdict (healthy / findings / stop-ship), the two
+    or three numbers the dev side must record verbatim, and what the next
+    most useful capture would be.
+
+The A/B differential (kill-switch run) is a separate procedure — see the
+code-development prompt below.
+
 ## Copy/Paste Prompt
 
 Use this prompt to hand the work to a code-development or deep-analysis agent:
