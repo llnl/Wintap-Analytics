@@ -8,16 +8,17 @@
 # count-conserving comparator. Leaves the service running with aggregation
 # ON regardless of outcome.
 #
-# Upload adapters (S3 etc.) are disabled in the deployed ETLConfig.json for
-# the duration of the run and restored on exit: delete-after-upload removes
-# raw_sensor parquet moments after doMerge materializes it, and startup
-# clearRawSensor() wipes the tree on every restart while an adapter is
-# enabled — either one races the harvest to the data.
+# The upload cycle (delete-after-upload + startup clearRawSensor wipe) races
+# the harvest to the data, so WINTAP_ETL_UPLOAD_INTERVAL_SEC is set huge for
+# the run: no upload, no delete — and no doMerge either, so rows never reach
+# raw_sensor/. The harvest therefore reads the serializer flush files
+# (process_file-<filetime>.parquet, written every SerializationIntervalSec)
+# directly, plus raw_sensor/raw_process_file for anything already merged.
 #
 # Usage (as root on the field host):
 #   ./run_fop11_ab.sh [--work-dir DIR] [--files N] [--rounds N]
 #                     [--dir-churn N] [--data-root DIR] [--results-dir DIR]
-#                     [--harvest-timeout SEC] [--etl-config PATH]
+#                     [--harvest-timeout SEC]
 #
 # Exit codes: 0 = PASS, 1 = comparator FAIL, 2 = vacuous/no data,
 #             3 = run invalid (serializer backlog during a phase),
@@ -35,12 +36,10 @@ HARVEST_TIMEOUT=600
 SIMULATE_DIR=""
 ENV_FILE=/etc/lintap/lintap.env
 AGG_FLAG_LINE='WINTAP_FILEOPS_AGG_ENABLED=false'
-ETL_CONFIG=""
-ETL_CONFIG_BACKUP=""
-INTERVAL_ADDED=0
-# Merge cadence during the test: doMerge() is what moves serializer flush
-# files into raw_sensor/, and it runs once per upload interval (default 300s).
-INTERVAL_LINE='WINTAP_ETL_UPLOAD_INTERVAL_SEC=60'
+# Effectively-never upload cadence: parks merge+upload+delete for the whole
+# run so serializer flush files (and any merged raw_sensor files) survive
+# until harvest. Removed (and any pre-existing override restored) on exit.
+INTERVAL_LINE='WINTAP_ETL_UPLOAD_INTERVAL_SEC=86400'
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -51,7 +50,6 @@ while [ $# -gt 0 ]; do
     --data-root) DATA_ROOT=${2:?}; shift 2 ;;
     --results-dir) RESULTS_DIR=${2:?}; shift 2 ;;
     --harvest-timeout) HARVEST_TIMEOUT=${2:?}; shift 2 ;;
-    --etl-config) ETL_CONFIG=${2:?}; shift 2 ;;
     --simulate) SIMULATE_DIR=${2:?}; shift 2 ;;  # internal: fixture-driven plumbing test
     -h|--help) grep '^#' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) echo "unknown arg: $1" >&2; exit 4 ;;
@@ -120,48 +118,17 @@ else
 fi
 
 # ---------- uploader quiesce ----------
-# With any upload adapter enabled, the sensor deletes raw_sensor parquet
-# after successful upload AND wipes the whole tree at startup — both race
-# the harvest. Disable adapters for the run; cleanup restores them.
+# Park the upload cycle for the whole run (takes effect at the first
+# restart). Any pre-existing override is saved and restored on exit.
 
 if [ -z "$SIMULATE_DIR" ]; then
-  if [ -z "$ETL_CONFIG" ]; then
-    # ETLConfig.json lives next to the lintap binary (assembly directory).
-    for tok in $(systemctl show -p ExecStart lintap 2>/dev/null | grep -oE '/[^ ;"]+'); do
-      if [ -f "$(dirname "$tok")/ETLConfig.json" ]; then
-        ETL_CONFIG="$(dirname "$tok")/ETLConfig.json"
-        break
-      fi
-    done
-  fi
-  [ -z "$ETL_CONFIG" ] && ETL_CONFIG=$(find /opt /usr/local /usr/lib -maxdepth 4 -name ETLConfig.json 2>/dev/null | head -1)
-  [ -n "$ETL_CONFIG" ] && [ -f "$ETL_CONFIG" ] || die "cannot locate deployed ETLConfig.json (pass --etl-config PATH); enabled upload adapters would delete parquet before harvest"
-  ENABLED_ADAPTERS=$("$MODERN_PY" -c 'import json,sys;print(",".join(a["Name"] for a in json.load(open(sys.argv[1])).get("Adapters",[]) if a.get("Enabled")))' "$ETL_CONFIG") \
-    || die "cannot parse $ETL_CONFIG"
-  if [ -n "$ENABLED_ADAPTERS" ]; then
-    ETL_CONFIG_BACKUP="$RESULTS_DIR/ETLConfig.json.orig"
-    cp "$ETL_CONFIG" "$ETL_CONFIG_BACKUP" || die "cannot back up $ETL_CONFIG"
-    "$MODERN_PY" - "$ETL_CONFIG" <<'PY' || die "failed to disable adapters in $ETL_CONFIG"
-import json, sys
-path = sys.argv[1]
-with open(path) as f:
-    cfg = json.load(f)
-for adapter in cfg.get("Adapters", []):
-    adapter["Enabled"] = False
-with open(path, "w") as f:
-    json.dump(cfg, f, indent=2)
-PY
-    log "upload adapters disabled for the run: $ENABLED_ADAPTERS (backup: $ETL_CONFIG_BACKUP)"
-  else
-    log "no enabled upload adapters in $ETL_CONFIG — nothing to quiesce"
-  fi
   if grep -q '^WINTAP_ETL_UPLOAD_INTERVAL_SEC=' "$ENV_FILE" 2>/dev/null; then
-    log "WARNING: pre-existing WINTAP_ETL_UPLOAD_INTERVAL_SEC in $ENV_FILE left as-is; merge cadence governs how fast rows reach raw_sensor"
-  else
-    printf '%s\n' "$INTERVAL_LINE" >>"$ENV_FILE"
-    INTERVAL_ADDED=1
-    log "merge cadence override for the run: $INTERVAL_LINE"
+    grep '^WINTAP_ETL_UPLOAD_INTERVAL_SEC=' "$ENV_FILE" >"$RESULTS_DIR/upload-interval.orig"
+    sed -i '/^WINTAP_ETL_UPLOAD_INTERVAL_SEC=/d' "$ENV_FILE"
+    log "saved pre-existing upload-interval override for restore: $(tr '\n' ' ' <"$RESULTS_DIR/upload-interval.orig")"
   fi
+  printf '%s\n' "$INTERVAL_LINE" >>"$ENV_FILE"
+  log "upload cycle parked for the run: $INTERVAL_LINE"
 fi
 
 # ---------- helpers ----------
@@ -226,9 +193,15 @@ import duckdb, glob, sys
 data_root, prefix, start_ft, end_ft, out = sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]), sys.argv[5]
 # File events only: other event types under the data root lack a 'path'
 # column and would poison the union (binder error on the WHERE clause).
-files = glob.glob(f"{data_root}/raw_sensor/raw_process_file/**/*.parquet", recursive=True)
+# With the upload cycle parked, rows sit in serializer flush files
+# (process_file-<filetime>.parquet); anything merged earlier lives under
+# raw_sensor/raw_process_file. Read both; .parquet.active never matches.
+files = sorted(set(
+    glob.glob(f"{data_root}/**/process_file-*.parquet", recursive=True)
+    + glob.glob(f"{data_root}/raw_sensor/raw_process_file/**/*.parquet", recursive=True)
+))
 if not files:
-    print(f"diag: no parquet files under {data_root}/raw_sensor/raw_process_file", file=sys.stderr)
+    print(f"diag: no process_file-*.parquet flush files or raw_sensor/raw_process_file parquet under {data_root}", file=sys.stderr)
     print(0)
     raise SystemExit(0)
 file_list = ", ".join("'" + f.replace("'", "''") + "'" for f in files)
@@ -284,17 +257,17 @@ PYEOF
 }
 
 flush_boundary() {
-  # Wait out one serializer flush (60s cadence) plus one merge cycle (60s
-  # override) so workload rows materialize into raw_sensor/. Deliberately
-  # NOT a restart: shutdown discards the serializer's in-progress .active
-  # file, and startup wipes raw_sensor/ whenever an uploader is enabled.
+  # Wait out one serializer flush (SerializationIntervalSec, 60s) plus
+  # margin so workload rows land in flush files. Deliberately NOT a
+  # restart: shutdown discards the serializer's in-progress .active file,
+  # and startup wipes raw_sensor/ whenever an uploader is enabled.
   if [ -n "$SIMULATE_DIR" ]; then sleep 3; return 0; fi
-  log "flush boundary: waiting 90s for serializer flush + merge cycle"
+  log "flush boundary: waiting 90s for serializer flush"
   sleep 90
 }
 
-# Always leave the host in production config (aggregation ON, uploaders
-# restored, merge cadence restored), even on failure/interrupt.
+# Always leave the host in production config (aggregation ON, upload cadence
+# restored), even on failure/interrupt.
 cleanup() {
   [ -n "$SIMULATE_DIR" ] && return 0
   local changed=0
@@ -303,18 +276,17 @@ cleanup() {
     sed -i "\%^${AGG_FLAG_LINE}\$%d" "$ENV_FILE"
     changed=1
   fi
-  if [ "$INTERVAL_ADDED" -eq 1 ] && grep -q "^${INTERVAL_LINE}\$" "$ENV_FILE" 2>/dev/null; then
-    log "cleanup: removing merge-cadence override"
+  if grep -q "^${INTERVAL_LINE}\$" "$ENV_FILE" 2>/dev/null; then
+    log "cleanup: unparking the upload cycle"
     sed -i "\%^${INTERVAL_LINE}\$%d" "$ENV_FILE"
-    changed=1
-  fi
-  if [ -n "$ETL_CONFIG_BACKUP" ] && [ -f "$ETL_CONFIG_BACKUP" ]; then
-    log "cleanup: restoring upload adapters in $ETL_CONFIG (NB: startup clearRawSensor wipes un-uploaded raw_sensor parquet from the test window)"
-    cp "$ETL_CONFIG_BACKUP" "$ETL_CONFIG" || log "WARNING: restore failed — restore manually from $ETL_CONFIG_BACKUP"
+    if [ -s "$RESULTS_DIR/upload-interval.orig" ]; then
+      cat "$RESULTS_DIR/upload-interval.orig" >>"$ENV_FILE"
+      log "cleanup: restored pre-existing upload-interval override"
+    fi
     changed=1
   fi
   if [ "$changed" -eq 1 ]; then
-    log "cleanup: restarting lintap with production config"
+    log "cleanup: restarting lintap with production config (accumulated test parquet merges and uploads normally)"
     systemctl restart lintap || true
   fi
 }
