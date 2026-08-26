@@ -1046,3 +1046,20 @@ host together with Lintap (mixed deploy misreads mnt_ns). Handoff deploy
 steps and reviewer prompt updated (post-13d eviction/miss decorrelation
 rule).
 Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan,dev_handoff}.md`; `log.md`.
+
+## [2026-08-26] acceptance | fop-13c/fop-13d field-accepted; loss point moves downstream (fop-14 candidate)
+
+Bundle 053404Z transcribed: queue drops 0 throughout, aggregation healthy
+with ~50-66% folding, dir index at the new 65,536 cap with heavy eviction
+churn AND strong resolution (29,469 resolved vs 354 missed in the burst
+minute) — the eviction/miss decorrelation rule is satisfied and fop-13c/13d
+are field-accepted. Late-run residual miss pockets (48-49/min, producer-dead
++ cwd) are the known transient-process class, not index pressure.
+New finding dispositioned as fop-14 candidate (measurement-first): the ETL
+serializer/parquet-writer stage dropped ~63k rows in 3.5 min during the
+heavy window against its 10,000-row default caps — the active end-to-end
+loss point now sits downstream of the sensor, and dedup cannot shrink it
+(Esper output is distinct-group-driven). Owner-resolution warnings noted as
+producer-lifetime residual + log-hygiene item. fop-11 still owes the
+kill-switch A/B and a parquet-sanity bundle.
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.

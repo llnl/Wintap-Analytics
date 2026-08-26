@@ -1663,3 +1663,59 @@ Pending field validation:
   miss impact.
 - `--dir-churn` A/B scenario: hot-base relative opens resolve to absolute
   throughout the flood.
+
+## fop-13c/fop-13d Field Bundle 053404Z — 2026-08-26 (recorded from implementor review summary)
+
+Deployed fop-13c/13d build (`lintap_pid=3638431`), two clean smoke anchors
+(sessions 20260826T050442Z, 20260826T051345Z) plus a heavier mixed workload
+(uv/dbt/git/falcon) from ~10:19 PM local onward.
+
+Sensor-side results — **ACCEPTED for fop-13c/fop-13d**:
+
+- Queue: `drops=0` in every sampled line (10:03-10:34 PM); high_water peaked
+  38,010 vs capacity 524,288 — the queue is no longer the limiter.
+- Aggregation: enabled throughout; `summary_enqueue_fail=0`, `cap_bypass=0`,
+  `bytes_clamped` only single-count blips; substantial folding (e.g.
+  10:13:30 PM `first_emits=31112`, `repeats_folded=59654` — a 66% fold).
+- Sender: mostly 0.3-2.0 ms sampled send; one 17.5 ms outlier at
+  10:13:30 PM with no secondary effects.
+- **Dir index (the fop-13d acceptance evidence): eviction/miss
+  decorrelation confirmed.** Index at the 65,536 cap for most of the run
+  with evictions 50k-139k/interval, yet 10:19:32 PM shows
+  `relative_open_resolved=29469`, `miss=354`, `resolved_dir_index=19485`
+  under active churn — the old 16,384-cap collapse signature
+  (dir_index_miss ≈ total miss) did not recur.
+- Late-run residual: brief pockets at 10:32-10:33 PM (miss 48-49/min,
+  entirely `cwd_lookup_miss` + `miss_producer_dead`) — producer-lifetime
+  races on AT_FDCWD opens, not index pressure; recovered by 10:34.
+
+End-to-end results — **not fully clean; pressure moved downstream**:
+
+1. **File serializer backlog drops** from 10:30:47 PM onward: cumulative
+   `dropped=520630 → 583661` over ~3.5 min (~18k/min) in `Serializer.Save`
+   warnings. This is real end-to-end loss of already-aggregated rows at the
+   ETL serializer stage, whose queue caps (`ETLMaxQueueEvents` /
+   `ETLMaxQueueEventsSerializer`) default to 10,000 in ETLConfig.json —
+   the same undersized-buffer shape the FileOps queue had pre-4x.
+2. **Owner-resolution warnings** clustering in the same window ("Could not
+   resolve owner process for PID ... (File)") — sender-side resolution of
+   events whose pre-enqueue identity stamp missed because the producer was
+   already dead at decode; correlates with the miss_producer_dead pockets.
+
+### Designer disposition (2026-08-26)
+
+- fop-13c/fop-13d: **field-accepted** on this evidence.
+- Serializer backlog → new candidate **fop-14 (downstream durability,
+  measurement-first)**: the loss chain is now
+  ring (fixed) → sensor queue (fixed) → Esper (fop-11 shrinks input) →
+  **serializer/parquet-writer queues (10k caps) ← active loss point**.
+  Note: fop-11 dedup cannot fix this stage — Esper's 10s output volume is
+  driven by DISTINCT (path, pid, activity) groups, which dedup preserves by
+  design. First step mirrors the queue experiment: raise the ETLConfig
+  serializer caps, measure drop deltas and memory, then decide if the
+  parquet writer itself needs throughput work.
+- Owner-resolution warnings: known residual of producer-lifetime races
+  (same class as the cwd miss pockets); low priority — consider replacing
+  per-event warnings with a 60s counter to stop log spam during bursts.
+- fop-11 acceptance still owes: kill-switch A/B differential and a
+  post-collector-update bundle carrying duckdb/fileops-parquet-sanity.txt.

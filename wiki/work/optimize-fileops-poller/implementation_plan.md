@@ -369,8 +369,21 @@ fop-07 remains open from phase 1):
       correlate with misses and steady-state base dirs survive (miss floor
       returns to the 0-131/min range). Implemented locally 2026-08-25 with
       fop-13c and F2/F4 in one hardening pass — see verification.md
-      §fop-13c/fop-13d + F2/F4; field validation pending (scan-window
-      eviction/miss decorrelation + the new --dir-churn A/B scenario).
+      §fop-13c/fop-13d + F2/F4. **FIELD-ACCEPTED 2026-08-26** (bundle
+      053404Z): eviction/miss decorrelation confirmed — 29,469 resolves vs
+      354 misses in the burst minute under 68k/interval eviction churn at
+      the 65,536 cap; the 16,384-cap collapse signature did not recur.
+- [ ] fop-14 — downstream durability (CANDIDATE, measurement-first, from
+      bundle 053404Z): with the sensor path clean, the active end-to-end
+      loss point is the ETL serializer/parquet-writer stage (cumulative
+      dropped= 520k→583k during the heavy window; ETLMaxQueueEvents /
+      ETLMaxQueueEventsSerializer default 10,000). fop-11 dedup cannot help
+      here — Esper output volume is distinct-group-driven by design. Step 1
+      mirrors the FileOps queue experiment: raise the serializer caps in
+      ETLConfig, measure drop deltas + memory; then decide whether the
+      parquet writer needs throughput work. Also: replace per-event
+      owner-resolution warnings with a 60s counter (log hygiene; the misses
+      are the known producer-lifetime residual).
 - [x] fop-13 test/harness hardening (review findings F2+F4): make the
       comparator's relative→absolute matcher count-conserving (consume from
       the candidate "added" multiset, longest-suffix first) with a synthetic
