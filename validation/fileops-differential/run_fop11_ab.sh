@@ -85,8 +85,12 @@ fi
 if [ -n "$UV_BIN" ]; then
   log "using uv: $UV_BIN"
   PYRUN=("$UV_BIN" run --with duckdb python3)
+  # RHEL8's stock python3 is 3.6; the workload needs 3.7+. uv resolves a
+  # modern interpreter for this too.
+  PYRUN_WORKLOAD=("$UV_BIN" run python3)
 elif python3 -c 'import duckdb' 2>/dev/null; then
   PYRUN=(python3)
+  PYRUN_WORKLOAD=(python3)
 else
   die "need uv (not found in PATH or /home/\${SUDO_USER}/.local/bin) or python3 with the duckdb package"
 fi
@@ -132,7 +136,7 @@ run_workload() { # $1 = phase
     return 0
   fi
   log "running deterministic workload (phase=$1)"
-  python3 "$WORKLOAD" \
+  "${PYRUN_WORKLOAD[@]}" "$WORKLOAD" \
     --work-dir "$WORK_DIR" \
     --manifest "$RESULTS_DIR/$1-manifest.json" \
     --files "$FILES" --rounds "$ROUNDS" --dir-churn "$DIR_CHURN" \
