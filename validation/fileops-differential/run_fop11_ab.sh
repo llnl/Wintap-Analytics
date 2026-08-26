@@ -40,6 +40,12 @@ AGG_FLAG_LINE='WINTAP_FILEOPS_AGG_ENABLED=false'
 # run so serializer flush files (and any merged raw_sensor files) survive
 # until harvest. Removed (and any pre-existing override restored) on exit.
 INTERVAL_LINE='WINTAP_ETL_UPLOAD_INTERVAL_SEC=86400'
+# With aggregation OFF the host-wide event flood saturates FileSerializer's
+# default 10k in-memory queue between 60s flushes, and drop policy "newest"
+# then discards everything that arrives at a full queue — including the
+# entire workload burst. Raise the cap for the run (drops are still
+# detected by the backlog guard if this proves insufficient).
+QUEUE_CAP_LINE='WINTAP_ETL_MAX_QUEUE_EVENTS_FILESERIALIZER=100000'
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -121,14 +127,20 @@ fi
 # Park the upload cycle for the whole run (takes effect at the first
 # restart). Any pre-existing override is saved and restored on exit.
 
-if [ -z "$SIMULATE_DIR" ]; then
-  if grep -q '^WINTAP_ETL_UPLOAD_INTERVAL_SEC=' "$ENV_FILE" 2>/dev/null; then
-    grep '^WINTAP_ETL_UPLOAD_INTERVAL_SEC=' "$ENV_FILE" >"$RESULTS_DIR/upload-interval.orig"
-    sed -i '/^WINTAP_ETL_UPLOAD_INTERVAL_SEC=/d' "$ENV_FILE"
-    log "saved pre-existing upload-interval override for restore: $(tr '\n' ' ' <"$RESULTS_DIR/upload-interval.orig")"
+apply_env_override() { # $1 = line to add, $2 = save-file basename for any pre-existing lines
+  local var=${1%%=*}
+  if grep -q "^${var}=" "$ENV_FILE" 2>/dev/null; then
+    grep "^${var}=" "$ENV_FILE" >"$RESULTS_DIR/$2"
+    sed -i "/^${var}=/d" "$ENV_FILE"
+    log "saved pre-existing $var for restore: $(tr '\n' ' ' <"$RESULTS_DIR/$2")"
   fi
-  printf '%s\n' "$INTERVAL_LINE" >>"$ENV_FILE"
-  log "upload cycle parked for the run: $INTERVAL_LINE"
+  printf '%s\n' "$1" >>"$ENV_FILE"
+  log "env override for the run: $1"
+}
+
+if [ -z "$SIMULATE_DIR" ]; then
+  apply_env_override "$INTERVAL_LINE" upload-interval.orig
+  apply_env_override "$QUEUE_CAP_LINE" queue-cap.orig
 fi
 
 # ---------- helpers ----------
@@ -209,10 +221,13 @@ prefix_sql = prefix.replace("'", "''")
 con = duckdb.connect()
 try:
     con.execute(f"CREATE VIEW raw AS SELECT * FROM read_parquet([{file_list}], union_by_name=true)")
+    # Real flush schema (FileSerializer): File_Path (lowercased by the
+    # sensor), FirstSeen/LastSeen (FileTime), ActivityType, EventCount, PID.
+    # DuckDB binds identifiers case-insensitively.
     con.execute(f"""
         CREATE TABLE hits AS
         SELECT * FROM raw
-        WHERE path LIKE '{prefix_sql}%'
+        WHERE file_path LIKE '{prefix_sql}%'
           AND COALESCE(firstSeen, 0) >= {start_ft}
           AND COALESCE(firstSeen, 0) <= {end_ft}
     """)
@@ -223,15 +238,15 @@ try:
         # Zero hits is ambiguous — say which filter is eliminating rows.
         total, pfx, win = con.execute(f"""
             SELECT count(*),
-                   count(*) FILTER (WHERE path LIKE '{prefix_sql}%'),
+                   count(*) FILTER (WHERE file_path LIKE '{prefix_sql}%'),
                    count(*) FILTER (WHERE COALESCE(firstSeen, 0) BETWEEN {start_ft} AND {end_ft})
             FROM raw""").fetchone()
         print(f"diag: files={len(files)} rows={total} prefix_hits={pfx} window_hits={win} (window {start_ft}..{end_ft})", file=sys.stderr)
         if pfx and not win:
-            lo, hi = con.execute(f"SELECT min(firstSeen), max(firstSeen) FROM raw WHERE path LIKE '{prefix_sql}%'").fetchone()
+            lo, hi = con.execute(f"SELECT min(firstSeen), max(firstSeen) FROM raw WHERE file_path LIKE '{prefix_sql}%'").fetchone()
             print(f"diag: prefix rows exist but firstSeen outside window: {lo}..{hi} — timestamp units or clock skew?", file=sys.stderr)
         elif win and not pfx:
-            for (p,) in con.execute(f"SELECT DISTINCT path FROM raw WHERE COALESCE(firstSeen, 0) BETWEEN {start_ft} AND {end_ft} LIMIT 5").fetchall():
+            for (p,) in con.execute(f"SELECT DISTINCT file_path FROM raw WHERE COALESCE(firstSeen, 0) BETWEEN {start_ft} AND {end_ft} LIMIT 5").fetchall():
                 print(f"diag: in-window path sample: {p}", file=sys.stderr)
     print(n)
 except Exception as exc:
@@ -276,15 +291,19 @@ cleanup() {
     sed -i "\%^${AGG_FLAG_LINE}\$%d" "$ENV_FILE"
     changed=1
   fi
-  if grep -q "^${INTERVAL_LINE}\$" "$ENV_FILE" 2>/dev/null; then
-    log "cleanup: unparking the upload cycle"
-    sed -i "\%^${INTERVAL_LINE}\$%d" "$ENV_FILE"
-    if [ -s "$RESULTS_DIR/upload-interval.orig" ]; then
-      cat "$RESULTS_DIR/upload-interval.orig" >>"$ENV_FILE"
-      log "cleanup: restored pre-existing upload-interval override"
+  local line save
+  for line in "$INTERVAL_LINE::upload-interval.orig" "$QUEUE_CAP_LINE::queue-cap.orig"; do
+    save=${line##*::}; line=${line%%::*}
+    if grep -q "^${line}\$" "$ENV_FILE" 2>/dev/null; then
+      log "cleanup: removing env override ${line%%=*}"
+      sed -i "\%^${line}\$%d" "$ENV_FILE"
+      if [ -s "$RESULTS_DIR/$save" ]; then
+        cat "$RESULTS_DIR/$save" >>"$ENV_FILE"
+        log "cleanup: restored pre-existing ${line%%=*}"
+      fi
+      changed=1
     fi
-    changed=1
-  fi
+  done
   if [ "$changed" -eq 1 ]; then
     log "cleanup: restarting lintap with production config (accumulated test parquet merges and uploads normally)"
     systemctl restart lintap || true

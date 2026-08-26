@@ -53,9 +53,12 @@ def main() -> int:
     out = out_dir / f"raw-File-sim-{args.phase}-{ft}.parquet"
 
     con = duckdb.connect()
+    # Column names mirror the real FileSerializer flush schema (File_Path,
+    # FirstSeen, ActivityType, EventCount) so the sim validates the same SQL
+    # the field harvest runs.
     con.execute(
-        "CREATE TABLE t (PID INTEGER, path VARCHAR, activityType VARCHAR, "
-        "eventCount INTEGER, firstSeen BIGINT)"
+        "CREATE TABLE t (PID INTEGER, File_Path VARCHAR, ActivityType VARCHAR, "
+        "EventCount INTEGER, FirstSeen BIGINT)"
     )
     con.executemany("INSERT INTO t VALUES (?, ?, ?, ?, ?)", rows)
     con.execute(f"COPY t TO '{out}' (FORMAT PARQUET)")
