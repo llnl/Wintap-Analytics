@@ -1087,3 +1087,25 @@ with a synthetic cross-run scenario (fails without the flags, clean with
 them). The fop-11 kill-switch A/B procedure uses both flags with the SAME
 work-dir path for both runs so workload paths are identical across runs.
 Pages updated: `validation/fileops-differential/compare_fileops.py`; `log.md`.
+
+## [2026-08-26] code | fop-11 A/B fully automated after manual procedure failed
+
+The manual A/B produced a vacuous result (zero workload tuples both sides —
+time-window parquet copying raced the serializer flush cadence, and the
+first diagnostic ran without root so the permission-restricted data root
+globbed empty silently). Fixes, in order: comparator gained --ignore-pid and
+--path-prefix (cross-run A/B was structurally impossible with pid-keyed
+tuples), then an exit-2 vacuous-pass guard (empty prefix-scoped baseline can
+never read as success), and finally the whole procedure was scripted:
+validation/fileops-differential/run_fop11_ab.sh runs both phases end to end
+— kill-switch env management with cleanup-on-exit, agg-state verification
+from the live counter log, restart-as-flush boundaries, row-level harvesting
+by non-overlapping firstSeen windows + work-dir prefix, serializer-backlog
+invalidation (exit 3), and the count-conserving comparison with a verdict
+summary. A --simulate mode with a fixture generator
+(simulate_ab_fixture.py) tests the full pipeline off-host; the first
+simulation caught a window-overlap bug (ON harvest captured both phases'
+rows) — fixed by clamping each phase's window to start after the previous
+phase's end. Final simulation: baseline 6 raw rows vs candidate 5 aggregated
+rows weighing 6 — missing=0, added=0, PASS, exit 0.
+Pages updated: `validation/fileops-differential/{run_fop11_ab.sh,simulate_ab_fixture.py,compare_fileops.py}`; `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.

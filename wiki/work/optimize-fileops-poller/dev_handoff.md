@@ -232,10 +232,21 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     Goal for the next pass (state as of 2026-08-26): fop-12/fop-13 and
     fop-13c/fop-13d are CLOSED by human acceptance; fop-11 is deployed and
     healthy in field bundles but owes two formal gates:
-    1. The kill-switch A/B differential (WINTAP_FILEOPS_AGG_ENABLED=false
-       baseline run vs enabled run, count-conserving comparator,
-       --fail-on-unmatched-relative) — also closes the folded fop-13
-       differential obligation.
+    1. The kill-switch A/B differential — AUTOMATED (2026-08-26): run as
+       root on the field host:
+         validation/fileops-differential/run_fop11_ab.sh
+       One command does both phases (OFF baseline via the kill switch, ON
+       candidate), verifies the agg state from the live counter log,
+       harvests each phase's rows by non-overlapping firstSeen windows +
+       work-dir prefix (row-level, immune to parquet file-boundary mixing),
+       uses service restarts as flush boundaries, refuses to pass if
+       serializer backlog-drop warnings appeared during a phase (exit 3 =
+       INVALID, fix fop-14 caps first), and runs the count-conserving
+       comparator (--ignore-pid --path-prefix --fail-on-unmatched-relative).
+       Exit 0 = PASS; results + summary.txt in
+       /var/tmp/fop11-ab-results-<ts>/. Aggregation is restored ON even on
+       failure/interrupt. Also closes the folded fop-13 differential
+       obligation.
     2. One bundle from the UPDATED collector carrying
        duckdb/fileops-parquet-sanity.txt (raw_events > rows is the Esper
        composition proof) — confirm the host pulled the collector update
