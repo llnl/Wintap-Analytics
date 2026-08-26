@@ -909,3 +909,53 @@ accepted as documented limitation, no change; F4 (no automated DIR_OPEN /
 recovery-path tests) accepted → same hardening slice (extract dir-index logic
 into a testable class).
 Pages updated: `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] closeout | fop-12/fop-13 accepted; fop-11 implementation starts
+
+Human acceptance closes fop-12 and fop-13: the path-identity precondition for
+fop-11 is met (evidence summarized in verification.md §fop-13 Closeout). The
+4x queue capacity (524288) is validated and will become the code default in
+the fop-11 slice; RSS accounting deferred to the upcoming longer execution
+cycle via the standing pidstat-collector parquet series; the differential
+rerun folds into fop-11's standing A/B gate. fop-11 implementation
+(pre-enqueue emit-first aggregation per the approved proposal, with P3
+cost-split sampling riding along) begins now.
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.
+
+## [2026-08-25] code | fop-11 implemented locally
+
+Files changed in `../wintap`: `shared/WintapAPI/WintapMessage.cs` (File schema:
+EventCount default 1, FirstSeen/LastSeenEventTime FileTime longs),
+`wintap/platform/linux/sensor/ebpf/FileOpsAggregator.cs` (new, dependency-free,
+unit-testable), `FileOpsSensor.cs` (absorb hook, summary emitter, flush timer,
+shutdown drain, agg=/sender= counters, P3 send sampling, queue default 524288),
+`wintap/core/etl/esper/file.epl` (count(*) → sum(file.eventCount); min/max over
+the new fields with case-fallback to eventTime — parquet columns unchanged,
+Windows senders safe via defaults), `tests/Wintap.Tests/FileOpsAggregatorTests.cs`
+(new, 9 tests) + test csproj compile-include (linux sources are excluded from
+the Wintap assembly). Files changed in this repo: `compare_fileops.py`
+(eventCount-weighted tuple counts — the standing gate is now count-conserving
+across pre/post-aggregation streams).
+Semantics: emit-first at (pid, path, op), 1000ms window (matching the fop-10
+measurement), summaries carry repeats-only counts and first-occurrence
+identity, bounded table with counted per-event bypass, kill switch
+WINTAP_FILEOPS_AGG_ENABLED=false for same-build A/B.
+Validation: Lintap build 0 errors; 19/19 targeted tests (incl. 9 new
+aggregator tests: count conservation, emit-first, rollover, cap bypass,
+identity-at-first-occurrence); comparator synthetic aggregation scenarios
+pass (conserved rc=0, shortfall rc=1). Field deployment and A/B acceptance
+pending; dev_handoff retargeted to the fop-11 deploy/acceptance pass.
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan,dev_handoff}.md`; `log.md`.
+
+## [2026-08-25] maintenance | fop-13 field feedback transcribed; wiki confirmed current
+
+Pre-push audit found the fop-13 deployed-bundle reviews existed only in the
+field-side clone's summaries, not in this clone's verification.md. Transcribed
+them into verification.md §fop-13 Field Runs (first deployed bundle, same-
+instance follow-up with the 6:19:29 PM at-scale proof line, and the 4x
+queue-capacity experiment bundles 023152/024019), clearly sourced and
+delimited so a field-side merge can prefer richer local copies if present.
+index.md footer refreshed to the current feature state. Wiki now carries the
+complete fop-12/fop-13 record: gap analysis, implementation, field feedback,
+review-finding dispositions, closeout, and the fop-11 local slice.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.

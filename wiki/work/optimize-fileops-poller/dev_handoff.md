@@ -87,8 +87,22 @@ and locally tested — DIR_OPEN records, the dir-identity index, file/dirfd
 (s_dev, i_ino) emission, the miss-cause split, comparator upgrade matching,
 the dirfd-relative workload scenario, and a `resolve=` triage extract in the
 diagnostics collector. See verification.md §fop-13a/fop-13b Local Code Slice.
-**Next: rebuild tracers on the RHEL8 field host, deploy, and run the
-acceptance measurements** against the 20260825T234559Z baseline.
+
+**fop-12/fop-13 CLOSED (2026-08-25, human acceptance):** field evidence met
+the bar — miss floor ~8k/min → 0-131/min with `resolved_dir_index` dominant,
+producer-dead diagnosis confirmed, `(relative)` out of top prefixes, ring 0,
+4x queue validated (drops=0 at ~437k depth). See verification.md §fop-13
+Closeout. The differential rerun folds into fop-11's standing gate.
+
+**fop-11 implemented locally (2026-08-25):** emit-first (pid, path, op)
+aggregation with 1000ms window, identity-at-first-occurrence summaries,
+file.epl composition change (parquet columns unchanged — eventCount now
+counts raw events), P3 send-cost sampling, queue default raised to 524288,
+comparator count-conservation weighting, 9 aggregator unit tests + synthetic
+comparator scenarios green. Kill switch: WINTAP_FILEOPS_AGG_ENABLED=false.
+See verification.md §fop-11 Local Code Slice. **Next: deploy on the RHEL8
+host (no tracer changes this slice — Lintap rebuild/install only) and run
+the fop-11 field acceptance below.**
 
 ## Copy/Paste Prompt
 
@@ -145,37 +159,44 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     loss signal is the bounded userspace sender queue under some load phases.
     fop-08 full acceptance still owes a differential-harness rerun.
 
-    Goal for the next pass: fop-13 is implemented locally (2026-08-25) —
-    deploy it and run the field acceptance. Read
-    wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25.md for
-    the diagnosis and acceptance criteria, and verification.md
-    §fop-13a/fop-13b Local Code Slice for exactly what landed.
+    Goal for the next pass: fop-11 is implemented locally (2026-08-25) —
+    deploy it and run the field acceptance. fop-12/fop-13 are CLOSED by human
+    acceptance. Read verification.md §fop-11 Local Code Slice for exactly
+    what landed, and the fop-11 proposal (+§Designer Review, §Human Review
+    Response, §Esper-Layer Addendum) for the semantics.
 
     Deployment steps (RHEL8 field host):
-    1. Rebuild tracers ON THE HOST (make clean && make in
-       wintap/platform/linux/sensor/ebpf/tracers — .bpf.o objects are
-       gitignored; never deploy objects built elsewhere) and rebuild/install
-       Lintap.
-    2. Run the deterministic workload (now includes the dirfd-relative
-       scenario) and collect a short smoke bundle, then a longer bundle.
-       The collector now emits journal/lintap-file-log-fileops-resolve.txt
-       with a timestamped resolve=[...] triage view.
+    1. No tracer changes this slice: rebuild/install Lintap only. Keep the
+       validated env setting WINTAP_FILEOPS_MAX_QUEUE_EVENTS if present (the
+       code default is now 524288 anyway).
+    2. Run the deterministic workload and collect a smoke bundle, then a
+       longer bundle under normal host load. The 60s line now carries
+       agg=[...] and sender=[...] sections.
+    3. Kill switch for A/B: WINTAP_FILEOPS_AGG_ENABLED=false restores
+       per-event behavior on the same build.
 
-    Acceptance vs the 20260825T234559Z baseline (~8k relative misses/min):
-    1. relative_open_resolve_miss drops by an order of magnitude, with the
-       residual explained by dir_index_miss.
-    2. (relative) leaves the top-5 prefix_top buckets.
-    3. miss_producer_dead/alive confirms (or corrects) the producer-lifetime
-       diagnosis — record the split either way.
-    4. ring_fail_total stays 0; queue drops do not regress; dir_open volume
-       is measured via the new dir_open kernel/user counters.
-    5. A/B differential rerun; use --fail-on-unmatched-relative for the
-       dirfd-relative scenario's tuples.
+    Acceptance vs the fop-13-era bundles:
+    1. Queue drops collapse under comparable load (repeats_folded should run
+       at 50-80% of open volume plus read/write repeats); depth/high_water
+       shrink materially.
+    2. A/B differential (baseline = aggregation disabled or a fop-13 build;
+       candidate = aggregation enabled) passes with the count-conserving
+       comparator; use --fail-on-unmatched-relative. This run also closes
+       the folded fop-13 differential obligation.
+    3. Counter reconciliation: first_emits + repeats_folded ≈ post-filter
+       consumed; summaries ≈ expired entries; sum(eventCount) in the parquet
+       output ≈ raw event count; summary_enqueue_fail=0; cap_bypass ~0.
+    4. ring_fail_total stays 0; resolve=[...] health holds (fop-13 counters
+       unchanged by this slice).
+    5. Record send_sample_avg_us — the P3 number that decides whether any
+       post-fop-11 sender work is warranted.
+    6. Esper/parquet sanity: firstSeen/lastSeen sane (no zeros), eventCount
+       sums plausible vs kernel emitted totals.
 
-    fop-11 unblocks after fop-13b field acceptance via the dev:ino key
-    (split contract for identity-less rows), independent of the residual
-    path-quality tail. Keep the existing human decisions: do NOT canonicalize
-    absolute-path opens, and keep A4 (distinct `Mmap`) out of this pass.
+    Keep the existing human decisions: do NOT canonicalize absolute-path
+    opens, keep A4 (distinct `Mmap`) out of this pass, no sampling. Deferred
+    parallel slices remain available: fop-13c (mnt_ns index keying), F2/F4
+    hardening (comparator matcher count-consumption; more DIR_OPEN tests).
 
     fop-11 scope (amended direction, 2026-08-25, still blocked): short-interval aggregation
     to the (pid, path, op) level with repeat count, grouped totals (bytes

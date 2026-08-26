@@ -1407,3 +1407,155 @@ Pending field validation (acceptance per the gap analysis):
 - `ring_fail_total` stays 0 and queue drops do not regress with `dir_open`
   volume measured via the new `dir_open` kernel/user counters.
 - A/B differential rerun including the dirfd-relative workload scenario.
+
+## fop-13 Field Runs — 2026-08-25 (recorded from implementor review summaries)
+
+The deployed-build bundle reviews below were performed on the field-side
+system; the numbers are transcribed from the implementor's review summaries
+so this clone carries the complete acceptance record. If the field-side clone
+holds its own richer copies of these reviews, prefer those on merge.
+
+### First deployed fop-13 bundle
+
+- `relative_open_resolve_miss` fell from the ~7997-8814/min post-dirfd floor
+  to 0-945/min (samples: 46, 853, 945, 200, 14, 33, 133, 4, 0, 68).
+- DIR_OPEN/dir-index live: `dir_open_consumed` ~11.9k-19.8k,
+  `dir_open_indexed` ~11.6k-19.3k, `dir_index_size` → 1055, evictions 0.
+- Miss-cause split supports the producer-lifetime diagnosis: heavy windows
+  mostly `miss_producer_dead` (819/34, 945/0, 180/20 dead/alive).
+- `(relative)` no longer in top-prefix examples; `ring_fail_total=0`.
+- Queue drops still recurred under load (e.g. 6:14:19 PM `drops=47404` at
+  `depth=107238`).
+- Smoke: session-20260826T011005Z complete; session-20260826T011806Z partial
+  in that bundle (collected mid-run).
+
+### Follow-up bundle, same running instance (lintap_pid=3502838)
+
+- Key line 6:19:29 PM: `relative_open_resolved=29152`, `miss=6`,
+  `resolved_fd=9442`, `resolved_dir_index=19709`, `resolved_cwd=1`,
+  `resolved_dirfd=0` — first at-scale proof that the dir-index branch does
+  the bulk of the recovery.
+- Later window misses: 31, 0, 21, 5, 15, 131, 62, 66, 27, 0, 10.
+- Index healthy: size → 2029, evictions 0.
+- Queue drops remained the active problem across 6:21-6:30 PM
+  (1617 → 61671/min peaks) — assigned to fop-11, not a fop-13 gap.
+- Smoke session-20260826T011806Z runs 1-2 present, run 3 not yet copied.
+
+### 4x queue-capacity experiment (WINTAP_FILEOPS_MAX_QUEUE_EVENTS=524288)
+
+- Bundle 023152: sampled windows showed `drops=0` at 4x capacity; the
+  10-minute spaced smoke session fully copied; path identity strong.
+- Bundle 024019 (later, same execution): `drops=0` persisted with backlog
+  depth reaching `393320` and `437633` (`high_water=437692`) — the drops were
+  burst-shaped, not a sustained deficit. Misses stayed 0-124/min under that
+  backlog (resolution is pre-enqueue, unaffected by sender lag); index size
+  → 2108, evictions 0. `FileOps-Sender` remained the hot thread,
+  `FileOps-Poller` cold.
+- RSS accounting deferred to the longer execution cycle; the
+  pidstat-collector parquet series already records memory over time.
+
+## fop-13 Closeout — 2026-08-25 (human acceptance)
+
+Human decision: fop-13 is closed as the successful fix for the fop-12
+path-identity floor, on the field evidence recorded above:
+
+- `relative_open_resolve_miss` collapsed from the ~7997-8814/min pre-fop-13
+  floor to 0-945/min (first bundle) and 0-131/min in later windows, with the
+  6:19:29 PM line as the at-scale proof: `relative_open_resolved=29152`,
+  `miss=6`, and `resolved_dir_index=19709` as the dominant recovery branch.
+- `miss_producer_dead` dominance confirmed the gap-analysis diagnosis.
+- `(relative)` left the top prefix buckets; dir index healthy
+  (size ~2.1k of 16,384 cap, evictions 0); `ring_fail_total=0` throughout.
+- The 4x queue experiment (`WINTAP_FILEOPS_MAX_QUEUE_EVENTS=524288`) was
+  robustly positive: `drops=0` sustained later in the same execution with
+  backlog depth reaching ~437k, while path identity held under that backlog
+  (resolution is pre-enqueue, unaffected by sender lag). Decision: the code
+  default is raised to 524288 in the fop-11 slice.
+- RSS accounting for the deeper queue is deferred to the upcoming longer
+  execution cycle; the pidstat-collector parquet already records process/
+  thread memory over time, so the number is retrievable without a dedicated
+  capture.
+- Accepted behavior note (for the component page at closeout): under burst
+  backlog, File events reach live Esper consumers late; recorded output stays
+  truthful because EventTime/firstSeen/lastSeen use kernel timestamps.
+- The updated differential rerun folds into fop-11's standing A/B gate (the
+  harness runs for every slice; fop-11's run covers both).
+
+Deferred (tracked in the plan): fop-13c namespace-aware index keying; F2/F4
+test-harness hardening.
+
+## fop-11 Local Code Slice — 2026-08-25
+
+Implemented the approved emit-first short-interval aggregation, with P3
+cost-split sampling and the validated queue default riding along.
+
+Schema decision (recorded before coding, per acceptance): `FileActivityObject`
+in `shared/WintapAPI/WintapMessage.cs` gains `EventCount` (int, **default 1**
+via initializer so Windows senders are safe), `FirstSeenEventTime` and
+`LastSeenEventTime` (FileTime-UTC longs, 0 = unset). **Parquet columns are
+unchanged** — `file.epl` already output `eventCount`/`firstSeen`/`lastSeen`;
+only their sources change (`count(*)` → `sum(file.eventCount)`; min/max over
+the new fields with a `case`-fallback to `eventTime` for rows that never set
+them). Downstream note for Wintappy/analytics: `eventCount` now counts raw
+events rather than pre-Esper rows — a semantic improvement, same column.
+
+Code changes in `../wintap`:
+
+- New `FileOpsAggregator` (dependency-free, internal, unit-testable):
+  (pid, path, op)-keyed table, emit-first — first occurrence in a window is
+  never absorbed; repeats fold into count/byte-sum/first-last-kernel-ts;
+  summary emitted on window expiry, rollover, timer flush, or shutdown
+  FlushAll. Identity captured at first occurrence, never at flush. Bounded
+  (default 32,768 keys) with per-event bypass at cap — never loses data.
+- `FileOpsSensor`: absorb hook after identity stamping and before enqueue;
+  summary rows built from entry state (EventCount = repeats; first-emit rows
+  carry EventCount=1 and First/Last = EventTime, so SUM conserves); byte sums
+  clamped to int.MaxValue with a counter; flush timer at max(250, window/2);
+  shutdown drains the aggregator before the queue closes. Config:
+  `WINTAP_FILEOPS_AGG_ENABLED` (default true — the A/B kill switch),
+  `WINTAP_FILEOPS_AGG_WINDOW_MS` (default 1000, matching the fop-10
+  measurement window), `WINTAP_FILEOPS_AGG_MAX_KEYS` (default 32768).
+- P3: every 64th `EventChannel.Send` on the sender thread is Stopwatch-timed;
+  60s log gains `sender=[send_sample_avg_us=,samples=,interval=]`.
+- Queue default raised 131072 → 524288 (field-validated 4x setting).
+- 60s log gains `agg=[enabled,window_ms,first_emits,repeats_folded,summaries,
+  cap_bypass,entries,summary_enqueue_fail,bytes_clamped]`.
+- `file.epl` updated per the composition rules (cross-platform safe).
+
+Changes in `Wintap-Analytics`:
+
+- `compare_fileops.py`: tuple counts now weighted by the `eventCount` column
+  when present (COALESCE to 1), making the standing missing-tuple gate
+  count-conserving across pre/post-aggregation streams; absent column keeps
+  weight 1 (backward compatible).
+
+Tests:
+
+- New `FileOpsAggregatorTests` (9 tests): emit-first, absorption, count
+  conservation (first + repeats == raw), distinct-key isolation, window
+  rollover, zero-repeat suppression, cap bypass, FlushAll drain,
+  identity-from-first-occurrence. The dependency-free class is compiled
+  directly into the test project (linux platform sources are excluded from
+  the Wintap assembly the tests reference).
+- Comparator synthetic scenarios: aggregated candidate (1+4 vs 5 raw)
+  conserves → rc=0; count shortfall (1+3 vs 5) detected → rc=1.
+
+Commands/results:
+
+- `dotnet build wintap/Lintap.csproj` — 0 errors.
+- Targeted test classes: `19/19 passed` (resolver, message, process-tree,
+  aggregator).
+- `python3 -m py_compile` + uv/duckdb synthetic comparator runs passed.
+- Tracers unchanged this slice (no kernel edits in fop-11).
+
+Pending field validation (acceptance):
+
+- Deploy; A/B differential (the fop-13 rerun folds in here) with
+  `--fail-on-unmatched-relative`; counter reconciliation now includes
+  aggregation: kernel emitted ≈ consumed; first_emits + repeats_folded ≈
+  consumed-after-filters; sum(EventCount) in output ≈ raw event count.
+- Queue drops vs the fop-13-era bundles under comparable load — expected to
+  collapse with 50-80% of opens (and read/write repeats) no longer enqueued.
+- `send_sample_avg_us` recorded — the P3 number that decides any post-fop-11
+  sender work.
+- `agg=[...]` health: entries bounded, cap_bypass ~0, summary_enqueue_fail 0.

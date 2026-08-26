@@ -123,4 +123,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-25 (optimize-fileops-poller milestone: phase-2 wrap-up recorded; fop-12 improved but still blocks fop-11)*
+*Last updated: 2026-08-25 (optimize-fileops-poller: fop-12/fop-13 closed by human acceptance — path-identity floor collapsed via the dir-identity index; fop-11 emit-first aggregation implemented locally, field acceptance pending)*

@@ -106,8 +106,18 @@ def load_tuples(parquet_glob: str) -> tuple[Counter[tuple[int, str, str]], Count
         path_col = pick_column(columns, ("Path", "path", "File_Path", "file_path", "file", "File"))
         pid_col = pick_column(columns, ("PID", "pid", "ProcessId", "process_id"))
         op_col = pick_column(columns, ("ActivityType", "activity_type", "op", "operation", "EventType", "event_type"))
+        # fop-11 count conservation: rows may be aggregates carrying an
+        # eventCount for the raw events they represent. Weight tuple counts by
+        # it when present so pre- and post-aggregation streams compare on raw
+        # event cardinality; absent column -> every row weighs 1.
+        count_expr = "1"
+        for candidate in ("eventCount", "event_count", "EventCount"):
+            if candidate in columns or candidate.lower() in {c.lower() for c in columns}:
+                actual = next(c for c in columns if c.lower() == candidate.lower())
+                count_expr = f"COALESCE({actual}, 1)"
+                break
         rows = connection.execute(
-            f"SELECT {pid_col}, {path_col}, {op_col} FROM read_parquet('{quote(parquet_glob)}')"
+            f"SELECT {pid_col}, {path_col}, {op_col}, {count_expr} FROM read_parquet('{quote(parquet_glob)}')"
         ).fetchall()
     finally:
         connection.close()
@@ -115,13 +125,14 @@ def load_tuples(parquet_glob: str) -> tuple[Counter[tuple[int, str, str]], Count
     regular: Counter[tuple[int, str, str]] = Counter()
     relative: Counter[tuple[int, str, str]] = Counter()
     noise: Counter[str] = Counter()
-    for pid, raw_path, raw_op in rows:
+    for pid, raw_path, raw_op, raw_count in rows:
         path = normalize_path(str(raw_path or ""))
         op = str(raw_op or "").lower()
+        weight = max(int(raw_count or 1), 1)
         if is_regular_candidate(path):
-            regular[(int(pid), path, op)] += 1
+            regular[(int(pid), path, op)] += weight
         elif is_relative_candidate(path):
-            relative[(int(pid), path, op)] += 1
+            relative[(int(pid), path, op)] += weight
         else:
             if not path:
                 noise["empty"] += 1

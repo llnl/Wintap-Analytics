@@ -291,7 +291,15 @@ fop-07 remains open from phase 1):
       later only if ring pressure or poller CPU returns. Revised differential
       contract: op-scoped distinct-tuple equality + count conservation +
       byte-total conservation, decidable only on drop-free runs.
-- [ ] fop-12 — absolute-path ground truth (precondition for fop-11 keys,
+      **Local code slice built 2026-08-25:** FileOpsAggregator (emit-first,
+      (pid, path, op), 1000ms window, bounded, identity-at-first-occurrence),
+      file.epl composition change (sum(eventCount), case-fallback min/max —
+      parquet columns unchanged), P3 send sampling, queue default 524288,
+      comparator count-conservation weighting, 9 unit tests + synthetic
+      comparator scenarios all passing. Field A/B (with the folded fop-13
+      differential rerun) pending. See verification.md §fop-11 Local Code
+      Slice.
+- [x] fop-12 — absolute-path ground truth (precondition for fop-11 keys,
       human-directed 2026-08-25): resolve relative/`openat` paths to absolute
       at open time so File telemetry records accurate ground truth and
       aggregation keys cannot conflate distinct files. Recommended mechanism:
@@ -311,7 +319,7 @@ fop-07 remains open from phase 1):
       into `miss_producer_dead` vs `miss_producer_alive` via one `/proc/<pid>`
       existence check (2026-08-25 local code slice; field data pending —
       deployed counters will validate the producer-lifetime diagnosis).
-- [ ] fop-13b — kernel-time directory identity + file dev:ino (one slice,
+- [x] fop-13b — kernel-time directory identity + file dev:ino (one slice,
       shared record-format change; CO-RE tier): (1) stamp non-`AT_FDCWD`
       relative-open path records with the dirfd's `(s_dev, i_ino)` (same fdt
       traversal `is_regular_fd` already runs); (2) stop discarding
@@ -334,8 +342,14 @@ fop-07 remains open from phase 1):
       index + file/dirfd (s_dev, i_ino) emission + comparator upgrade matching
       and dirfd-relative workload scenario are all implemented; both tracer
       tiers and Lintap build clean, Linux-relevant tests and comparator
-      synthetic scenarios pass. Field deployment/acceptance pending — see
-      verification.md §fop-13a/fop-13b Local Code Slice.
+      synthetic scenarios pass.
+      **CLOSED 2026-08-25 (human acceptance):** field evidence met the
+      acceptance bar — miss floor ~8k/min → 0-131/min in later windows with
+      `resolved_dir_index` as the dominant branch, producer-dead diagnosis
+      confirmed, `(relative)` out of top prefixes, ring 0, index healthy.
+      The 4x queue setting (524288) validated (drops=0 at ~437k depth) and
+      becomes the code default in fop-11. Differential rerun folds into
+      fop-11's standing gate. See verification.md §fop-13 Closeout.
 
 - [ ] fop-13c — namespace-aware dir-index keying (from the 2026-08-25 fop-13
       code review, finding F1; not an acceptance blocker): stamp
