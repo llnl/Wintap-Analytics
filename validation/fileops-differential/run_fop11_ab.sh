@@ -341,6 +341,11 @@ run_phase() { # $1 = off|on  $2 = agg false|true
     echo "$phase" >>"$RESULTS_DIR/invalid-phases.txt"
     PHASE_INVALID=1
   fi
+  # Keep the sensor's own accounting for the phase (agg first_emits/
+  # repeats_folded/summaries/summary_enqueue_fail, queue drops) as evidence.
+  if [ -z "$SIMULATE_DIR" ]; then
+    grep 'FileOps counters' "$LINTAP_LOG" 2>/dev/null | tail -8 >"$RESULTS_DIR/$phase-counters.log" || true
+  fi
   if ! harvest "$phase" "$start_ft" "$end_ft"; then
     log "ERROR: no $phase rows harvested within ${HARVEST_TIMEOUT}s"
     return 1
@@ -391,6 +396,7 @@ CMP_RC=$?
     echo "VERDICT: FAIL (see result.json missing/unmatched samples)"
   fi
   echo "key numbers (result.json): $(python3 -c "import json;d=json.load(open('$RESULTS_DIR/result.json'));print({k:d[k] for k in ('baseline_regular_tuples','candidate_regular_tuples','missing_regular_tuples','added_regular_tuples','matched_relative_tuples','unmatched_relative_tuples')})" 2>/dev/null || echo 'unavailable')"
+  echo "on-phase agg counters: $(grep -oE 'agg=\[[^]]*\]' "$RESULTS_DIR/on-counters.log" 2>/dev/null | tail -1 || echo 'unavailable')"
 } | tee "$RESULTS_DIR/summary.txt"
 
 if [ "$PHASE_INVALID" -ne 0 ]; then exit 3; fi
