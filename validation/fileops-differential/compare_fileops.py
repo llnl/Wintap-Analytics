@@ -251,6 +251,15 @@ def main() -> int:
         return 1
     if args.fail_on_unmatched_relative and unmatched_relative:
         return 1
+    # Guard against vacuous passes: a prefix-scoped A/B with an empty
+    # baseline population compared nothing and must not read as success.
+    if args.path_prefix and sum(baseline.values()) == 0:
+        print(
+            f"VACUOUS: no baseline regular tuples under prefix {args.path_prefix} — "
+            "workload rows not captured; check parquet flush timing and filesystem type",
+            file=sys.stderr,
+        )
+        return 2
     return 0
 
 
