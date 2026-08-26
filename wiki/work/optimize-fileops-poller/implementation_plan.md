@@ -337,6 +337,22 @@ fop-07 remains open from phase 1):
       synthetic scenarios pass. Field deployment/acceptance pending — see
       verification.md §fop-13a/fop-13b Local Code Slice.
 
+- [ ] fop-13c — namespace-aware dir-index keying (from the 2026-08-25 fop-13
+      code review, finding F1; not an acceptance blocker): stamp
+      `task->nsproxy->mnt_ns->ns.inum` (one CO-RE chain read) on DIR_OPEN and
+      relative-open records and key the dir-identity index by
+      `(mnt_ns, s_dev, i_ino)`, eliminating wrong-path aliasing across mount
+      namespaces (containers). Within-namespace bind mounts remain
+      last-writer-wins among valid aliases of the same object — documented.
+- [ ] fop-13 test/harness hardening (review findings F2+F4): make the
+      comparator's relative→absolute matcher count-conserving (consume from
+      the candidate "added" multiset, longest-suffix first) with a synthetic
+      test for the over-credit case; extract the dir-identity index + join
+      logic from `FileOpsSensor` into a testable class and add unit tests for
+      DIR_OPEN handling and the recovery chain. F3 (miss-cause split
+      best-effort under PID reuse) is accepted as a documented limitation of
+      triage instrumentation — no change.
+
 ### Phase-2 future tasks (not slices yet)
 
 - [ ] Mmap as a first-class File activity type (approved 2026-08-25 as a

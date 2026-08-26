@@ -887,3 +887,25 @@ the RHEL8 host and run field acceptance," including the rebuild-on-host rule
 for the gitignored .bpf.o objects and the acceptance checklist vs the
 20260825T234559Z baseline.
 Pages updated: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`; `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] review | fop-13 first field run triaged; findings dispositioned
+
+First deployed fop-13 bundle (reviewed by the implementing agent, recorded in
+verification.md) confirms the gap-analysis diagnosis: relative_open_resolve_miss
+collapsed from the ~7997-8814/min floor to 0-945/min, heavy miss windows are
+dominated by miss_producer_dead, the dir index is live and healthy
+(dir_open_indexed ~11.6k-19.3k, dir_index_size 1055, evictions 0), (relative)
+left the top prefixes, and ring_fail_total stayed 0. Queue drops recurring
+under load are the expected sender-ceiling problem — designer position: no
+separate follow-on; fop-11 pre-enqueue dedup is the queue-drop fix, sequenced
+after fop-13 acceptance (full spaced-smoke bundle + differential rerun).
+
+Code-review findings triaged: F1 (global (s_dev,i_ino) keying aliases across
+mount namespaces) accepted → new slice fop-13c, mnt_ns-aware index keying,
+not an acceptance blocker; F2 (comparator over-credits relative upgrades,
+presence-based matching) accepted → count-conserving matcher in the
+test/harness hardening slice; F3 (miss-split best-effort under PID reuse)
+accepted as documented limitation, no change; F4 (no automated DIR_OPEN /
+recovery-path tests) accepted → same hardening slice (extract dir-index logic
+into a testable class).
+Pages updated: `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
