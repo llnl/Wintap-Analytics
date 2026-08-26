@@ -4,7 +4,7 @@ type: concept
 confidence: medium
 grounded_by: []
 policy: agent-editable
-last_validated: 2026-08-25
+last_validated: 2026-08-26
 repo_scope: cross-repo
 implementation_area: wintap-api
 event_domain: file

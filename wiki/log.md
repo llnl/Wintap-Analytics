@@ -1063,3 +1063,16 @@ loss point now sits downstream of the sensor, and dedup cannot shrink it
 producer-lifetime residual + log-hygiene item. fop-11 still owes the
 kill-switch A/B and a parquet-sanity bundle.
 Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.
+
+## [2026-08-26] maintenance | end-of-day sync audit; wiki confirmed consistent
+
+Pre-handoff audit for tomorrow's pickup: dev_handoff Phase 2 Status now
+carries the fop-13c/13d field acceptance and the fop-14 disposition; the
+copy/paste prompt's goal is refreshed to the actual remaining work (fop-11's
+two formal gates — kill-switch A/B and a parquet-sanity bundle from the
+updated collector — plus the human's fop-14 go/no-go); index.md footer and
+the actively-edited docs' last_validated dates bumped to 2026-08-26. State
+at close: fop-01..fop-13d complete and field-accepted; fop-11 deployed and
+healthy pending its two gates; fop-14 candidate awaiting decision; deferred
+future tasks unchanged (Mmap activity type, OSS sensor survey).
+Pages updated: `work/optimize-fileops-poller/{dev_handoff,verification,implementation_plan}.md`; `index.md`; `log.md`.

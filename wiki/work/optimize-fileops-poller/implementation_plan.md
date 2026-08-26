@@ -7,7 +7,7 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile
 policy: agent-editable
-last_validated: 2026-08-25
+last_validated: 2026-08-26
 repo_scope: cross-repo
 implementation_area: wintap-api
 event_domain: file

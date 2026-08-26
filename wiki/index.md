@@ -124,4 +124,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-25 (optimize-fileops-poller: fop-12/fop-13 closed by human acceptance — path-identity floor collapsed via the dir-identity index; fop-11 emit-first aggregation implemented locally, field acceptance pending)*
+*Last updated: 2026-08-26 (optimize-fileops-poller: fop-13c/fop-13d field-accepted — LRU dir index decorrelates evictions from misses; fop-11 deployed and healthy, owing the kill-switch A/B and parquet-sanity gates; fop-14 downstream-durability candidate opened for the ETL serializer loss point)*

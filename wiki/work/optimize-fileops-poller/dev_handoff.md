@@ -8,7 +8,7 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracepoint.bpf.c
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile
 policy: agent-editable
-last_validated: 2026-08-25
+last_validated: 2026-08-26
 repo_scope: cross-repo
 implementation_area: wintap-api
 event_domain: file
@@ -100,9 +100,19 @@ file.epl composition change (parquet columns unchanged — eventCount now
 counts raw events), P3 send-cost sampling, queue default raised to 524288,
 comparator count-conservation weighting, 9 aggregator unit tests + synthetic
 comparator scenarios green. Kill switch: WINTAP_FILEOPS_AGG_ENABLED=false.
-See verification.md §fop-11 Local Code Slice. **Next: deploy on the RHEL8
-host (no tracer changes this slice — Lintap rebuild/install only) and run
-the fop-11 field acceptance below.**
+See verification.md §fop-11 Local Code Slice.
+
+**fop-13c/fop-13d FIELD-ACCEPTED (2026-08-26, bundle 053404Z):** eviction/
+miss decorrelation confirmed at the 65,536-cap LRU index (29,469 resolves vs
+354 misses in the burst minute under 68k/interval churn). Sensor path is
+clean end to end. The active loss point moved downstream: the ETL
+serializer/parquet-writer stage dropped ~18k rows/min against its 10,000-row
+default caps during the heavy window — dispositioned as candidate **fop-14
+(downstream durability, measurement-first)** in the implementation plan;
+dedup cannot shrink that stage (Esper output is distinct-group-driven).
+**Remaining fop-11 gates: kill-switch A/B differential + one bundle from the
+updated collector (duckdb/fileops-parquet-sanity.txt) — confirm the host has
+pulled the collector update.**
 
 ## Bundle Reviewer Prompt (fop-11 collector, 2026-08-25)
 
@@ -219,11 +229,23 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     loss signal is the bounded userspace sender queue under some load phases.
     fop-08 full acceptance still owes a differential-harness rerun.
 
-    Goal for the next pass: fop-11 is implemented locally (2026-08-25) —
-    deploy it and run the field acceptance. fop-12/fop-13 are CLOSED by human
-    acceptance. Read verification.md §fop-11 Local Code Slice for exactly
-    what landed, and the fop-11 proposal (+§Designer Review, §Human Review
-    Response, §Esper-Layer Addendum) for the semantics.
+    Goal for the next pass (state as of 2026-08-26): fop-12/fop-13 and
+    fop-13c/fop-13d are CLOSED by human acceptance; fop-11 is deployed and
+    healthy in field bundles but owes two formal gates:
+    1. The kill-switch A/B differential (WINTAP_FILEOPS_AGG_ENABLED=false
+       baseline run vs enabled run, count-conserving comparator,
+       --fail-on-unmatched-relative) — also closes the folded fop-13
+       differential obligation.
+    2. One bundle from the UPDATED collector carrying
+       duckdb/fileops-parquet-sanity.txt (raw_events > rows is the Esper
+       composition proof) — confirm the host pulled the collector update
+       first.
+    In parallel, the human decides fop-14 (downstream durability): step 1 is
+    a config-only serializer-cap experiment on the host; see the
+    implementation plan's fop-14 entry.
+    Background for what landed: verification.md §fop-11 Local Code Slice,
+    §fop-13c/fop-13d + F2/F4, and the fop-11 proposal (+§Designer Review,
+    §Human Review Response, §Esper-Layer Addendum) for semantics.
 
     Deployment steps (RHEL8 field host):
     1. UPDATED 2026-08-25 (fop-13c/13d hardening landed after fop-11): the
