@@ -82,17 +82,28 @@ if [ -z "$UV_BIN" ] && [ -n "${SUDO_USER:-}" ]; then
     [ -x "$cand" ] && { UV_BIN=$cand; break; }
   done
 fi
+# RHEL8's stock python3 is 3.6; everything here needs >=3.8. Discover a
+# modern interpreter explicitly — under sudo, uv would otherwise fall back
+# to root's system python (root has no uv-managed interpreters).
+MODERN_PY=""
+for cand in python3.13 python3.12 python3.11 python3.10 python3.9 python3.8 python3; do
+  if command -v "$cand" >/dev/null 2>&1 &&      "$cand" -c 'import sys; raise SystemExit(0 if sys.version_info >= (3, 8) else 1)' 2>/dev/null; then
+    MODERN_PY=$(command -v "$cand")
+    break
+  fi
+done
+[ -n "$MODERN_PY" ] || die "no python >= 3.8 found (checked python3.8-3.13); install one (e.g. dnf install python3.12)"
+log "using python: $MODERN_PY"
+
 if [ -n "$UV_BIN" ]; then
   log "using uv: $UV_BIN"
-  PYRUN=("$UV_BIN" run --with duckdb python3)
-  # RHEL8's stock python3 is 3.6; the workload needs 3.7+. uv resolves a
-  # modern interpreter for this too.
-  PYRUN_WORKLOAD=("$UV_BIN" run python3)
-elif python3 -c 'import duckdb' 2>/dev/null; then
-  PYRUN=(python3)
-  PYRUN_WORKLOAD=(python3)
+  PYRUN=("$UV_BIN" run --python "$MODERN_PY" --with duckdb python3)
+  PYRUN_WORKLOAD=("$MODERN_PY")
+elif "$MODERN_PY" -c 'import duckdb' 2>/dev/null; then
+  PYRUN=("$MODERN_PY")
+  PYRUN_WORKLOAD=("$MODERN_PY")
 else
-  die "need uv (not found in PATH or /home/\${SUDO_USER}/.local/bin) or python3 with the duckdb package"
+  die "need uv (not found in PATH or /home/\${SUDO_USER}/.local/bin) or a python >= 3.8 with the duckdb package"
 fi
 
 # ---------- helpers ----------
