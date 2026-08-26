@@ -1598,3 +1598,68 @@ a new hardening slice **fop-13d** — LRU (touch-on-hit) eviction replacing
 FIFO, cap raised 16384 → 65536 with an env knob, ~10 MB worst case within
 the approved memory tradeoff. Confirmation to pull from the existing bundle:
 `dir_open_consumed` and `dir_open_unresolved` during the 9:02-9:17 window.
+
+## fop-13c/fop-13d + F2/F4 Hardening Local Code Slice — 2026-08-25
+
+Implemented all deferred hardening in one dev pass (human-directed).
+
+Code changes in `../wintap`:
+
+- **fop-13c (namespace keying):** the CO-RE tracer reads the opener's
+  mount-namespace inum (`task->nsproxy->mnt_ns->ns.inum`, one CO-RE chain)
+  and stamps it on path records (`mnt_ns` at offset 328; record grows to
+  336B). The dir-identity index is now keyed `(mnt_ns, s_dev, i_ino)` — a
+  bind-mount/container alias in another namespace can never satisfy a
+  lookup. Fallback tier mirrors the field zeroed (its records group under
+  ns 0).
+- **fop-13d (LRU + capacity):** the index is extracted into a new
+  dependency-free `DirIdentityIndex` class (also the F4 fix) with
+  touch-on-hit LRU eviction replacing the FIFO shortcut, capacity raised
+  16384 → 65536 via `WINTAP_FILEOPS_DIR_INDEX_MAX` (~10 MB worst case).
+  Hot base directories now survive filesystem-walk floods; one-shot scan
+  identities age out. Eviction counting moved into the class.
+- **F4:** `DirIdentityIndexTests` (7 tests) — ns key isolation, LRU
+  scan-flood survival of a hot entry (the exact field failure mode from
+  bundle 041718), cold-entry eviction, get-refreshes-LRU, capacity/eviction
+  counting, update-in-place.
+
+Changes in `Wintap-Analytics`:
+
+- **F2:** `compare_fileops.py` relative→absolute matcher is now
+  count-consuming: exact relative matches consume candidate relative
+  counts; upgrade matches consume from the candidate's absolute SURPLUS
+  (candidate − baseline, so rows satisfying the strict absolute gate are
+  never double-credited); longest suffix matches first ("b/c" claims
+  "/a/b/c" ahead of "c").
+- **Stretch — fop-13d field validation scenario:** `fileops_workload.py
+  --dir-churn N` opens N distinct O_DIRECTORY handles (synthetic filesystem
+  walk) while interleaving relative opens through one hot base dir;
+  manifest records the expected absolute. Under LRU the hot dir's relative
+  opens keep resolving during the flood; under FIFO they would miss.
+
+Commands/results:
+
+- Both tracer tiers rebuilt clean (mnt_ns CO-RE read accepted by clang/BTF
+  locally; RHEL8 verifier check happens at deploy as usual).
+- `dotnet build wintap/Lintap.csproj` — 0 errors.
+- Targeted tests: 26/26 (resolver/message/process-tree 10, aggregator 9,
+  dir-index 7).
+- Comparator F2 scenarios: over-credit fixed (longest-suffix wins, second
+  claimant unmatched), count-bounded matching (5 vs 3 → matched 3,
+  unmatched 2), no-double-dip into gate-satisfying rows, prior scenarios
+  regression-free.
+- Workload `--dir-churn 200` smoke run produced the manifest section.
+
+Deploy note: **this slice changes the ring record format (path record +8B).
+Tracers MUST be rebuilt on the field host together with the Lintap
+rebuild** — a mixed deploy (old .bpf.o + new decoder, or vice versa)
+misreads the mnt_ns field.
+
+Pending field validation:
+
+- Post-deploy bundle: during a scan window, `dir_index_evictions` no longer
+  correlates with `relative_open_resolve_miss`; miss floor returns to the
+  0-131/min range; `dir_index_size` may sit at the new 65536 cap without
+  miss impact.
+- `--dir-churn` A/B scenario: hot-base relative opens resolve to absolute
+  throughout the flood.

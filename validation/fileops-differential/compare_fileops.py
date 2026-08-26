@@ -77,25 +77,55 @@ def normalize_relative(path: str) -> str:
 def match_relative_upgrades(
     relative: Counter[tuple[int, str, str]],
     other_relative: Counter[tuple[int, str, str]],
-    absolute: Counter[tuple[int, str, str]],
+    absolute_surplus: Counter[tuple[int, str, str]],
 ) -> tuple[Counter[tuple[int, str, str]], Counter[tuple[int, str, str]]]:
-    """Split relative tuples into matched (still present as relative, or present
-    as an absolute path ending in /<relative>) vs unmatched."""
-    by_pid_op: dict[tuple[int, str], list[str]] = {}
-    for (pid, path, op) in absolute:
-        by_pid_op.setdefault((pid, op), []).append(path)
+    """Split baseline relative tuples into matched vs unmatched, consuming
+    counts (F2 hardening): an exact relative match consumes from the
+    candidate's relative counts; a relative->absolute upgrade consumes from
+    the candidate's absolute SURPLUS (candidate - baseline, so rows that
+    satisfy the strict absolute gate are not double-credited). Longer
+    relative suffixes match first so "b/c" claims "/a/b/c" ahead of "c"."""
+    surplus_by_pid_op: dict[tuple[int, str], dict[str, int]] = {}
+    for (pid, path, op), count in absolute_surplus.items():
+        surplus_by_pid_op.setdefault((pid, op), {})[path] = count
+    relative_capacity = Counter(other_relative)
 
     matched: Counter[tuple[int, str, str]] = Counter()
     unmatched: Counter[tuple[int, str, str]] = Counter()
-    for (pid, rel_path, op), count in relative.items():
-        if (pid, rel_path, op) in other_relative:
-            matched[(pid, rel_path, op)] += count
-            continue
-        suffix = "/" + normalize_relative(rel_path)
-        if any(candidate.endswith(suffix) for candidate in by_pid_op.get((pid, op), ())):
-            matched[(pid, rel_path, op)] += count
-        else:
-            unmatched[(pid, rel_path, op)] += count
+    ordered = sorted(
+        relative.items(),
+        key=lambda item: len(normalize_relative(item[0][1])),
+        reverse=True,
+    )
+    for (pid, rel_path, op), count in ordered:
+        need = count
+
+        # Exact relative match, count-bounded.
+        available = relative_capacity[(pid, rel_path, op)]
+        if available > 0:
+            take = min(need, available)
+            relative_capacity[(pid, rel_path, op)] -= take
+            matched[(pid, rel_path, op)] += take
+            need -= take
+
+        # Upgrade match against absolute surplus, count-consuming.
+        if need > 0:
+            suffix = "/" + normalize_relative(rel_path)
+            pool = surplus_by_pid_op.get((pid, op), {})
+            for abs_path in list(pool):
+                if need <= 0:
+                    break
+                if not abs_path.endswith(suffix):
+                    continue
+                take = min(need, pool[abs_path])
+                pool[abs_path] -= take
+                if pool[abs_path] <= 0:
+                    del pool[abs_path]
+                matched[(pid, rel_path, op)] += take
+                need -= take
+
+        if need > 0:
+            unmatched[(pid, rel_path, op)] += need
     return matched, unmatched
 
 
@@ -164,7 +194,7 @@ def main() -> int:
     missing = baseline - candidate
     added = candidate - baseline
     upgraded_relative, unmatched_relative = match_relative_upgrades(
-        baseline_relative, candidate_relative, candidate
+        baseline_relative, candidate_relative, added
     )
     summary = {
         "baseline_regular_tuples": sum(baseline.values()),

@@ -351,14 +351,14 @@ fop-07 remains open from phase 1):
       becomes the code default in fop-11. Differential rerun folds into
       fop-11's standing gate. See verification.md §fop-13 Closeout.
 
-- [ ] fop-13c — namespace-aware dir-index keying (from the 2026-08-25 fop-13
+- [x] fop-13c — namespace-aware dir-index keying (from the 2026-08-25 fop-13
       code review, finding F1; not an acceptance blocker): stamp
       `task->nsproxy->mnt_ns->ns.inum` (one CO-RE chain read) on DIR_OPEN and
       relative-open records and key the dir-identity index by
       `(mnt_ns, s_dev, i_ino)`, eliminating wrong-path aliasing across mount
       namespaces (containers). Within-namespace bind mounts remain
       last-writer-wins among valid aliases of the same object — documented.
-- [ ] fop-13d — dir-index LRU + capacity (from the 2026-08-25 fop-11 field
+- [x] fop-13d — dir-index LRU + capacity (from the 2026-08-25 fop-11 field
       bundle 041718; NOT a fop-11 acceptance blocker): late-run filesystem
       walks pin the dir-identity index at its 16384 cap with 133k+
       evictions/interval, and FIFO eviction flushes hot base dirs
@@ -367,8 +367,11 @@ fop-07 remains open from phase 1):
       WINTAP_FILEOPS_DIR_INDEX_MAX knob (~10 MB worst case, approved memory
       tradeoff). Acceptance: during a scan window, evictions no longer
       correlate with misses and steady-state base dirs survive (miss floor
-      returns to the 0-131/min range).
-- [ ] fop-13 test/harness hardening (review findings F2+F4): make the
+      returns to the 0-131/min range). Implemented locally 2026-08-25 with
+      fop-13c and F2/F4 in one hardening pass — see verification.md
+      §fop-13c/fop-13d + F2/F4; field validation pending (scan-window
+      eviction/miss decorrelation + the new --dir-churn A/B scenario).
+- [x] fop-13 test/harness hardening (review findings F2+F4): make the
       comparator's relative→absolute matcher count-conserving (consume from
       the candidate "added" multiset, longest-suffix first) with a synthetic
       test for the over-credit case; extract the dir-identity index + join

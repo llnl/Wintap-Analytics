@@ -16,6 +16,16 @@ def main() -> int:
     parser.add_argument("--manifest", required=True)
     parser.add_argument("--files", type=int, default=16)
     parser.add_argument("--rounds", type=int, default=4)
+    parser.add_argument(
+        "--dir-churn",
+        type=int,
+        default=0,
+        help="fop-13d stress: open this many DISTINCT directories via "
+        "O_DIRECTORY handles (a synthetic filesystem-walk), flooding the "
+        "sensor's dir-identity index while a hot base dir keeps serving "
+        "relative opens. Validates LRU survival: the hot dir's relative "
+        "opens must keep resolving despite the flood.",
+    )
     args = parser.parse_args()
 
     work_dir = Path(args.work_dir)
@@ -63,6 +73,47 @@ def main() -> int:
         os.close(dir_fd)
         rel_target.unlink()
         rel_dir.rmdir()
+
+    # fop-13d stress scenario: a synthetic filesystem walk. Opens N distinct
+    # directory handles (flooding the dir-identity index) while interleaving
+    # relative opens through one hot base dir. Under LRU eviction the hot
+    # dir survives and its relative opens keep resolving; under FIFO it
+    # would be flushed and misses would spike.
+    if args.dir_churn > 0:
+        churn_root = work_dir / "churn"
+        churn_root.mkdir(exist_ok=True)
+        hot_dir = work_dir / "hotbase"
+        hot_dir.mkdir(exist_ok=True)
+        hot_target = hot_dir / "hot-target.dat"
+        hot_target.write_bytes(payload)
+        hot_fd = os.open(str(hot_dir), os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            created = []
+            for i in range(args.dir_churn):
+                sub = churn_root / f"d{i:06d}"
+                sub.mkdir()
+                created.append(sub)
+                churn_fd = os.open(str(sub), os.O_RDONLY | os.O_DIRECTORY)
+                os.close(churn_fd)
+                # Interleave hot-base relative opens so LRU keeps the hot
+                # entry warm the way steady-state traffic would.
+                if i % 16 == 0:
+                    fd = os.open("hot-target.dat", os.O_RDONLY, dir_fd=hot_fd)
+                    os.read(fd, 32)
+                    os.close(fd)
+            manifest["dir_churn"] = {
+                "distinct_dirs_opened": args.dir_churn,
+                "hot_base_dir": str(hot_dir),
+                "hot_relative_name": "hot-target.dat",
+                "expected_absolute": str(hot_target),
+            }
+            for sub in created:
+                sub.rmdir()
+        finally:
+            os.close(hot_fd)
+            hot_target.unlink()
+            hot_dir.rmdir()
+            churn_root.rmdir()
 
     # Negative/noise cases: these should not be required in regular-file parity.
     try:

@@ -138,6 +138,11 @@ read-only field host: output must be a transcription-ready summary
     4. journal/lintap-file-log-fileops-resolve.txt — path identity must not
        regress: miss levels (0-131/min range expected), resolved_dir_index
        share, miss_producer_dead/alive split, dir_index size/evictions.
+       Post-fop-13d (LRU index, cap 65536): during scan windows,
+       dir_index_evictions must NOT correlate with
+       relative_open_resolve_miss any more — evictions with a stable miss
+       floor is healthy LRU aging; evictions with a miss spike would mean
+       the hot set exceeds even the new cap (report it prominently).
     5. journal/lintap-file-log-esper-errors.txt — MUST contain no file.epl
        compile/deploy failures. Any Esper statement error here is a
        stop-ship finding: it means File serialization may be broken while
@@ -221,9 +226,13 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     Response, §Esper-Layer Addendum) for the semantics.
 
     Deployment steps (RHEL8 field host):
-    1. No tracer changes this slice: rebuild/install Lintap only. Keep the
+    1. UPDATED 2026-08-25 (fop-13c/13d hardening landed after fop-11): the
+       ring record format changed again (path records carry mnt_ns, +8B).
+       Rebuild tracers ON THE HOST (make clean && make) AND rebuild/install
+       Lintap together — a mixed deploy misreads the new field. Keep the
        validated env setting WINTAP_FILEOPS_MAX_QUEUE_EVENTS if present (the
-       code default is now 524288 anyway).
+       code default is now 524288 anyway); the dir index is now LRU with
+       default cap 65536 (WINTAP_FILEOPS_DIR_INDEX_MAX to override).
     2. Run the deterministic workload and collect a smoke bundle, then a
        longer bundle under normal host load. The 60s line now carries
        agg=[...] and sender=[...] sections.

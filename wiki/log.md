@@ -1023,3 +1023,26 @@ fop-13d added to the plan (touch-on-hit LRU eviction, cap 16384 → 65536 with
 env knob). Remaining fop-11 gates unchanged: kill-switch A/B differential and
 a post-collector-update bundle (parquet composition sanity).
 Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.
+
+## [2026-08-25] code | fop-13c/fop-13d + F2/F4 hardening implemented locally
+
+Human-directed dev pass implementing all deferred hardening. In `../wintap`:
+fop-13c — CO-RE tracer stamps the opener's mount-namespace inum on path
+records (+8B; fallback tier zeros) and the dir index keys by
+(mnt_ns, s_dev, i_ino), closing the bind-mount/container aliasing risk from
+review finding F1; fop-13d — the index is extracted into a dependency-free
+DirIdentityIndex class (F4) with touch-on-hit LRU eviction and cap 65536
+(WINTAP_FILEOPS_DIR_INDEX_MAX), fixing the scan-flood churn from bundle
+041718; DirIdentityIndexTests (7) including LRU hot-entry scan-flood
+survival. In this repo: F2 — the comparator's relative→absolute matcher is
+count-consuming against the candidate's absolute surplus, longest-suffix
+first, with over-credit/count-bound/no-double-dip scenarios verified;
+stretch — fileops_workload.py --dir-churn N synthetic filesystem-walk
+scenario for field validation of the LRU fix.
+Validation: both tracer tiers build; Lintap 0 errors; 26/26 targeted tests;
+all comparator scenarios pass; churn workload smoke run clean.
+DEPLOY NOTE: record format changed — tracers must be rebuilt on the field
+host together with Lintap (mixed deploy misreads mnt_ns). Handoff deploy
+steps and reviewer prompt updated (post-13d eviction/miss decorrelation
+rule).
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan,dev_handoff}.md`; `log.md`.
