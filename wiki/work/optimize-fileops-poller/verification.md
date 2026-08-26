@@ -1559,3 +1559,42 @@ Pending field validation (acceptance):
 - `send_sample_avg_us` recorded — the P3 number that decides any post-fop-11
   sender work.
 - `agg=[...]` health: entries bounded, cap_bypass ~0, summary_enqueue_fail 0.
+
+## fop-11 Field Bundle 041718 — 2026-08-25 (recorded from implementor review summary)
+
+Same running sensor as the first two fop-11 bundles (`lintap_pid=3584692`);
+includes both 5-minute smoke sessions (20260826T033507Z, 20260826T034337Z).
+Reviewed against the handoff acceptance criteria:
+
+- **Item 1 (queue-drop collapse): good.** `drops=0` throughout sampled
+  lines; depth/high-water modest vs capacity=524288.
+- **Item 3 (aggregation health): good in sampled windows.**
+  `summary_enqueue_fail=0`, `cap_bypass=0`, `bytes_clamped` 0 (occasionally
+  1-2), `repeats_folded` substantial.
+- **Item 4 (ring/resolve health): mixed.** `ring_fail_total=0` holds.
+  Resolve health holds in the smoke windows (misses 0-44/min). **New
+  finding: late-run dir-index saturation/churn** — around 9:02:34 PM:
+  `dir_index_size=16384` (the cap), `dir_index_evictions=133126`,
+  `relative_open_resolve_miss=357` with `dir_index_miss=357`; at 9:17:37 PM
+  evictions 144525, miss 322 (cwd_lookup_miss 316).
+- **Item 5 (P3 send timing): captured.** `send_sample_avg_us` ~356-2202.
+- **Items 2/6 (A/B differential, parquet sanity): not assessable from this
+  bundle** (pre-collector-update capture; kill-switch run still pending).
+
+### Designer disposition (2026-08-25)
+
+The churn is a fop-13 structural limit exposed by runtime, not a fop-11
+defect: ~133-144k evictions/interval at a pinned cap is the signature of a
+filesystem walk (updatedb/backup/rpm-verify class) flooding the index with
+one-shot directory identities, and the index's FIFO eviction (implemented as
+a simplicity shortcut; the gap analysis specified LRU) evicts the hot
+long-lived base dirs the steady-state workload depends on —
+`dir_index_miss ≈ relative_open_resolve_miss` is exactly that signature.
+Even degraded, misses (322-357/min) are ~4% of the pre-fop-13 floor.
+
+Decision path: **does not block fop-11 acceptance** (queue/composition/A-B
+criteria are independent and the smoke anchors stay clean); fixed instead by
+a new hardening slice **fop-13d** — LRU (touch-on-hit) eviction replacing
+FIFO, cap raised 16384 → 65536 with an env knob, ~10 MB worst case within
+the approved memory tradeoff. Confirmation to pull from the existing bundle:
+`dir_open_consumed` and `dir_open_unresolved` during the 9:02-9:17 window.

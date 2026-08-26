@@ -358,6 +358,16 @@ fop-07 remains open from phase 1):
       `(mnt_ns, s_dev, i_ino)`, eliminating wrong-path aliasing across mount
       namespaces (containers). Within-namespace bind mounts remain
       last-writer-wins among valid aliases of the same object — documented.
+- [ ] fop-13d — dir-index LRU + capacity (from the 2026-08-25 fop-11 field
+      bundle 041718; NOT a fop-11 acceptance blocker): late-run filesystem
+      walks pin the dir-identity index at its 16384 cap with 133k+
+      evictions/interval, and FIFO eviction flushes hot base dirs
+      (dir_index_miss ≈ total miss, 322-357/min ≈ 4% of the pre-fop-13
+      floor). Fix: touch-on-hit LRU eviction, cap 16384 → 65536 with a
+      WINTAP_FILEOPS_DIR_INDEX_MAX knob (~10 MB worst case, approved memory
+      tradeoff). Acceptance: during a scan window, evictions no longer
+      correlate with misses and steady-state base dirs survive (miss floor
+      returns to the 0-131/min range).
 - [ ] fop-13 test/harness hardening (review findings F2+F4): make the
       comparator's relative→absolute matcher count-conserving (consume from
       the candidate "added" multiset, longest-suffix first) with a synthetic

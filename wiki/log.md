@@ -1006,3 +1006,20 @@ parquet-sanity composition proof (raw_events > rows; the eventCount
 column-error signature identifies a pre-fop-11 build). Output contract:
 transcription-ready summary statistics only, per the read-only field policy.
 Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] review | fop-11 bundle 041718 triaged; dir-index churn dispositioned as fop-13d
+
+Third fop-11 bundle (same execution) transcribed into verification.md: queue
+drops stayed 0, ring 0, aggregation health clean (cap_bypass=0,
+summary_enqueue_fail=0, substantial repeats_folded), P3 send_sample_avg_us
+captured (~356-2202us). New finding: late-run dir-index saturation — the
+index pins at its 16384 cap with 133k-144k evictions/interval and
+dir_index_miss ≈ total miss (322-357/min), the signature of a filesystem
+walk flooding the FIFO-evicted index and flushing hot base directories.
+Designer disposition: a fop-13 structural limit exposed by runtime, not a
+fop-11 defect — does NOT block fop-11 acceptance (degraded misses are ~4% of
+the pre-fop-13 floor and smoke anchors stay clean); new hardening slice
+fop-13d added to the plan (touch-on-hit LRU eviction, cap 16384 → 65536 with
+env knob). Remaining fop-11 gates unchanged: kill-switch A/B differential and
+a post-collector-update bundle (parquet composition sanity).
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.
