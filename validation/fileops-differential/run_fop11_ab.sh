@@ -170,15 +170,17 @@ data_root, prefix, start_ft, end_ft, out = sys.argv[1], sys.argv[2], int(sys.arg
 # column and would poison the union (binder error on the WHERE clause).
 files = glob.glob(f"{data_root}/raw_sensor/raw_process_file/**/*.parquet", recursive=True)
 if not files:
+    print(f"diag: no parquet files under {data_root}/raw_sensor/raw_process_file", file=sys.stderr)
     print(0)
     raise SystemExit(0)
 file_list = ", ".join("'" + f.replace("'", "''") + "'" for f in files)
 prefix_sql = prefix.replace("'", "''")
 con = duckdb.connect()
 try:
+    con.execute(f"CREATE VIEW raw AS SELECT * FROM read_parquet([{file_list}], union_by_name=true)")
     con.execute(f"""
         CREATE TABLE hits AS
-        SELECT * FROM read_parquet([{file_list}], union_by_name=true)
+        SELECT * FROM raw
         WHERE path LIKE '{prefix_sql}%'
           AND COALESCE(firstSeen, 0) >= {start_ft}
           AND COALESCE(firstSeen, 0) <= {end_ft}
@@ -186,6 +188,20 @@ try:
     n = con.execute("SELECT count(*) FROM hits").fetchone()[0]
     if n:
         con.execute(f"COPY hits TO '{out}' (FORMAT PARQUET)")
+    else:
+        # Zero hits is ambiguous — say which filter is eliminating rows.
+        total, pfx, win = con.execute(f"""
+            SELECT count(*),
+                   count(*) FILTER (WHERE path LIKE '{prefix_sql}%'),
+                   count(*) FILTER (WHERE COALESCE(firstSeen, 0) BETWEEN {start_ft} AND {end_ft})
+            FROM raw""").fetchone()
+        print(f"diag: files={len(files)} rows={total} prefix_hits={pfx} window_hits={win} (window {start_ft}..{end_ft})", file=sys.stderr)
+        if pfx and not win:
+            lo, hi = con.execute(f"SELECT min(firstSeen), max(firstSeen) FROM raw WHERE path LIKE '{prefix_sql}%'").fetchone()
+            print(f"diag: prefix rows exist but firstSeen outside window: {lo}..{hi} — timestamp units or clock skew?", file=sys.stderr)
+        elif win and not pfx:
+            for (p,) in con.execute(f"SELECT DISTINCT path FROM raw WHERE COALESCE(firstSeen, 0) BETWEEN {start_ft} AND {end_ft} LIMIT 5").fetchall():
+                print(f"diag: in-window path sample: {p}", file=sys.stderr)
     print(n)
 except Exception as exc:
     print(f"ERR {exc}", file=sys.stderr)
