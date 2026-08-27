@@ -129,7 +129,7 @@ def match_relative_upgrades(
     return matched, unmatched
 
 
-def load_tuples(parquet_glob: str, ignore_pid: bool = False, path_prefix: str | None = None) -> tuple[Counter[tuple[int, str, str]], Counter[tuple[int, str, str]], Counter[str]]:
+def load_tuples(parquet_glob: str, ignore_pid: bool = False, path_prefix: str | None = None) -> tuple[Counter[tuple[int, str, str]], Counter[tuple[int, str, str]], Counter[str], Counter[tuple[int, str, str]] | None]:
     connection = duckdb.connect()
     try:
         columns = list_columns(connection, parquet_glob)
@@ -146,8 +146,16 @@ def load_tuples(parquet_glob: str, ignore_pid: bool = False, path_prefix: str | 
                 actual = next(c for c in columns if c.lower() == candidate.lower())
                 count_expr = f"COALESCE({actual}, 1)"
                 break
+        # fop-11 byte conservation: aggregates carry summed bytes for the raw
+        # events they fold. Absent column -> byte checking unavailable (None).
+        bytes_expr = None
+        for candidate in ("BytesRequested", "bytes_requested", "bytesRequested", "bytes"):
+            if candidate.lower() in {c.lower() for c in columns}:
+                actual = next(c for c in columns if c.lower() == candidate.lower())
+                bytes_expr = f"COALESCE({actual}, 0)"
+                break
         rows = connection.execute(
-            f"SELECT {pid_col}, {path_col}, {op_col}, {count_expr} FROM read_parquet('{quote(parquet_glob)}')"
+            f"SELECT {pid_col}, {path_col}, {op_col}, {count_expr}, {bytes_expr or '0'} FROM read_parquet('{quote(parquet_glob)}')"
         ).fetchall()
     finally:
         connection.close()
@@ -155,7 +163,8 @@ def load_tuples(parquet_glob: str, ignore_pid: bool = False, path_prefix: str | 
     regular: Counter[tuple[int, str, str]] = Counter()
     relative: Counter[tuple[int, str, str]] = Counter()
     noise: Counter[str] = Counter()
-    for pid, raw_path, raw_op, raw_count in rows:
+    regular_bytes: Counter[tuple[int, str, str]] | None = Counter() if bytes_expr else None
+    for pid, raw_path, raw_op, raw_count, raw_bytes in rows:
         path = normalize_path(str(raw_path or ""))
         op = str(raw_op or "").lower()
         weight = max(int(raw_count or 1), 1)
@@ -167,6 +176,8 @@ def load_tuples(parquet_glob: str, ignore_pid: bool = False, path_prefix: str | 
             if path_prefix and not path.startswith(path_prefix):
                 continue
             regular[(tuple_pid, path, op)] += weight
+            if regular_bytes is not None:
+                regular_bytes[(tuple_pid, path, op)] += max(int(raw_bytes or 0), 0)
         elif is_relative_candidate(path):
             relative[(tuple_pid, path, op)] += weight
         else:
@@ -178,7 +189,7 @@ def load_tuples(parquet_glob: str, ignore_pid: bool = False, path_prefix: str | 
                 noise[path.split(":", 1)[0]] += 1
             else:
                 noise["other"] += 1
-    return regular, relative, noise
+    return regular, relative, noise, regular_bytes
 
 
 def main() -> int:
@@ -206,15 +217,37 @@ def main() -> int:
         "counterpart, either relative or as an absolute path ending in "
         "/<relative> (fop-12/fop-13 upgrade matching). Default: report only.",
     )
+    parser.add_argument(
+        "--check-bytes",
+        action="store_true",
+        help="Also verify byte-total conservation: per regular tuple, the "
+        "candidate's summed BytesRequested must not be less than the "
+        "baseline's (deficit = lost bytes; surplus mirrors tolerated "
+        "'added' counts). Skipped with a warning if either side lacks a "
+        "bytes column. Relative tuples are out of scope.",
+    )
     args = parser.parse_args()
 
-    baseline, baseline_relative, baseline_noise = load_tuples(args.baseline, args.ignore_pid, args.path_prefix)
-    candidate, candidate_relative, candidate_noise = load_tuples(args.candidate, args.ignore_pid, args.path_prefix)
+    baseline, baseline_relative, baseline_noise, baseline_bytes = load_tuples(args.baseline, args.ignore_pid, args.path_prefix)
+    candidate, candidate_relative, candidate_noise, candidate_bytes = load_tuples(args.candidate, args.ignore_pid, args.path_prefix)
     missing = baseline - candidate
     added = candidate - baseline
     upgraded_relative, unmatched_relative = match_relative_upgrades(
         baseline_relative, candidate_relative, added
     )
+
+    byte_deficit: Counter[tuple[int, str, str]] = Counter()
+    bytes_checked = False
+    if args.check_bytes:
+        if baseline_bytes is None or candidate_bytes is None:
+            print("WARNING: --check-bytes requested but a side lacks a bytes column; byte conservation NOT verified", file=sys.stderr)
+        else:
+            bytes_checked = True
+            for key, base_total in baseline_bytes.items():
+                deficit = base_total - candidate_bytes.get(key, 0)
+                if deficit > 0:
+                    byte_deficit[key] = deficit
+
     summary = {
         "baseline_regular_tuples": sum(baseline.values()),
         "candidate_regular_tuples": sum(candidate.values()),
@@ -238,6 +271,14 @@ def main() -> int:
             {"pid": pid, "path": path, "op": op, "count": count}
             for (pid, path, op), count in unmatched_relative.most_common(25)
         ],
+        "bytes_checked": bytes_checked,
+        "baseline_bytes": sum(baseline_bytes.values()) if baseline_bytes is not None else None,
+        "candidate_bytes": sum(candidate_bytes.values()) if candidate_bytes is not None else None,
+        "byte_deficit_total": sum(byte_deficit.values()),
+        "byte_deficit_samples": [
+            {"pid": pid, "path": path, "op": op, "deficit": deficit}
+            for (pid, path, op), deficit in byte_deficit.most_common(25)
+        ],
     }
 
     text = json.dumps(summary, indent=2, sort_keys=True)
@@ -250,6 +291,8 @@ def main() -> int:
     if missing:
         return 1
     if args.fail_on_unmatched_relative and unmatched_relative:
+        return 1
+    if bytes_checked and byte_deficit:
         return 1
     # Guard against vacuous passes: a prefix-scoped A/B with an empty
     # baseline population compared nothing and must not read as success.

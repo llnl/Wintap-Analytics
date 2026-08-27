@@ -28,25 +28,27 @@ def main() -> int:
     w = args.work_dir.rstrip("/")
     if args.phase == "off":
         # Raw per-event rows: 3 opens + 2 reads of f1, 1 open of f2.
+        # Reads carry 64 bytes each (byte-conservation coverage).
         rows = [
-            (111, f"{w}/f1.dat", "Open", 1, ft),
-            (111, f"{w}/f1.dat", "Open", 1, ft),
-            (111, f"{w}/f1.dat", "Open", 1, ft),
-            (111, f"{w}/f1.dat", "Read", 1, ft),
-            (111, f"{w}/f1.dat", "Read", 1, ft),
-            (111, f"{w}/f2.dat", "Open", 1, ft),
+            (111, f"{w}/f1.dat", "Open", 1, 0, ft),
+            (111, f"{w}/f1.dat", "Open", 1, 0, ft),
+            (111, f"{w}/f1.dat", "Open", 1, 0, ft),
+            (111, f"{w}/f1.dat", "Read", 1, 64, ft),
+            (111, f"{w}/f1.dat", "Read", 1, 64, ft),
+            (111, f"{w}/f2.dat", "Open", 1, 0, ft),
         ]
     else:
-        # Aggregated equivalent: first emits (count 1) + summaries (repeats).
+        # Aggregated equivalent: first emits (count 1) + summaries (repeats,
+        # bytes summed across the folded events).
         rows = [
-            (222, f"{w}/f1.dat", "Open", 1, ft),
-            (222, f"{w}/f1.dat", "Open", 2, ft),  # summary: 2 repeats
-            (222, f"{w}/f1.dat", "Read", 1, ft),
-            (222, f"{w}/f1.dat", "Read", 1, ft),
-            (222, f"{w}/f2.dat", "Open", 1, ft),
+            (222, f"{w}/f1.dat", "Open", 1, 0, ft),
+            (222, f"{w}/f1.dat", "Open", 2, 0, ft),  # summary: 2 repeats
+            (222, f"{w}/f1.dat", "Read", 1, 64, ft),
+            (222, f"{w}/f1.dat", "Read", 1, 64, ft),  # summary: 1 repeat, 64 bytes
+            (222, f"{w}/f2.dat", "Open", 1, 0, ft),
         ]
     # Background noise outside the prefix, both phases.
-    rows.append((999, "/var/unrelated/background.log", "Write", 1, ft))
+    rows.append((999, "/var/unrelated/background.log", "Write", 1, 5, ft))
 
     out_dir = Path(args.data_root) / "raw_sensor" / "raw_process_file"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -58,9 +60,9 @@ def main() -> int:
     # the field harvest runs.
     con.execute(
         "CREATE TABLE t (PID INTEGER, File_Path VARCHAR, ActivityType VARCHAR, "
-        "EventCount INTEGER, FirstSeen BIGINT)"
+        "EventCount INTEGER, BytesRequested INTEGER, FirstSeen BIGINT)"
     )
-    con.executemany("INSERT INTO t VALUES (?, ?, ?, ?, ?)", rows)
+    con.executemany("INSERT INTO t VALUES (?, ?, ?, ?, ?, ?)", rows)
     con.execute(f"COPY t TO '{out}' (FORMAT PARQUET)")
     con.close()
     print(f"fixture written: {out} ({len(rows)} rows)")

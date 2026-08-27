@@ -390,7 +390,7 @@ log "running comparator"
   --baseline "$RESULTS_DIR/off.parquet" \
   --candidate "$RESULTS_DIR/on.parquet" \
   --ignore-pid --path-prefix "$WORK_DIR" \
-  --fail-on-unmatched-relative \
+  --fail-on-unmatched-relative --check-bytes \
   --json-out "$RESULTS_DIR/result.json" >"$RESULTS_DIR/comparator-stdout.json" 2>"$RESULTS_DIR/comparator-stderr.txt"
 CMP_RC=$?
 
