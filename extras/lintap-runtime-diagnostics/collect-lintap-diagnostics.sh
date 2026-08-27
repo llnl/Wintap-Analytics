@@ -699,8 +699,10 @@ collect_fileops_parquet_sanity() {
 
   {
     printf 'files (newest 20, last 6h):\n%s\n\n' "$file_list" | tr ',' '\n'
+    # NB: dot-commands only work on CLI stdin, not inside -c SQL strings;
+    # and the flush schema's path column is File_Path (FileSerializer).
     printf -- '--- fop-11 composition check ---\n'
-    timeout 60 "$DUCKDB_BIN" -c "
+    timeout 60 "$DUCKDB_BIN" <<SQLEOF
 .mode markdown
 WITH data AS (SELECT * FROM read_parquet([$file_list], union_by_name=true))
 SELECT count(*) AS rows,
@@ -712,15 +714,15 @@ SELECT count(*) AS rows,
        max(lastSeen) AS max_last_seen,
        sum(CASE WHEN firstSeen IS NULL OR firstSeen <= 0 THEN 1 ELSE 0 END) AS zero_first_seen_rows
 FROM data;
-"
+SQLEOF
     printf -- '\n--- basic shape (works on any build) ---\n'
-    timeout 60 "$DUCKDB_BIN" -c "
+    timeout 60 "$DUCKDB_BIN" <<SQLEOF
 .mode markdown
 WITH data AS (SELECT * FROM read_parquet([$file_list], union_by_name=true))
-SELECT count(*) AS rows, count(DISTINCT path) AS distinct_paths,
+SELECT count(*) AS rows, count(DISTINCT file_path) AS distinct_paths,
        min(firstSeen) AS min_first_seen, max(lastSeen) AS max_last_seen
 FROM data;
-"
+SQLEOF
   } >"$out_file" 2>&1
 }
 
