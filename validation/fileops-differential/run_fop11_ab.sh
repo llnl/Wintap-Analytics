@@ -130,9 +130,16 @@ fi
 apply_env_override() { # $1 = line to add, $2 = save-file basename for any pre-existing lines
   local var=${1%%=*}
   if grep -q "^${var}=" "$ENV_FILE" 2>/dev/null; then
-    grep "^${var}=" "$ENV_FILE" >"$RESULTS_DIR/$2"
-    sed -i "/^${var}=/d" "$ENV_FILE"
-    log "saved pre-existing $var for restore: $(tr '\n' ' ' <"$RESULTS_DIR/$2")"
+    if [ "$(grep "^${var}=" "$ENV_FILE" | sort -u)" = "$1" ]; then
+      # Identical to what we'd write: a leftover from an interrupted run,
+      # not a production value — discard rather than "restore" it later.
+      log "discarding leftover $var from a previous interrupted run"
+      sed -i "/^${var}=/d" "$ENV_FILE"
+    else
+      grep "^${var}=" "$ENV_FILE" >"$RESULTS_DIR/$2"
+      sed -i "/^${var}=/d" "$ENV_FILE"
+      log "saved pre-existing $var for restore: $(tr '\n' ' ' <"$RESULTS_DIR/$2")"
+    fi
   fi
   printf '%s\n' "$1" >>"$ENV_FILE"
   log "env override for the run: $1"
