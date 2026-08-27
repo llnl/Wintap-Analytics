@@ -224,10 +224,13 @@ try:
     # Real flush schema (FileSerializer): File_Path (lowercased by the
     # sensor), FirstSeen/LastSeen (FileTime), ActivityType, EventCount, PID.
     # DuckDB binds identifiers case-insensitively.
+    # Relative rows (no leading /) must flow through: under aggregation the
+    # folded repeats of dir_fd-relative opens keep the unresolved relative
+    # name, and the comparator's relative-upgrade matching handles them.
     con.execute(f"""
         CREATE TABLE hits AS
         SELECT * FROM raw
-        WHERE file_path LIKE '{prefix_sql}%'
+        WHERE (file_path LIKE '{prefix_sql}%' OR file_path NOT LIKE '/%')
           AND COALESCE(firstSeen, 0) >= {start_ft}
           AND COALESCE(firstSeen, 0) <= {end_ft}
     """)
