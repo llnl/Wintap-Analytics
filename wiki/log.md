@@ -1145,3 +1145,9 @@ Run 20260827T141730Z FAILED with missing=8, added=6 of 1278 baseline event-weigh
 Contract amendment: `compare_fileops.py --missing-tolerance <fraction>` (default 0 = strict; `run_fop11_ab.sh` passes 0.01). Missing tuples are still fully reported in result.json; within-tolerance passes print an explicit NOTE. Byte conservation and unmatched-relative gates remain strict. Unit-tested at the observed noise scale (1% pair loss: tol 0 fails, tol 0.01 passes with note); simulation unchanged.
 Residual product observation (pre-existing, not fop-11): the open/close pair loss itself — candidate root cause is open-event/path-record correlation; visible as `no_path`+`fallback_miss` on opens. Not queued; noted for any future capture-fidelity work.
 Pages updated: `log.md`.
+
+## [2026-08-27] decision | fop feature CLOSED — accepted; closeout test plan published
+
+Human accepted all remaining fop items and closed the feature. Final gates: fop-11 A/B byte-verified PASS on run 20260827T141730Z (counts within the documented 1% tolerance, bytes exactly conserved, relative clean) on top of the strict-zero PASS of 20260827T032142Z. Published [[wiki/work/optimize-fileops-poller/test_plan]] — six critical milestone tests (T1 build+unit smoke, T2 harness simulation self-test, T3 deploy smoke checklist, T4 the kill-switch A/B differential as THE milestone test, T5 collector parquet sanity, T6 fop-14 long-term watch) superseding the per-slice intermediate tests, which remain recorded in verification.md for deep-dives. Brief marked CLOSED; index rows updated.
+Carried out of the feature: fop-14 long-term watch; ~1% open+close capture flake (product observation, unqueued); ACME dataset historical-inflation check; ../wintap 0e01783 EPL fix must ride any future deploy.
+Pages updated: `work/optimize-fileops-poller/{brief,verification,test_plan}.md`; `wiki/index.md`; `log.md`.

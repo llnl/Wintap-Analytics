@@ -21,6 +21,14 @@ tags: [feature-work, file-events, ebpf, linux-sensor, ring-buffer, performance, 
 
 # Feature Brief: Optimize FileOps Poller Event Volume
 
+> **STATUS: CLOSED — accepted 2026-08-27.** All fop slices landed and
+> field-verified; fop-11 count+byte conservation proven by the kill-switch
+> A/B (see [[wiki/work/optimize-fileops-poller/verification]]); the
+> regression surface is [[wiki/work/optimize-fileops-poller/test_plan]].
+> Watch items: fop-14 serializer caps (long-term, re-measure post-EPL-fix),
+> the ~1% open+close capture flake, and the ACME dataset historical
+> eventCount-inflation check.
+
 Spun off from the initial review recorded 2026-08-24 in
 [[wiki/work/fix-unbounded-process-table-growth/verification]] ("Initial
 FileOps Review"). Development happens on the `grantj-rhel8-testing` branch in

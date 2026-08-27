@@ -1756,3 +1756,19 @@ byte-total conservation; the comparator verifies distinct tuples + count
 conservation only. Verify bytes (sum BytesRequested per tuple across phases)
 or record an explicit waiver. Collector-bundle gate
 (duckdb/fileops-parquet-sanity.txt) still owed.
+
+## Feature acceptance (2026-08-27)
+
+Human accepted the feature for closeout. Final evidence set:
+- fop-11 A/B run 20260827T032142Z: strict PASS (missing=0), post-EPL-fix.
+- fop-11 A/B run 20260827T141730Z: PASS with all three contract invariants
+  machine-checked — missing 8/1278 (0.63%, within the documented 1%
+  capture-noise tolerance; every entry the known paired open+close flake),
+  byte totals exactly conserved (568320 = 568320, deficit 0),
+  unmatched_relative=0.
+- fop-12/fop-13: accepted on post-fop-13 resolve counters (misses
+  0-6/interval; workload relative opens 36/36 resolved via dir index).
+- fop-08 differential debt: discharged by the A/B harness runs.
+- Collector parquet-sanity queries fixed (5dfc124) — T5 of the test plan
+  covers the composition proof going forward.
+Milestone regression surface: [[wiki/work/optimize-fileops-poller/test_plan]].
