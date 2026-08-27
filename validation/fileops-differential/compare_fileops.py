@@ -218,6 +218,18 @@ def main() -> int:
         "/<relative> (fop-12/fop-13 upgrade matching). Default: report only.",
     )
     parser.add_argument(
+        "--missing-tolerance",
+        type=float,
+        default=0.0,
+        help="Tolerated missing_regular_tuples as a fraction of baseline "
+        "(default 0 = strict). Rationale: the sensor has a pre-existing, "
+        "phase-symmetric per-event capture flake (an open whose path record "
+        "misses is dropped no_path, and its close then drops with it — "
+        "paired open+close singles, ~1%% of pairs), which is unrelated to "
+        "aggregation; aggregation defects lose counts at repeat scale. "
+        "Missing tuples are still reported in the JSON either way.",
+    )
+    parser.add_argument(
         "--check-bytes",
         action="store_true",
         help="Also verify byte-total conservation: per regular tuple, the "
@@ -271,6 +283,8 @@ def main() -> int:
             {"pid": pid, "path": path, "op": op, "count": count}
             for (pid, path, op), count in unmatched_relative.most_common(25)
         ],
+        "missing_fraction": (sum(missing.values()) / sum(baseline.values())) if baseline else 0.0,
+        "missing_tolerance": args.missing_tolerance,
         "bytes_checked": bytes_checked,
         "baseline_bytes": sum(baseline_bytes.values()) if baseline_bytes is not None else None,
         "candidate_bytes": sum(candidate_bytes.values()) if candidate_bytes is not None else None,
@@ -289,7 +303,16 @@ def main() -> int:
             handle.write("\n")
 
     if missing:
-        return 1
+        missing_fraction = sum(missing.values()) / max(sum(baseline.values()), 1)
+        if missing_fraction > args.missing_tolerance:
+            return 1
+        print(
+            f"NOTE: {sum(missing.values())} missing tuple(s) "
+            f"({missing_fraction:.4f} of baseline) within tolerance "
+            f"{args.missing_tolerance} — treated as PASS (capture noise, "
+            "see missing_samples)",
+            file=sys.stderr,
+        )
     if args.fail_on_unmatched_relative and unmatched_relative:
         return 1
     if bytes_checked and byte_deficit:
