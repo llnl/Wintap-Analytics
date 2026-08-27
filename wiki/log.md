@@ -1125,3 +1125,16 @@ Source: field run `/var/tmp/fop11-ab-results-20260827T032142Z` on spk16 with the
 Outcome: VERDICT PASS, exit 0. Baseline 1272 event-weighted regular tuples (down from 5800 under the n² inflation — now matching the workload's actual syscall count), candidate 1292, missing=0, added=20 (candidate-side background surplus, tolerated by design), unmatched_relative=0. ON-phase counters healthy: 24.9k repeats folded, 3.9k summaries, `summary_enqueue_fail=0`, `cap_bypass=0`. OFF rows 687 (one row per group per 10s batch, as intended post-fix) vs 1280 in the inflated runs. fop-11 kill-switch count conservation is accepted.
 Harness hardening: leftover env-override lines from interrupted runs are now discarded instead of being "restored" into production (the parked upload interval survived two cleanup cycles on spk16 this way; field host cleaned up manually).
 Pages updated: `log.md`.
+
+## [2026-08-27] decision | fop closeout dispositions and byte-conservation gate implemented
+
+Human dispositions toward feature closeout:
+- **fop-12: ACCEPTED** (post-fop-13 field evidence: relative_open_resolve_miss 0-6/interval, workload relative opens resolving 36/36 via the dir index, vs the 8-10k floor that blocked acceptance).
+- **fop-08 differential debt: discharged** by the fop-11 A/B harness runs (OFF phase exercises the full post-fop-08 pipeline; PASS 20260827T032142Z).
+- **fop-14: watch long-term** during longer test deployments rather than a dedicated re-measurement now (prior severity number was taken under the per-event-row EPL inflation and is not trusted).
+- **EPL-fix mainlining (../wintap 0e01783): deferred** — no production deployments at present, so no urgency beyond normal branch flow.
+- **Historical eventCount inflation: check the "ACME" dataset** before treating it as a practical problem — many changes have landed since the last production deployment, so pre-fix inflated parquet may not exist in any dataset anyone consumes. If ACME's File/Registry data predates the last deployment gap, re-baseline or fence it; otherwise close the concern.
+
+Implemented: byte-total conservation in the comparator (`compare_fileops.py --check-bytes`, wired into `run_fop11_ab.sh`, Wintap-Analytics 67f463d) — per regular tuple, candidate summed BytesRequested must not fall below baseline (deficit fails with samples; surplus mirrors tolerated added counts; warn-and-skip when a bytes column is absent). Simulation passes with bytes verified; deficit and missing-column paths unit-tested. The fop-11 differential contract's three invariants (distinct tuples, count conservation, byte conservation) are now all machine-checked; the next field A/B run verifies them together.
+Remaining for fop-11 acceptance: the collector-bundle gate (duckdb/fileops-parquet-sanity.txt), then closeout mechanics (verification/brief/index status flips).
+Pages updated: `work/optimize-fileops-poller/{implementation_plan,dev_handoff}.md`; `log.md`.

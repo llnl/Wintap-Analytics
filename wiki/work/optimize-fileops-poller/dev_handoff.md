@@ -228,6 +228,9 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     no longer overflows (ring_fail_total=0 in all recent bundles); the active
     loss signal is the bounded userspace sender queue under some load phases.
     fop-08 full acceptance still owes a differential-harness rerun.
+    UPDATE 2026-08-27: the human accepted that debt as discharged by the
+    fop-11 A/B harness runs (same differential harness, OFF phase exercises
+    the full post-fop-08 pipeline; PASS on 20260827T032142Z).
 
     UPDATE 2026-08-27: gate 1 (kill-switch A/B) PASSED on spk16 —
     results /var/tmp/fop11-ab-results-20260827T032142Z, missing=0. The

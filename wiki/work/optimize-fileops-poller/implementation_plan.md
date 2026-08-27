@@ -310,9 +310,11 @@ fop-07 remains open from phase 1):
       32 hot reads → exactly 32×32=1024 parquet events). Fixed in `../wintap`
       0e01783 (AgentId added to both group-bys; tcp/udp already grouped it) —
       any fop-11 deploy must include it. See wiki/log.md 2026-08-26/27
-      entries. Remaining before acceptance: (a) the collector-bundle gate
-      below; (b) byte-total conservation is NOT yet checked by the comparator
-      (counts + distinct tuples only) — verify or waive explicitly.
+      entries. Remaining before acceptance: the collector-bundle gate below.
+      Byte-total conservation is implemented in the comparator as of
+      2026-08-27 (--check-bytes, wired into run_fop11_ab.sh; deficit-fail
+      with samples, warn-and-skip when a bytes column is absent) — the next
+      field A/B run verifies all three contract invariants.
 - [x] fop-12 — absolute-path ground truth (precondition for fop-11 keys,
       human-directed 2026-08-25): resolve relative/`openat` paths to absolute
       at open time so File telemetry records accurate ground truth and
@@ -323,9 +325,14 @@ fop-07 remains open from phase 1):
       tracepoints. Also improves fd-cache attribution for subsequent
       read/write events. Dev chooses the exact resolution point; record
       rationale. Local code/build, deployment, and field validation are now
-      complete and recorded; acceptance is still pending because the remaining
-      `relative_open_resolve_miss` floor and `(relative)` bucket are too large
-      for safe aggregation keys. Root cause of the floor diagnosed 2026-08-25:
+      complete and recorded; **ACCEPTED by human 2026-08-27** — post-fop-13
+      field runs show `relative_open_resolve_miss` at 0-6/interval with all
+      workload relative opens resolving via the dir index (36/36 in the
+      fop-11 A/B runs), against the 8-10k/interval floor that had blocked
+      acceptance. Earlier context: acceptance had been pending because the
+      `relative_open_resolve_miss` floor and `(relative)` bucket were too
+      large for safe aggregation keys. Root cause of the floor diagnosed
+      2026-08-25:
       all fallbacks are decode-time `/proc` reads racing millisecond-lived
       producers — see [[wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25]];
       the fix is fop-13.
