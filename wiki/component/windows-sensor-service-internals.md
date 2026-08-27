@@ -39,6 +39,9 @@ Startup initializes platform-specific data-directory permissions on Windows, log
 Sensor producers build `WintapMessage` objects and call `EventChannel.Send`. At that point Wintap attaches `AgentId`, process identity, parent process context, process registrations, and finally submits the event to Esper as `WintapMessage` unless environment flags bypass the relevant stages.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/EventChannel.cs §Send -->
 
+Since 2026-08-25, every message that reaches egress is also inspected by the always-on sensor health monitor (constant-time data-quality checks, stream-liveness watchdog, aggregated `SensorHealth` lines in Wintap.log) via `EventChannel.InspectForHealth` on both egress branches plus the `MemoryMapSensor` direct-send bypass; the monitor starts right after `subscriptionMgr.Start()` and stops first during shutdown. See [[wiki/component/sensor-health-monitor]].
+<!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/EventChannel.cs §InspectForHealth; ../wintap/wintap/core/infrastructure/WintapSvcCore.cs §StartupWorkerAsync/§StopAsync -->
+
 ## Operational Notes
 
 The service has explicit environment-variable escape hatches for investigation and isolation, including `WINTAP_DISABLE_DUCKDB_UI`, `WINTAP_DISABLE_SENSORS`, `WINTAP_DISABLE_ETL`, `WINTAP_SKIP_PROCESS_RESOLVE`, `WINTAP_SKIP_PARENT_PROCESS_RESOLVE`, `WINTAP_SKIP_PROCESS_REGISTER`, and `WINTAP_SKIP_ESPER_SEND`.
