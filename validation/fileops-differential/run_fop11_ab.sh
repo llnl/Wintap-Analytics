@@ -305,6 +305,8 @@ cleanup() {
     fi
   done
   if [ "$changed" -eq 1 ]; then
+    # Snapshot the log before the restart truncates it (LogType.Overwrite).
+    cp "$LINTAP_LOG" "$RESULTS_DIR/final-lintap.log" 2>/dev/null || true
     log "cleanup: restarting lintap with production config (accumulated test parquet merges and uploads normally)"
     systemctl restart lintap || true
   fi
@@ -341,9 +343,10 @@ run_phase() { # $1 = off|on  $2 = agg false|true
     echo "$phase" >>"$RESULTS_DIR/invalid-phases.txt"
     PHASE_INVALID=1
   fi
-  # Keep the sensor's own accounting for the phase (agg first_emits/
-  # repeats_folded/summaries/summary_enqueue_fail, queue drops) as evidence.
+  # Preserve the phase's evidence BEFORE any restart destroys it: the log
+  # is opened LogType.Overwrite, so every service restart truncates it.
   if [ -z "$SIMULATE_DIR" ]; then
+    cp "$LINTAP_LOG" "$RESULTS_DIR/$phase-lintap.log" 2>/dev/null || true
     grep 'FileOps counters' "$LINTAP_LOG" 2>/dev/null | tail -8 >"$RESULTS_DIR/$phase-counters.log" || true
   fi
   if ! harvest "$phase" "$start_ft" "$end_ft"; then
