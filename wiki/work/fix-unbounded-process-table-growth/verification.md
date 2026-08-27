@@ -360,3 +360,21 @@ Future optimization ideas to validate, in likely priority order:
 4. Add explicit FileOps drop/emit counters so later tuning is measurable instead of inferred from CPU alone.
 
 Treat this note as a future todo and a starting hypothesis list, not a final design.
+
+## Feature acceptance (2026-08-27)
+
+Human accepted the current state for closeout ahead of the branch PR
+(the Windows developer needs the changes; no production deployments
+exist). Evidence: slice-1 review accepted 2026-08-13; field process
+table bounded across weeks of spk16 operation (47,648 rows / 1,977 open
+at the 2026-08-16 check vs the pre-feature 8M rows/10 days);
+process_retention_telemetry bounded with a correlated host CPU drop;
+CloneSensor thread filter cut thread-row noise ~35x; process-creation
+pytest green (5/5, 2026-08-27). The dev handoff's long-run gate is
+superseded by human decision: final long-run acceptance runs as
+[[wiki/work/extended-deployment-monitoring/brief]] (1-2 week status
+checks, multi-host, ~a few weeks; expected short patch cycles).
+Canonical promotion done: [[wiki/component/process-table-retention]]
+and [[wiki/component/fileops-event-pipeline]].
+Milestone regression surface:
+[[wiki/work/optimize-fileops-poller/test_plan]] (P-tests).

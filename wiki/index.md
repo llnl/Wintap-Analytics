@@ -33,6 +33,8 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/component/wintap-api-shared-data-model]] | high | Canonical page for the WintapMessage envelope, domain objects, plugin contracts, and EventChannel enrichment boundary. |
 | [[wiki/component/wintap-recorder]] | high | Captures WintapRecorder recording-session control, registry mode flags, Parquet monitoring, and merge behavior. |
 | [[wiki/component/plugin-and-mcp-samples]] | high | Documents plugin discovery/contracts, sample event subscriber behavior, and research/POC MCP SQL tooling caveats. |
+| [[wiki/component/process-table-retention]] | high | Process-table retention/reconciliation contracts: resolver-owned sweep, liveness-based stale-open closing, bounded QA telemetry, CloneSensor CLONE_THREAD filter, ~47-50k row plateau, DuckDB lock caveat. |
+| [[wiki/component/fileops-event-pipeline]] | high | Kernel-to-parquet FileOps contracts: tracer tiers and filters, fd/dir-index path identity, fop-11 emit-first aggregation (count+byte conserving), the Esper group-by rule (ungrouped select column = n² eventCount inflation), FileSerializer flush schema, and known caveats. |
 | [[wiki/component/sensor-upload-cache-pipeline]] | high | Canonical page for the shared upload/cache pipeline: merge cycle, type-agnostic ride-along sweep contract, delete-after-upload (fixed 2026-08-17), prune backstop, hang-recovery scoping, deployment prerequisites, and the small-file consolidation follow-up. |
 ## Data_model
 
@@ -99,7 +101,8 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/improve-pidstat-collector/implementation_plan]] | medium | Plan with slice 2 redefined (2026-08-14) as a Python rewrite: single-process collector on the duckdb Python API absorbing all review findings, pytest port with fork regression guard, systemd unit, Wintappy DBT parquet migration; steps 1–4 complete. |
 | [[wiki/work/improve-pidstat-collector/dev_handoff]] | medium | Slice-2 handoff: rewrite the collector in Python (retiring the fork-storm bash version), hard single-process requirement, carried-over semantics as spec, pytest port, systemd, and Wintappy parquet migration, with `../Lintap` + `../Wintappy` authorization. |
 | [[wiki/work/improve-pidstat-collector/verification]] | medium | Verification log for both slices, each with an accepted independent review: slice 1 (bash, retired) and slice 2 (Python /proc sampler, 12/12 pytest, container columns, Wintappy parquet migration); remaining items are operational (target-host systemd, container fixture, S3 end-to-end blocked on the upload fix). |
-| [[wiki/work/fix-unbounded-process-table-growth/brief]] | medium | Feature brief for bounding event_store process-table growth on long runs (8M rows/10 days observed) with retention + stale-open reconciliation while preserving PID-reuse-safe process resolution. |
+| [[wiki/work/fix-unbounded-process-table-growth/brief]] | medium | CLOSED 2026-08-27 (accepted): process-table growth bounded (8M rows/10 days → ~47k plateau) via retention sweep + stale-open reconciliation + bounded QA telemetry + CloneSensor thread filter; long-run acceptance runs as extended-deployment-monitoring; knowledge promoted to component/process-table-retention. |
+| [[wiki/work/extended-deployment-monitoring/brief]] | high | Parallel acceptance task for both 2026-08-27-closed features: 1-2 week human status checks on multi-host test deployments (P2/T5/T3/T6 from the bundle), exit criteria for final acceptance, and the carried watch items (fop-14, capture flake, ACME dataset check). |
 | [[wiki/work/fix-unbounded-process-table-growth/references]] | medium | Source map for the process-table retention feature: ProcessResolver/EventChannel hot paths, ClearDB call sites, validation-harness baseline, decisions to date, DuckDB space-reclamation questions. |
 | [[wiki/work/fix-unbounded-process-table-growth/design]] | medium | First-slice design: lazy resolver-owned sweep scheduling, liveness-based stale-open reconciliation, exited-row retention, and DuckDB telemetry for stop/reconciled/deleted/retention-miss counts. |
 | [[wiki/work/fix-unbounded-process-table-growth/implementation_plan]] | medium | First-slice implementation checklist for resolver retention/reconciliation, harness updates, VM builds, and the remaining long-run follow-up work. |
@@ -125,4 +128,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ---
 
-*Last updated: 2026-08-27 (optimize-fileops-poller: feature CLOSED/accepted — fop-11 A/B passed with count+byte conservation, EPL n² eventCount bug found and fixed en route, closeout test plan published)*
+*Last updated: 2026-08-27 (both features CLOSED/accepted — fix-unbounded-process-table-growth and its fop subtask; knowledge promoted to component pages; long-run acceptance shifted to extended-deployment-monitoring ahead of the branch PR)*
