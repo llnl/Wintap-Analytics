@@ -1,5 +1,5 @@
 ---
-title: "Closeout Test Plan: FileOps Feature (fop)"
+title: "Closeout Test Plan: grantj-rhel8-testing Branch (fop + process-table retention)"
 type: concept
 confidence: high
 grounded_by:
@@ -18,9 +18,12 @@ source_paths: wiki/work/optimize-fileops-poller/test_plan.md
 tags: [feature-work, file-events, ebpf, linux-sensor, test-plan, closeout]
 ---
 
-# Closeout Test Plan: FileOps Feature (fop)
+# Closeout Test Plan: grantj-rhel8-testing Branch
 
-The critical milestone tests for everything the fop branch changed:
+The critical milestone tests for everything the branch changed, across
+both features: [[wiki/work/fix-unbounded-process-table-growth/brief]]
+(P-tests below: resolver retention/reconciliation, telemetry bounding,
+CloneSensor thread-clone filter) and its FileOps subtask (T-tests):
 kernel tracers + filters (fop-01..07), the decoupled poller/sender
 (fop-08/09), runtime measurement (fop-10), emit-first aggregation with
 count/byte conservation (fop-11), relative-path ground truth + the LRU
@@ -131,10 +134,48 @@ cap sizing; env knobs `WINTAP_ETL_MAX_QUEUE_EVENTS_*` exist). Also
 worth a periodic glance: `open: no_path` in the counters — the residual
 ~1% open/close capture flake documented in the 2026-08-27 log entry.
 
+## P1 — Process-creation harness (dev box or VM, ~5 min)
+
+```bash
+cd validation/process-creation && uv run pytest
+```
+
+Expected: all tests pass (workload, evaluator, schema, lintap
+normalizer). Covers: process event correctness end to end — the
+regression surface for resolver retention, rundown reconciliation, and
+the CloneSensor thread-clone filter.
+
+## P2 — Process-table boundedness (field host; free with the T5 bundle)
+
+In the diagnostics bundle, read `duckdb/event-table-counts.out`:
+
+- `process` rows in the ~50k band (2026-08-16 baseline: 47,648 rows,
+  1,977 open / 45,671 closed) — NOT millions (the pre-feature failure
+  was 8M rows/10 days);
+- open rows a small fraction of total (thousands, not tens of
+  thousands) — stale-open reconciliation working;
+- `process_retention_telemetry` bounded (the aggregation/retention fix),
+  not growing per-sweep.
+
+Order-of-magnitude growth in any of these on a long-running host reopens
+the retention feature.
+
+## P3 — Deep-dive long run (VM; only when P1/P2 flag something, ~hours)
+
+```bash
+validation/process-creation/scripts/run_lintap_currentish_long_run.sh
+python3 validation/process-creation/scripts/summarize_currentish_long_run.py --run-dir /tmp/validation-runs/<run-id>
+```
+
+Expected: `live_pids_missing_open_row == 0`, low `stale_open_rows`, no
+surprising `reconciled_closed` jump. This is the diagnostic tool, not a
+routine gate — spk16's continuous operation is the standing long run.
+
 ## Run cadence
 
-- Every sensor or harness change: T1 + T2.
+- Every sensor or harness change: T1 + T2; P1 when the process path is
+  touched.
 - Every field deploy: T3, then T4 when the change touches the FileOps
   path (events, aggregation, serialization, EPL).
-- Per diagnostics bundle: T5 comes free with the collector.
-- T6 continuously during long-running test deployments.
+- Per diagnostics bundle: T5 and P2 come free with the collector.
+- T6 continuously during long-running test deployments; P3 on demand.
