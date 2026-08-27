@@ -299,6 +299,20 @@ fop-07 remains open from phase 1):
       comparator scenarios all passing. Field A/B (with the folded fop-13
       differential rerun) pending. See verification.md §fop-11 Local Code
       Slice.
+      **Field A/B PASSED 2026-08-27** (spk16, results 20260827T032142Z):
+      missing=0 (baseline 1272 vs candidate 1292 event-weighted tuples);
+      per-op event totals for the hot-loop file identical across phases
+      (34/34/32). En route, the initial FAILs root-caused a pre-existing
+      serializer bug — `file.epl`/`registry.epl` selected `AgentId` without
+      grouping it, making the statement not fully aggregated so Esper
+      emitted one row PER INPUT EVENT stamped with the group's
+      sum(eventCount): n events → n rows × n counts (n² inflation; proof:
+      32 hot reads → exactly 32×32=1024 parquet events). Fixed in `../wintap`
+      0e01783 (AgentId added to both group-bys; tcp/udp already grouped it) —
+      any fop-11 deploy must include it. See wiki/log.md 2026-08-26/27
+      entries. Remaining before acceptance: (a) the collector-bundle gate
+      below; (b) byte-total conservation is NOT yet checked by the comparator
+      (counts + distinct tuples only) — verify or waive explicitly.
 - [x] fop-12 — absolute-path ground truth (precondition for fop-11 keys,
       human-directed 2026-08-25): resolve relative/`openat` paths to absolute
       at open time so File telemetry records accurate ground truth and
@@ -381,7 +395,20 @@ fop-07 remains open from phase 1):
       here — Esper output volume is distinct-group-driven by design. Step 1
       mirrors the FileOps queue experiment: raise the serializer caps in
       ETLConfig, measure drop deltas + memory; then decide whether the
-      parquet writer needs throughput work. Also: replace per-event
+      parquet writer needs throughput work.
+      **RE-MEASURE FIRST (2026-08-27): this severity was measured under the
+      ungrouped-AgentId EPL bug (one Esper row per input event), so the
+      serializer stage was seeing per-event row volume, not
+      one-row-per-group. With `../wintap` 0e01783 deployed, Esper output
+      collapses to one row per (group, 10s batch) and the observed drop rate
+      may shrink by orders of magnitude — re-run the heavy-window
+      measurement before sizing caps.** The queue-cap knobs already exist as
+      env overrides (the fop-11 A/B parks
+      WINTAP_ETL_MAX_QUEUE_EVENTS_FILESERIALIZER=100000 for its agg-OFF
+      flood phase). Keep a cap regardless: it is the host-protection
+      backpressure of last resort against a stalled parquet writer
+      (disk-full/duckdb hang would otherwise grow the in-memory queue
+      without bound); the open question is sizing, not existence. Also: replace per-event
       owner-resolution warnings with a 60s counter (log hygiene; the misses
       are the known producer-lifetime residual).
 - [x] fop-13 test/harness hardening (review findings F2+F4): make the

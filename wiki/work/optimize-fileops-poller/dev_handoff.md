@@ -229,6 +229,19 @@ Use this prompt to hand the work to a code-development or deep-analysis agent:
     loss signal is the bounded userspace sender queue under some load phases.
     fop-08 full acceptance still owes a differential-harness rerun.
 
+    UPDATE 2026-08-27: gate 1 (kill-switch A/B) PASSED on spk16 —
+    results /var/tmp/fop11-ab-results-20260827T032142Z, missing=0. The
+    initial FAILs root-caused a pre-existing n² eventCount inflation in
+    file.epl/registry.epl (ungrouped AgentId → Esper one-row-per-event
+    semantics), fixed in ../wintap 0e01783 — REQUIRED in any deploy, and
+    it invalidates all pre-fix parquet eventCount analyses (File/Registry,
+    all hosts including Windows). Remaining before fop-11 acceptance:
+    gate 2 (collector bundle) and a byte-total-conservation check or
+    explicit waiver (comparator verifies counts + distinct tuples only).
+    fop-14 severity must be RE-MEASURED post-0e01783 (prior number was
+    per-event-row volume). Details: wiki/log.md 2026-08-26/27;
+    implementation_plan fop-11/fop-14 entries.
+
     Goal for the next pass (state as of 2026-08-26): fop-12/fop-13 and
     fop-13c/fop-13d are CLOSED by human acceptance; fop-11 is deployed and
     healthy in field bundles but owes two formal gates:

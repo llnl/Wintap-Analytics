@@ -1719,3 +1719,40 @@ End-to-end results — **not fully clean; pressure moved downstream**:
   per-event warnings with a 60s counter to stop log spam during bursts.
 - fop-11 acceptance still owes: kill-switch A/B differential and a
   post-collector-update bundle carrying duckdb/fileops-parquet-sanity.txt.
+
+## fop-11 Field A/B (2026-08-26/27) — PASSED; EPL n² inflation found and fixed en route
+
+Runs on spk16 via `validation/fileops-differential/run_fop11_ab.sh` (harness
+hardening 9139e01..5e5cee0 on grantj-rhel8-testing: real FileSerializer flush
+schema `File_Path`/`FirstSeen`; upload cycle parked for the run — delete-after-
+upload and startup `clearRawSensor()` otherwise destroy the data, and
+`Lintap.log` is `LogType.Overwrite` so per-phase log snapshots are saved into
+the results dir; `WINTAP_ETL_MAX_QUEUE_EVENTS_FILESERIALIZER=100000` for the
+agg-OFF flood; zero-row diagnostics; in-window relative rows passed to the
+comparator; leftover env overrides from interrupted runs discarded).
+
+- Run 20260826T232412Z: FAIL — baseline 5800 vs candidate 1470 event-weighted
+  tuples. Root cause was NOT fop-11: `file.epl`/`registry.epl` select
+  `AgentId` ungrouped/unaggregated → Esper "aggregated but not fully
+  aggregated" semantics → one output row PER INPUT EVENT, each stamped with
+  the batch-group's sum(eventCount) → n events become n rows × n counts.
+  Arithmetic proof from harvested parquet: 32 hot-loop reads → exactly
+  32 rows × EventCount 32 = 1024; 33 opens → 1090; aggregated candidate
+  2 rows × group-sum. Sensor-side accounting was clean throughout
+  (summary_enqueue_fail=0, cap_bypass=0, queue drops=0; aggregator summary
+  carried 32/32 folded repeats — conservation exact at the sensor).
+  Fix: `../wintap` 0e01783 adds AgentId to both group-bys (tcp/udp already
+  had it). Consequence: all pre-fix File/Registry `eventCount` parquet is
+  batch-quadratically inflated, on all platforms sharing core/etl.
+- Run 20260827T032142Z (fixed EPLs deployed): **PASS, exit 0** — baseline
+  1272 vs candidate 1292, missing=0, added=20 (candidate-side background
+  surplus, tolerated by design), unmatched_relative=0. Row-shape check:
+  OFF hot reads 1 row × EventCount 32 (was 32×32); per-op hot-file event
+  totals identical across phases (Open 34/34, Close 34/34, Read 32/32,
+  Write 1/1, Delete 1/1) — count conservation verified per-tuple.
+
+Residual for acceptance: the revised differential contract also names
+byte-total conservation; the comparator verifies distinct tuples + count
+conservation only. Verify bytes (sum BytesRequested per tuple across phases)
+or record an explicit waiver. Collector-bundle gate
+(duckdb/fileops-parquet-sanity.txt) still owed.
