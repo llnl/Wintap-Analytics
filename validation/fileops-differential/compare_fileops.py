@@ -298,9 +298,14 @@ def main() -> int:
     text = json.dumps(summary, indent=2, sort_keys=True)
     print(text)
     if args.json_out:
-        with open(args.json_out, "w", encoding="utf-8") as handle:
-            handle.write(text)
-            handle.write("\n")
+        try:
+            with open(args.json_out, "w", encoding="utf-8") as handle:
+                handle.write(text)
+                handle.write("\n")
+        except OSError as exc:
+            # The summary is already on stdout; a side-file failure must not
+            # masquerade as a comparison verdict.
+            print(f"WARNING: could not write --json-out {args.json_out}: {exc}", file=sys.stderr)
 
     if missing:
         missing_fraction = sum(missing.values()) / max(sum(baseline.values()), 1)
