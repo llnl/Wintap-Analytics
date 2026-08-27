@@ -137,11 +137,13 @@ worth a periodic glance: `open: no_path` in the counters — the residual
 ## P1 — Process-creation harness (dev box or VM, ~5 min)
 
 ```bash
-cd validation/process-creation && uv run pytest
+cd validation/process-creation && uv run --extra dev --extra parquet pytest
 ```
 
 Expected: all tests pass (workload, evaluator, schema, lintap
-normalizer). Covers: process event correctness end to end — the
+normalizer). NB: on dev checkouts where the repo lives on a
+symlink-mangling mount (virtiofs), point the venv at local disk first:
+`export UV_PROJECT_ENVIRONMENT=/tmp/pc-venv`. Covers: process event correctness end to end — the
 regression surface for resolver retention, rundown reconciliation, and
 the CloneSensor thread-clone filter.
 
