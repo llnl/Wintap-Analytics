@@ -71,7 +71,20 @@ Remaining before feature closeout:
 
 - [ ] Long-run plateau validation (`scripts/run_lintap_currentish_long_run.sh`) with attribution parity vs. the 2026-08-06 baseline.
 - [ ] CPU-vs-table-size correlation from pidstat data (before/after) — uses the pidstat collector built by [[wiki/work/improve-pidstat-collector/brief]].
-- [ ] DuckDB reclaim behavior measured (DELETE vs. compaction).
+- [x] Bound `process_retention_telemetry` growth by aggregating rows per sweep and pruning old telemetry rows (2026-08-23).
+- [ ] DuckDB reclaim behavior measured (DELETE vs. compaction), including the existing multi-million-row telemetry table after pruning.
 - [ ] Complete Windows runtime regression check on a host/run where Security-log startup replay is available; current host reported log wrap, so `ClearDB`/startup replay remains only partially exercised.
 - [ ] Review findings 2–3 fixed (uncached btime fallback; capped collision logging).
+- [x] Future FileOps-Poller review item — spun off 2026-08-24 into its own feature [[wiki/work/optimize-fileops-poller/brief]] after full source analysis; the tracked-fd hypothesis was demoted to an alternative (fidelity holes: pre-existing/inherited/dup'd fds) in favor of a stateless CO-RE regular-file filter plus self-PID filtering, userspace dead-work removal, and stage counters.
 - [ ] Closeout: promote durable facts to canonical pages — candidates: event-store "currentish" retention semantics, env knobs, and `process_retention_telemetry` (new component/data_model page + `wiki/event_type/process-events.md`); the `/proc/stat btime` hash-basis fact; the clone-sensor requirement for fork-without-exec live coverage (also feeds the lintap-process-creation-validation thread).
+
+## Field Watch Item (2026-08-17)
+
+Lintap CPU may still be trending upward over long runs on the RHEL 8 test
+machine (operator observation; needs more data from more systems before
+root-causing). Leading hypothesis remains DuckDB event_store size — this
+raises the priority of the open "DuckDB reclaim behavior" item above:
+DELETE alone may not reclaim space/plan efficiency, and periodic
+CHECKPOINT/compaction may be required. Correlate with pidstat data once
+multi-day datasets exist (the collector now ships parquet with per-process
+CPU, so the correlation analysis this feature always wanted is unblocked).

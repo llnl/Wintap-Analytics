@@ -5,7 +5,7 @@ confidence: medium
 grounded_by:
   - wiki/work/improve-pidstat-collector/implementation_plan.md
 policy: agent-editable
-last_validated: 2026-08-12
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -16,6 +16,35 @@ tags: [feature-work, verification, lintap, pidstat]
 ---
 
 # Verification: Improve pidstat Collector
+
+## Post-Close Follow-Up (2026-08-20)
+
+Source inspection of the current `../Wintappy` DBT files confirms the follow-up
+bugfix landed after feature closeout: the dedicated pidstat macro file is gone,
+`PIDSTAT_DATA_PATH` is removed from the documented/configured DBT path, and
+`stg_pidstat_metrics` now uses the shared raw-event helpers rooted at
+`WINTAP_DBT_RAW_SENSOR_DATASET` (`raw_event_exists('pidstat')`,
+`raw_sensor_partition_globs_sql('pidstat')`, and `partition_filter()`).
+
+Result: pidstat now behaves like the other optional `raw_sensor` events,
+including split-I/O/S3 dataset-root selection and day/hour partition-window
+narrowing.
+
+## Slice 2 Completion Note
+
+Slice 2 is complete on branch `grantj-rhel8-testing` across
+`Wintap-Analytics/`, `../Lintap`, and `../Wintappy`.
+
+- The bash collector was retired and replaced with a Python `/proc` sampler.
+- The collector now writes typed parquet with `hostname` and container
+  attribution columns.
+- The Wintappy bronze pidstat input was migrated from CSV to parquet.
+- Validation passed in `lintap-dev` for pytest, live collector smoke runs, the
+  `uv`-managed runtime bootstrap/launcher flow, and DBT fixture/empty-input
+  builds.
+- Remaining closeout items are operational, not design: package-install/systemd
+  verification on a target host, optional live container fixture coverage, and
+  the separate upload-delete fix needed for end-to-end S3/delete confirmation.
 
 ## Test Commands
 
@@ -213,8 +242,179 @@ Reviewed by the wiki-maintainer session after the first-slice commits landed
 ## Follow-Ups
 
 - Install `shellcheck` (or run lint in a container/CI) before calling shell lint “verified”.
-- Add the systemd unit/package wiring in the next slice.
-- Update `../Wintappy` to read the new parquet layout in the later coordinated slice.
 - Manual inspection of `/tmp/opencode/pidstat-15m-clean.dyb7fq/parquet/raw_sensor/pidstat/dayPK=20260812/hourPK=09/` is pending.
 - The earlier 15-minute dataset at `/tmp/opencode/pidstat-15m.U6zwhN` should be
   treated as invalid after the parser bug discovery.
+- Install the packaged files onto a target host and start `lintap-pidstat.service`
+  through the real systemd unit before calling the packaging path fully
+  verified.
+- Add a live containerized-process fixture if a suitable container runtime is
+  available in the validation environment.
+
+## Slice 2 Verification (2026-08-15)
+
+### Test Commands
+
+Commands are recorded in the order executed.
+
+1. `multipass info lintap-dev`
+Result: VM running, Ubuntu 24.04, LLNL repos mounted at `/home/ubuntu/git`.
+
+2. `multipass exec lintap-dev -- bash -lc "python3 --version && command -v uv && uv --version && command -v pidstat && pidstat -V && command -v duckdb"`
+Result: VM has Python 3.12.3, `uv 0.12.2`, `pidstat` (`sysstat 12.6.1`), and DuckDB CLI.
+
+3. `multipass exec lintap-dev -- bash -lc "python3 -m py_compile /home/ubuntu/git/Lintap/pidstat-collector.py /home/ubuntu/git/Lintap/tests/test_pidstat_collector.py"`
+Result: Python syntax check passed for the new collector and pytest suite.
+
+4. `multipass exec lintap-dev --working-directory /home/ubuntu/git/Lintap -- bash -lc "UV_PROJECT_ENVIRONMENT=/tmp/lintap-venv uv lock"`
+Result: `uv.lock` regenerated for the updated `requires-python >=3.11,<3.13` and pytest dev dependency.
+
+5. `multipass exec lintap-dev --working-directory /home/ubuntu/git/Lintap -- bash -lc "UV_PROJECT_ENVIRONMENT=/tmp/lintap-venv uv run --group dev pytest tests/test_pidstat_collector.py -q"`
+Result: `12 passed`.
+
+6. `multipass exec lintap-dev --working-directory /home/ubuntu/git/Lintap -- bash -lc "UV_PROJECT_ENVIRONMENT=/tmp/lintap-venv uv run python -c 'import sys, duckdb; print(sys.executable); print(duckdb.__version__)'"`
+Result: the project `uv` environment resolved correctly in-VM (`/tmp/lintap-venv/bin/python3`, DuckDB Python `1.5.2`).
+
+7. `multipass exec lintap-dev --working-directory /home/ubuntu/git/Lintap -- bash -lc "mkdir -p /var/tmp/opencode && run_root=$(mktemp -d -p /var/tmp/opencode pidstat-live.XXXXXX) && UV_PROJECT_ENVIRONMENT=/tmp/lintap-venv WINTAP_DATA_ROOT=\"$run_root\" PIDSTAT_ROTATE_INTERVAL_SEC=2 timeout --signal=TERM 6 uv run python ./pidstat-collector.py; RUN_ROOT=\"$run_root\" UV_PROJECT_ENVIRONMENT=/tmp/lintap-venv uv run python -c \"import duckdb, os; root=os.environ['RUN_ROOT']; print(duckdb.connect().execute(f'select count(*), count(distinct command) from read_parquet(\\\"{root}/parquet/raw_sensor/pidstat/**/*.parquet\\\")').fetchone())\""`
+Result: live collector smoke run passed in `lintap-dev`. The collector rotated a parquet window on SIGTERM and the post-run query returned `(138, 115)` meaning 138 rows across 115 distinct commands.
+
+8. `multipass exec lintap-dev -- bash -lc "command -v systemd-analyze >/dev/null 2>&1 && systemd-analyze verify /home/ubuntu/git/Lintap/packaging/lintap-rpm/lintap-pidstat.service /home/ubuntu/git/Lintap/packaging/lintap-deb/lintap-pidstat.service"`
+Result: superseded later in the session when the hardcoded interpreter design was replaced with the `uv`-managed launcher flow below.
+
+9. `multipass exec lintap-dev -- bash -lc "bash -n /home/ubuntu/git/Lintap/packaging/lintap-rpm/build-rpm.sh /home/ubuntu/git/Lintap/packaging/lintap-deb/build-deb.sh"`
+Result: packaging script syntax checks passed.
+
+10. `multipass exec lintap-dev --working-directory /home/ubuntu/git/Wintappy -- bash -lc "UV_PROJECT_ENVIRONMENT=/tmp/wintappy-venv uv run dbt --version"`
+Result: Wintappy dev environment bootstrapped under `uv`; dbt core `1.12.2`, duckdb adapter `1.9.6`.
+
+11. `multipass exec lintap-dev --working-directory /home/ubuntu/git/Wintappy -- bash -lc "... create parquet fixture ... && export WINTAP_DATA_ROOT=/tmp/opencode/wintappy-pidstat-fixture && export WINTAP_DBT_DATASET=/tmp/opencode/wintappy-pidstat-fixture/parquet && export WINTAP_DBT_DATABASE=/tmp/opencode/wintappy-pidstat-fixture/duckdb/wintap.duckdb && export WINTAP_DBT_START_DAY=20260812 && export WINTAP_DBT_END_DAY=20260812 && export PIDSTAT_DATA_PATH=/tmp/opencode/wintappy-pidstat-fixture/parquet/raw_sensor/pidstat && UV_PROJECT_ENVIRONMENT=/tmp/wintappy-venv uv run dbt run --project-dir wintap_dbt --profiles-dir wintap_dbt --select stg_pidstat_metrics pidstat_metrics && duckdb /tmp/opencode/wintappy-pidstat-fixture/duckdb/wintap.duckdb -csv -c \"select count(*) as rows, min(hostname) as hostname, max(container_runtime) as runtime from stg_pidstat_metrics\""`
+Result: parquet-backed bronze/silver pidstat models built successfully. Verification query returned `rows=2`, `hostname=fixture-host`, `runtime=docker`.
+
+12. `multipass exec lintap-dev --working-directory /home/ubuntu/git/Wintappy -- bash -lc "mkdir -p /tmp/opencode/wintappy-pidstat-empty/parquet/raw_sensor /tmp/opencode/wintappy-pidstat-empty/duckdb /tmp/opencode/wintappy-pidstat-empty/empty-pidstat && export WINTAP_DATA_ROOT=/tmp/opencode/wintappy-pidstat-empty && export WINTAP_DBT_DATASET=/tmp/opencode/wintappy-pidstat-empty/parquet && export WINTAP_DBT_DATABASE=/tmp/opencode/wintappy-pidstat-empty/duckdb/wintap.duckdb && export WINTAP_DBT_START_DAY=20260812 && export WINTAP_DBT_END_DAY=20260812 && export PIDSTAT_DATA_PATH=/tmp/opencode/wintappy-pidstat-empty/empty-pidstat && UV_PROJECT_ENVIRONMENT=/tmp/wintappy-venv uv run dbt run --project-dir wintap_dbt --profiles-dir wintap_dbt --select stg_pidstat_metrics && duckdb /tmp/opencode/wintappy-pidstat-empty/duckdb/wintap.duckdb -csv -c \"select count(*) as rows from stg_pidstat_metrics; select name, type from pragma_table_info('stg_pidstat_metrics') where name in ('hostname','cgroup_path','pid_ns_inode','container_runtime','container_id') order by name\""`
+Result: empty-input path still builds an empty typed table. Verified the new columns exist with expected types: `hostname/cgroup_path/container_runtime/container_id` as `VARCHAR`, `pid_ns_inode` as `BIGINT`.
+
+13. `multipass exec lintap-dev --working-directory /home/ubuntu/git/Lintap -- bash -lc 'bash -n ./pidstat-collector-bootstrap.sh ./pidstat-collector-launch.sh ./packaging/lintap-rpm/build-rpm.sh ./packaging/lintap-deb/build-deb.sh'`
+Result: syntax checks passed for the new bootstrap/launcher scripts and updated packaging scripts.
+
+14. `multipass exec lintap-dev --working-directory /home/ubuntu/git/Lintap -- bash -lc 'mkdir -p /var/tmp/opencode; export PIDSTAT_VENV_DIR=/var/tmp/opencode/pidstat-service-312/.venv; export PIDSTAT_BOOTSTRAP_PYTHON=3.12; bash ./pidstat-collector-bootstrap.sh; "$PIDSTAT_VENV_DIR/bin/python" -c "import sys; print(sys.version)"; run_root=$(mktemp -d -p /var/tmp/opencode pidstat-launch.XXXXXX); WINTAP_DATA_ROOT="$run_root" PIDSTAT_ROTATE_INTERVAL_SEC=2 PIDSTAT_VENV_DIR="$PIDSTAT_VENV_DIR" timeout --signal=TERM 6 bash ./pidstat-collector-launch.sh; RUN_ROOT="$run_root" "$PIDSTAT_VENV_DIR/bin/python" -c "import duckdb, os; root=os.environ[\"RUN_ROOT\"]; sql = \"select count(*), count(distinct command) from read_parquet(\" + chr(39) + root + \"/parquet/raw_sensor/pidstat/**/*.parquet\" + chr(39) + \")\"; print(duckdb.connect().execute(sql).fetchone())"'`
+Result: the `uv` bootstrap/launcher flow passed end-to-end in `lintap-dev`. `uv` created a dedicated Python 3.12.3 venv at `/var/tmp/opencode/pidstat-service-312/.venv`, installed DuckDB there, and the launcher produced parquet successfully. The post-run query returned `(137, 114)` rows/distinct commands.
+
+15. `multipass exec lintap-dev -- bash -lc 'command -v systemd-analyze >/dev/null 2>&1 && printf "%s\n" "[Unit]" "Description=Test pidstat collector" "[Service]" "EnvironmentFile=-/home/ubuntu/git/Lintap/packaging/lintap-rpm/lintap.env" "WorkingDirectory=/home/ubuntu/git/Lintap" "ExecStart=/bin/bash /home/ubuntu/git/Lintap/pidstat-collector-launch.sh" "User=root" > /tmp/lintap-pidstat-verify.service && systemd-analyze verify /tmp/lintap-pidstat-verify.service'`
+Result: a temp unit using the new launcher shape verified cleanly in `lintap-dev`.
+
+### Results
+
+- Branch note: the slice-2 implementation work is recorded on
+  `grantj-rhel8-testing` in `Wintap-Analytics/`, `../Lintap`, and
+  `../Wintappy`.
+- Slice 2 core implementation completed in `../Lintap`: the bash collector was retired and replaced with `pidstat-collector.py`, a single-process `/proc` sampler using the DuckDB Python API.
+- The new pytest suite passed with 12 tests on `lintap-dev`, covering: parquet conversion/partitioning, pidstat-oracle parsing, glued-record handling, malformed-tail partial emission, salvage, byte cap, age cap, midnight/window-date behavior, container-path parsing, pidstat-oracle agreement, zero-child fork regression, and a live uv-run collector smoke test.
+- The chosen telemetry source is option B (`/proc`) with pidstat retained only as the oracle in tests.
+- Container attribution columns are now present end-to-end from collector output through Wintappy bronze.
+- Wintappy now reads pidstat from parquet (`read_parquet(..., filename=true)`) and no longer uses the legacy tab-CSV bronze path.
+- The runtime packaging decision is now validated in `lintap-dev`: a root-run
+  systemd unit can point at a small launcher script, while `uv` bootstraps a
+  dedicated collector venv (`PIDSTAT_VENV_DIR`) using a compatible Python
+  version (`PIDSTAT_BOOTSTRAP_PYTHON`, default `3.12`). No host interpreter
+  path is hardcoded anymore.
+
+### Known Gaps
+
+- The real packaged service was not installed and started under systemd in the
+  VM; validation used the launcher directly plus `systemd-analyze verify` on a
+  temp unit with the same `ExecStart` shape.
+- The container-attribution tests cover v1/v2 cgroup parsing, but not a live containerized-process fixture on this VM.
+- The end-to-end S3/local-delete validation remains blocked by the separate sensor-side delete-after-upload defect in [[wiki/work/fix-upload-cache-deletion/brief]].
+
+## Independent Review — Slice 2 (2026-08-16)
+
+Reviewed by the wiki-maintainer session after the slice-2 commits landed
+(`../Lintap` 8eaae5c, `../Wintappy` ccbf783 on `grantj-rhel8-testing`; this
+repo 3cafcbf/74ce903/2323d33).
+
+Independently re-verified: pytest 12/12 in `../Lintap` (uv, python 3.12),
+covering the seven ported cases plus oracle-tolerance, midnight/window-date,
+container v1/v2 parsing, and the steady-state-no-children fork guard.
+
+Code-review assessment of `pidstat-collector.py`:
+
+- `/proc` stat field offsets all verified correct against proc(5) with the
+  post-`)` indexing (minflt/majflt, utime/stime, starttime, vsize/rss,
+  processor, delayacct_blkio_ticks, guest_time).
+- Rate semantics match pidstat: %usr excludes guest time, %CPU =
+  user+system+guest, %wait from schedstat run-delay deltas, iodelay as delta
+  ticks. PID reuse handled via starttime comparison; first sample correctly
+  emits nothing.
+- Zero-child hot loop confirmed by construction and by the fork regression
+  test; conversion is in-process duckdb with atomic `os.replace` and full
+  traceback logging (review finding 4 absorbed as specified, likewise
+  midnight and glued-record findings).
+- Wintappy migration matches the shipped end state: `read_parquet(filename=true)`
+  was adopted first, container columns are included, the empty-input typed
+  table is preserved, and a later 2026-08-20 bugfix removed the pidstat-only
+  override so pidstat now uses the standard `raw_sensor_dataset` helpers.
+- Boundary check: no pidstat-slice-2 changes in `../wintap` (its new commits
+  belong to the retention/eBPF thread).
+- The uv-managed venv launcher pivot (after the pinned `python3.11` proved
+  brittle) is a sound field-driven packaging decision, properly recorded in
+  the design page.
+
+Findings (minor, none blocking):
+
+1. `enforce_accumulation_guard` calls `.stat()` on files between listing and
+   deletion with no `FileNotFoundError` tolerance, and runs inside the
+   conversion `try` — once the upload-delete fix lands, the sensor's uploader
+   will delete these files concurrently, making the race real and its error
+   report misleading ("parquet conversion failed"). Queued as a checklist
+   follow-up.
+2. Open items are honestly tracked, not hidden: live container fixture test,
+   package-install/systemd verification on a target host, and the
+   S3/delete-after-upload end-to-end (blocked on fix-upload-cache-deletion).
+
+Review verdict: slice 2 accepted. Remaining checklist items are operational
+verification plus the closeout promotion — the feature is code-complete.
+
+## Field Noise Mitigation (2026-08-23)
+
+Follow-up from the `spk16.llnl.gov` long-running Lintap diagnostic: the live
+pidstat collector had been manually launched with `PIDSTAT_ROTATE_INTERVAL_SEC=10`,
+causing frequent DuckDB parquet conversions. The copied Lintap event-store DB
+showed many short-lived `python3.12` process rows parented to the collector
+process, consistent with conversion-time DuckDB/Python worker-thread churn being
+observed by Lintap's clone sensor.
+
+Changes made in `../Lintap`:
+
+- `pidstat-collector.py` now clamps rotation to
+  `PIDSTAT_MIN_ROTATE_INTERVAL_SEC`, defaulting to `300` seconds. Operators can
+  explicitly lower the floor for tests, but the default prevents accidental
+  10-second production rotation.
+- `pidstat-collector.py` now reuses one DuckDB connection for parquet conversion
+  instead of opening/closing a connection per rotation.
+- DuckDB conversion defaults to `PIDSTAT_DUCKDB_THREADS=1` and applies that
+  setting on the persistent connection to reduce conversion worker-thread churn.
+- Startup logging now reports `min_rotate` and `duckdb_threads` so live logs show
+  whether the quieting controls are active.
+- Package env defaults and README files document `PIDSTAT_MIN_ROTATE_INTERVAL_SEC=300`
+  and `PIDSTAT_DUCKDB_THREADS=1`.
+
+Validation:
+
+```bash
+cd ../Lintap
+uv run --group dev pytest tests/test_pidstat_collector.py
+```
+
+Result: `14 passed`.
+
+Operational note for the current live host: after updating the deployed
+`/usr/lib/lintap/pidstat-collector.py`, restart the manually launched collector
+without the `PIDSTAT_ROTATE_INTERVAL_SEC=10` override, or include
+`PIDSTAT_MIN_ROTATE_INTERVAL_SEC=300 PIDSTAT_DUCKDB_THREADS=1` in the environment.
+
+Post-restart check using `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260823T223445Z` confirmed the collector-side mitigation reduced noise:
+
+- Manual collector command used `PIDSTAT_MIN_ROTATE_INTERVAL_SEC=300` and `PIDSTAT_DUCKDB_THREADS=1`.
+- System fork-rate sample dropped to effectively zero over the 10-second diagnostic window (`processes_delta_10s=4`).
+- `python3.12` disappeared from the current top process-row producers; open `python3.12` rows dropped from `1117` in the pre-mitigation DB copy to `31` in the post-mitigation DB copy.
+- Lintap CPU remained high (`ps` around 8.5 cores; `perf stat` sampled 9.4 CPUs), so the remaining high-CPU issue is no longer explained primarily by pidstat collector conversion churn.

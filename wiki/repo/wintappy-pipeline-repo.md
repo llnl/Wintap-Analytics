@@ -5,6 +5,10 @@ confidence: high
 grounded_by:
   - ../Wintappy/README.md
   - ../Wintappy/pyproject.toml
+  - ../Wintappy/wintap_dbt/dbt_project.yml
+  - ../Wintappy/wintap_dbt/macros/paths.sql
+  - ../Wintappy/wintap_dbt/macros/raw_sources.sql
+  - ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
   - ../Wintappy/review-notes/Architecture.md
   - ../Wintappy/review-notes/DataModel.md
   - ../Wintappy/review-notes/ProjectSummary.md
@@ -12,7 +16,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-08-11
+last_validated: 2026-08-20
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -51,6 +55,19 @@ DBT silver models are the normalized, process-centric detail objects: `host`, `h
 DBT gold models are analyst-facing summaries: `process_registry_summary`, `process_file_summary`, `process_net_summary`, `process_image_load_summary`, `process_summary`, and `process_uber_summary`. Optional enrichment inputs feeding `process_uber_summary` — labels/networkx, LOLBAS, MITRE, and Sigma — are currently typed empty DBT stubs, not real wired inputs.
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/Architecture.md §Gold -->
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/OpenQuestions.md §In progress / high priority -->
+
+## pidstat Bronze Input (promoted 2026-08-17, patched 2026-08-20)
+
+The pidstat bronze model (`stg_pidstat_metrics`) now behaves like the other optional raw events instead of using a pidstat-only path override. `dbt_project.yml` defines `raw_sensor_dataset` from `WINTAP_DBT_RAW_SENSOR_DATASET` with fallback to `WINTAP_DBT_DATASET`; the shared raw-source helpers build `<raw_sensor_dataset>/raw_sensor/pidstat/...` globs and existence checks from that root. `stg_pidstat_metrics` uses those shared helpers (`raw_event_exists('pidstat')`, `raw_sensor_partition_globs_sql('pidstat')`, and `partition_filter()`), so pidstat now respects the same dataset-root split-I/O/S3 configuration and the same day/hour partition narrowing as models such as `stg_raw_host`.
+<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/dbt_project.yml §vars -->
+<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/macros/paths.sql §raw_sensor_dataset_path/raw_sensor_path/raw_sensor_partition_globs_sql/partition_filter -->
+<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/macros/raw_sources.sql §raw_event_exists -->
+<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql §model -->
+
+The dedicated `PIDSTAT_DATA_PATH` override and `wintap_dbt/macros/pidstat.sql` helper were removed in that follow-up bugfix, so pidstat is now just another canonical optional `raw_sensor` event. It still carries `hostname` and container-attribution columns (`cgroup_path`, `pid_ns_inode`, `container_runtime`, `container_id`), and it still builds a typed empty table when no pidstat parquet exists. The former tab-CSV input remains retired; bronze is parquet-only, and pre-2026-08 CSV datasets still need one-time conversion. Producer side: [[wiki/repo/lintap-supporting-repo]] pidstat collector.
+<!-- GROUND_TRUTH: ../Wintappy/Makefile §dbt vars -->
+<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/README.md §Configuration -->
+<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql §typed empty fallback -->
 
 ## Legacy Python ETL
 

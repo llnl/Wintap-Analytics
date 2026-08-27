@@ -1,0 +1,453 @@
+---
+title: "Implementation Plan: Optimize FileOps Poller Event Volume"
+type: concept
+confidence: medium
+grounded_by:
+  - ../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile
+policy: agent-editable
+last_validated: 2026-08-26
+repo_scope: cross-repo
+implementation_area: wintap-api
+event_domain: file
+audience: llm-agent
+status: draft
+source_paths: wiki/work/optimize-fileops-poller/implementation_plan.md
+tags: [feature-work, file-events, ebpf, linux-sensor, implementation-plan]
+---
+
+# Implementation Plan: Optimize FileOps Poller Event Volume
+
+Branch: `grantj-rhel8-testing` in `../wintap` (code) and in
+`Wintap-Analytics` (wiki + validation). Units are `fop-nn`. Sequenced so
+measurement lands first and decision-gated work lands last. Design rationale:
+[[wiki/work/optimize-fileops-poller/design]].
+
+## Scope
+
+Kernel tracers (`file_ops_tracer.bpf.c` CO-RE tier, `file_ops_tracepoint.bpf.c`
+fallback), `FileOpsSensor.cs`, minor `LibBpf.cs`/`BaseEbpfSensor.cs` touches,
+Makefile tier move, and a new validation scenario in `Wintap-Analytics`.
+No aggregation, no new syscall coverage, no Windows changes.
+
+## Steps
+
+### fop-01 — Counters + baseline (measure first)
+
+- Kernel (both variants): percpu array map `fileops_stats` counting, per op
+  class: emitted, dropped-by-filter (one slot per filter as they land), and
+  ringbuf reserve failures (overflow drops).
+- Userspace: extend the `CountPseudoDrop`/`MaybeLogPseudoDrops` pattern to
+  count all drop reasons (no-path, data-root, .etl, parquet) plus emitted,
+  per op class; read and log the kernel map on the same 60s cadence.
+- Capture a **baseline** on the RHEL8 host with
+  `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh` plus the
+  new counter logs, under (a) idle, (b) the deterministic file workload,
+  (c) a network-busy period. Record in verification.md. This quantifies the
+  socket/pipe share and is the evidence base for every later slice.
+
+### fop-02 — Userspace dead-work removal (U1, U2, U3)
+
+- Remove per-event `GenPidHash`; record the DirectParquetSink decision.
+- Memoize `/proc` fallback resolutions into `_fdToPath`; skip fallback for
+  close ops; replace `FileInfo` with a direct readlink.
+- Zero-alloc decode: read scalars from the native pointer first, drop early,
+  materialize strings only for emitted events.
+
+### fop-03 — Kernel self-PID filter (K1, both variants)
+
+- 1-entry array map; userspace writes `StateManager.WintapPID` after load
+  (needs `bpf_map_update_elem` P/Invoke if not present in `LibBpf.cs`).
+- Early-return in all 9 programs; count drops in `fileops_stats`.
+
+### fop-04 — Wakeup batching (K3, both variants)
+
+- `BPF_RB_NO_WAKEUP` submits + forced wakeup every Nth event or on
+  `bpf_ringbuf_query` occupancy threshold; verify shutdown still drains
+  within the 2s `PollingThread.Join` budget.
+
+### fop-05 — CO-RE regular-file filter (K2) — gated on socket/pipe decision
+
+- Move `file_ops_tracer.bpf.o` from `TRACEPOINT_OBJS` to `CORE_OBJS` in the
+  Makefile; include vmlinux.h; keep `file_ops_tracepoint.bpf.c` unchanged as
+  fallback.
+- fd→`f_inode` CO-RE traversal with `max_fds` bounds check; emit fd ops only
+  for `S_ISREG`; drop `PROC_SUPER_MAGIC`/`SYSFS_MAGIC`/devtmpfs by
+  `s_magic`. Count each drop class.
+- **Spike first** on the target RHEL8 kernel: minimal program proving the
+  verifier accepts the traversal (record in a `spike.md` if non-trivial).
+- Keep userspace pseudo-path/data-root filters (fallback tier + defense in
+  depth).
+
+### fop-06 — Small fd-op records (K4)
+
+- Compact record for read/write/close/mmap (second ringbuf or tagged
+  variable-size records — dev's choice, record rationale); matching decode;
+  both variants if the format is shared, otherwise CO-RE tier only with
+  fallback keeping the old format (decode must handle both).
+
+### fop-07 — fd-cache eviction + kernel timestamps (U4, U5)
+
+- Evict `_fdToPath[pid]` on process exit (ExitSensor hook or periodic
+  liveness sweep — dev's choice, record rationale).
+- Convert `TimestampNs` (monotonic) to wallclock via a once-computed offset;
+  use it for `WintapMessage` EventTime.
+
+## Files Likely To Change
+
+- `../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c`
+- `../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracepoint.bpf.c`
+- `../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile`
+- `../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`
+- `../wintap/wintap/platform/linux/sensor/ebpf/helpers/LibBpf.cs`
+- `../wintap/wintap/platform/linux/sensor/shared/BaseEbpfSensor.cs` (only if
+  poll timeout/knobs need touching for fop-04)
+- `Wintap-Analytics/validation/` — new file-ops differential + burst scenario
+  (see Tests below)
+
+## Tests To Add Or Update
+
+Required per slice; a slice is not done until its tests pass and results are
+recorded in [[wiki/work/optimize-fileops-poller/verification]].
+
+1. **Builds (every slice):**
+   - `cd ../wintap/wintap/platform/linux/sensor/ebpf/tracers && make clean && make`
+     — both tiers build; preflight passes on the RHEL8 host (clang, bpftool,
+     BTF detected).
+   - `cd ../wintap && dotnet build wintap/Lintap.csproj` — 0 errors.
+2. **Deterministic file workload + A/B differential (the no-loss proof;
+   built in fop-01, run every slice after):** a script that, in a temp dir
+   outside the data root: creates N files, writes, reads, mmaps (e.g. via
+   `python -c`), closes, deletes; also touches a `/proc` and `/dev` path and
+   generates socket traffic (e.g. `curl` localhost) for the negative cases.
+   Run baseline build and slice build against it; extract File events from
+   the run's parquet/DuckDB output; assert the slice stream is equal-or-
+   superset on regular-file (path, op class, PID) tuples, and that the only
+   removals are the enumerated allowed classes. Fold into
+   `Wintap-Analytics/validation/` following the process-creation harness
+   pattern (uv + pytest where practical).
+3. **Counter reconciliation (fop-01+):** kernel emitted ≈ userspace consumed
+   + ringbuf drops over a run; assert in the differential harness.
+4. **Burst/storm test (fop-06 acceptance, baseline in fop-01):** e.g.
+   `find /usr -type f -exec cat {} + > /dev/null` or a tight
+   create/write/delete loop; compare ringbuf overflow-drop counters
+   before/after fop-06 — must decrease.
+5. **fd-cache boundedness (fop-07):** process-churn workload (spawn/exit
+   thousands of short-lived file-touching processes); assert `_fdToPath`
+   entry count returns to baseline (expose count via the 60s counter log).
+6. **Fallback-tier test (fop-05+, every subsequent slice):** force the
+   fallback object (temporarily remove/rename `file_ops_tracer.bpf.o` or add
+   a config override) and re-run the smoke workload — sensor loads, events
+   flow, userspace filters still applied.
+7. **Timestamp sanity (fop-07):** under an artificially backlogged poller
+   (pause/resume the process with SIGSTOP during the workload), event times
+   must track syscall time, not dequeue time.
+8. **Unit-style decode tests (fop-02, fop-06):** decode of both record
+   formats from crafted byte buffers, including truncated/garbage input —
+   via the `../wintap/diagnostics/` console-project pattern (no test project
+   exists in the repo) or in-harness; dev's choice, record location.
+9. **Field measurement (fop-02, fop-03, fop-05 at minimum):**
+   `collect-lintap-diagnostics.sh` on the RHEL8 field host; record total
+   Lintap CPUs (perf stat) and `FileOps-Poller` thread share vs. the fop-01
+   baseline.
+
+## Migration Or Compatibility Notes
+
+- `.bpf.o` artifacts are committed alongside sources (existing convention) —
+  rebuild and commit both objects when their `.c` changes; the CO-RE object
+  must be built on a BTF host.
+- Hosts without BTF silently keep today's behavior via the fallback object —
+  document in the component page at closeout which filters apply per tier.
+- DirectParquetSink File rows lose the (broken) per-event PidHash in fop-02;
+  confirm no consumer reads it before removal (flagged in design §Risks).
+- Config surface: any new knobs (wakeup batch size, fallback force flag)
+  go through `ConfigManager` like existing flags; document defaults.
+
+## Rollback Plan
+
+- Each slice is a separate commit on `grantj-rhel8-testing`; revert the
+  commit and rebuild both `.bpf.o` objects to roll back.
+- fop-05 has a built-in runtime rollback: force the fallback object.
+- Keep the fop-01 counters in any rollback — they are diagnostic, not
+  behavioral.
+
+## Done Checklist
+
+- [ ] fop-01 counters landed; baseline (idle / workload / network-busy)
+      recorded in verification.md, including the measured socket/pipe share.
+- [ ] fop-02 dead-work removal landed; A/B differential clean; allocation/CPU
+      delta recorded.
+- [x] fop-01/fop-02 code slice built locally: kernel/user counters, userspace
+      dead-work removal, and differential harness are implemented. Full field
+      baseline and deployed A/B run remain pending before these slices are
+      accepted.
+- [x] Expanded no-loss reduction slice landed in the working branch and was
+      deployed to the RHEL8 field host: self-PID filtering, wakeup batching,
+      CO-RE regular-file fd filtering, compact tagged records, 16 MiB ring
+      buffer, and kernel pseudo-path filtering are all active in the deployed
+      build. Full acceptance remains pending because the overnight run still
+      showed sustained ring-buffer loss.
+- [ ] fop-03 self-PID filter landed in both variants; self rows absent from
+      stream; counter shows kernel-side drops.
+- [ ] fop-04 wakeup batching landed; context-switch/CPU delta recorded;
+      shutdown drain verified.
+- [x] Socket/pipe row decision recorded in brief.md (2026-08-25 human
+      sign-off: drop ratified; pipe/anon_inode visibility gap recorded in the
+      design fidelity-gap backlog; fallback tier left unchanged).
+- [ ] fop-05 CO-RE filter landed (spike accepted by RHEL8 verifier); Makefile
+      tier move done; fallback path exercised and unchanged.
+- [ ] fop-06 small records landed; burst drop counters reduced vs. baseline.
+- [ ] fop-07 fd-cache eviction + kernel timestamps landed; churn and
+      timestamp tests pass.
+- [ ] Field measurement vs. fop-01 baseline shows the CPU win; recorded.
+- [x] Deep-analysis handoff completed (2026-08-25): overnight counters
+      interpreted, next no-loss reduction ranked, and the follow-on slice
+      selected from evidence rather than intuition (fop-08 front-runner) —
+      see [[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]].
+- [x] fop-08/fop-09 code slice built locally: `ProcessResolver` now maintains
+      an in-memory active-process cache for File-event pid-hash lookup,
+      `FileOpsSensor` now decouples ring-buffer decode/filter from
+      resolve/Esper with a bounded in-process queue (`drop_newest`, depth /
+      high-water / drop counters logged every ~60s), and `EventChannel.Send`
+      now uses startup-cached config flags instead of per-event lookups. Full
+      acceptance remains pending the differential rerun and field-host
+      measurement/counter reconciliation.
+- [x] fop-10 local code slice built: `FileOpsSensor` now logs bounded summary
+      measurements in the 60s `FileOps counters` line for top-N emitted
+      process-name buckets, top-N emitted path-prefix buckets, and the
+      short-window same-`(pid,path)` open duplicate ratio. Deployed and field-
+      host measurement are now recorded in verification.
+- [x] Milestone — fop-11 review gate reached: `fop-10` now provides both the
+      attribution data and the duplicate-open evidence needed to write a
+      concrete `fop-11` proposal for design review; see
+      [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]].
+- [x] fop-12 local code slice built: relative/openat `open` paths are now
+      resolved to absolute paths pre-enqueue via `/proc/<pid>/fd/<fd>` when
+      possible; Linux path case is preserved instead of lowercased; File event
+      time now uses the kernel monotonic timestamp converted to wallclock; the
+      differential comparator was aligned to preserve Linux case. Deployment
+      and field-host validation are now recorded in verification; acceptance
+      remains pending because the relative-path miss floor stayed high.
+- [x] fop-12 follow-on local code slice built: `open` / `openat` path records
+      now also carry `dirfd`, userspace fallback resolution now tries opened-fd
+      then `cwd` / `dirfd`-base joins pre-enqueue, and reason-split resolution
+      counters are logged. Deployment and field-host validation are now
+      recorded in verification; acceptance remains pending because `dirfd`
+      helps but the `(relative)` bucket and miss floor remain too large.
+- [x] Milestone — phase-2 wrap-up recorded: queue/ring behavior improved,
+      `fop-10` justified the `fop-11` design direction, and `fop-12` recovered
+      a meaningful `dirfd` slice but is still not accepted. Next pass stays
+      focused on the remaining relative/openat identity gap before `fop-11`.
+- [ ] Closeout: promote durable facts — new FileOps sensor component page
+      (pipeline stages, per-tier filters, counters, config), file-events
+      event_type update if stream content changed, fidelity-gap backlog
+      pointer — and update `wiki/log.md`.
+
+## Phase 2 — Deep Analysis (2026-08-25)
+
+The original-scope implementation reached its current deployed state —
+implemented with opencode gpt-5.5 and gpt-5.4. The feature continues in a
+deep-analysis phase rather than being closed or forked into a new feature.
+Analysis artifact:
+[[wiki/work/optimize-fileops-poller/deep-analysis-2026-08-25]].
+
+The analysis concluded the sustained overnight ring-buffer loss is a
+userspace consumer-throughput ceiling (per-event DuckDB resolution under the
+global `_dbLock` plus a synchronous Esper send on the single poller thread),
+not kernel emission volume. Phase-2 slices, ranked by the analysis and
+**approved by human sign-off 2026-08-25** with the sequence fop-08 (+fop-09)
+→ fop-10 → fop-11 go/no-go (fop-11 remains gated on its own conditions;
+fop-07 remains open from phase 1):
+
+- [ ] fop-08 — decouple the poller from per-event resolution: bounded
+      in-process queue between the ring-buffer callback and resolve/Esper,
+      plus an in-memory pid→pid_hash current-process cache that eliminates
+      the per-event DuckDB query under `_dbLock`.
+- [ ] fop-09 — hoist the five per-event `ConfigManager.GetValue` calls in
+      `EventChannel.Send` into cached fields.
+- [x] fop-10 — Q2 measurement slice: top-N per-comm / per-path-prefix
+      aggregate emit counters in the 60s `FileOps counters` log (summary
+      statistics only; no raw event data). Extended 2026-08-25 per human
+      direction: also measure the **open/openat duplicate ratio** — repeats of
+      the same (pid, path) open within a short window — to quantify the
+      redundancy hypothesis behind fop-11. Local code/build, deployment, and
+      field-host collection are complete; review data is recorded in
+      verification.
+- [ ] fop-11 — short-interval aggregation (APPROVED with conditions,
+      2026-08-25): gates (a)/(b) are met — fop-10 measured 52.7–83.7%
+      duplicate-open ratios and the human accepted the information tradeoff,
+      amending the 2026-08-24 direction to: **aggregation to the
+      (pid, path, op) level with grouped totals (bytes etc.) and min/max
+      timestamps over short intervals is acceptable**, for all op classes,
+      not just open/openat (open-first remains sensible sequencing, not a
+      boundary). Emit-first semantics stand. Hard conditions from the
+      designer review recorded in
+      [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]]
+      §Designer Review: absolute-path identity (see fop-12, a precondition),
+      and summary-record identity stamped at first occurrence. Layer choice
+      per that review: userspace pre-enqueue dedup first (reusing the fop-10
+      measurement dictionary; no verifier spike needed), kernel promotion
+      later only if ring pressure or poller CPU returns. Revised differential
+      contract: op-scoped distinct-tuple equality + count conservation +
+      byte-total conservation, decidable only on drop-free runs.
+      **Local code slice built 2026-08-25:** FileOpsAggregator (emit-first,
+      (pid, path, op), 1000ms window, bounded, identity-at-first-occurrence),
+      file.epl composition change (sum(eventCount), case-fallback min/max —
+      parquet columns unchanged), P3 send sampling, queue default 524288,
+      comparator count-conservation weighting, 9 unit tests + synthetic
+      comparator scenarios all passing. Field A/B (with the folded fop-13
+      differential rerun) pending. See verification.md §fop-11 Local Code
+      Slice.
+      **Field A/B PASSED 2026-08-27** (spk16, results 20260827T032142Z):
+      missing=0 (baseline 1272 vs candidate 1292 event-weighted tuples);
+      per-op event totals for the hot-loop file identical across phases
+      (34/34/32). En route, the initial FAILs root-caused a pre-existing
+      serializer bug — `file.epl`/`registry.epl` selected `AgentId` without
+      grouping it, making the statement not fully aggregated so Esper
+      emitted one row PER INPUT EVENT stamped with the group's
+      sum(eventCount): n events → n rows × n counts (n² inflation; proof:
+      32 hot reads → exactly 32×32=1024 parquet events). Fixed in `../wintap`
+      0e01783 (AgentId added to both group-bys; tcp/udp already grouped it) —
+      any fop-11 deploy must include it. See wiki/log.md 2026-08-26/27
+      entries. Remaining before acceptance: the collector-bundle gate below.
+      Byte-total conservation is implemented in the comparator as of
+      2026-08-27 (--check-bytes, wired into run_fop11_ab.sh; deficit-fail
+      with samples, warn-and-skip when a bytes column is absent) — the next
+      field A/B run verifies all three contract invariants.
+- [x] fop-12 — absolute-path ground truth (precondition for fop-11 keys,
+      human-directed 2026-08-25): resolve relative/`openat` paths to absolute
+      at open time so File telemetry records accurate ground truth and
+      aggregation keys cannot conflate distinct files. Recommended mechanism:
+      readlink `/proc/<pid>/fd/<fd>` at open-exit for non-absolute paths
+      (pre-enqueue, while the producer is alive — the fd handle yields the
+      absolute path directly); `bpf_d_path` is not available on RHEL8 4.18
+      tracepoints. Also improves fd-cache attribution for subsequent
+      read/write events. Dev chooses the exact resolution point; record
+      rationale. Local code/build, deployment, and field validation are now
+      complete and recorded; **ACCEPTED by human 2026-08-27** — post-fop-13
+      field runs show `relative_open_resolve_miss` at 0-6/interval with all
+      workload relative opens resolving via the dir index (36/36 in the
+      fop-11 A/B runs), against the 8-10k/interval floor that had blocked
+      acceptance. Earlier context: acceptance had been pending because the
+      `relative_open_resolve_miss` floor and `(relative)` bucket were too
+      large for safe aggregation keys. Root cause of the floor diagnosed
+      2026-08-25:
+      all fallbacks are decode-time `/proc` reads racing millisecond-lived
+      producers — see [[wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25]];
+      the fix is fop-13.
+- [x] fop-13a — miss-cause counter split: final relative-open misses now split
+      into `miss_producer_dead` vs `miss_producer_alive` via one `/proc/<pid>`
+      existence check (2026-08-25 local code slice; field data pending —
+      deployed counters will validate the producer-lifetime diagnosis).
+- [x] fop-13b — kernel-time directory identity + file dev:ino (one slice,
+      shared record-format change; CO-RE tier): (1) stamp non-`AT_FDCWD`
+      relative-open path records with the dirfd's `(s_dev, i_ino)` (same fdt
+      traversal `is_regular_fd` already runs); (2) stop discarding
+      `O_DIRECTORY` opens — emit them as internal `DIR_OPEN` records (no
+      WintapMessage) feeding a global bounded LRU index
+      `(s_dev, i_ino) → absolute dir path`, giving a race-free resolution
+      step that works after producer exit; (3) emit the opened file's
+      `(s_dev, i_ino)` on open and fd records (approved A3) so fop-11 can key
+      aggregation on `(pid, dev:ino, op)` independent of path quality. New
+      counters: `resolved_dir_index`, `dir_index_miss`, `dir_open_emitted`.
+      Acceptance: order-of-magnitude drop in `relative_open_resolve_miss` vs
+      the 20260825T234559Z baseline (~8k/min), `(relative)` out of top-5
+      prefixes, ring/queue health unchanged, comparator gains a
+      relative→absolute matching mode for the transition. Full analysis and
+      non-fixes: [[wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25]].
+      fop-11 unblocks on the dev:ino track (with the split contract for
+      identity-less rows) once fop-13b is deployed, independent of the
+      residual path-quality tail.
+      **Local code slice built 2026-08-25:** DIR_OPEN records + dir-identity
+      index + file/dirfd (s_dev, i_ino) emission + comparator upgrade matching
+      and dirfd-relative workload scenario are all implemented; both tracer
+      tiers and Lintap build clean, Linux-relevant tests and comparator
+      synthetic scenarios pass.
+      **CLOSED 2026-08-25 (human acceptance):** field evidence met the
+      acceptance bar — miss floor ~8k/min → 0-131/min in later windows with
+      `resolved_dir_index` as the dominant branch, producer-dead diagnosis
+      confirmed, `(relative)` out of top prefixes, ring 0, index healthy.
+      The 4x queue setting (524288) validated (drops=0 at ~437k depth) and
+      becomes the code default in fop-11. Differential rerun folds into
+      fop-11's standing gate. See verification.md §fop-13 Closeout.
+
+- [x] fop-13c — namespace-aware dir-index keying (from the 2026-08-25 fop-13
+      code review, finding F1; not an acceptance blocker): stamp
+      `task->nsproxy->mnt_ns->ns.inum` (one CO-RE chain read) on DIR_OPEN and
+      relative-open records and key the dir-identity index by
+      `(mnt_ns, s_dev, i_ino)`, eliminating wrong-path aliasing across mount
+      namespaces (containers). Within-namespace bind mounts remain
+      last-writer-wins among valid aliases of the same object — documented.
+- [x] fop-13d — dir-index LRU + capacity (from the 2026-08-25 fop-11 field
+      bundle 041718; NOT a fop-11 acceptance blocker): late-run filesystem
+      walks pin the dir-identity index at its 16384 cap with 133k+
+      evictions/interval, and FIFO eviction flushes hot base dirs
+      (dir_index_miss ≈ total miss, 322-357/min ≈ 4% of the pre-fop-13
+      floor). Fix: touch-on-hit LRU eviction, cap 16384 → 65536 with a
+      WINTAP_FILEOPS_DIR_INDEX_MAX knob (~10 MB worst case, approved memory
+      tradeoff). Acceptance: during a scan window, evictions no longer
+      correlate with misses and steady-state base dirs survive (miss floor
+      returns to the 0-131/min range). Implemented locally 2026-08-25 with
+      fop-13c and F2/F4 in one hardening pass — see verification.md
+      §fop-13c/fop-13d + F2/F4. **FIELD-ACCEPTED 2026-08-26** (bundle
+      053404Z): eviction/miss decorrelation confirmed — 29,469 resolves vs
+      354 misses in the burst minute under 68k/interval eviction churn at
+      the 65,536 cap; the 16,384-cap collapse signature did not recur.
+- [ ] fop-14 — downstream durability (CANDIDATE, measurement-first, from
+      bundle 053404Z): with the sensor path clean, the active end-to-end
+      loss point is the ETL serializer/parquet-writer stage (cumulative
+      dropped= 520k→583k during the heavy window; ETLMaxQueueEvents /
+      ETLMaxQueueEventsSerializer default 10,000). fop-11 dedup cannot help
+      here — Esper output volume is distinct-group-driven by design. Step 1
+      mirrors the FileOps queue experiment: raise the serializer caps in
+      ETLConfig, measure drop deltas + memory; then decide whether the
+      parquet writer needs throughput work.
+      **RE-MEASURE FIRST (2026-08-27): this severity was measured under the
+      ungrouped-AgentId EPL bug (one Esper row per input event), so the
+      serializer stage was seeing per-event row volume, not
+      one-row-per-group. With `../wintap` 0e01783 deployed, Esper output
+      collapses to one row per (group, 10s batch) and the observed drop rate
+      may shrink by orders of magnitude — re-run the heavy-window
+      measurement before sizing caps.** The queue-cap knobs already exist as
+      env overrides (the fop-11 A/B parks
+      WINTAP_ETL_MAX_QUEUE_EVENTS_FILESERIALIZER=100000 for its agg-OFF
+      flood phase). Keep a cap regardless: it is the host-protection
+      backpressure of last resort against a stalled parquet writer
+      (disk-full/duckdb hang would otherwise grow the in-memory queue
+      without bound); the open question is sizing, not existence. Also: replace per-event
+      owner-resolution warnings with a 60s counter (log hygiene; the misses
+      are the known producer-lifetime residual).
+- [x] fop-13 test/harness hardening (review findings F2+F4): make the
+      comparator's relative→absolute matcher count-conserving (consume from
+      the candidate "added" multiset, longest-suffix first) with a synthetic
+      test for the over-credit case; extract the dir-identity index + join
+      logic from `FileOpsSensor` into a testable class and add unit tests for
+      DIR_OPEN handling and the recovery chain. F3 (miss-cause split
+      best-effort under PID reuse) is accepted as a documented limitation of
+      triage instrumentation — no change.
+
+### Phase-2 future tasks (not slices yet)
+
+- [ ] Mmap as a first-class File activity type (approved 2026-08-25 as a
+      future feature enhancement, deliberately NOT in fop-12/fop-11): stop
+      collapsing op 5 → `Read` at decode; introduce a distinct `Mmap`
+      ActivityType so code-loading is distinguishable from data reads in the
+      recorded stream (`file.epl` groups by activityType, so today
+      mmap+read of the same file merge into one "Read" row, and mmap's
+      mapped-length bytes pollute read byte sums). Stream-content change:
+      ship with a downstream note for Wintappy models and analytics keying
+      on activityType, and update the differential comparator's op mapping
+      in the same slice.
+
+- [ ] OSS sensor survey (requested 2026-08-25; deliberately deferred by human
+      direction later that day — "wait a bit longer, improvements still
+      coming"): review how other open-source eBPF/host sensors handle
+      file-event volume and ring-buffer drop pressure — candidates:
+      Falco/Sysdig (drop accounting, consumer design), Cilium Tetragon
+      (in-kernel filtering/rate-limiting policies), Aqua Tracee, Elastic
+      ebpf/Agent, Sysmon for Linux, osquery. Deliverable: a wiki concept page
+      comparing their kernel-side reduction, aggregation, and userspace
+      consumption architectures against Lintap's, with adoptable patterns
+      ranked. Natural trigger: after fop-11/fop-12 land and are measured,
+      when comparing aggregation designs answers concrete questions.

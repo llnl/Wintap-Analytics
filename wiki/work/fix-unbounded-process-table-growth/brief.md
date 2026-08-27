@@ -20,6 +20,13 @@ tags: [feature-work, process-events, event-store, duckdb, process-resolution, lo
 
 # Feature Brief: Fix Unbounded Process Table Growth
 
+> **STATUS: CLOSED — accepted 2026-08-27** (current state accepted by
+> human; long-running acceptance shifted to the parallel
+> [[wiki/work/extended-deployment-monitoring/brief]] task ahead of the
+> branch PR). Durable knowledge promoted to
+> [[wiki/component/process-table-retention]]. The FileOps subtask closed
+> the same day: [[wiki/work/optimize-fileops-poller/brief]].
+
 ## Problem
 
 `ProcessResolver` persists live process state in a DuckDB `process` table at

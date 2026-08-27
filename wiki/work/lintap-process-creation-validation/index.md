@@ -54,5 +54,6 @@ This thread is intentionally separate from canonical `wiki/event_type/process-ev
 - Which short-lived process patterns are measurable enough to become regression tests?
 - What loss counters and backpressure signals are required before comparing performance or accuracy numbers across sensors?
 - Can Lintap expose clone/vfork flags and lifecycle provenance without destabilizing WintapAPI process semantics?
+- Field finding (2026-08-14, RHEL 8): the clone sensor's `sched_process_fork` attach succeeds on RHEL 8 — the Fedora failure that motivated the opt-out packaging default does not generalize. The fork-without-exec warning signature (`parentPid = childPid - 1`) and an unexplained ~500-700 forks/sec rate on a nominally idle machine are under investigation. See [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]].
 - Should additional reference implementations beyond Tetragon/Tracee/Sysdig be added to the comparison matrix? A brainstorming note proposes Sysmon for Linux (Microsoft's Windows-event-to-eBPF mapping) and Bombini (Rust/Aya/LSM) as candidates; neither has a local checkout or source-inspection pass yet. See [[wiki/concept/agentic-ebpf-probe-development]].
 <!-- SPECULATIVE: raw/Agentic_Coding_for_eBPF.md — candidate references from unverified brainstorming note -->

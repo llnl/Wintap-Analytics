@@ -5,21 +5,26 @@ confidence: medium
 grounded_by:
   - raw/Issues/Long_Running_Cleanup.md
   - ../Lintap/pidstat-collect.sh
-  - ../Wintappy/wintap_dbt/macros/pidstat.sql
+  - ../Wintappy/wintap_dbt/dbt_project.yml
   - ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
   - ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs
 policy: agent-editable
-last_validated: 2026-08-11
+last_validated: 2026-08-20
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
 audience: mixed
-status: draft
+status: reviewed
 source_paths: wiki/work/improve-pidstat-collector/brief.md
 tags: [feature-work, lintap, pidstat, monitoring, s3]
 ---
 
 # Feature Brief: Improve pidstat Collector
+
+> **Feature closed 2026-08-17** on branch `grantj-rhel8-testing` with accepted reviews; durable facts promoted to [[wiki/component/sensor-upload-cache-pipeline]], [[wiki/repo/lintap-supporting-repo]], and [[wiki/repo/wintappy-pipeline-repo]]. Follow-ups tracked in implementation_plan.md: collector CPU investigation (needs multi-system data), small-file consolidation (assigned to fix-upload-cache-deletion next slice), target-host systemd/reboot check, live container fixture, S3 end-to-end (unblocked once the upload fix merges).
+>
+> **Post-close Wintappy bugfix (2026-08-20):** the dedicated pidstat DBT macro and `PIDSTAT_DATA_PATH` override were removed. `stg_pidstat_metrics` now resolves `raw_sensor/pidstat` through `WINTAP_DBT_RAW_SENSOR_DATASET` and the shared raw-event helpers like the other optional raw models.
+
 
 ## Problem
 
@@ -71,9 +76,11 @@ for rationale and mechanism):
   type-agnostically and each uploader preserves the relative path as the S3
   key — the S3 layout therefore mirrors raw_sensor so DBT/pull tooling can
   fetch both uniformly, with no C# changes expected.
-- Keep local disk bounded: the sensor's uploader already deletes each parquet
-  after confirmed upload; the collector needs only a guard for accumulation
-  while the sensor is down.
+- Keep local disk bounded: the collector's accumulation guard is the
+  effective bound. (Corrected 2026-08-15: the sensor's delete-after-upload
+  was found never to fire — adapters never raise `UploadCompleted` — so
+  uploads currently repeat and nothing deletes; fix tracked in
+  [[wiki/work/fix-upload-cache-deletion/brief]].)
 - Deliberately version the downstream contract: Wintappy's
   `stg_pidstat_metrics` currently hardcodes tab-delimited
   `read_csv('$PIDSTAT_DATA_PATH/**/*.csv')`; moving to parquet requires a
@@ -81,6 +88,11 @@ for rationale and mechanism):
   over the new layout).
 - Enable the motivating analysis: correlate Lintap process resource use with
   system load and event_store growth over multi-day runs.
+- Added 2026-08-14 (human, "huge plus"): per-process container attribution —
+  cgroup path, namespace identity, and best-effort container runtime/ID
+  columns from `/proc/<pid>/cgroup` and `/proc/<pid>/ns/pid` (see the
+  telemetry-source investigation in
+  [[wiki/work/improve-pidstat-collector/design]]).
 
 ## Non-Goals
 
@@ -128,10 +140,12 @@ without manual file handling.
 - `../wintap` upload path (`core/etl/load/CacheManager.cs`,
   `adapters/S3Adapter.cs`, `adapters/base/Uploader.cs`) — read/verify only; no
   changes expected since the sweep is type-agnostic.
-- `../Wintappy/wintap_dbt/macros/pidstat.sql` and
-  `models/bronze/stg_pidstat_metrics.sql` — coordinated change from tab-CSV to
-  parquet over the new layout (sibling repo; code changes need explicit
-  authorization).
+- `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql`,
+  `dbt_project.yml`, and the shared raw-source macros under
+  `wintap_dbt/macros/` — coordinated change from tab-CSV to parquet, followed
+  by the 2026-08-20 bugfix that removed pidstat-specific pathing so this model
+  now follows the same raw-event helpers as the other optional events (sibling
+  repo; code changes need explicit authorization).
 - This repo's validation harness docs, which already rely on pidstat capture
   during validation runs.
 

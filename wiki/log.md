@@ -359,6 +359,93 @@ Pages updated: index.md (two new Work rows); log.md.
 Contradictions flagged: none.
 Next stage: dispatch the wintap Engineer for the P2.1 instruction document using the handoff prompt, then run the approve/implement/audit loop per unit.
 
+## [2026-08-14] diagnostic | RHEL 8 field test: clone sensor attach, fork-without-exec signature, suspected fork storm
+
+Source: operator-reported Lintap logs from the first real-machine RHEL 8 test (2026-08-14), plus source inspection of CloneSensor.cs, BaseEbpfSensor.cs, clone_tracer.bpf.c, and ../Lintap/packaging/lintap-rpm/lintap.env.
+Pages created: diagnostic/rhel8-clone-sensor-and-fork-without-exec.md — three findings: (1) the EventChannel warn signature parentPid = childPid−1 identifies fork-without-exec processes invisible to exec-only sensing, matching the VM-validated clone-sensor coverage requirement; (2) the clone sensor's sched_process_fork attach succeeds on RHEL 8, so the Fedora failure behind the opt-out packaging default does not generalize (candidate: revisit the lintap.env default); (3) warnings persisted ~7 min after clone enable — PID-range rate analysis (~450-700 PIDs/sec per stream, observed wrap at pid_max 4,194,304) suggests a fork storm with multi-minute event-processing lag on a nominally idle machine, with pre-enable backlog and PID namespaces as competing explanations; decisive checks recorded (fork-rate from /proc/stat, top forking parents from raw_process parquet).
+Pages updated: work/lintap-process-creation-validation/index.md (field-finding pointer); index.md.
+Contradictions flagged: none hard. The packaging comment "sched_process_fork attach failed on Fedora" stands but is now known to be Fedora-specific, not general.
+Notes: retention feature ruled unlikely as a contributor by the warn signature; process_retention_telemetry query recorded as the standard rule-out for future triage.
+
+## [2026-08-14] diagnostic | Fork storm root cause: pidstat-collector per-line command substitutions
+
+Source: operator-run top-forkers query on the RHEL 8 machine (bash and date, both root, top 2 in raw_process), matched against ../Lintap/pidstat-collector.sh source structure.
+Root cause: the collector's hot loop executes ~7 command-substitution subshells per pidstat output line, two exec'ing date (~700 forks/sec at -p ALL on ~500 processes). This matches the measured PID-advance rate, the top-forker names, and the parentPid = childPid−1 warn signature (each $(...) subshell is a fork-without-exec bash that forks date). The observability collector was flooding the sensor it feeds; raw_process data from affected runs is polluted (bash/date dominate) and unfit for process-mix conclusions.
+Pages updated: diagnostic/rhel8-clone-sensor-and-fork-without-exec.md (Root Cause section replacing the fork-storm/namespace open question; remaining open items: confirm fork-rate collapse after stopping the collector, and whether the observed multi-minute event lag at ~700 events/sec merits a sensor-capacity investigation); work/improve-pidstat-collector/implementation_plan.md (new CRITICAL slice-2 step 6b: fork-free hot loop — global-variable normalize, printf '%(%s)T' epoch, window-epoch date column merging the midnight fix, plain path variables, plus a no-child-processes regression guard).
+Contradictions flagged: none. Reviewer note: the 2026-08-12 slice-1 review flagged conversion cost but missed the per-line fork cost — recorded here so the review checklist for shell collectors includes hot-loop fork auditing.
+Notes: clone-sensor-on-RHEL-8 finding (attach works) is unaffected and stands on its own.
+
+## [2026-08-14] decision | pidstat collector slice 2 redefined: Python rewrite
+
+Source: human decision following the fork-storm diagnosis (diagnostic/rhel8-clone-sensor-and-fork-without-exec.md) — bash+duckdb-CLI stays conceptually but the implementation moves to a single-process Python collector using the duckdb Python API, for fork elimination and readability.
+Pages updated: work/improve-pidstat-collector/design.md (new decision section: rationale, carried-over slice-1 semantics restated as requirements, bash pidstat-collector.sh retired while pidstat-collect.sh remains the example; DuckDB-CLI-vs-Python open question resolved; new open question: Python runtime/packaging given RHEL 8's default python3.6 vs duckdb wheel requirements); implementation_plan.md (step 6 rewritten as the Python rewrite absorbing all three review findings, step 6b as the pytest port incl. midnight case and fork regression guard; checklist, files-to-change, and tests sections aligned); dev_handoff.md (slice-2 prompt rewritten: hard single-process requirement, delete-the-bash-collector instruction gated on tests passing, runtime/packaging decision assigned to the dev); index.md.
+Contradictions flagged: none. The slice-1 acceptance stands — its behavior and test suite become the specification the Python port must satisfy.
+
+## [2026-08-14] investigation | pidstat collector telemetry source options + container attribution
+
+Source: human questions (is pidstat still the right source for the Python collector? can we get container info?), answered with live verification on lintap-dev: /proc/<pid>/stat (52 fields incl. minflt/majflt, delayacct_blkio_ticks, guest_time), /proc/<pid>/io, /proc/<pid>/status ctx switches, /proc/<pid>/schedstat, /proc/<pid>/cgroup (v2 unified here; v1/hybrid on RHEL 8), /proc/<pid>/ns/pid readlink; psutil API inspection (no page faults, no guest time, no iodelay on Linux).
+Findings: three source options recorded in design.md — A keep-pidstat-child (full schema, one child, text parsing), B stdlib /proc sampler (full schema, zero children, zero new deps, owns rate math), C psutil (schema-incomplete, not recommended). Container attribution (cgroup_path, pid_ns_inode, best-effort runtime/id) is only available via /proc — effectively deciding for option B; new columns coordinate with the same-slice Wintappy bronze migration so the schema changes once. Recommendation: implement B behind a sampler interface with pidstat retained as side-by-side test oracle.
+Pages updated: work/improve-pidstat-collector/design.md (Telemetry Source Investigation + Container Attribution sections); brief.md (container-attribution goal added); references.md (proc(5), psutil evaluation); implementation_plan.md (step 6 source-selection + container columns; checklist items); dev_handoff.md (source-selection and container requirements in the copy/paste prompt); index.md. last_validated bumped to 2026-08-14 across the feature artifacts.
+Contradictions flagged: none. Note: container/namespace-tagged rows would also let the RHEL 8 diagnostic's interleaved-PID-range question be answered from collector data directly.
+
+## [2026-08-15] feature-work | fix-upload-cache-deletion started; pidstat mechanism fact corrected
+
+Source: overnight RHEL 8 field test (S3 uploader re-sending the same data every cycle) plus code review of ../wintap/wintap/core/etl/load/ (CacheManager.cs, adapters/S3Adapter.cs, SMBFileShareAdapter.cs, SignedS3UrlAdapter.cs, interfaces/IUpload.cs).
+Root cause: the delete-after-upload path is dead code — CacheManager subscribes Uploader_UploadCompleted (which deletes), but no adapter ever raises the event (declared-only in S3/SMB adapters; the sole Invoke is commented out in SignedS3UrlAdapter). CacheManager.upload() sets successfulUpload ("any success = all success, for now") and never reads it — the intended delete site. Only pruneCache()'s 256MB cap removes files, and its free-space check uses Windows drive-letter logic, suspect on Linux.
+Pages created: work/fix-upload-cache-deletion/brief.md (evidence with GROUND_TRUTH pointers, goals incl. Linux prune fix and empty dayPK/hourPK dir removal from the Long_Running_Cleanup issue, acceptance criteria incl. overnight single-upload validation); work/fix-upload-cache-deletion/dev_handoff.md (../wintap core/etl/load authorization, recommended inline-delete fix shape with the mid-loop event-raise anti-pattern called out, dead-event decision delegated).
+Pages corrected: work/improve-pidstat-collector/design.md — the 2026-08-11 mechanism fact "Uploader_UploadCompleted deletes each parquet after successful upload" was true of the handler code but false in effect (event never fires); struck through with dated correction. brief.md bounded-disk goal corrected (accumulation guard is the effective bound); dev_handoff.md known-issue note added; implementation_plan.md S3 end-to-end checklist item marked blocked on the new feature.
+Pages updated: index.md (two new Work rows).
+Contradictions flagged: one, resolved by correction — recorded mechanism fact contradicted observed field behavior; lesson noted: handler-exists-and-subscribed is not evidence the event fires; verify the raise site when grounding event-driven claims.
+
+## [2026-08-15] review | Upload subsystem robustness pass folded into fix-upload-cache-deletion
+
+Source: follow-up code review of ../wintap/wintap/core/etl/load/ (CacheManager doMerge/HangDetector/pruneCache/getFreeBytes/getCurrentCacheDirSize, S3Adapter client lifecycle and retry, upload loop).
+Additional findings (prioritized into the feature): (1) HangDetector_Elapsed deletes ALL parquet under the parquet root on a hung merge — un-uploaded raw_sensor and future pidstat data included; restrict to unmerged working dirs. (2) pruneCache off-by-one (breaks before deleting the threshold-crossing file), cap measured against whole-cache size while deleting only raw_sensor parquet (unreachable-target risk), hardcoded 256MB cap, unused drive-letter getFreeBytes dead code. (3) Unguarded PostUpload loop can silently kill the upload thread; empty catch in delete handler; upload failures logged at Info. (4) Zero-byte parquet files skipped by upload become permanent stragglers post-fix. (5) Double directory enumeration per cycle. Verified-sound and explicitly out of scope: S3 client per-cycle lifecycle, 429 backoff+jitter, credentials, key mirroring, .Result pattern.
+Pages updated: work/fix-upload-cache-deletion/brief.md (goals expanded with GROUND_TRUTH pointers; acceptance criteria for merge-hang scoping, prune accounting, PostUpload resilience; deployment note re one-time backlog drain on machines that ran the broken version); dev_handoff.md (cleanup items in priority order with a do-not-change list); index.md.
+Contradictions flagged: none.
+
+## [2026-08-15] update | fix-upload-cache-deletion: Windows considerations made explicit
+
+Source: human question (does the design account for Windows?) plus source confirmation that PluginManager (shared core) constructs WintapETL/CacheManager on both platforms — Windows Wintap runs the identical upload path and has the identical re-upload bug.
+Assessment: the fix is platform-neutral by construction (shared code; case-insensitive globs and path→S3-key separator normalization already handled), with three Windows specifics now stated explicitly: transient file-lock tolerance on delete (AV/indexer — log, retain, retry next cycle, never kill the upload thread); Directory.Delete failure tolerance for empty-dir removal (which also makes the new-file race safe on both platforms); and a Windows service-mode verification run (same setup as the 2026-08-13 retention check) confirming delete-after-upload across ≥3 cycles.
+Pages updated: work/fix-upload-cache-deletion/brief.md (Windows acceptance criteria); dev_handoff.md (Windows correctness requirement + verification addition).
+Contradictions flagged: none.
+
+## [2026-08-15] code | Improve pidstat collector slice 2
+
+Files changed: `../Lintap/pidstat-collector.py` (new), `../Lintap/pidstat-collector.sh` (deleted), `../Lintap/tests/test_pidstat_collector.py` (pytest port), `../Lintap/pyproject.toml`, `../Lintap/.python-version`, `../Lintap/README.md`, `../Lintap/packaging/lintap-{rpm,deb}/*pidstat*`, `../Wintappy/wintap_dbt/macros/pidstat.sql`, `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql`, `../Wintappy/Makefile`, `../Wintappy/wintap_dbt/README.md`, plus this feature's work artifacts.
+Results: rewrote the collector in Python around a zero-child `/proc` sampler and DuckDB Python conversion; preserved the slice-1 env/spool/partition/salvage/accumulation semantics; added hostname + container attribution columns; ported the test suite to pytest with pidstat-oracle, midnight, and fork-regression coverage; added pinned-interpreter systemd units; migrated Wintappy pidstat bronze from CSV to parquet and validated both fixture and empty-input paths in `lintap-dev` using `uv`.
+Limitations: the pinned `/usr/bin/python3.11` unit path could not be started on the Ubuntu 24.04 validation VM because that interpreter is not installed there; live container fixture coverage and S3/delete-after-upload closeout remain open.
+
+## [2026-08-15] update | Improve pidstat collector runtime packaging switched to uv-managed venv launcher
+
+Source: follow-up implementation request after the hardcoded `/usr/bin/python3.11` path proved too brittle for mixed-host deployment.
+Files changed: `../Lintap/pidstat-collector-bootstrap.sh` (new), `../Lintap/pidstat-collector-launch.sh` (new), `../Lintap/packaging/lintap-{rpm,deb}/lintap-pidstat.service`, both `lintap.env` files, packaging READMEs/build scripts, top-level `../Lintap/README.md`, and this feature's work artifacts.
+Results: removed the host-interpreter pin; service now launches the collector through `/bin/bash /usr/lib/lintap/pidstat-collector-launch.sh`, which resolves `PIDSTAT_VENV_DIR` and execs the collector from a dedicated `uv`-managed venv. Added `pidstat-collector-bootstrap.sh` to create that venv and install DuckDB, defaulting to `PIDSTAT_BOOTSTRAP_PYTHON=3.12` so the runtime stays within the collector's supported `>=3.11,<3.13` range. Validated in `lintap-dev`: bootstrap created a 3.12.3 venv, launcher produced parquet successfully, and a temp unit with the new `ExecStart` shape passed `systemd-analyze verify`.
+Limitations: still not a full package-install/reboot test; the real packaged service must be exercised on a target host later.
+
+## [2026-08-16] review | improve-pidstat-collector slice 2 accepted
+
+Source: independent review of ../Lintap 8eaae5c and ../Wintappy ccbf783 (both on grantj-rhel8-testing) plus this repo's slice-2 wiki commits. Re-verified: pytest 12/12 in ../Lintap (uv, python 3.12).
+Review verdict: slice 2 accepted; feature is code-complete. The dev implemented telemetry option B (zero-child /proc sampler) with container attribution, verified stat-field offsets correct against proc(5), pidstat-matching rate semantics (guest-excluded %usr, schedstat-based %wait, delta-tick iodelay), PID-reuse handling via starttime, in-process duckdb conversion with atomic replace and full traceback logging, and all three carried review findings absorbed. Wintappy bronze matches spec (read_parquet + filename provenance + container columns + empty-input typed table). Packaging pivoted mid-slice from a pinned /usr/bin/python3.11 to a uv-managed 3.12 venv bootstrap/launcher after field brittleness — decision properly recorded. Boundary check clean (no pidstat changes in ../wintap).
+Findings (minor): (1) enforce_accumulation_guard stats files without FileNotFoundError tolerance and runs inside the conversion try — a real race once the upload fix has the sensor deleting concurrently, with a misleading error attribution; queued as a checklist follow-up. (2) Open items honestly tracked: live container fixture, target-host systemd install/reboot, S3 end-to-end (blocked on fix-upload-cache-deletion).
+Pages updated: work/improve-pidstat-collector/verification.md (slice-2 Independent Review section); implementation_plan.md (container/systemd checklist reconciliation, acceptance line, guard-race follow-up); design.md (Summary rewritten to match the shipped Python/proc-sampler reality and the pending-deletion caveat); index.md.
+Contradictions flagged: none.
+
+## [2026-08-16] query | Small parquet files are merged before upload — no new task
+
+Source: human question (are the frequent small parquet files merged before upload?), answered from ../wintap/wintap/core/etl/load/Merge.cs, CacheManager.cs (doMerge before upload each cycle), RawSensorWriter.cs, and ETLConfig.json.
+Answer: yes on both paths. Serializer flush files (SerializationIntervalSec, shipped default 60s — the wiki's "10-second" figures refer to event aggregation windows, not file cadence) are consolidated by doMerge into one file per event type per upload cycle before the sweep; the pidstat collector writes one file per rotation window by construction, matching that granularity. Upload unit is ~12 files/type/hour. No next-slice task added. Optional future consolidation to hourly files (~12× fewer S3 objects, up to 1h local latency) noted in conversation but deliberately not queued.
+Pages updated: work/improve-pidstat-collector/design.md (merge-before-upload added to verified mechanism facts).
+Contradictions flagged: none.
+
+## [2026-08-16] code | fix-upload-cache-deletion first implementation pass
+
+Source: code-development pass on branch `grantj-rhel8-testing` in `../wintap`, driven by the feature handoff and brief.
+Files changed: `../wintap/wintap/core/etl/load/CacheManager.cs`, `interfaces/IUpload.cs`, `adapters/S3Adapter.cs`, `adapters/SMBFileShareAdapter.cs`, `../wintap/wintap/core/etl/model/ETLConfig.cs`, `../wintap/wintap/core/etl/ETLConfig.json`, `../wintap/wintap/core/etl/shared/Utilities.cs`, plus this feature's `brief.md`, new `verification.md`, and `index.md`.
+Results: delete-after-upload moved inline to `CacheManager.upload()` after the full uploader loop, preserving the existing any-success policy; dead `UploadCompleted` event plumbing removed from the active load path; zero-byte files now delete instead of spinning forever; empty partition dirs are pruned after delete; `pruneCache()` now measures `raw_sensor` size, deletes the threshold-crossing file, uses a configurable cap, and protects current-window files; merge-hang cleanup now skips `raw_sensor/`, `csv/`, and `merged/`; `PostUpload()` calls are guarded per uploader. Verified in `lintap-dev`: `dotnet build Lintap.csproj -warnaserror:CS0067` passed. `Wintap.csproj -p:EnableWindowsTargeting=true` remains blocked in this VM by unrelated Windows-target dependency issues.
+Limitations: no live uploader target was exercised yet, so single-upload-plus-delete across >=3 cycles still needs target-host verification.
+
 ## [2026-08-17] update | improve-windows-process-collection: unit IDs renamed P2.x → wpc-nn
 
 Source: Architect decision in the wintap main session — the P-major numbering was judged unintuitive. New scheme combines the descriptive-slug pattern used by this wiki's Linux feature threads (kebab-case feature names, numbered steps, slices) with the semantic-prefix precedent already in ../wintap's architecture assessment (DEC-/OQ-/INV-).
@@ -436,6 +523,7 @@ Audit artifact: `../wintap/developer_docs/audits/wpc-02-sensor-core.md` (Status:
 Verification: `dotnet build "wintap\Wintap.csproj" -c Release -p:WarningLevel=0` passed; from `../wintap/tests/Wintap.Tests`, `dotnet test --filter "Category=wpc-02" --logger "console;verbosity=detailed"` selected and passed 5/5 tests. The audit records a verification-command deviation: repo-root `dotnet build -c Release` / root filtered test target `Wintap.sln`, which currently fails under .NET SDK MSBuild on the existing `Wintap-Workbench` website project (`MSB4249`), so project-scoped equivalents were used. The audit also records a narrow internal `genPidHash` test seam to avoid elevation-sensitive `StateManager` initialization; production still defaults to unchanged `ProcessHash.GenPidHash`.
 Open questions: none for wpc-02. Next unit is wpc-03 snapshot refresh.
 
+
 ## [2026-08-17] instruction | [wintap] wpc-04 field enrichment instruction approved
 
 Decisions made: none. Architect requested and approved the wpc-04 instruction for Developer handoff. Scope is field enrichment on the already-landed `WindowsProcessSensor`: SID/user via wpc-01 helper, `LookupAccountSid` with bounded SID cache, token fallback for NoSid/Malformed, ETW command line with PEB fallback, and executable path via `QueryFullProcessImageName` with device-path translation fallback. The instruction preserves settled WPC constraints: no schema changes, no PidHash formula changes, TraceEvent stays 3.1.23, no new NuGet dependencies, resolver-backed sensor, runtime wire-in deferred to wpc-06, Stop metrics deferred to wpc-05, boot ETL deferred to wpc-07.
@@ -484,6 +572,15 @@ Wiki pages updated: `wiki/work/improve-windows-process-collection/implementation
 Audit artifacts: `../wintap/developer_docs/audits/wpc-05-stop-metrics-merge.md` (Complete; 4/4 wpc-05 tests passed); `../wintap/developer_docs/audits/wpc-06-wire-in-removal.md` (Complete; 35/35 wpc tests and 36/36 full test-project regression passed via the documented MSB4249 project-scoped fallback; smoke evidence includes wire-in ordering, Start/Stop/Refresh parquet flow, and parseable interval/shutdown QA counter lines, e.g. snapshot_count=489).
 Instructions written: `../wintap/developer_docs/instructions/wpc-07-boot-etl-coverage.md` (Status: Draft — Architect approval pending; slice 2 opt-in Global Logger boot ETL coverage).
 Open questions: Architect review of the wpc-07 draft, including the optional logger-tag rider and the `boot_replay_count` QA-counter addition. wpc-08 (validation harness, slice 3) remains after wpc-07.
+
+## [2026-08-17] closeout | improve-pidstat-collector + fix-upload-cache-deletion closed; durable facts promoted
+
+Source: final review of branch grantj-rhel8-testing across all four repos (wintap ecfa746 upload fix; Lintap 8eaae5c Python collector; Wintappy ccbf783 parquet bronze; this repo's verification commits), plus operator field notes from RHEL 8 testing.
+Upload-fix review: accepted for merge. Independently re-verified Lintap.csproj build (0 errors, zero CS0067). All specified behaviors landed: gated inline delete after the full uploader loop, dead event removed from IUpload/adapters, zero-byte cleanup, bottom-up empty-partition-dir removal with tolerated failures, merge-hang recovery scoped away from raw_sensor, prune off-by-one fixed with configurable RawSensorMaxCacheSizeBytes measured against raw_sensor only, guarded PostUpload, Warn-level failure logs. Post-merge follow-ups (dev-recorded): 3+ cycle live-uploader run; Windows-targeting build (env-blocked) and service-mode run.
+Features closed: both briefs marked reviewed/closed with follow-ups tracked. Durable facts promoted to canonical pages: NEW component/sensor-upload-cache-pipeline.md (layout, merge cycle, type-agnostic ride-along contract, delete-after-upload fix, prune/hang-recovery semantics, deployment prerequisites); repo/lintap-supporting-repo.md (pidstat-collector.py section); repo/wintappy-pipeline-repo.md (parquet-only pidstat bronze section).
+Operator field notes recorded: (1) pidstat-collector.py possible high CPU — investigate with multi-system data (pidstat plan follow-ups); (2) Lintap CPU possibly still trending up over long runs — watch; leading hypothesis duckdb event_store size, may need compaction (fix-unbounded plan field-watch item; raises priority of its open DuckDB-reclaim question); (3) pidstat parquet files are NOT merged before upload — 2026-08-16 mechanism fact corrected; generic per-cycle small-file consolidation for all raw_sensor type dirs queued as fix-upload-cache-deletion next slice; (4) attribution below.
+Attribution note (per human request): this branch and its features were implemented using Claude (Fable) for design/review/wiki-maintenance and opencode (gpt-5.4) for development.
+Contradictions flagged: one, resolved by correction — the 2026-08-16 "no merge step needed for pidstat" mechanism fact contradicted field observation; corrected in the pidstat design page with the consolidation task queued.
 
 ## [2026-08-18] closeout | [wintap] wpc-07 boot ETL coverage completed
 
@@ -577,6 +674,51 @@ Changes: Made **Results** the standard reader-facing section for future feature 
 Decisions made: Presentation convention only; the approved Velocity formula, fields, guardrails, and raw evidence are unchanged.
 Contradictions flagged: none.
 
+## [2026-08-20] update | Wintappy pidstat raw_sensor-path bugfix documented
+
+Sources read: `../Wintappy/wintap_dbt/dbt_project.yml`; `../Wintappy/wintap_dbt/macros/paths.sql`; `../Wintappy/wintap_dbt/macros/raw_sources.sql`; `../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql`; `../Wintappy/wintap_dbt/README.md`; `../Wintappy/Makefile`.
+Pages created: none.
+Pages updated: `repo/wintappy-pipeline-repo.md`; `work/improve-pidstat-collector/brief.md`; `work/improve-pidstat-collector/references.md`; `work/improve-pidstat-collector/design.md`; `work/improve-pidstat-collector/dev_handoff.md`; `work/improve-pidstat-collector/implementation_plan.md`; `work/improve-pidstat-collector/verification.md`; `index.md`; `log.md`.
+Summary: documented the follow-up bugfix that removed `PIDSTAT_DATA_PATH` and the dedicated pidstat DBT macro/override in Wintappy. `stg_pidstat_metrics` now resolves `raw_sensor/pidstat` from `WINTAP_DBT_RAW_SENSOR_DATASET` through the shared raw-event helpers and uses the same day/hour partition-window narrowing as the other optional raw events.
+Contradictions flagged: none.
+
+## [2026-08-23] diagnostic | Lintap runtime high-CPU collector utility
+
+Context: current field host has `/usr/lib/lintap/Lintap` running for six days at roughly 8.5 CPU cores, with all major sensors enabled and default process-retention settings. Non-root inspection could not read `/var/log/lintap/event_store/main.duckdb`, service environment, file descriptors, or full journals.
+Files created: `extras/lintap-runtime-diagnostics/README.md`; `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`.
+Purpose: root-run, read-only diagnostic bundle for pidhash/process-table runtime performance work. It collects service/process/thread samples, redacted config, journals, filesystem summaries, fork-rate data, optional perf/dotnet/pidstat samples, and read-only DuckDB summaries/`EXPLAIN ANALYZE` output for process-table and retention telemetry investigation.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-23] diagnostic | spk16 Lintap high-CPU field findings
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260823T205648Z` root-run diagnostics using a copied DuckDB event-store database.
+Findings: `process` table retention is working at field scale (`64,742` rows after six days), but `process_retention_telemetry` has grown to `16,190,964` per-identity rows and is now the unbounded table. Runtime CPU remained high (`8.5` cores by `ps`, `13.9-15.2` CPUs by `perf stat`) across many native `Lintap` threads and sensor pollers. Fork rate was low (`~3/sec`), ruling out the earlier pidstat shell fork storm. Schema output showed no `process` indexes and pidhash lookup plans used sequential scans over ~64k rows. Process rows/telemetry were dominated by short-lived monitor commands and `python3.12` rows parented to the pidstat collector, suggesting clone/thread events are being registered as process rows.
+Recommended fixes: aggregate and retain/prune `process_retention_telemetry`; filter `CloneSensor` thread clones (`CLONE_THREAD`) so thread IDs do not pollute the pidhash process table; evaluate `process_id, create_time` indexing after reducing telemetry/thread-clone churn.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-23] fix | pidstat collector conversion noise mitigation
+
+Source: spk16 field diagnostic showed many short-lived `python3.12` process rows parented to the pidstat collector while it was manually running with `PIDSTAT_ROTATE_INTERVAL_SEC=10`.
+Files changed: `../Lintap/pidstat-collector.py`; `../Lintap/tests/test_pidstat_collector.py`; `../Lintap/README.md`; `../Lintap/packaging/lintap-rpm/lintap.env`; `../Lintap/packaging/lintap-deb/lintap.env`; `../Lintap/packaging/lintap-rpm/README.md`; `../Lintap/packaging/lintap-deb/README.md`.
+Fix: clamp rotation to `PIDSTAT_MIN_ROTATE_INTERVAL_SEC` default `300`, add `PIDSTAT_DUCKDB_THREADS=1`, reuse one DuckDB connection for parquet conversion, and log the effective quieting settings at startup. This reduces collector-induced process/clone noise before addressing broader CloneSensor thread filtering.
+Validation: `uv run --group dev pytest tests/test_pidstat_collector.py` in `../Lintap` passed (`14 passed`).
+Pages updated: `work/improve-pidstat-collector/verification.md`; `log.md`.
+
+## [2026-08-23] diagnostic | pidstat mitigation post-restart check
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260823T223445Z` after restarting the manual pidstat collector with `PIDSTAT_MIN_ROTATE_INTERVAL_SEC=300` and `PIDSTAT_DUCKDB_THREADS=1`.
+Results: collector-induced noise dropped materially: fork-rate sample was effectively zero (`processes_delta_10s=4`), `python3.12` disappeared from the current top process-row producers, and open `python3.12` rows fell from `1117` to `31`. Lintap CPU improved by `perf stat` sample (`13.9-15.2` CPUs before to `9.4` CPUs after) but remained high by `ps` (`~8.5` cores). `process` remained bounded (`47,135` rows), while `process_retention_telemetry` still grew to `16,362,388` rows, adding ~171k rows over ~98 minutes.
+Conclusion: pidstat conversion churn is mitigated, but the remaining high-CPU/runtime-quality work should move to `../wintap`: aggregate/prune `process_retention_telemetry`, filter `CloneSensor` thread clones, then reassess process lookup indexing.
+Pages updated: `work/improve-pidstat-collector/verification.md`; `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-23] fix | process retention telemetry bounded
+
+Files changed: `../wintap/wintap/core/infrastructure/ProcessResolver.cs`; `../wintap/shared/ai/wintap_mcp_server/wintap_mcp_server.csproj`.
+Fix: `process_retention_telemetry` now writes aggregate rows by default instead of one row per process identity; per-`pid_hash` detail is opt-in via `WINTAP_PROCESS_RETENTION_TELEMETRY_DETAIL_ENABLED=true`. Added `WINTAP_PROCESS_RETENTION_TELEMETRY_RETENTION_SEC` with a 24-hour default and prunes old telemetry rows every maintenance sweep. Startup logging includes the telemetry retention/detail settings.
+Build fix: MCP publish had failed because generated files under `shared/ai/wintap_mcp_server/mcp_temp/obj` were included by the MCP project source glob, causing duplicate assembly attributes. The MCP project now excludes `mcp_temp/**` alongside direct `obj/**` and `bin/**`.
+Validation: direct MCP publish passed; `dotnet build wintap/Lintap.csproj` in `../wintap` passed with existing warnings and `0` errors.
+Pages updated: `work/fix-unbounded-process-table-growth/design.md`; `work/fix-unbounded-process-table-growth/implementation_plan.md`; `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
 ## [2026-08-24] feature | [wintap] windows-sensor-health-check opened: exploration, design, plan, shc-01 draft
 
 Decisions made (Architect, via interview — recorded in `work/windows-sensor-health-check/interview.md`): health checks run in-agent at the WintapMessage egress choke point before serialization; aggregated per-sensor-stream/per-check counters flushed periodically as dedicated health messages into the normal Parquet stream with a capped first-N sample; coverage is all Windows sensors including WindowsProcessSensor; full-stream constant-time checks, no sampling.
@@ -630,6 +772,65 @@ Mini-lab: shc-03 per-unit estimate revised pre-implementation in `work/windows-s
 Instructions updated: `../wintap/developer_docs/instructions/shc-03-querydosdevice-drive-map.md` (widened: two production files; grounded current `fromNative` code and exact replacement method; hard-constraints block carries the scoped sensor-file exception; acceptance criteria and Out of Scope updated; tests 8–12 added). Status: Draft — Architect approval pending on the widened version.
 Pages updated: `work/windows-sensor-health-check/implementation_plan.md` (shc-03 description/tests/files widened); `work/windows-sensor-health-check/design.md` (revision banner; residual-guard paragraph rewritten as the recorded widen-not-defer decision with the Architect's realize-now rationale); `work/windows-sensor-health-check/metrics.md`; `wiki/log.md`.
 Open questions: Architect approval of the widened shc-03 draft (including confirming the reverted approval stamp).
+
+## [2026-08-24] validation | spk16 post-RPM telemetry bounding check
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260824T013652Z` after building/installing the new RPM with the telemetry aggregation fix and running for about 2.5 hours.
+Results: Lintap PID `1918289` sampled at `1.211` CPUs by `perf stat` (vs. `9.4` after pidstat mitigation and `13.9-15.2` before). Fork rate was quiet (`5` process creations over 10 seconds). `process` table remained bounded at `47,648` rows. `process_retention_telemetry` was reduced to `4,721` aggregate rows, with aggregate totals preserved in `metric_value`. Copied DuckDB size was `19.0 MiB`, down from ~`761 MiB` before the telemetry fix. Process lookup plans still used sequential scans over ~47k rows but query times were small in the copied DB.
+Conclusion: process-retention telemetry aggregation/retention fixed the runaway telemetry table and materially reduced Lintap runtime CPU on the field host. Remaining follow-ups: CloneSensor thread-clone filtering and optional lookup indexing.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-24] diagnostic | process lookup index low leverage in field snapshot
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260824T033731Z`.
+Findings: Lintap remained stable at `1.471` CPUs by `perf stat`; `process` had `48,628` rows and `process_retention_telemetry` had `9,459` aggregate rows. The copied DB included `idx_process_process_id_create_time` on `(process_id, create_time)`, but representative pidhash lookup plans still used sequential scans over ~48k rows, with copied-DB query times around `0.012-0.025s`. Hot threads were sensor pollers (`CloneProcess`, `FileOps`, `ExitProcess`, `ExecveProcess`) rather than telemetry/DB churn.
+Conclusion: additional DuckDB indexing is not the next highest-leverage fix. Prefer CloneSensor thread-clone filtering or an in-memory current-process map if further CPU reduction is needed.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-24] fix | CloneSensor filters thread clones
+
+Files changed: `../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs`.
+Fix: CloneSensor now skips clone events with `CLONE_THREAD` (`0x00010000`) before reading `/proc` or emitting process `Start` rows. Unknown clone flags (`0`) and the vfork sentinel remain accepted to preserve fork/vfork/process-like clone coverage.
+Rationale: field diagnostics showed thread IDs being registered as processes, polluting the pidhash/process table and increasing stale-open reconciliation work.
+Validation: `dotnet build wintap/Lintap.csproj` in `../wintap` passed with existing warnings and `0` errors.
+Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-24] maintenance | Lintap runtime diagnostics utility cleanup
+
+Files updated: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`; `extras/lintap-runtime-diagnostics/README.md`.
+Changes: removed hardcoded DuckDB PATH and hardcoded `/root/main.duckdb`; added `--db` override; added upfront required/optional command reporting in `requirements.txt`; added DuckDB CLI discovery across PATH and common install locations; added automatic live-DB lock probing and snapshot fallback that copies `main.duckdb` plus `main.duckdb.wal` when present into `duckdb/snapshot/` before running read-only queries; updated manifest and summary notes to record source/query DB paths.
+Validation: `bash -n extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh` passed; `--help` output verified.
+
+## [2026-08-24] review | Initial FileOps poller optimization note captured
+
+Source: simple source inspection of `../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`, `file_ops_tracer.bpf.c`, `file_ops_tracepoint.bpf.c`, and field diagnostics where `FileOps-Poller` remained the dominant hot thread after pidstat/telemetry fixes.
+Result: recorded a future-todo note, explicitly marked as an initial review rather than a decided design. Main hypothesis: reduce ring-buffer volume by emitting fd-based file operations only for tracked fds in eBPF, then consider earlier pseudo-path/data-root/parquet filtering and optional op-class toggles.
+Pages updated: `work/fix-unbounded-process-table-growth/implementation_plan.md`; `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
+
+## [2026-08-24] feature | optimize-fileops-poller created and handed off
+
+Source: full design/engineering analysis of `../wintap` FileOps path (`FileOpsSensor.cs`, both `file_ops_*.bpf.c` tracers, `BaseEbpfSensor.cs` poll loop, `EventChannel.Send`, `ProcessHash`, tracers `Makefile`), extending the 2026-08-24 initial review.
+Key findings: non-regular-file fds (sockets/pipes) always miss the fd cache, pay an uncached `/proc` readlink per syscall, and are emitted as `socket:[N]` File rows; Wintap's own I/O is fully processed then discarded; per-event `GenPidHash` is dead (overwritten in `EventChannel.Send`) or wrong (DirectParquetSink); `_fdToPath` never evicts on process exit (leak + PID-reuse misattribution); kernel timestamps are discarded; `file_ops_tracer.bpf.o` is not actually CO-RE despite its name.
+Plan: seven `fop-nn` slices, measurement-first (counters/baseline), then userspace dead-work removal, kernel self-PID filter, wakeup batching, CO-RE `S_ISREG`/superblock-magic filtering (gated on a human socket/pipe-row decision), compact fd-op records, fd-cache eviction + kernel timestamps. No-loss constraint enforced by a standing A/B differential test; aggregation explicitly deferred per human direction. Work proceeds on `grantj-rhel8-testing` in both repos.
+Pages created: `work/optimize-fileops-poller/{brief,references,design,implementation_plan,dev_handoff,verification}.md`.
+Pages updated: `work/fix-unbounded-process-table-growth/implementation_plan.md` (future-todo item spun off); `index.md`; `log.md`.
+
+## [2026-08-24] code | optimize-fileops-poller fop-01/fop-02 code slice
+
+Files changed in `../wintap`: `FileOpsSensor.cs`, `LibBpf.cs`, `file_ops_tracer.bpf.c`, `file_ops_tracepoint.bpf.c`.
+Files created in this repo: `validation/fileops-differential/README.md`, `compare_fileops.py`, `fileops_workload.py`.
+Implemented: kernel emitted/ring-fail counters by FileOps op class in both tracer variants; userspace consumed/emitted/drop/fallback counters and periodic logs; removed dead per-event FileOps `GenPidHash`; memoized successful `/proc/<pid>/fd` fallback paths; skipped `/proc` fallback for close events; direct scalar decode before string materialization; deterministic file workload and parquet A/B comparator that fails on missing regular-file tuples.
+Validation: tracer `make clean && make` passed; `dotnet build wintap/Lintap.csproj` passed with existing warnings and 0 errors; Python harness syntax passed; comparator positive and negative synthetic parquet smoke tests passed.
+Limitations: deployed fop-01 counter baseline and live A/B differential remain pending.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-24] fix | FileOps verifier failure on unlink path
+
+Source: `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260824T212523Z` showed the deployed fop build failed verifier on `t_unlinkat` with `R8 invalid mem access 'inv'`, so FileOps did not load and the low CPU sample was not a valid optimization result.
+Files changed: `../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c`; `../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracepoint.bpf.c`; `../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile`; `../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Fix: split pathname emission into saved-buffer and raw-user-pointer helpers; unlink/unlinkat now use `bpf_probe_read_user_str()` via `emit_file_event_user()`. Completed the compact tagged record format for fd vs path events and moved `file_ops_tracer.bpf.o` into the CO-RE Makefile tier.
+Validation: `make clean && make` in the tracer directory passed, including CO-RE `file_ops_tracer.bpf.o`; `dotnet build wintap/Lintap.csproj` passed with existing warnings and `0` errors.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
 
 ## [2026-08-25] closeout | [wintap] windows-sensor-health-check feature closed (Feature Velocity 7.0)
 
@@ -717,3 +918,612 @@ Instruction updated: `../wintap/developer_docs/instructions/wrc-08-parquet-value
 Pages updated: `wiki/work/improve-windows-registry-collection/implementation_plan.md` (wrc-08 approval status); `wiki/work/improve-windows-registry-collection/references.md` (instruction status); `wiki/log.md`.
 
 Open questions: none on wrc-08 design. Feature close-out still waits on wrc-08 implementation/audit and the Architect live-query addendum. No source code or test files were modified.
+
+## [2026-08-25] code | optimize-fileops-poller expanded deployment and diagnostics
+
+Source: continued work on `../wintap` FileOps path plus live RHEL8 validation using `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T033307Z` (smoke) and `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T142601Z` (overnight).
+Files changed in `../wintap`: `FileOpsSensor.cs`, `LibBpf.cs`, `file_ops_tracer.bpf.c`, `file_ops_tracepoint.bpf.c`, `tracers/Makefile`. Files changed in this repo: `extras/lintap-runtime-diagnostics/{collect-lintap-diagnostics.sh,README.md}`, `work/optimize-fileops-poller/{verification,dev_handoff,implementation_plan}.md`, `log.md`.
+Implemented and validated in the deployed build: self-PID kernel filter and counters; CO-RE regular-file fd filtering; compact tagged fd vs path records; wakeup batching with `force_wakeup_total`; 16 MiB FileOps ring buffer; kernel pseudo-path filtering and `pseudo_drop_total`; deployed-build fingerprinting and optional `bpftool` capture in the diagnostics bundle.
+Results: smoke test proved the new build was live, with FileOps attached, 16 MiB ring buffer visible in `bpftool`, and first-minute `ring_fail_total=0` while `pseudo_drop_total` and `nonregular_drop_total` were already large. Overnight validation showed the same deployed hashes remained installed and that the feature made a substantial practical improvement in observability and early-drop volume reduction, but sustained ring-buffer loss still accumulated under long-running host load (`open`, `read`, `close`, `mmap` still rising materially).
+Pages updated: `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] feature | optimize-fileops-poller enters phase 2 (deep analysis)
+
+Decision: stay in this feature rather than opening a new one. The original scope
+(fop-01..fop-06 substance: counters, dead-work removal, self-PID filter, CO-RE
+regular-file filter, kernel pseudo-path filter, compact records, wakeup batching,
+16 MiB ring buffer) reached its current deployed state implemented with opencode
+gpt-5.5 and gpt-5.4; the feature now continues as a deep-analysis phase.
+Evidence constraint: raw runtime diagnostics are no longer readable in this
+environment (security); analysis used only wiki-recorded summary statistics plus
+read-only `../wintap` source.
+
+Deep analysis (`work/optimize-fileops-poller/deep-analysis-2026-08-25.md`):
+sustained overnight ring loss (~778 reserve failures/s across open/read/close/
+mmap/write over the 9,121s counter window) is a steady-state userspace consumer
+shortfall, not kernel emission or burst behavior. Root cause: the single
+FileOps-Poller thread processes each surviving event synchronously through
+`EventChannel.Send`, which runs a per-event DuckDB query under the process-global
+`_dbLock` (plus a second query on miss) and a synchronous Esper `SendEventBean`,
+with no queue between the ring buffer and that work (~12-25ms/lookup from the
+2026-08-24 diagnostic implies a ~40-80 events/s ceiling). The 16 MiB ring
+(~300k compact records) absorbs the smoke-test minute, then saturates. Ranked
+next no-loss slices: fop-08 (bounded in-process queue + in-memory pid→pid_hash
+current-process cache) front-runner, fop-09 (hoist per-event config lookups),
+fop-10 (top-N per-comm/prefix aggregate counters for path-class attribution),
+fop-07 still open; fentry/`bpf_d_path` stays deferred. Next slice selection
+pending human sign-off.
+
+Human decision recorded (2026-08-25): non-regular-file fd rows (`socket:[N]`,
+`pipe:[N]`, `anon_inode:[N]`, ttys) are permanently dropped from the File
+stream, ratifying the deployed CO-RE filter; pipe/anon_inode I/O invisibility
+recorded as a fidelity gap (candidate future op class); the BTF-less fallback
+tier stays as-is with the tier content difference documented.
+
+Pages created: `work/optimize-fileops-poller/deep-analysis-2026-08-25.md`.
+Pages updated: `work/optimize-fileops-poller/{brief,design,implementation_plan,dev_handoff,verification}.md`; `index.md`; `log.md`.
+
+## [2026-08-25] direction | fileops phase-2 strategy discussion recorded
+
+Human direction after reviewing the deep analysis: (1) the userspace workflow
+optimizations (fop-08 queue + in-memory cache) are endorsed — memory spend on
+queues is acceptable and helps spikes; (2) in-kernel short-interval aggregation
+of file events by (pid, op class, identity) is now open for consideration,
+amending the 2026-08-24 no-aggregation direction — motivated by suspected high
+same-(pid,path) open/openat redundancy and by the fact that Esper aggregates
+later in the pipeline anyway; recorded as gated candidate fop-11, with fop-10
+extended to measure the open duplicate ratio first; (3) future task saved: an
+OSS sensor survey (Falco/Sysdig, Tetragon, Tracee, Elastic ebpf, Sysmon for
+Linux, osquery) on how peer projects handle event-volume and ring-drop
+pressure.
+Pages updated: `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] approval | fileops phase-2 plan approved and handed off
+
+Human approved the full phase-2 plan: sequence fop-08 (+fop-09) → fop-10 →
+fop-11 go/no-go. `dev_handoff.md` rewritten as the phase-2 dev handoff: the
+copy/paste prompt now targets implementing fop-08 (in-memory pid→pid_hash
+current-process cache replacing the per-event DuckDB query under `_dbLock`,
+plus a bounded in-process queue between the ring callback and resolve/Esper
+with depth/drop counters) and fop-09 (hoist per-event config lookups), with
+acceptance criteria tied to the ~778/s ring_fail baseline from the deep
+analysis and the standing no-loss differential gate. fop-11 aggregation stays
+gated (fop-10 duplicate-ratio evidence + separate human go/no-go + verifier
+spike + redefined differential contract). OSS sensor survey remains a parallel
+future research task.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `index.md`; `log.md`.
+
+## [2026-08-25] code | fileops phase-2 local fop-08/fop-09 slice
+
+Files changed in `../wintap`: `wintap/core/infrastructure/IProcessResolver.cs`; `wintap/core/infrastructure/ProcessResolver.cs`; `wintap/core/infrastructure/EventChannel.cs`; `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Implemented: in-memory active-process cache for File-event pid-hash lookup; bounded FileOps sender queue between the ring callback and resolve/Esper; startup-cached `EventChannel` config/env flags; 60s queue depth/high-water/drop logging and File-event process-cache hit/miss logging; queue capacity knob `WINTAP_FILEOPS_MAX_QUEUE_EVENTS` (default `131072`).
+Validation: `make clean && make` for tracers passed; `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests).
+Pages updated: `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+Open follow-up: rerun the no-loss differential harness, deploy to the RHEL8 field host, capture queue/counter reconciliation, and verify whether overnight `ring_fail_total` growth collapses versus the ~778/s baseline.
+
+## [2026-08-25] test | fileops phase-2 field-host non-root smoke workload session
+
+Environment: deployed field host `spk16.llnl.gov`, but without root access from this shell.
+Validation change: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh` now copies `/tmp/fileops-phase2-smoke` into the diagnostics bundle when present.
+Workload run: repeated deterministic FileOps stimulus using `validation/fileops-differential/fileops_workload.py`, session `/tmp/fileops-phase2-smoke/session-20260825T165200Z`, spanning `2026-08-25T16:52:00Z` to `2026-08-25T16:59:22Z`, 5 runs total, each with `--files 24 --rounds 4`, all exiting `0`.
+Limitation: the existing parquet validator `devtools/file_capture_smoke_test.py` is not usable as this non-root user on the deployed host because default data-root discovery hits `PermissionError` on `/var/log/lintap`.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] review | fileops phase-2 deployed bundle shows queue saturation instead of ring saturation
+
+Reviewed root-run diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T172341Z` after the fop-08/fop-09 deployment. Outcome: `ring_fail_total=0` across all recorded FileOps op classes, `FileOps-Poller` is no longer hot, and `FileOps-Sender` is now the dominant CPU thread; however the new bounded userspace queue reaches capacity (`high_water=131072`) and records substantial per-minute drops (examples: `21567`, `47564`, `78368`, `50144`). The copied `/tmp/fileops-phase2-smoke` session is present in the bundle and aligns with the recorded workload window. This changes the active loss signal from kernel ring drops to userspace queue drops while confirming that the decoupling moved work off the poller as intended.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] code | fileops queue follow-on pre-enqueue identity stamping
+
+Files changed in `../wintap`: `wintap/core/infrastructure/EventChannel.cs`; `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Implemented: File events now try to capture current-process identity from the active-process cache before entering the bounded sender queue, and `EventChannel.Send` skips sender-thread re-resolution for File events that already carry `PidHash` + `ProcessName`. Motivation came directly from bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T172341Z`, where sender-thread cache misses rose sharply once queue backlog deepened.
+Validation: `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests).
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] review | fileops post-identity-stamping bundle removes queue drops in capture window
+
+Reviewed root-run diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T184934Z` against prior queue-saturation bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T172341Z`. Outcome: `ring_fail_total` remains `0`, and unlike the earlier bundle the bounded userspace queue records `drops=0` throughout the captured window even when depth rises above `100k` (`depth=102547`, `high_water=103187`). File-event process-cache behavior under backlog is materially healthier (for example `hit=54026,miss=4834` at the deepest recorded backlog versus prior collapse cases like `hit=139,miss=8388`). `FileOps-Sender` remains the dominant CPU thread, but the immediate loss mode improved from frequent queue drops to no observed queue drops during this collection.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] code | fileops fop-10 measurement slice
+
+Files changed in `../wintap`: `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Implemented: bounded 60s FileOps measurement summaries for top-N emitted process-name buckets, top-N emitted path-prefix buckets, and the same-`(pid,path)` short-window open duplicate ratio. Summary state is bounded and logs coarse path-prefix buckets only, not raw paths.
+Validation: tracer `make clean && make` passed; `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests).
+Pages updated: `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] review | later pre-fop-10 bundle shows queue drops returned
+
+Reviewed additional same-build bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T203648Z` after the more encouraging `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T184934Z` snapshot. Outcome: kernel `ring_fail_total` still stayed `0`, but userspace queue saturation returned in multiple intervals, including substantial drop bursts (`30591`, `91570`, `385435`, `448425`, `1960545`). `FileOps-Sender` remained the dominant hot thread while `FileOps-Poller` stayed cold, confirming again that the current failure mode is sender-path/queue loss rather than ring loss. This downgrades the earlier zero-drop bundle from “likely stable” to “good short-window sample” and reinforces the need for `fop-10` attribution data before choosing the next reduction step.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] review | first deployed fop-10 bundle provides attribution and duplicate-open evidence
+
+Reviewed first deployed `fop-10` diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T210710Z`. Outcome: the new `measure=[...]` section is present in the `FileOps counters` log and reports top process-name buckets, top path-prefix buckets, and the same-`(pid,path)` short-window open duplicate ratio. The duplicate-open ratio is consistently high across sampled intervals (roughly `52.7%` to `83.7%`, commonly `60-80%`), with dominant surviving emitters including `rpm`, `systemd`, `splunkd`, `git`, `setroubleshoot*`, and dominant prefixes `/lib64`, `/usr`, `(relative)`, `/opt`, `/var` or `/`. Kernel `ring_fail_total` stayed `0`; queue drops were `0` in most sampled intervals but did recur later (`2:07:32 PM` interval: `depth=130909`, `high_water=131072`, `drops=39731`). The smoke-workload session `/tmp/fileops-phase2-smoke/session-20260825T205219Z` overlaps the pidstat collector flush schedule (`13:55:02` inside the session window, bounded by `13:50:02` and `14:00:02` writes), giving a practical correlation anchor for future pidstat analysis.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] milestone | fileops fop-11 proposal prepared for designer review
+
+Based on the deployed `fop-10` evidence, the feature reached a new milestone: `fop-11` is no longer just a gated candidate but now has a concrete review-ready proposal. New artifact: `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`, recommending emit-first short-interval aggregation of repeat `open` / `openat` activity only, with bounded kernel state and a revised distinct-tuple-plus-count-conservation differential contract. Related feature pages updated to point at the proposal and to mark the `fop-10` review gate as reached.
+Pages created: `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`.
+Pages updated: `work/optimize-fileops-poller/brief.md`; `work/optimize-fileops-poller/design.md`; `work/optimize-fileops-poller/implementation_plan.md`; `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.
+
+## [2026-08-25] code | fileops fop-12 absolute-path precondition slice
+
+Files changed in `../wintap`: `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`. Files changed in `Wintap-Analytics`: `validation/fileops-differential/compare_fileops.py`; `work/optimize-fileops-poller/verification.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+Implemented: pre-enqueue relative/openat `open` path resolution through `/proc/<pid>/fd/<fd>` when possible; logged resolution success/miss counters; Linux path-case preservation instead of unconditional lowercasing; File event time sourced from kernel monotonic timestamps converted to wallclock; comparator aligned to preserve Linux case.
+Validation: `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests); `python3 -m py_compile validation/fileops-differential/compare_fileops.py` passed.
+Open follow-up: deploy, confirm new resolution counters in the 60s FileOps log, verify relative-prefix collapse in `fop-10` measurement output, and rerun the differential harness on Linux-case-preserving output.
+
+## [2026-08-25] review | first deployed fop-12 bundle shows resolution counters but relative-path bucket still large
+
+Reviewed first deployed `fop-12` diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T225502Z`. Outcome: the new `resolve=[relative_open_resolved=...,relative_open_resolve_miss=...]` section is present and `ring_fail_total` remains `0`; queue drops also stayed `0` in the sampled window. However, the absolute-path precondition is not yet met: relative-open resolution misses remain high (roughly `8.4k-9.8k` per sampled interval) and `(relative)` remains a top path-prefix bucket (`~8.6k-10.3k` total, mostly opens). The deployment therefore improved observability and preserved performance, but did not yet solve relative/openat identity conflation well enough to call `fop-12` accepted.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] review | post-fd0 short bundle improves resolution counts but relative bucket remains large
+
+Reviewed short post-`fd=0` diagnostics bundle `/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T232323Z`. Outcome: queue drops stayed `0` and kernel `ring_fail_total` stayed `0`; the `fd=0` fix appears to raise relative-path resolution counts in at least some intervals (for example `relative_open_resolved=10654` with `relative_open_resolve_miss=23424` at `4:18:57 PM`, versus prior examples closer to `1.3k-1.7k` resolves). However, `(relative)` remains a major top-prefix bucket (`~8.3k-23.7k` total in reviewed lines) and miss volume is still too high to accept `fop-12` as complete. This confirms the bug fix was necessary but not sufficient, and points toward a next follow-on that preserves more open-time context such as `dirfd` for fallback absolute-path reconstruction.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `log.md`.
+
+## [2026-08-25] code | fileops fop-12 follow-on dirfd and cwd fallback
+
+Files changed in `../wintap`: `wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c`; `wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracepoint.bpf.c`; `wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`.
+Implemented: open/openat path records now carry `dirfd`; relative-path resolution now tries opened-fd first, then `cwd` or `dirfd`-base joins pre-enqueue; reason-split resolution counters were added so the next deployed bundle can show exactly which fallback path is recovering absolute paths and which misses remain.
+Validation: tracer `make clean && make` passed; `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter ProcessResolverTests` passed (4 tests).
+Open follow-up: deploy and compare `resolved_fd` vs `resolved_dirfd` vs `resolved_cwd`, and verify whether the `(relative)` top-prefix bucket finally shrinks materially.
+
+## [2026-08-25] review | fop-11 proposal designer review completed
+
+Reviewed [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]] and
+the revised validation/semantic contract. Verdict: approved in principle —
+the fop-10 evidence is sound (the duplicate measurement uses the same
+(pid, path) key and 1000 ms window the proposal specifies, so the 52.7-83.7%
+repeat ratios directly predict the design's win). Two hard conditions:
+(1) relative-path opens must be excluded from aggregation (or keyed by
+dirfd/cwd) — the (relative) bucket conflates distinct files and would break
+the emit-first guarantee; (2) summary-record process identity must be stamped
+at first-occurrence, not resolved at flush, to avoid reintroducing the
+resolve-after-exit failure fop-08 fixed. One recommended re-scoping: implement
+dedup in userspace pre-enqueue first (ring_fail is now 0 everywhere, loss is
+queue-side, poller has idle headroom, and the fop-10 measurement dictionary is
+the needed structure) — kernel promotion stays available later. Contract
+notes: op-scope the revised rule, require drop-free runs for count
+conservation, spec the repeat-metadata schema and comparator changes in the
+spike. Review recorded in the proposal page §Designer Review.
+Pages updated: `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`; `log.md`.
+
+## [2026-08-25] direction | fop-11 human review response: scope expanded, fop-12 added
+
+Human response to the fop-11 designer review: (1) relative-path handling
+upgraded from "exclude from aggregation" to "resolve to absolute" — accurate
+ground truth is the sensor's purpose; recorded as new precondition slice
+fop-12 (recommended: readlink /proc/<pid>/fd/<fd> at open-exit, pre-enqueue);
+(2) summary-record identity-at-first-occurrence condition accepted;
+(3) aggregation direction formally amended: (pid, path, op)-level aggregation
+with grouped totals (bytes etc.) and min/max timestamps over short intervals
+is acceptable for ALL op classes (2026-08-24 "no aggregation" non-goal struck
+in brief.md; sampling still excluded; emit-first semantics stand) — this also
+brings the read/write burst loss mode inside fop-11's reach; (4) the OSS
+sensor survey (Tetragon/Tracee/Sysdig et al.) stays deliberately deferred —
+"improvements still coming"; natural trigger recorded as post-fop-11/12.
+Dev handoff copy/paste prompt retargeted from fop-08/09 (deployed) to
+fop-12 → fop-11 with the amended contract (count + byte-total conservation on
+drop-free runs).
+Pages updated: `work/optimize-fileops-poller/{fop-11-proposal-2026-08-25,brief,implementation_plan,dev_handoff}.md`; `log.md`.
+
+## [2026-08-25] analysis | fop-12 resolution options + additional win candidates
+
+Source analysis of the relative-path resolution problem, recorded as
+suggestions in `work/optimize-fileops-poller/dev_handoff.md` §"fop-12
+Resolution Analysis + Additional Win Candidates". Ranked options: R1 readlink
+`/proc/<pid>/fd/<fd>` at poller decode pre-enqueue (open-exit already emits
+the returned fd; kernel resolves symlinks/dot-segments/dirfd in one call;
+count misses, never hide them), R2 cwd/dirfd lexical join as fallback only
+(openat_state lacks dirfd today; chdir race; symlink-unsafe `..` collapse),
+R3 kernel-side not viable on RHEL8 4.18 (`bpf_d_path` is fentry/LSM-only).
+Deeper wins found: A1 `NormalizeFilePath` lowercases paths on a
+case-sensitive filesystem (`FileOpsSensor.cs:895`) — accuracy bug conflating
+distinct files, fix also removes a per-event allocation; A2 kernel timestamps
+still unused, needed for fop-11 min/max accuracy; A3 emit (s_dev, i_ino) —
+CO-RE tier already reads `f_inode`, giving collision-free aggregation
+identity and fd/PID-reuse validation; A4 mmap is collapsed into Read at
+decode, erasing load/execution signal; P3 sampled sender cost-split
+measurement to steer post-dedup optimization. A1/A4 and optional
+full-canonicalization flagged as stream-content changes needing human
+sign-off.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] analysis | Esper-layer findings reframe fop-11; A1-A3/P3 decided
+
+Human decisions recorded: A1 path lowercasing becomes a platform-policy
+function (Windows lowercases, Linux preserves case; single extraction point,
+expandable); A2 kernel timestamps and A3 (s_dev, i_ino) emission and P3
+sender cost-split sampling approved; A4 (distinct Mmap activity type)
+explained further, sign-off still pending.
+
+Esper-stream analysis (human-requested): `file.epl` already aggregates File
+events into 10s batches grouped by (path, PidHash, PID, activityType,
+ProcessName) with count(*)/sum(bytes)/min-max(eventTime), and `default.epl`
+excludes File from per-event pass-through — so File telemetry is
+aggregate-only on disk today, and fop-11 (sub-batch interval, compositional
+accumulators) becomes a pure performance change at the parquet output. New
+fop-11 hard conditions: File schema repeat-count field (default 1) +
+first/last timestamps; file.epl switches count(*) → sum(count field) and
+min/max over the new fields. Also noted: the comparator already measures the
+aggregated rows (count conservation = asserting eventCount balance), A2
+improves the accuracy of the existing firstSeen/lastSeen columns, and PidHash
+stamping quality directly shapes output row grouping.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/fop-11-proposal-2026-08-25.md`; `log.md`.
+
+## [2026-08-25] handoff | A4 decided; phase-2 fop-12/fop-11 dev handoff finalized
+
+A4 (distinct Mmap activity type) approved by human sign-off as its own future
+feature enhancement, deliberately deferred — not part of fop-12/fop-11;
+recorded in the implementation plan's Phase-2 future tasks with the
+downstream/comparator notes. Dev handoff for the next phase finalized: the
+copy/paste prompt targets fop-12 (absolute-path ground truth via fd readlink,
+pre-enqueue) then fop-11 (short-interval (pid, path, op) aggregation,
+emit-first, userspace-first) with the Esper composition rules as hard
+conditions (schema repeat-count + first/last timestamps, file.epl
+count(*) → sum(count), sub-batch interval), plus approved companions A1
+(platform path-case policy), A2 (kernel timestamps), A3 (dev:ino emission),
+and P3 (sender cost-split sampling).
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] decision | R1 approved in base form; all fop-12/fop-11 sign-offs closed
+
+Human sign-off: fop-12 implements base R1 only — fd-readlink resolution for
+relative/openat paths; absolute-path opens keep their as-requested form. The
+full-canonicalization extension (resolving all opens, surfacing symlink
+targets) was explicitly declined for now and remains a documented future
+option (if ever taken, carry both paths as a schema addition). With A1-A4 and
+P3 already decided, no stream-content sign-offs remain open; the dev handoff
+prompt is fully unblocked for the fop-12 → fop-11 implementation pass.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] milestone | fileops phase-2 wrap-up recorded; fop-11 stays blocked on path identity
+
+Closed the current phase-2 implementation burst with a milestone wrap-up after
+reviewing the deployed `fop-12` follow-ons through bundle
+`/tmp/lintap-runtime-diagnostics-spk16.llnl.gov-20260825T234559Z`. Outcome:
+queue/ring behavior remains materially better than the pre-phase-2 state,
+`fop-10` successfully justified the `fop-11` design direction, and the latest
+`dirfd`/`cwd` follow-on proved a real `dirfd` recovery contribution while also
+showing that `cwd` is negligible. However, `relative_open_resolve_miss` and the
+`(relative)` prefix bucket remain too large to accept `fop-12` as the hard
+precondition for `fop-11`. A dedicated milestone page now captures the landed
+work, strongest supporting evidence, and the best current fix hypotheses for
+the next design pass.
+Pages created: `work/optimize-fileops-poller/milestone-2026-08-25-phase2-wrapup.md`.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `work/optimize-fileops-poller/implementation_plan.md`; `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.
+
+## [2026-08-25] analysis | fop-12 gap diagnosed; fop-13 fix designed
+
+Reviewed the deployed fop-12 work in `../wintap` (commit "Complete fop-12
+path recovery") and the milestone evidence. Diagnosis: the ~8k/min
+`relative_open_resolve_miss` floor is structural — all fop-12 fallbacks
+(opened-fd readlink, cwd, dirfd readlink) read decode-time `/proc` state
+while the dominant relative-open producers (`sed`, `awk`, `sh`, `rpm`
+helpers) live milliseconds; `dirfd_lookup_miss ≈ relative_open_resolve_miss`
+proves both readlinks die together. Structural root cause in the tracer:
+O_DIRECTORY opens are discarded at open-exit (the records that would teach
+userspace dirfd→path) and directory-fd closes are dropped by is_regular_fd
+(so any dirfd knowledge must be identity-keyed, not (pid,fd)-keyed).
+Fix recorded as fop-13 in `work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25.md`:
+fop-13a miss-cause counter split (measurement-first), fop-13b kernel-time
+identity in one record-format slice — dirfd (s_dev,i_ino) stamping, internal
+DIR_OPEN records feeding a global (s_dev,i_ino)→dir-path LRU index, and file
+dev:ino emission (approved A3) so fop-11 can aggregate on (pid, dev:ino, op)
+independent of path quality. Non-fixes recorded (latency shaving, more cwd,
+retro-resolution). fop-11 unblocks on the dev:ino track after fop-13b.
+Pages created: `work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25.md`.
+Pages updated: `work/optimize-fileops-poller/{implementation_plan,dev_handoff}.md`; `index.md`; `log.md`.
+
+## [2026-08-25] code | fop-13a/fop-13b implemented locally
+
+Files changed in `../wintap`: `FileOpsSensor.cs`, `file_ops_tracer.bpf.c`,
+`file_ops_tracepoint.bpf.c`. Files changed in this repo:
+`validation/fileops-differential/{compare_fileops.py,fileops_workload.py}`.
+Implemented per the gap analysis: DIR_OPEN internal records (O_DIRECTORY opens
+no longer discarded; un-flagged directory opens detected via i_mode), file and
+dirfd (s_dev, i_ino) captured in-kernel at event time, a global bounded
+dir-identity index in userspace giving a race-free resolution step that works
+after producer exit, miss-cause counter split (producer-dead vs alive), new
+resolve/dir_open counters in the 60s log, comparator relative→absolute upgrade
+matching with an opt-in gate, and a deterministic dirfd-relative workload
+scenario. Build-time find: the open-exit handlers hit the BPF stack limit with
+the new locals; fixed by removing the 264-byte openat_state stack copy
+(read map value directly, delete after emit).
+Validation: both tracer tiers build; Lintap builds with 0 errors;
+Linux-relevant test classes 10/10 (Windows-specific test failures verified
+pre-existing on this host); comparator synthetic scenarios 4/4; workload smoke
+run clean. Field deployment, counter baselining vs 20260825T234559Z, and the
+A/B differential remain pending (RHEL8 host rebuilds its own .bpf.o — objects
+are gitignored).
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.
+
+## [2026-08-25] maintenance | diagnostics resolve-triage extract + fop-13 handoff refresh
+
+`extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh` now emits
+`journal/lintap-file-log-fileops-resolve.txt` — a timestamped extract of just
+the `resolve=[...]` counter section so the fop-13 recovery mix, miss-cause
+split, and dir-index health are reviewable at a glance (the full counter lines
+were already captured; awk extraction verified against a synthetic log line;
+`bash -n` passed). `dev_handoff.md` refreshed: fop-13 marked implemented
+locally, copy/paste prompt retargeted from "implement fop-13" to "deploy on
+the RHEL8 host and run field acceptance," including the rebuild-on-host rule
+for the gitignored .bpf.o objects and the acceptance checklist vs the
+20260825T234559Z baseline.
+Pages updated: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`; `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] review | fop-13 first field run triaged; findings dispositioned
+
+First deployed fop-13 bundle (reviewed by the implementing agent, recorded in
+verification.md) confirms the gap-analysis diagnosis: relative_open_resolve_miss
+collapsed from the ~7997-8814/min floor to 0-945/min, heavy miss windows are
+dominated by miss_producer_dead, the dir index is live and healthy
+(dir_open_indexed ~11.6k-19.3k, dir_index_size 1055, evictions 0), (relative)
+left the top prefixes, and ring_fail_total stayed 0. Queue drops recurring
+under load are the expected sender-ceiling problem — designer position: no
+separate follow-on; fop-11 pre-enqueue dedup is the queue-drop fix, sequenced
+after fop-13 acceptance (full spaced-smoke bundle + differential rerun).
+
+Code-review findings triaged: F1 (global (s_dev,i_ino) keying aliases across
+mount namespaces) accepted → new slice fop-13c, mnt_ns-aware index keying,
+not an acceptance blocker; F2 (comparator over-credits relative upgrades,
+presence-based matching) accepted → count-conserving matcher in the
+test/harness hardening slice; F3 (miss-split best-effort under PID reuse)
+accepted as documented limitation, no change; F4 (no automated DIR_OPEN /
+recovery-path tests) accepted → same hardening slice (extract dir-index logic
+into a testable class).
+Pages updated: `work/optimize-fileops-poller/implementation_plan.md`; `log.md`.
+
+## [2026-08-25] closeout | fop-12/fop-13 accepted; fop-11 implementation starts
+
+Human acceptance closes fop-12 and fop-13: the path-identity precondition for
+fop-11 is met (evidence summarized in verification.md §fop-13 Closeout). The
+4x queue capacity (524288) is validated and will become the code default in
+the fop-11 slice; RSS accounting deferred to the upcoming longer execution
+cycle via the standing pidstat-collector parquet series; the differential
+rerun folds into fop-11's standing A/B gate. fop-11 implementation
+(pre-enqueue emit-first aggregation per the approved proposal, with P3
+cost-split sampling riding along) begins now.
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.
+
+## [2026-08-25] code | fop-11 implemented locally
+
+Files changed in `../wintap`: `shared/WintapAPI/WintapMessage.cs` (File schema:
+EventCount default 1, FirstSeen/LastSeenEventTime FileTime longs),
+`wintap/platform/linux/sensor/ebpf/FileOpsAggregator.cs` (new, dependency-free,
+unit-testable), `FileOpsSensor.cs` (absorb hook, summary emitter, flush timer,
+shutdown drain, agg=/sender= counters, P3 send sampling, queue default 524288),
+`wintap/core/etl/esper/file.epl` (count(*) → sum(file.eventCount); min/max over
+the new fields with case-fallback to eventTime — parquet columns unchanged,
+Windows senders safe via defaults), `tests/Wintap.Tests/FileOpsAggregatorTests.cs`
+(new, 9 tests) + test csproj compile-include (linux sources are excluded from
+the Wintap assembly). Files changed in this repo: `compare_fileops.py`
+(eventCount-weighted tuple counts — the standing gate is now count-conserving
+across pre/post-aggregation streams).
+Semantics: emit-first at (pid, path, op), 1000ms window (matching the fop-10
+measurement), summaries carry repeats-only counts and first-occurrence
+identity, bounded table with counted per-event bypass, kill switch
+WINTAP_FILEOPS_AGG_ENABLED=false for same-build A/B.
+Validation: Lintap build 0 errors; 19/19 targeted tests (incl. 9 new
+aggregator tests: count conservation, emit-first, rollover, cap bypass,
+identity-at-first-occurrence); comparator synthetic aggregation scenarios
+pass (conserved rc=0, shortfall rc=1). Field deployment and A/B acceptance
+pending; dev_handoff retargeted to the fop-11 deploy/acceptance pass.
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan,dev_handoff}.md`; `log.md`.
+
+## [2026-08-25] maintenance | fop-13 field feedback transcribed; wiki confirmed current
+
+Pre-push audit found the fop-13 deployed-bundle reviews existed only in the
+field-side clone's summaries, not in this clone's verification.md. Transcribed
+them into verification.md §fop-13 Field Runs (first deployed bundle, same-
+instance follow-up with the 6:19:29 PM at-scale proof line, and the 4x
+queue-capacity experiment bundles 023152/024019), clearly sourced and
+delimited so a field-side merge can prefer richer local copies if present.
+index.md footer refreshed to the current feature state. Wiki now carries the
+complete fop-12/fop-13 record: gap analysis, implementation, field feedback,
+review-finding dispositions, closeout, and the fop-11 local slice.
+Pages updated: `work/optimize-fileops-poller/verification.md`; `index.md`; `log.md`.
+
+## [2026-08-25] maintenance | collector carries the full fop-11 acceptance evidence; field-side read-only policy recorded
+
+Human direction: the field-side clone stays read-only (policy) — no commits
+from that system; bundle reviews continue arriving as summaries and are
+transcribed here. Consequence: the diagnostics bundle must carry everything a
+review needs. `collect-lintap-diagnostics.sh` extended accordingly:
+timestamped `agg=[...]` and `sender=[...]` triage extracts (fold ratio,
+cap_bypass/summary_enqueue_fail health, P3 send_sample_avg_us), an
+esper-errors extract (a silently failed file.epl deploy would break File
+output while sensor counters look healthy), and
+`duckdb/fileops-parquet-sanity.txt` — newest File parquet queried for
+rows vs sum(eventCount) (composition proof), aggregated-row count,
+firstSeen/lastSeen sanity, and zero-firstSeen rows, with a build-agnostic
+fallback query. Validated: bash -n, awk extracts against synthetic log
+lines, and the sanity SQL against synthetic parquet (3 rows → 6 raw events,
+1 aggregated row). SUMMARY.txt key-files list updated. A rerun of the
+collector on the field host now yields the remaining fop-11 acceptance
+evidence except the A/B differential (which needs the kill-switch run).
+Pages updated: `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`; `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] ingest | dev/field workflow promoted to canonical wiki page
+
+Human direction: project context recorded in agent memory (~/.claude) must
+also live in the wiki — the wiki is the shared knowledge base, agent memory
+is a private pointer. Promoted the dev/field process knowledge to
+`wiki/workflow/lintap-dev-field-workflow.md`: the lintap-dev / spk16 split,
+the field-side read-only policy and dev-side transcription process, the
+self-sufficient-diagnostics principle, pull-only deploys with on-host tracer
+rebuilds, push mechanics (dev VM has no credentials; the human pushes), and
+the agent-memory mirroring policy itself. The agent memory file now points
+at the wiki page as canonical.
+Pages created: `workflow/lintap-dev-field-workflow.md`.
+Pages updated: `index.md`; `log.md`.
+
+## [2026-08-25] handoff | bundle reviewer prompt added for the fop-11 collector
+
+The field-side reviewer's guidance predated the collector update, so a
+dedicated reviewer prompt was added to dev_handoff.md (§Bundle Reviewer
+Prompt): maps each new bundle file to its acceptance question with expected
+healthy values — agg fold ratio (50-80% expected under load) and health
+counters, P3 sender headroom arithmetic, queue deltas vs fop-13-era bundles,
+resolve regression bounds, the esper-errors stop-ship rule, and the
+parquet-sanity composition proof (raw_events > rows; the eventCount
+column-error signature identifies a pre-fop-11 build). Output contract:
+transcription-ready summary statistics only, per the read-only field policy.
+Pages updated: `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-25] review | fop-11 bundle 041718 triaged; dir-index churn dispositioned as fop-13d
+
+Third fop-11 bundle (same execution) transcribed into verification.md: queue
+drops stayed 0, ring 0, aggregation health clean (cap_bypass=0,
+summary_enqueue_fail=0, substantial repeats_folded), P3 send_sample_avg_us
+captured (~356-2202us). New finding: late-run dir-index saturation — the
+index pins at its 16384 cap with 133k-144k evictions/interval and
+dir_index_miss ≈ total miss (322-357/min), the signature of a filesystem
+walk flooding the FIFO-evicted index and flushing hot base directories.
+Designer disposition: a fop-13 structural limit exposed by runtime, not a
+fop-11 defect — does NOT block fop-11 acceptance (degraded misses are ~4% of
+the pre-fop-13 floor and smoke anchors stay clean); new hardening slice
+fop-13d added to the plan (touch-on-hit LRU eviction, cap 16384 → 65536 with
+env knob). Remaining fop-11 gates unchanged: kill-switch A/B differential and
+a post-collector-update bundle (parquet composition sanity).
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.
+
+## [2026-08-25] code | fop-13c/fop-13d + F2/F4 hardening implemented locally
+
+Human-directed dev pass implementing all deferred hardening. In `../wintap`:
+fop-13c — CO-RE tracer stamps the opener's mount-namespace inum on path
+records (+8B; fallback tier zeros) and the dir index keys by
+(mnt_ns, s_dev, i_ino), closing the bind-mount/container aliasing risk from
+review finding F1; fop-13d — the index is extracted into a dependency-free
+DirIdentityIndex class (F4) with touch-on-hit LRU eviction and cap 65536
+(WINTAP_FILEOPS_DIR_INDEX_MAX), fixing the scan-flood churn from bundle
+041718; DirIdentityIndexTests (7) including LRU hot-entry scan-flood
+survival. In this repo: F2 — the comparator's relative→absolute matcher is
+count-consuming against the candidate's absolute surplus, longest-suffix
+first, with over-credit/count-bound/no-double-dip scenarios verified;
+stretch — fileops_workload.py --dir-churn N synthetic filesystem-walk
+scenario for field validation of the LRU fix.
+Validation: both tracer tiers build; Lintap 0 errors; 26/26 targeted tests;
+all comparator scenarios pass; churn workload smoke run clean.
+DEPLOY NOTE: record format changed — tracers must be rebuilt on the field
+host together with Lintap (mixed deploy misreads mnt_ns). Handoff deploy
+steps and reviewer prompt updated (post-13d eviction/miss decorrelation
+rule).
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan,dev_handoff}.md`; `log.md`.
+
+## [2026-08-26] acceptance | fop-13c/fop-13d field-accepted; loss point moves downstream (fop-14 candidate)
+
+Bundle 053404Z transcribed: queue drops 0 throughout, aggregation healthy
+with ~50-66% folding, dir index at the new 65,536 cap with heavy eviction
+churn AND strong resolution (29,469 resolved vs 354 missed in the burst
+minute) — the eviction/miss decorrelation rule is satisfied and fop-13c/13d
+are field-accepted. Late-run residual miss pockets (48-49/min, producer-dead
++ cwd) are the known transient-process class, not index pressure.
+New finding dispositioned as fop-14 candidate (measurement-first): the ETL
+serializer/parquet-writer stage dropped ~63k rows in 3.5 min during the
+heavy window against its 10,000-row default caps — the active end-to-end
+loss point now sits downstream of the sensor, and dedup cannot shrink it
+(Esper output is distinct-group-driven). Owner-resolution warnings noted as
+producer-lifetime residual + log-hygiene item. fop-11 still owes the
+kill-switch A/B and a parquet-sanity bundle.
+Pages updated: `work/optimize-fileops-poller/{verification,implementation_plan}.md`; `log.md`.
+
+## [2026-08-26] maintenance | end-of-day sync audit; wiki confirmed consistent
+
+Pre-handoff audit for tomorrow's pickup: dev_handoff Phase 2 Status now
+carries the fop-13c/13d field acceptance and the fop-14 disposition; the
+copy/paste prompt's goal is refreshed to the actual remaining work (fop-11's
+two formal gates — kill-switch A/B and a parquet-sanity bundle from the
+updated collector — plus the human's fop-14 go/no-go); index.md footer and
+the actively-edited docs' last_validated dates bumped to 2026-08-26. State
+at close: fop-01..fop-13d complete and field-accepted; fop-11 deployed and
+healthy pending its two gates; fop-14 candidate awaiting decision; deferred
+future tasks unchanged (Mmap activity type, OSS sensor survey).
+Pages updated: `work/optimize-fileops-poller/{dev_handoff,verification,implementation_plan}.md`; `index.md`; `log.md`.
+
+## [2026-08-26] code | comparator gains cross-run A/B flags for the fop-11 gate
+
+Pre-A/B gap found: the comparator keyed tuples by (pid, path, op), so two
+separate executions (different PIDs, different background activity) could
+never compare cleanly. Added --ignore-pid (collapse the pid key) and
+--path-prefix (restrict to the deterministic workload's work dir), verified
+with a synthetic cross-run scenario (fails without the flags, clean with
+them). The fop-11 kill-switch A/B procedure uses both flags with the SAME
+work-dir path for both runs so workload paths are identical across runs.
+Pages updated: `validation/fileops-differential/compare_fileops.py`; `log.md`.
+
+## [2026-08-26] code | fop-11 A/B fully automated after manual procedure failed
+
+The manual A/B produced a vacuous result (zero workload tuples both sides —
+time-window parquet copying raced the serializer flush cadence, and the
+first diagnostic ran without root so the permission-restricted data root
+globbed empty silently). Fixes, in order: comparator gained --ignore-pid and
+--path-prefix (cross-run A/B was structurally impossible with pid-keyed
+tuples), then an exit-2 vacuous-pass guard (empty prefix-scoped baseline can
+never read as success), and finally the whole procedure was scripted:
+validation/fileops-differential/run_fop11_ab.sh runs both phases end to end
+— kill-switch env management with cleanup-on-exit, agg-state verification
+from the live counter log, restart-as-flush boundaries, row-level harvesting
+by non-overlapping firstSeen windows + work-dir prefix, serializer-backlog
+invalidation (exit 3), and the count-conserving comparison with a verdict
+summary. A --simulate mode with a fixture generator
+(simulate_ab_fixture.py) tests the full pipeline off-host; the first
+simulation caught a window-overlap bug (ON harvest captured both phases'
+rows) — fixed by clamping each phase's window to start after the previous
+phase's end. Final simulation: baseline 6 raw rows vs candidate 5 aggregated
+rows weighing 6 — missing=0, added=0, PASS, exit 0.
+Pages updated: `validation/fileops-differential/{run_fop11_ab.sh,simulate_ab_fixture.py,compare_fileops.py}`; `work/optimize-fileops-poller/dev_handoff.md`; `log.md`.
+
+## [2026-08-26] debug | fop-11 A/B FAIL root-caused to file.epl ungrouped-AgentId n² eventCount inflation
+
+Source: first successful field fop-11 A/B runs on spk16 (results 20260826T232412Z and the relative-harvest rerun), preserved per-phase Lintap.log/counters snapshots, and `../wintap` source review (FileOpsAggregator.cs, FileOpsSensor.cs, EventChannel.cs, FileSerializer.cs, esper/*.epl).
+Outcome: the comparator FAIL (baseline 5800 event-weighted tuples vs candidate 1470) is NOT a fop-11 defect. `file.epl` (and `registry.epl`) select `AgentId` without grouping or aggregating it, so Esper classifies the statement as aggregated-but-not-fully-aggregated and emits one output row PER INPUT EVENT, each stamped with the batch-group's `sum(eventCount)` — n events in a group become n rows × n counts. Proof from harvested parquet: 32 hot-loop reads → exactly 32 rows × EventCount=32 = 1024; 33 opens → 1090; the aggregated candidate showed 2 rows × group-sum (67/64). `tcp.epl`/`udp.epl` already group AgentId and are unaffected. fop-11 aggregation itself conserved exactly (summary carried 32/32 folded repeats; `summary_enqueue_fail=0`, `cap_bypass=0`).
+Fixed in `../wintap` 0e01783 (grantj-rhel8-testing): AgentId added to both group-bys. Consequence for consumers: all production File/Registry `eventCount` values to date are batch-quadratically inflated (larger groups inflate more), which also likely contributed to fop-10's high duplicate-open ratios read from parquet-derived views (the sensor-side `open_dup` measure is pre-Esper and is a separate open question).
+Harness hardening landed en route (Wintap-Analytics grantj-rhel8-testing 9139e01..4060483): serializer-count parse fix; harvest narrowed to the real FileSerializer flush schema (`File_Path` lowercased, `FirstSeen` FileTime) and to serializer flush files + raw_sensor/raw_process_file; upload cycle parked via `WINTAP_ETL_UPLOAD_INTERVAL_SEC` (delete-after-upload and startup `clearRawSensor()` were destroying evidence; Lintap.log is LogType.Overwrite so per-phase log snapshots are now saved into the results dir); `WINTAP_ETL_MAX_QUEUE_EVENTS_FILESERIALIZER=100000` for the run (agg-off flood saturates the 10k drop-newest queue and ate the workload burst); zero-row harvest diagnostics; in-window relative rows passed through to the comparator's relative-upgrade matching.
+Open follow-up: rebuild/redeploy the fixed sensor on spk16 and rerun the A/B — expected PASS with off-phase hot reads collapsing to 1 row × EventCount 32 per 10s batch. Known operational hazard: an interrupted run leaves the parked upload-interval line in `/etc/lintap/lintap.env` and a later run's cleanup "restores" it as pre-existing; verify the line is absent after failed runs.
+Pages updated: `log.md`.
+
+## [2026-08-27] review | fop-11 A/B PASS on spk16 with fixed EPLs — count conservation accepted
+
+Source: field run `/var/tmp/fop11-ab-results-20260827T032142Z` on spk16 with the `../wintap` 0e01783 EPL fix deployed.
+Outcome: VERDICT PASS, exit 0. Baseline 1272 event-weighted regular tuples (down from 5800 under the n² inflation — now matching the workload's actual syscall count), candidate 1292, missing=0, added=20 (candidate-side background surplus, tolerated by design), unmatched_relative=0. ON-phase counters healthy: 24.9k repeats folded, 3.9k summaries, `summary_enqueue_fail=0`, `cap_bypass=0`. OFF rows 687 (one row per group per 10s batch, as intended post-fix) vs 1280 in the inflated runs. fop-11 kill-switch count conservation is accepted.
+Harness hardening: leftover env-override lines from interrupted runs are now discarded instead of being "restored" into production (the parked upload interval survived two cleanup cycles on spk16 this way; field host cleaned up manually).
+Pages updated: `log.md`.
+
+## [2026-08-27] decision | fop closeout dispositions and byte-conservation gate implemented
+
+Human dispositions toward feature closeout:
+- **fop-12: ACCEPTED** (post-fop-13 field evidence: relative_open_resolve_miss 0-6/interval, workload relative opens resolving 36/36 via the dir index, vs the 8-10k floor that blocked acceptance).
+- **fop-08 differential debt: discharged** by the fop-11 A/B harness runs (OFF phase exercises the full post-fop-08 pipeline; PASS 20260827T032142Z).
+- **fop-14: watch long-term** during longer test deployments rather than a dedicated re-measurement now (prior severity number was taken under the per-event-row EPL inflation and is not trusted).
+- **EPL-fix mainlining (../wintap 0e01783): deferred** — no production deployments at present, so no urgency beyond normal branch flow.
+- **Historical eventCount inflation: check the "ACME" dataset** before treating it as a practical problem — many changes have landed since the last production deployment, so pre-fix inflated parquet may not exist in any dataset anyone consumes. If ACME's File/Registry data predates the last deployment gap, re-baseline or fence it; otherwise close the concern.
+
+Implemented: byte-total conservation in the comparator (`compare_fileops.py --check-bytes`, wired into `run_fop11_ab.sh`, Wintap-Analytics 67f463d) — per regular tuple, candidate summed BytesRequested must not fall below baseline (deficit fails with samples; surplus mirrors tolerated added counts; warn-and-skip when a bytes column is absent). Simulation passes with bytes verified; deficit and missing-column paths unit-tested. The fop-11 differential contract's three invariants (distinct tuples, count conservation, byte conservation) are now all machine-checked; the next field A/B run verifies them together.
+Remaining for fop-11 acceptance: the collector-bundle gate (duckdb/fileops-parquet-sanity.txt), then closeout mechanics (verification/brief/index status flips).
+Pages updated: `work/optimize-fileops-poller/{implementation_plan,dev_handoff}.md`; `log.md`.
+
+## [2026-08-27] decision | fop-11 differential contract amended: 1% missing-tuple tolerance for capture noise
+
+Run 20260827T141730Z FAILED with missing=8, added=6 of 1278 baseline event-weighted tuples — while bytes conserved exactly (568320 = 568320) and yesterday's identical run passed with missing=0. Every missing/added entry is a paired open+close single on a distinct `fileops-RR-FFF.dat` round-robin file. Diagnosis: the pre-existing open path-record miss (`open: no_path` ≈14-23/interval in every counters line) drops the open AND orphans its close (the fd→path store never learns the fd), losing ~1% of open/close pairs per phase; which phase eats the flake is a coin flip, so a strict any-missing gate flaps. This is per-event capture noise upstream of aggregation — fop-11 defects lose counts at repeat scale (the EPL bug was -75%), not 0.6%.
+Contract amendment: `compare_fileops.py --missing-tolerance <fraction>` (default 0 = strict; `run_fop11_ab.sh` passes 0.01). Missing tuples are still fully reported in result.json; within-tolerance passes print an explicit NOTE. Byte conservation and unmatched-relative gates remain strict. Unit-tested at the observed noise scale (1% pair loss: tol 0 fails, tol 0.01 passes with note); simulation unchanged.
+Residual product observation (pre-existing, not fop-11): the open/close pair loss itself — candidate root cause is open-event/path-record correlation; visible as `no_path`+`fallback_miss` on opens. Not queued; noted for any future capture-fidelity work.
+Pages updated: `log.md`.
+
+## [2026-08-27] decision | fop feature CLOSED — accepted; closeout test plan published
+
+Human accepted all remaining fop items and closed the feature. Final gates: fop-11 A/B byte-verified PASS on run 20260827T141730Z (counts within the documented 1% tolerance, bytes exactly conserved, relative clean) on top of the strict-zero PASS of 20260827T032142Z. Published [[wiki/work/optimize-fileops-poller/test_plan]] — six critical milestone tests (T1 build+unit smoke, T2 harness simulation self-test, T3 deploy smoke checklist, T4 the kill-switch A/B differential as THE milestone test, T5 collector parquet sanity, T6 fop-14 long-term watch) superseding the per-slice intermediate tests, which remain recorded in verification.md for deep-dives. Brief marked CLOSED; index rows updated.
+Carried out of the feature: fop-14 long-term watch; ~1% open+close capture flake (product observation, unqueued); ACME dataset historical-inflation check; ../wintap 0e01783 EPL fix must ride any future deploy.
+Pages updated: `work/optimize-fileops-poller/{brief,verification,test_plan}.md`; `wiki/index.md`; `log.md`.
+
+## [2026-08-27] decision | fix-unbounded-process-table-growth CLOSED — accepted; long-run acceptance parallelized; canonical promotion done
+
+Human accepted the current state of the parent feature to unblock the branch PR (Windows developer needs the shared-core changes; no production deployments yet). The dev handoff's long-run evidence gate is superseded: long-running acceptance shifts to the new parallel task [[wiki/work/extended-deployment-monitoring/brief]] — 1-2 week human status checks over multi-host test deployments for ~a few weeks, with short focused patch cycles expected; exit criteria and the carried watch items (fop-14, ~1% capture flake, ACME dataset check) recorded there.
+Canonical promotion (deferred by the handoff until closeout) done: [[wiki/component/process-table-retention]] (retention sweep, liveness reconciliation, bounded telemetry, CLONE_THREAD filter, plateau figures, DuckDB lock caveat) and [[wiki/component/fileops-event-pipeline]] (stage contracts kernel→parquet, the Esper group-by rule behind the n² eventCount bug, flush schema, caveats). P1 process-creation pytest re-verified green (5/5) as PR preflight; T2 harness sim green.
+Pages updated: `work/fix-unbounded-process-table-growth/{brief,verification}.md`; `work/extended-deployment-monitoring/brief.md` (new); `component/{process-table-retention,fileops-event-pipeline}.md` (new); `wiki/index.md`; `log.md`.
+

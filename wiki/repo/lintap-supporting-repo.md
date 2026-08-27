@@ -35,6 +35,13 @@ TeleTap output is expected to include canonical raw sensor Parquet under `raw_se
 The older sysdig workflow captures process, file, network, and optional SELinux activity as TSV/SCAP, converts raw TSV into raw Wintap format, and then relies on Wintap-style ETL scripts for final datasets.
 <!-- GROUND_TRUTH: ../Lintap/README.md §Running Lintap (sysdig); §Post-processing -->
 
+## pidstat Collector (promoted 2026-08-17)
+
+`../Lintap/pidstat-collector.py` is a single-process Python host-performance collector: it samples `/proc` directly (stat/io/status/schedstat — full pidstat-equivalent schema plus `hostname` and container-attribution columns from cgroup/ns), computes rates from counter deltas, and rotates typed parquet into the sensor's cache at `raw_sensor/pidstat/dayPK=/hourPK=/` every `PIDSTAT_ROTATE_INTERVAL_SEC` (default 300, synced to the sensor upload cycle), where the sensor's uploader ships it ([[wiki/component/sensor-upload-cache-pipeline]]). Configuration is `PIDSTAT_*` env vars; sampling default 5 s; crash salvage via a spool outside the swept tree; accumulation guard caps unshipped bytes/age. It runs as a systemd service (`lintap-pidstat.service`) from a uv-managed Python 3.12 venv (`pidstat-collector-bootstrap.sh` / `-launch.sh`) because RHEL 8's system python3.6 predates duckdb wheels. `pidstat-collect.sh` remains only as a minimal example; the interim bash rotating collector was retired after its per-line command substitutions caused a ~700 forks/sec storm ([[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]]). Wintappy's DBT bronze reads the parquet layout directly.
+<!-- GROUND_TRUTH: ../Lintap/pidstat-collector.py; ../Lintap/packaging/lintap-rpm/lintap-pidstat.service; ../Lintap/README.md §Managed pidstat collector -->
+
+Open watch item: collector CPU usage looked higher than expected in early RHEL 8 field runs — investigate with data from more systems (tracked in [[wiki/work/improve-pidstat-collector/implementation_plan]]).
+
 ## Wiki Boundary
 
 Lintap pages should focus on Linux dev-environment setup, packaging/deployment support, raw-to-normalized data transition, and compatibility tensions. Do not use Lintap as the canonical source for Windows Wintap sensor semantics.

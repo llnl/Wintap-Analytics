@@ -1,0 +1,338 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import re
+import sys
+from collections import Counter
+from pathlib import PurePosixPath
+
+try:
+    import duckdb
+except ImportError as exc:  # pragma: no cover - runtime preflight
+    raise SystemExit(f"duckdb Python package is required: {exc}")
+
+
+NOISE_PREFIXES = ("/proc", "/sys", "/dev")
+NON_REGULAR_RE = re.compile(r"^(socket|pipe|anon_inode|eventfd|inotify|memfd):\[")
+
+
+def quote(value: str) -> str:
+    return value.replace("'", "''")
+
+
+def list_columns(connection: duckdb.DuckDBPyConnection, parquet_glob: str) -> set[str]:
+    rows = connection.execute(f"DESCRIBE SELECT * FROM read_parquet('{quote(parquet_glob)}')").fetchall()
+    return {row[0] for row in rows}
+
+
+def pick_column(columns: set[str], candidates: tuple[str, ...]) -> str:
+    lowered = {column.lower(): column for column in columns}
+    for candidate in candidates:
+        if candidate.lower() in lowered:
+            return lowered[candidate.lower()]
+    raise SystemExit(f"could not find any of columns {candidates}; available={sorted(columns)}")
+
+
+def normalize_path(path: str) -> str:
+    path = (path or "").strip()
+    if path.endswith(" (deleted)"):
+        path = path[: -len(" (deleted)")]
+    if sys.platform.startswith("win"):
+        path = path.lower()
+    return str(PurePosixPath(path)) if path.startswith("/") else path
+
+
+def is_regular_candidate(path: str) -> bool:
+    path = normalize_path(path)
+    if not path:
+        return False
+    if path.startswith(NOISE_PREFIXES):
+        return False
+    if NON_REGULAR_RE.match(path):
+        return False
+    return path.startswith("/")
+
+
+def is_relative_candidate(path: str) -> bool:
+    """A workload-relevant relative path: non-empty, not pseudo/non-regular noise,
+    and not absolute. These are invisible to the strict absolute-tuple gate, so
+    they get their own relative->absolute upgrade matching (fop-12/fop-13)."""
+    path = normalize_path(path)
+    if not path or path.startswith("/"):
+        return False
+    if NON_REGULAR_RE.match(path):
+        return False
+    return True
+
+
+def normalize_relative(path: str) -> str:
+    path = normalize_path(path)
+    while path.startswith("./"):
+        path = path[2:]
+    return str(PurePosixPath(path)) if path else path
+
+
+def match_relative_upgrades(
+    relative: Counter[tuple[int, str, str]],
+    other_relative: Counter[tuple[int, str, str]],
+    absolute_surplus: Counter[tuple[int, str, str]],
+) -> tuple[Counter[tuple[int, str, str]], Counter[tuple[int, str, str]]]:
+    """Split baseline relative tuples into matched vs unmatched, consuming
+    counts (F2 hardening): an exact relative match consumes from the
+    candidate's relative counts; a relative->absolute upgrade consumes from
+    the candidate's absolute SURPLUS (candidate - baseline, so rows that
+    satisfy the strict absolute gate are not double-credited). Longer
+    relative suffixes match first so "b/c" claims "/a/b/c" ahead of "c"."""
+    surplus_by_pid_op: dict[tuple[int, str], dict[str, int]] = {}
+    for (pid, path, op), count in absolute_surplus.items():
+        surplus_by_pid_op.setdefault((pid, op), {})[path] = count
+    relative_capacity = Counter(other_relative)
+
+    matched: Counter[tuple[int, str, str]] = Counter()
+    unmatched: Counter[tuple[int, str, str]] = Counter()
+    ordered = sorted(
+        relative.items(),
+        key=lambda item: len(normalize_relative(item[0][1])),
+        reverse=True,
+    )
+    for (pid, rel_path, op), count in ordered:
+        need = count
+
+        # Exact relative match, count-bounded.
+        available = relative_capacity[(pid, rel_path, op)]
+        if available > 0:
+            take = min(need, available)
+            relative_capacity[(pid, rel_path, op)] -= take
+            matched[(pid, rel_path, op)] += take
+            need -= take
+
+        # Upgrade match against absolute surplus, count-consuming.
+        if need > 0:
+            suffix = "/" + normalize_relative(rel_path)
+            pool = surplus_by_pid_op.get((pid, op), {})
+            for abs_path in list(pool):
+                if need <= 0:
+                    break
+                if not abs_path.endswith(suffix):
+                    continue
+                take = min(need, pool[abs_path])
+                pool[abs_path] -= take
+                if pool[abs_path] <= 0:
+                    del pool[abs_path]
+                matched[(pid, rel_path, op)] += take
+                need -= take
+
+        if need > 0:
+            unmatched[(pid, rel_path, op)] += need
+    return matched, unmatched
+
+
+def load_tuples(parquet_glob: str, ignore_pid: bool = False, path_prefix: str | None = None) -> tuple[Counter[tuple[int, str, str]], Counter[tuple[int, str, str]], Counter[str], Counter[tuple[int, str, str]] | None]:
+    connection = duckdb.connect()
+    try:
+        columns = list_columns(connection, parquet_glob)
+        path_col = pick_column(columns, ("Path", "path", "File_Path", "file_path", "file", "File"))
+        pid_col = pick_column(columns, ("PID", "pid", "ProcessId", "process_id"))
+        op_col = pick_column(columns, ("ActivityType", "activity_type", "op", "operation", "EventType", "event_type"))
+        # fop-11 count conservation: rows may be aggregates carrying an
+        # eventCount for the raw events they represent. Weight tuple counts by
+        # it when present so pre- and post-aggregation streams compare on raw
+        # event cardinality; absent column -> every row weighs 1.
+        count_expr = "1"
+        for candidate in ("eventCount", "event_count", "EventCount"):
+            if candidate in columns or candidate.lower() in {c.lower() for c in columns}:
+                actual = next(c for c in columns if c.lower() == candidate.lower())
+                count_expr = f"COALESCE({actual}, 1)"
+                break
+        # fop-11 byte conservation: aggregates carry summed bytes for the raw
+        # events they fold. Absent column -> byte checking unavailable (None).
+        bytes_expr = None
+        for candidate in ("BytesRequested", "bytes_requested", "bytesRequested", "bytes"):
+            if candidate.lower() in {c.lower() for c in columns}:
+                actual = next(c for c in columns if c.lower() == candidate.lower())
+                bytes_expr = f"COALESCE({actual}, 0)"
+                break
+        rows = connection.execute(
+            f"SELECT {pid_col}, {path_col}, {op_col}, {count_expr}, {bytes_expr or '0'} FROM read_parquet('{quote(parquet_glob)}')"
+        ).fetchall()
+    finally:
+        connection.close()
+
+    regular: Counter[tuple[int, str, str]] = Counter()
+    relative: Counter[tuple[int, str, str]] = Counter()
+    noise: Counter[str] = Counter()
+    regular_bytes: Counter[tuple[int, str, str]] | None = Counter() if bytes_expr else None
+    for pid, raw_path, raw_op, raw_count, raw_bytes in rows:
+        path = normalize_path(str(raw_path or ""))
+        op = str(raw_op or "").lower()
+        weight = max(int(raw_count or 1), 1)
+        # Cross-run A/B: two separate executions have different PIDs and
+        # different background activity; --ignore-pid collapses the pid key
+        # and --path-prefix restricts to the deterministic workload's files.
+        tuple_pid = 0 if ignore_pid else int(pid)
+        if is_regular_candidate(path):
+            if path_prefix and not path.startswith(path_prefix):
+                continue
+            regular[(tuple_pid, path, op)] += weight
+            if regular_bytes is not None:
+                regular_bytes[(tuple_pid, path, op)] += max(int(raw_bytes or 0), 0)
+        elif is_relative_candidate(path):
+            relative[(tuple_pid, path, op)] += weight
+        else:
+            if not path:
+                noise["empty"] += 1
+            elif path.startswith(NOISE_PREFIXES):
+                noise[path.split("/", 2)[1] if path.startswith("/") else path] += 1
+            elif NON_REGULAR_RE.match(path):
+                noise[path.split(":", 1)[0]] += 1
+            else:
+                noise["other"] += 1
+    return regular, relative, noise, regular_bytes
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Compare baseline/candidate FileOps parquet outputs")
+    parser.add_argument("--baseline", required=True, help="Baseline raw_process_file parquet glob")
+    parser.add_argument("--candidate", required=True, help="Candidate raw_process_file parquet glob")
+    parser.add_argument("--json-out", help="Optional summary JSON path")
+    parser.add_argument(
+        "--ignore-pid",
+        action="store_true",
+        help="Key tuples by (path, op) only — required for cross-run A/B "
+        "where the two captures come from separate executions with "
+        "different PIDs.",
+    )
+    parser.add_argument(
+        "--path-prefix",
+        help="Only compare regular-file tuples whose normalized path starts "
+        "with this prefix (e.g. the deterministic workload's work dir) — "
+        "excludes unrelated background host activity from a cross-run A/B.",
+    )
+    parser.add_argument(
+        "--fail-on-unmatched-relative",
+        action="store_true",
+        help="Also fail when a baseline relative-path tuple has no candidate "
+        "counterpart, either relative or as an absolute path ending in "
+        "/<relative> (fop-12/fop-13 upgrade matching). Default: report only.",
+    )
+    parser.add_argument(
+        "--missing-tolerance",
+        type=float,
+        default=0.0,
+        help="Tolerated missing_regular_tuples as a fraction of baseline "
+        "(default 0 = strict). Rationale: the sensor has a pre-existing, "
+        "phase-symmetric per-event capture flake (an open whose path record "
+        "misses is dropped no_path, and its close then drops with it — "
+        "paired open+close singles, ~1%% of pairs), which is unrelated to "
+        "aggregation; aggregation defects lose counts at repeat scale. "
+        "Missing tuples are still reported in the JSON either way.",
+    )
+    parser.add_argument(
+        "--check-bytes",
+        action="store_true",
+        help="Also verify byte-total conservation: per regular tuple, the "
+        "candidate's summed BytesRequested must not be less than the "
+        "baseline's (deficit = lost bytes; surplus mirrors tolerated "
+        "'added' counts). Skipped with a warning if either side lacks a "
+        "bytes column. Relative tuples are out of scope.",
+    )
+    args = parser.parse_args()
+
+    baseline, baseline_relative, baseline_noise, baseline_bytes = load_tuples(args.baseline, args.ignore_pid, args.path_prefix)
+    candidate, candidate_relative, candidate_noise, candidate_bytes = load_tuples(args.candidate, args.ignore_pid, args.path_prefix)
+    missing = baseline - candidate
+    added = candidate - baseline
+    upgraded_relative, unmatched_relative = match_relative_upgrades(
+        baseline_relative, candidate_relative, added
+    )
+
+    byte_deficit: Counter[tuple[int, str, str]] = Counter()
+    bytes_checked = False
+    if args.check_bytes:
+        if baseline_bytes is None or candidate_bytes is None:
+            print("WARNING: --check-bytes requested but a side lacks a bytes column; byte conservation NOT verified", file=sys.stderr)
+        else:
+            bytes_checked = True
+            for key, base_total in baseline_bytes.items():
+                deficit = base_total - candidate_bytes.get(key, 0)
+                if deficit > 0:
+                    byte_deficit[key] = deficit
+
+    summary = {
+        "baseline_regular_tuples": sum(baseline.values()),
+        "candidate_regular_tuples": sum(candidate.values()),
+        "missing_regular_tuples": sum(missing.values()),
+        "added_regular_tuples": sum(added.values()),
+        "baseline_relative_tuples": sum(baseline_relative.values()),
+        "candidate_relative_tuples": sum(candidate_relative.values()),
+        "matched_relative_tuples": sum(upgraded_relative.values()),
+        "unmatched_relative_tuples": sum(unmatched_relative.values()),
+        "baseline_noise": dict(baseline_noise),
+        "candidate_noise": dict(candidate_noise),
+        "missing_samples": [
+            {"pid": pid, "path": path, "op": op, "count": count}
+            for (pid, path, op), count in missing.most_common(25)
+        ],
+        "added_samples": [
+            {"pid": pid, "path": path, "op": op, "count": count}
+            for (pid, path, op), count in added.most_common(25)
+        ],
+        "unmatched_relative_samples": [
+            {"pid": pid, "path": path, "op": op, "count": count}
+            for (pid, path, op), count in unmatched_relative.most_common(25)
+        ],
+        "missing_fraction": (sum(missing.values()) / sum(baseline.values())) if baseline else 0.0,
+        "missing_tolerance": args.missing_tolerance,
+        "bytes_checked": bytes_checked,
+        "baseline_bytes": sum(baseline_bytes.values()) if baseline_bytes is not None else None,
+        "candidate_bytes": sum(candidate_bytes.values()) if candidate_bytes is not None else None,
+        "byte_deficit_total": sum(byte_deficit.values()),
+        "byte_deficit_samples": [
+            {"pid": pid, "path": path, "op": op, "deficit": deficit}
+            for (pid, path, op), deficit in byte_deficit.most_common(25)
+        ],
+    }
+
+    text = json.dumps(summary, indent=2, sort_keys=True)
+    print(text)
+    if args.json_out:
+        try:
+            with open(args.json_out, "w", encoding="utf-8") as handle:
+                handle.write(text)
+                handle.write("\n")
+        except OSError as exc:
+            # The summary is already on stdout; a side-file failure must not
+            # masquerade as a comparison verdict.
+            print(f"WARNING: could not write --json-out {args.json_out}: {exc}", file=sys.stderr)
+
+    if missing:
+        missing_fraction = sum(missing.values()) / max(sum(baseline.values()), 1)
+        if missing_fraction > args.missing_tolerance:
+            return 1
+        print(
+            f"NOTE: {sum(missing.values())} missing tuple(s) "
+            f"({missing_fraction:.4f} of baseline) within tolerance "
+            f"{args.missing_tolerance} — treated as PASS (capture noise, "
+            "see missing_samples)",
+            file=sys.stderr,
+        )
+    if args.fail_on_unmatched_relative and unmatched_relative:
+        return 1
+    if bytes_checked and byte_deficit:
+        return 1
+    # Guard against vacuous passes: a prefix-scoped A/B with an empty
+    # baseline population compared nothing and must not read as success.
+    if args.path_prefix and sum(baseline.values()) == 0:
+        print(
+            f"VACUOUS: no baseline regular tuples under prefix {args.path_prefix} — "
+            "workload rows not captured; check parquet flush timing and filesystem type",
+            file=sys.stderr,
+        )
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
