@@ -1527,3 +1527,25 @@ Human accepted the current state of the parent feature to unblock the branch PR 
 Canonical promotion (deferred by the handoff until closeout) done: [[wiki/component/process-table-retention]] (retention sweep, liveness reconciliation, bounded telemetry, CLONE_THREAD filter, plateau figures, DuckDB lock caveat) and [[wiki/component/fileops-event-pipeline]] (stage contracts kernel→parquet, the Esper group-by rule behind the n² eventCount bug, flush schema, caveats). P1 process-creation pytest re-verified green (5/5) as PR preflight; T2 harness sim green.
 Pages updated: `work/fix-unbounded-process-table-growth/{brief,verification}.md`; `work/extended-deployment-monitoring/brief.md` (new); `component/{process-table-retention,fileops-event-pipeline}.md` (new); `wiki/index.md`; `log.md`.
 
+
+## [2026-08-27] feature-open | selinux-monitoring: SELinux as a first-class Lintap eBPF event domain
+
+Opened via the LLM-assisted feature workflow on branch
+`lindseyw/selinux-monitoring` after a three-round interview. Core decision:
+the auditd/TSV batch path (`../Lintap/sql/selinux.sql`, never-committed
+collector, known TZ/join losses) was a crude POC and is superseded as a
+non-goal; instead SELinux telemetry becomes first-class Lintap events —
+eBPF-captured, flowing in parallel with process/file/network through
+tracer → sensor → EventChannel → Esper → serializer → raw_sensor parquet.
+Signals split by purpose: AVC denials/grants for policy debugging;
+transitions + a novel-tuple-deduped (src ctx, tgt ctx, class, perm)
+interaction map for monitoring. Constraints: RHEL 9-class kernel only
+(existing host available), ../wintap Linux sensor tree for code, EPL
+group-by invariant. Four acceptance criteria frozen (provoked denial vs
+ausearch, transition coverage, interaction-map DuckDB query, overhead/
+no-loss gate). v1 boundary: raw_sensor parquet — dashboards, Wintappy DBT,
+and RHEL 8 deferred. Attach points (selinux_audited tracepoint vs BPF LSM
+vs kprobes) delegated to an on-host spike; spike stub created. Sealed human
+estimates recorded in interview.md (seal intact for downstream agents).
+Pages created: `work/selinux-monitoring/{interview,brief,references,spike}.md`.
+Pages updated: `wiki/index.md`; `log.md`.
