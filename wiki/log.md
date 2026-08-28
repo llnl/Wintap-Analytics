@@ -1527,3 +1527,101 @@ Human accepted the current state of the parent feature to unblock the branch PR 
 Canonical promotion (deferred by the handoff until closeout) done: [[wiki/component/process-table-retention]] (retention sweep, liveness reconciliation, bounded telemetry, CLONE_THREAD filter, plateau figures, DuckDB lock caveat) and [[wiki/component/fileops-event-pipeline]] (stage contracts kernel→parquet, the Esper group-by rule behind the n² eventCount bug, flush schema, caveats). P1 process-creation pytest re-verified green (5/5) as PR preflight; T2 harness sim green.
 Pages updated: `work/fix-unbounded-process-table-growth/{brief,verification}.md`; `work/extended-deployment-monitoring/brief.md` (new); `component/{process-table-retention,fileops-event-pipeline}.md` (new); `wiki/index.md`; `log.md`.
 
+## [2026-08-27] feature-work | improve-etl-and-qa started via LLM-assisted feature workflow
+
+Source: source inspection of `../Wintappy/Makefile`, `../Wintappy/notebooks/wintap_dbt_overview.py`, `../Wintappy/wintap_dbt/dbt_project.yml`, pidstat/monitoring/silver model SQL under `../Wintappy/wintap_dbt/models/`, and this repo's legacy Streamlit/DataQA imports under `streamlit/projects/`.
+Pages created: `work/improve-etl-and-qa/interview.md`; `work/improve-etl-and-qa/brief.md`; `work/improve-etl-and-qa/references.md`.
+Pages updated: `index.md`.
+Decisions captured: cross-repo scope with Wintappy as center of gravity; all-event-family ETL/QA cleanup rather than pidstat-only; pidstat promoted to first-class bronze/silver/gold; Wintappy Marimo established as the canonical QA entry point; Analytics-side conflicts to be aligned or retired; stronger end-to-end verification required.
+Open questions: compatibility window for existing datasets/consumers; final bronze/silver/gold/monitoring contract per event family; which legacy Analytics QA paths should be updated vs. explicitly deprecated.
+
+## [2026-08-27] feature-work | improve-etl-and-qa: design and staged plan added
+
+Source: source inspection of Wintappy gold models (`process_summary`, `process_file_summary`, `process_net_summary`, `process_uber_summary`), monitoring models, and legacy Analytics-side DataQA code paths.
+Pages created: `work/improve-etl-and-qa/design.md`; `work/improve-etl-and-qa/implementation_plan.md`.
+Pages updated: `index.md`.
+Design direction recorded: separate event-family modeling from QA presentation; make pidstat a first-class family with explicit gold output; normalize the bronze/silver/gold story across process, file, network, and pidstat; treat monitoring as a consumer of intentional family outputs; keep Wintappy Marimo canonical and only align or retire conflicting Analytics-side QA paths.
+Implementation staged into seven slices: contract decisions, pidstat family implementation, broader event-family cleanup, monitoring cleanup, Marimo alignment, Analytics-side conflict cleanup, and end-to-end verification/canonical promotion.
+
+## [2026-08-27] feature-work | improve-etl-and-qa: Stage 1 contract decisions recorded
+
+Source: consumer-usage inspection across `../Wintappy/notebooks/wintap_dbt_overview.py`, DBT model refs under `../Wintappy/wintap_dbt/models/`, Wintappy review notes, and this repo's legacy DataQA references.
+Pages updated: `work/improve-etl-and-qa/design.md`; `work/improve-etl-and-qa/implementation_plan.md`; `log.md`.
+Decisions recorded: preserve current canonical downstream silver/gold relation names already anchoring Marimo/wiki contracts (`process`, `process_file`, `process_net_conn`, `process_summary`, `process_uber_summary`, `pidstat_metrics`); keep monitoring as a distinct cross-family QA layer; rewrite monitoring to prefer intentional silver/gold inputs over accidental bronze/raw-backed dependencies; do not add broad compatibility aliases for legacy raw-name assumptions; first code slice should center on pidstat gold plus monitoring cleanup and Marimo alignment.
+Remaining open questions: exact pidstat gold contract, which legacy Analytics pages merit alignment, and whether any non-pidstat family later justifies a deliberate canonical rename.
+
+## [2026-08-27] feature-work | improve-etl-and-qa: first coding slice defined
+
+Source: detailed inspection of Wintappy monitoring SQL (`build_summary`, `telemetry_event_summary`, `process_chart`, `file_chart`, `network_chart`, `perf_chart`) and the pidstat section of `../Wintappy/notebooks/wintap_dbt_overview.py`.
+Pages updated: `work/improve-etl-and-qa/design.md`; `work/improve-etl-and-qa/implementation_plan.md`; `log.md`.
+First-slice contract recorded: add `pidstat_process_summary` as the first pidstat gold model; keep `pidstat_metrics` as silver detail; update monitoring to prefer intentional silver/gold inputs (`process_file`, `process_conn_incr`, `pidstat_metrics`) over raw-backed bronze views where feasible; change the notebook pidstat section to use row-based availability and the new pidstat gold summary. File/network chart rewrites are explicitly first-slice targets using current silver timing fields rather than a larger event-time redesign.
+Deferred question narrowed: after the first-slice silver-based chart rewrite, decide whether file/network timeline fidelity is sufficient or whether a later slice needs a chart-specific detail contract.
+
+## [2026-08-27] code | improve-etl-and-qa first coding slice implemented
+
+Files changed: `../Wintappy/wintap_dbt/models/gold/pidstat_process_summary.sql` (new); `../Wintappy/wintap_dbt/models/monitoring/{build_summary,telemetry_event_summary,file_chart,network_chart}.sql`; `../Wintappy/notebooks/wintap_dbt_overview.py`; `../Wintappy/wintap_dbt/models/schema.yml`; `wiki/work/improve-etl-and-qa/{implementation_plan,verification}.md`; `wiki/index.md`; `wiki/log.md`.
+Implemented: introduced the first pidstat gold model (`pidstat_process_summary`), moved summary-style monitoring queries off raw-backed runtime dependencies and onto intentional silver/detail inputs where feasible, and aligned the Marimo pidstat section to use row-based availability plus the new pidstat gold summary.
+Verification: `make dbt-build` passed (`PASS=78`); `make dbt-test` passed (`PASS=39`); direct built-DuckDB query smoke for `build_summary`, `telemetry_event_summary`, `file_chart`, `network_chart`, `perf_chart`, `pidstat_process_summary`, and the notebook pidstat queries all succeeded without creating the DBT raw-source S3 secret in the direct session.
+Known gap: the current configured dataset/window still has zero pidstat parquet rows, so pidstat gold is structurally verified but not yet validated with non-empty live pidstat data; `file_chart` currently uses `process_file.min_event` as the first-slice silver timing basis and may need a later higher-fidelity chart contract.
+
+## [2026-08-28] fix | improve-etl-and-qa mixed-schema eventtime hotfix
+
+Source: dbt failure report for `process_registry` (`Conversion Error: Unimplemented type for cast (TIMESTAMP -> BIGINT) when casting from source column EventTime`) during a Wintappy build.
+Files changed: `../Wintappy/wintap_dbt/macros/time.sql`; `../Wintappy/wintap_dbt/models/silver/{host,host_ip,process_file,process_registry,process_image_load}.sql`; `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Implemented: added `unix_or_timestamp_expr()` and `win32_or_timestamp_expr()` macros so silver models tolerate either timestamp-typed or numeric `eventtime` inputs without blindly casting to `bigint`; updated the affected silver models to use the new macros.
+Verification: targeted `dbt run` for `process_registry` plus related dependents passed after the change, and a full `make dbt-build` re-run passed in `129.86s` with `PASS=78`.
+Known gap: no dedicated timestamp-vs-epoch regression fixture/test exists yet; validation is currently by successful DBT execution on the current dataset mix.
+
+## [2026-08-28] fix | Wintappy uv workflow cleanup
+
+Source: local failure report showing `uv add` could not use `../Wintappy/.venv` because the environment directory existed but had no Python executable, plus the deprecated `--isolated` Makefile usage and missing `plotly` dependency for the legacy `qa-pidstat` target.
+Files changed: `../Wintappy/Makefile`; `../Wintappy/pyproject.toml`; `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Implemented: removed deprecated `uv run --isolated` usage from the Makefile's DBT runner, added a `rebuild-venv` target for one-step local recovery, and added `plotly` to dev dependencies so the `qa-pidstat` marimo path resolves its import.
+Verification: `make rebuild-venv` recreated `.venv`; `uv sync --all-extras --dev` completed successfully; `uv run --dev --project . python -c "import plotly, marimo; print(plotly.__version__)"` passed with `plotly==7.0.0`.
+Note: the broken `.venv` was a local environment-state problem rather than a repository-tracked file issue; the repo changes only make the recovery path and dependency behavior saner going forward.
+
+## [2026-08-28] feature | Simple pidstat time-series chart added to Marimo QA
+
+Source: now-available pidstat rows in the current Wintappy DuckDB plus notebook-focused design follow-up.
+Files changed: `../Wintappy/notebooks/wintap_dbt_overview.py`; `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Implemented: added a first-pass pidstat time-series panel to the canonical Marimo QA notebook with a metric dropdown (`CPU %`, `Memory %`, `Read KB/s`, `Write KB/s`), a minimum peak-CPU filter, a max-series cap, and a 1-minute bucketed line chart over `pidstat_metrics` for the selected top processes from `pidstat_process_summary`.
+Verification: the backing query returned `2811` rows across `12` plotted series in `0.46s` on the current dataset with a `25%` peak-CPU threshold, and the updated notebook compiled cleanly via `python -m py_compile notebooks/wintap_dbt_overview.py`.
+Known limitation: this is intentionally a simple first cut; richer focusing controls (legend-based hiding, host/container selectors, alternative ranking criteria) are left for a later UX iteration if the chart proves useful.
+
+## [2026-08-28] feature | Pidstat chart UX upgraded from grokdata review
+
+Source: review of `../Lintap/teletap/grokdata_marimo.py` as a prototype reference for stronger layout and interaction patterns.
+Files changed: `../Wintappy/notebooks/wintap_dbt_overview.py`; `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Implemented: kept the canonical Wintappy notebook but borrowed key grokdata ideas for the pidstat panel — moved from Altair to Plotly for the pidstat time-series area, switched ranking/filtering to the selected metric instead of always peak CPU, added a host filter, and enabled a range-slider-based interactive time axis.
+Verification: notebook compiled cleanly; an example selected-metric smoke query (`Memory %`, threshold `0.1`) returned `5845` rows across `5` plotted series in `0.35s`.
+Remaining gap: the overall Wintappy page layout is still more section-oriented than grokdata's full dashboard composition; only the pidstat panel was upgraded in this pass.
+
+## [2026-08-28] feature | Event-volume correlation chart added to pidstat section
+
+Source: follow-up user request to compare Lintap CPU/resource usage against event volume by type over time.
+Files changed: `../Wintappy/notebooks/wintap_dbt_overview.py`; `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Implemented: added a second Plotly chart directly below the pidstat process-resource chart, using the same host filter and 1-minute buckets to show normalized event counts over time by type (`process`, `file`, `network`, `registry`, and `image_load` when present).
+Verification: the backing query returned `5024` rows in `0.33s` on the current dataset, with active series for `process`, `file`, `network`, and `registry`; notebook compile check remained clean.
+Known limitation: this is currently a notebook-level correlation view built directly from normalized tables rather than a dedicated DBT monitoring model, and cross-family "event count" semantics remain pragmatic rather than formally unified.
+
+## [2026-08-28] feature | Pidstat command aggregation mode added
+
+Source: follow-up exploration request using `setroubleshootd` as the motivating repeated-instance process family.
+Files changed: `../Wintappy/notebooks/wintap_dbt_overview.py`; `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Implemented: added a pidstat `Aggregation` control with `Per process` and `By command` modes. `By command` ranks series by the selected metric, aggregates matching process instances into one family series, and includes concurrent PID counts in hover data.
+Verification: a targeted `setroubleshootd` smoke query returned `380` rows in `0.27s`, collapsed to one visible command-level series with `concurrent_pids` preserved per bucket. This matched the exploratory finding that `setroubleshootd` instances are largely serial repeats rather than long-lived overlapping processes.
+Open follow-up: decide whether command aggregation should later offer alternate rollup semantics such as `sum`, `average per instance`, or `max instance`.
+
+## [2026-08-28] feature | Pidstat controls and chart comparability polished
+
+Source: follow-up UX request for clearer aggregate controls and a more comparable event-volume display.
+Files changed: `../Wintappy/notebooks/wintap_dbt_overview.py`; `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Implemented: renamed aggregation options to `Per process instance` and `Aggregate by command`, added a `Command contains` filter for narrowing repeated-instance families like `setroubleshootd`, and enabled a bottom-axis range slider on the event-volume subplot stack so its interaction style more closely matches the pidstat chart above.
+Verification: command-filtered aggregate smoke query for `setroubleshootd` returned the expected single family series (`380` rows in `0.27s`); notebook compile check remained clean.
+Known limitation: the pidstat and event-volume plots still do not share truly linked zoom because they remain separate Plotly figures.
+
+## [2026-08-28] milestone | improve-etl-and-qa interim checkpoint written
+
+Pages created: `work/improve-etl-and-qa/milestone-2026-08-28.md`.
+Pages updated: `index.md`; `log.md`.
+Summary: captured the current interim state after the first major wave of code work: pidstat gold landed, the canonical Wintappy QA notebook now supports interactive pidstat exploration plus event-volume correlation, mixed-schema eventtime handling is hardened, uv workflow cleanup is recorded, and the explicit next-slice decisions (monitoring promotion, linked zoom, broader event-family cleanup, Analytics-side conflict pass) are listed in one place.
