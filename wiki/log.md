@@ -1647,3 +1647,9 @@ Pages updated: `work/improve-etl-and-qa/{implementation_plan,verification}.md`; 
 Implemented: a standalone manual-batch collection package that samples `/proc/<pid>/smaps_rollup`, `/proc/<pid>/status`, and `/proc/<pid>/{fd,maps}` for a target process and writes partitioned parquet event types (`perf_smaps_rollup`, `perf_proc_status`, `perf_fd_map`) into canonical `raw_sensor/<event_type>/dayPK=/hourPK=` layout. Optional external stdout line capture is supported for provisional `perf_dotnet_counters_raw` and `perf_lintap_diag_raw` event streams so command shape can be iterated before long-term promotion.
 Verification: `cd validation/perf-collection && uv run --project . --extra dev pytest` passed (`4 passed`), including an end-to-end fake-procfs test that writes real parquet outputs.
 Known gap: not yet exercised against a live Linux `Lintap` process from this repo; external-command capture is structurally implemented but not yet validated with real `dotnet-counters` or future Lintap diagnostic output.
+
+## [2026-08-29] handoff | Host-ready Lintap memory experiment continuation
+
+Pages created: `work/improve-etl-and-qa/dev_handoff.md`.
+Pages updated: `index.md`; `log.md`.
+Summary: recorded a host-oriented continuation handoff for the live Lintap experiment. It points the next session at the perf-collection package, the current QA notebook, and the new instrumentation plan; captures the real-run parquet row counts already observed on-host; and explicitly elevates embedded DuckDB inside the long-running .NET process as a major memory-growth suspect alongside file-pipeline and runtime/allocator hypotheses.
