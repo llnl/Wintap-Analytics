@@ -1,0 +1,24 @@
+[project]
+name = "wintap-perf-collection"
+version = "0.1.0"
+description = "Manual-batch performance collectors for Lintap/Wintap diagnosis"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "duckdb>=1.0.0",
+  "pandas>=2.0.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0.0"]
+
+[project.scripts]
+wpc-perf-batch = "wintap_perf_collection.cli.manual_batch:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

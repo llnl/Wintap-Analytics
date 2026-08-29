@@ -1625,3 +1625,25 @@ Known limitation: the pidstat and event-volume plots still do not share truly li
 Pages created: `work/improve-etl-and-qa/milestone-2026-08-28.md`.
 Pages updated: `index.md`; `log.md`.
 Summary: captured the current interim state after the first major wave of code work: pidstat gold landed, the canonical Wintappy QA notebook now supports interactive pidstat exploration plus event-volume correlation, mixed-schema eventtime handling is hardened, uv workflow cleanup is recorded, and the explicit next-slice decisions (monitoring promotion, linked zoom, broader event-family cleanup, Analytics-side conflict pass) are listed in one place.
+
+## [2026-08-28] plan | Lintap stair-step memory-growth instrumentation
+
+Source: analysis of the current run's pidstat and event-volume data for the long-lived `Lintap` process on `spk16`.
+Pages created: `work/improve-etl-and-qa/instrumentation-plan-lintap-memory-growth.md`.
+Pages updated: `work/improve-etl-and-qa/implementation_plan.md`; `index.md`; `log.md`.
+Summary: current evidence points to burst-correlated memory ratcheting, likely file-pipeline-driven, but pidstat alone cannot distinguish true retained state from allocator/runtime retention. The plan therefore layers `/proc/<pid>/smaps_rollup`, .NET runtime counters, and periodic internal file-pipeline/serializer backlog counters on top of the existing pidstat/event-volume view, with sampling cadences and a prioritized rollout order recorded in the new artifact.
+
+## [2026-08-28] update | Lintap instrumentation plan refined for manual-batch-first execution
+
+Source: follow-up planning request focusing on immediate impact versus eventual long-term sidecar collection.
+Pages updated: `work/improve-etl-and-qa/instrumentation-plan-lintap-memory-growth.md`; `work/improve-etl-and-qa/implementation_plan.md`; `log.md`.
+Summary: refined the plan to distinguish two operating modes: (A) manual batch capture now, recommended first for speed and overhead validation; (B) long-term sidecar collection later, using the same raw-style parquet layout. Added concrete proposed event types (`perf_smaps_rollup`, `perf_dotnet_counters`, `perf_lintap_diag`, `perf_fd_map`) and updated Stage 8 to make manual-batch-first the default implementation path.
+
+## [2026-08-28] code | Manual-batch performance collectors added under validation/
+
+Source: implementation follow-through on the memory-growth instrumentation plan's immediate-impact path.
+Files created: `validation/perf-collection/pyproject.toml`; `validation/perf-collection/README.md`; `validation/perf-collection/src/wintap_perf_collection/{__init__.py,procfs.py,parquet.py}`; `validation/perf-collection/src/wintap_perf_collection/cli/manual_batch.py`; `validation/perf-collection/scripts/run_lintap_perf_batch.sh`; `validation/perf-collection/tests/{test_procfs.py,test_manual_batch.py}`.
+Pages updated: `work/improve-etl-and-qa/{implementation_plan,verification}.md`; `log.md`.
+Implemented: a standalone manual-batch collection package that samples `/proc/<pid>/smaps_rollup`, `/proc/<pid>/status`, and `/proc/<pid>/{fd,maps}` for a target process and writes partitioned parquet event types (`perf_smaps_rollup`, `perf_proc_status`, `perf_fd_map`) into canonical `raw_sensor/<event_type>/dayPK=/hourPK=` layout. Optional external stdout line capture is supported for provisional `perf_dotnet_counters_raw` and `perf_lintap_diag_raw` event streams so command shape can be iterated before long-term promotion.
+Verification: `cd validation/perf-collection && uv run --project . --extra dev pytest` passed (`4 passed`), including an end-to-end fake-procfs test that writes real parquet outputs.
+Known gap: not yet exercised against a live Linux `Lintap` process from this repo; external-command capture is structurally implemented but not yet validated with real `dotnet-counters` or future Lintap diagnostic output.

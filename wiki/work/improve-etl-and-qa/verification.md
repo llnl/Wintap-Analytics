@@ -39,6 +39,7 @@ tags: [feature-work, verification, wintappy, qa, dbt, pidstat]
 11. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && uv run --dev --project . python - <<'PY' ... execute the new event-volume-by-type query (1-minute buckets across process/file/network/registry/image_load) and inspect row count / elapsed time ... PY`
 12. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && uv run --dev --project . python - <<'PY' ... execute the new 'By command' pidstat aggregation query for command='setroubleshootd' and inspect row count, series count, and concurrent PID behavior ... PY`
 13. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && uv run --dev --project . python - <<'PY' ... execute the command-filtered 'Aggregate by command' pidstat query for command contains 'setroubleshootd' and inspect row count, series count, and elapsed time ... PY`
+14. `cd validation/perf-collection && uv run --project . --extra dev pytest`
 
 ## Manual Checks
 
@@ -53,6 +54,7 @@ tags: [feature-work, verification, wintappy, qa, dbt, pidstat]
 - Confirmed that the new event-volume-by-type comparison query is viable on the current dataset: `5024` rows in `0.33s`, with active series for `process`, `file`, `network`, and `registry` on this dataset.
 - Confirmed that the new `By command` aggregation mode behaves as intended for repeated-instance families like `setroubleshootd`: the command-level query returned `380` rows in `0.27s`, collapsed to `1` visible series with concurrent-PID counts preserved per bucket.
 - Confirmed that the command substring filter works with aggregation mode: filtering for `setroubleshootd` still returns the expected single command-family series (`380` rows in `0.27s`).
+- Confirmed that the new manual-batch performance collection package passes its initial parser/output tests (`4 passed`), including a fake-procfs end-to-end write into partitioned `raw_sensor/perf_*` parquet paths.
 
 ## Results
 
@@ -82,6 +84,7 @@ tags: [feature-work, verification, wintappy, qa, dbt, pidstat]
 - Correlation view added: the pidstat section now includes a second Plotly chart showing 1-minute event counts by type over time from the normalized event-family tables, intended for visual comparison against the pidstat process-resource chart.
 - Aggregation-mode follow-up: the pidstat chart now supports both `Per process` and `By command` views. For `setroubleshootd` on the current dataset, command aggregation produces a clean family-level series while still exposing concurrent PID counts in hover.
 - Polish follow-up: the pidstat control row now exposes clearer labels (`Per process instance`, `Aggregate by command`) plus a `Command contains` filter, and the event-volume subplot stack now uses a bottom-axis range slider so its time-navigation behavior is closer to the pidstat chart above.
+- Manual-batch instrumentation slice landed in this repo under `validation/perf-collection/`: a Linux `/proc` collector writes `perf_smaps_rollup`, `perf_proc_status`, and `perf_fd_map` rows into canonical raw-style parquet partitions, and optional external stdout capture can persist `perf_dotnet_counters_raw` / `perf_lintap_diag_raw` lines in the same layout for quick iteration.
 
 ## Known Gaps
 
@@ -95,6 +98,7 @@ tags: [feature-work, verification, wintappy, qa, dbt, pidstat]
 - `By command` aggregation currently sums the selected metric across matching processes within a bucket. That is useful for total family footprint, but future UX may also want `average per instance` or `max instance` aggregation modes.
 - The event-volume chart currently uses one normalized count strategy per event family (`num_process_start + num_process_stop`, `event_count`, `total_events`, etc.). If a stricter cross-family notion of "event volume" is needed later, that definition should be made explicit and possibly promoted into a dedicated monitoring model.
 - The pidstat and event-volume charts still do not share truly linked zoom because they remain separate Plotly figures; the current improvement is comparable interaction style rather than synchronized navigation.
+- The new performance collectors are validated only against parser fixtures and a fake procfs tree on macOS so far; no live Linux run has yet been executed from this repo to prove the real `/proc` sampling path or optional external-command capture behavior.
 
 ## Follow-Ups
 
@@ -104,4 +108,5 @@ tags: [feature-work, verification, wintappy, qa, dbt, pidstat]
 - Consider whether the event-volume correlation chart should stay notebook-only or be promoted into a named monitoring view if it becomes a stable QA concept.
 - If linked navigation becomes important, consider collapsing the two charts into a single multi-row Plotly subplot figure so zoom/pan is naturally shared.
 - Decide whether `file_chart` and possibly `network_chart` need a later chart-specific detail contract for higher-fidelity timelines.
+- Run the new `validation/perf-collection` tooling on a Linux host against a real `Lintap` process, confirm parquet lands under `raw_sensor/perf_*`, and decide which of the provisional raw event types should be promoted from manual-batch usage to long-term sidecar collection.
 - Continue with the later feature slices: broader event-family cleanup and Analytics-side conflict handling.

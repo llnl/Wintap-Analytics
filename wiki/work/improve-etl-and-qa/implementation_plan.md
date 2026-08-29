@@ -128,6 +128,20 @@ First-slice target notebook changes:
 - Promote durable facts about the final ETL/QA contract into canonical wiki
   pages.
 
+8. Stage 8: Lintap memory-growth instrumentation
+
+- Use the current pidstat/event-volume evidence as the baseline symptom view.
+- First implement manual batch-mode capture in this repo so command choice,
+  schema, and overhead can be tuned quickly.
+- Add `/proc/<pid>/smaps_rollup` sampling for the `Lintap` PID.
+- Add .NET runtime counter capture for the `Lintap` process.
+- Add periodic internal queue/cache/backlog counters, starting with the file
+  pipeline and serializer path.
+- Write those streams as raw-style parquet event types so later promotion to
+  long-term sidecar collection does not require a storage-contract rewrite.
+- Extend QA views so memory-growth diagnosis can compare RSS/heap/backlog/event
+  volume over the same time windows.
+
 ## Recommended First Implementation Slice
 
 Stage 2 + Stage 4 + Stage 5 as one coherent first coding pass:
@@ -164,6 +178,8 @@ Why this slice first:
 - `../Wintappy/Makefile`
 - `streamlit/projects/common/dqautil.py`
 - `streamlit/projects/DataQA/pages/*.py`
+- instrumentation/ or diagnostics paths in the runtime repo once the collection
+  approach is selected
 
 ## Tests To Add Or Update
 
@@ -172,6 +188,8 @@ Why this slice first:
 - Query smoke checks for the canonical Marimo dashboard.
 - Focused regression checks for any Analytics-side legacy pages that remain in
   use.
+- Longer-run validation for the new memory-growth instrumentation streams and
+  their alignment with pidstat/event-volume windows.
 
 First-slice minimum verification:
 
@@ -207,4 +225,5 @@ First-slice minimum verification:
 - [ ] Stage 6 Analytics-side conflicts aligned, retired, or explicitly marked
 - [x] Reproducible `dbt build` and `dbt test` verification recorded
 - [x] Dashboard smoke verification recorded
+- [ ] Stage 8 Lintap memory-growth instrumentation planned and manual-batch tooling implemented
 - [ ] Durable facts promoted into canonical wiki pages
