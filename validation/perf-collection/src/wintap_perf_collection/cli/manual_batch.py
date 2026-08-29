@@ -125,6 +125,7 @@ def main() -> int:
     process_name = paths.comm.read_text(encoding="utf-8").strip()
 
     captures: list[LineCapture] = []
+    collector_errors: dict[str, str] = {}
     if args.dotnet_counters_command:
         captures.append(start_line_capture("perf_dotnet_counters_raw", args.dotnet_counters_command, args.hostname, pid, process_name, args.run_id))
     if args.lintap_diag_command:
@@ -134,9 +135,17 @@ def main() -> int:
     started = time.time()
     try:
         while time.time() - started < args.duration_seconds:
-            rows_by_event["perf_smaps_rollup"].append(collect_smaps_rollup_row(paths, args.run_id, hostname=args.hostname))
-            rows_by_event["perf_proc_status"].append(collect_proc_status_row(paths, args.run_id, hostname=args.hostname))
-            rows_by_event["perf_fd_map"].append(collect_fd_map_row(paths, args.run_id, hostname=args.hostname))
+            for event_type, collector in (
+                ("perf_smaps_rollup", collect_smaps_rollup_row),
+                ("perf_proc_status", collect_proc_status_row),
+                ("perf_fd_map", collect_fd_map_row),
+            ):
+                try:
+                    rows_by_event[event_type].append(collector(paths, args.run_id, hostname=args.hostname))
+                except PermissionError as exc:
+                    collector_errors.setdefault(event_type, f"permission denied: {exc}")
+                except FileNotFoundError as exc:
+                    collector_errors.setdefault(event_type, f"missing procfs path: {exc}")
             time.sleep(args.interval_seconds)
     finally:
         for capture in captures:
@@ -159,6 +168,7 @@ def main() -> int:
         "duration_seconds": args.duration_seconds,
         "interval_seconds": args.interval_seconds,
         "outputs": outputs,
+        "collector_errors": collector_errors,
     }
     print(json.dumps(summary, indent=2, sort_keys=True))
     return 0
