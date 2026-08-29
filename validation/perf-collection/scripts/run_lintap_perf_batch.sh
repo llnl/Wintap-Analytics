@@ -4,6 +4,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
+if [[ "${EUID}" -ne 0 ]]; then
+  exec sudo -E env "PATH=$PATH" bash "$0" "$@"
+fi
+
 DURATION_SECONDS="${DURATION_SECONDS:-300}"
 INTERVAL_SECONDS="${INTERVAL_SECONDS:-5}"
 PROCESS_NAME_SUBSTRING="${PROCESS_NAME_SUBSTRING:-Lintap}"

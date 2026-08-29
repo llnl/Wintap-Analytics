@@ -29,6 +29,22 @@ export WINTAP_DATA_ROOT=/tmp/lintap-perf
 uv run wpc-perf-batch --process-name-substring Lintap --duration-seconds 300 --interval-seconds 5
 ```
 
+If `Lintap` is running as a service account or `/proc` access is restricted,
+run the collector with `sudo` so `smaps_rollup`, `status`, `fd`, and `maps`
+can be read. The shell wrapper now self-elevates automatically if needed:
+
+```bash
+cd validation/perf-collection
+export WINTAP_DATA_ROOT=/tmp/lintap-perf
+bash scripts/run_lintap_perf_batch.sh
+```
+
+If you prefer to call the CLI directly, use `sudo -E` yourself:
+
+```bash
+sudo -E uv run wpc-perf-batch --process-name-substring Lintap --duration-seconds 300 --interval-seconds 5
+```
+
 Shell wrapper:
 
 ```bash
@@ -60,6 +76,48 @@ cd validation/perf-collection
 export WINTAP_DATA_ROOT=/tmp/lintap-perf
 bash scripts/run_lintap_perf_batch.sh
 ```
+
+If the summary reports `collector_errors` for `perf_smaps_rollup` or
+`perf_fd_map`, rerun with `sudo -E`.
+
+### dotnet-counters support
+
+Verify whether `dotnet-counters` is already installed:
+
+```bash
+which dotnet
+which dotnet-counters || true
+dotnet-counters --version
+```
+
+If `dotnet-counters` is missing but `dotnet` is present, install it as a global
+tool:
+
+```bash
+dotnet tool install -g dotnet-counters
+```
+
+If it is already installed and you just want the latest version:
+
+```bash
+dotnet tool update -g dotnet-counters
+```
+
+If `dotnet-counters` installs under `~/.dotnet/tools`, ensure that directory is
+on `PATH`:
+
+```bash
+export PATH="$HOME/.dotnet/tools:$PATH"
+```
+
+Quick smoke check against a running target PID:
+
+```bash
+dotnet-counters monitor --process-id <PID> --refresh-interval 5 System.Runtime
+```
+
+If that prints live counter rows, you can feed the same command into the manual
+batch collector via `DOTNET_COUNTERS_COMMAND=...`.
 
 Useful overrides:
 
