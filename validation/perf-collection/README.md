@@ -14,8 +14,8 @@ Current collectors:
 - `perf_smaps_rollup` from `/proc/<pid>/smaps_rollup`
 - `perf_fd_map` from `/proc/<pid>/fd` and `/proc/<pid>/maps`
 - `perf_proc_status` from `/proc/<pid>/status`
+- `perf_dotnet_counters` from file-based `dotnet-counters collect --format json|csv`
 - optional raw line capture from external commands:
-  - `perf_dotnet_counters_raw`
   - `perf_lintap_diag_raw`
 
 ## Quick Start
@@ -52,17 +52,31 @@ cd validation/perf-collection
 bash scripts/run_lintap_perf_batch.sh
 ```
 
+Focused root-owned-service wrapper:
+
+```bash
+cd validation/perf-collection
+bash scripts/capture_lintap_perf_for_user.sh
+```
+
+This wrapper is the recommended path when `Lintap` is running as `root` and you
+want the finished parquet handed back to the invoking user. It:
+
+- resolves the live target PID as `root`
+- runs `wpc-perf-batch` against that PID
+- auto-enables `dotnet-counters collect --format json` when available
+- `chown`s the output tree back to the invoking user after the capture finishes
+
 Optional external command capture:
 
 ```bash
-DOTNET_COUNTERS_COMMAND='dotnet-counters monitor --process-id 12345 --refresh-interval 5 System.Runtime' \
 LINTAP_DIAG_COMMAND='some-future-lintap-diag-command --jsonl' \
 bash scripts/run_lintap_perf_batch.sh
 ```
 
-The wrapper does not assume a specific `dotnet-counters` output format yet. It
-captures stdout lines as parquet rows so the command can be iterated on quickly
-without redesigning storage.
+For `.NET` runtime counters, the collector now uses `dotnet-counters collect`
+with file output and parses the resulting `json` or `csv` directly into
+`perf_dotnet_counters`. The older terminal-scraping `monitor` path is removed.
 
 ## Developer / Operator Usage
 
@@ -113,11 +127,14 @@ export PATH="$HOME/.dotnet/tools:$PATH"
 Quick smoke check against a running target PID:
 
 ```bash
-dotnet-counters monitor --process-id <PID> --refresh-interval 5 System.Runtime
+dotnet-counters collect --process-id <PID> --refresh-interval 5 --format json --output /tmp/dotnet-counters-smoke --duration 00:00:10 --counters System.Runtime
 ```
 
-If that prints live counter rows, you can feed the same command into the manual
-batch collector via `DOTNET_COUNTERS_COMMAND=...`.
+If the target process is owned by another user, the diagnostics attach may also
+need matching privileges even when parts of `/proc/<pid>` remain readable.
+
+If that writes a `json` or `csv` output file successfully, the root wrapper can
+use the same tool path for long perf captures.
 
 Useful overrides:
 
@@ -127,6 +144,36 @@ DURATION_SECONDS=300 \
 INTERVAL_SECONDS=5 \
 PROCESS_NAME_SUBSTRING=Lintap \
 bash scripts/run_lintap_perf_batch.sh
+```
+
+Equivalent focused root-wrapper example:
+
+```bash
+RUN_ID=lintap-perf-5m \
+DURATION_SECONDS=300 \
+INTERVAL_SECONDS=5 \
+WINTAP_DATA_ROOT=/tmp/lintap-perf \
+bash scripts/capture_lintap_perf_for_user.sh
+```
+
+If you want to skip runtime counters for one run:
+
+```bash
+ENABLE_DOTNET_COUNTERS=0 bash scripts/capture_lintap_perf_for_user.sh
+```
+
+If you want the procfs sampler and `dotnet-counters` on different cadences:
+
+```bash
+INTERVAL_SECONDS=5 \
+DOTNET_COUNTERS_REFRESH_INTERVAL=10 \
+bash scripts/capture_lintap_perf_for_user.sh
+```
+
+If you want `csv` instead of the default `json` output mode:
+
+```bash
+DOTNET_COUNTERS_FORMAT=csv bash scripts/capture_lintap_perf_for_user.sh
 ```
 
 If you already know the PID, call the CLI directly:
@@ -142,22 +189,22 @@ uv run wpc-perf-batch \
 ### 2. Optional external collectors
 
 If `dotnet-counters` or a future Lintap diagnostic command is available on the
-host, capture its stdout into provisional raw event types alongside the procfs
+host, capture structured runtime counters plus any future diagnostic stdout alongside the procfs
 collectors:
 
 ```bash
-DOTNET_COUNTERS_COMMAND='dotnet-counters monitor --process-id 12345 --refresh-interval 5 System.Runtime' \
+DOTNET_COUNTERS_FORMAT=json \
 LINTAP_DIAG_COMMAND='some-future-lintap-diag-command --jsonl' \
-bash scripts/run_lintap_perf_batch.sh
+bash scripts/capture_lintap_perf_for_user.sh
 ```
 
-Today these land as raw line-capture event types:
+Today these land as these event types:
 
-- `perf_dotnet_counters_raw`
+- `perf_dotnet_counters`
 - `perf_lintap_diag_raw`
 
-That is deliberate: it keeps command-format iteration cheap before we commit to
-a durable parsed schema.
+This keeps the `.NET` runtime path durable for long runs while still leaving the
+future Lintap-specific diagnostic command flexible.
 
 ### 3. Inspect what was written
 
@@ -168,7 +215,7 @@ $WINTAP_DATA_ROOT/parquet/raw_sensor/
   perf_smaps_rollup/
   perf_proc_status/
   perf_fd_map/
-  perf_dotnet_counters_raw/   # optional
+  perf_dotnet_counters/       # parsed from dotnet-counters collect output
   perf_lintap_diag_raw/       # optional
 ```
 
@@ -187,7 +234,7 @@ duckdb -c "
 - `perf_smaps_rollup`: whether the stair steps are mostly `RssAnon` vs `RssFile`
 - `perf_proc_status`: whether `VmRSS`, `RssAnon`, and context-switch counters move together
 - `perf_fd_map`: whether FD count or mapped-region count ratchets upward with RSS
-- optional `perf_dotnet_counters_raw`: whether GC/heap signals track RSS steps
+- optional `perf_dotnet_counters`: whether GC/heap signals track RSS steps
 
 ### 5. Current scope
 

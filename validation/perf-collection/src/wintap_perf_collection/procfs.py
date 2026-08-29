@@ -27,7 +27,7 @@ def parse_smaps_rollup(text: str) -> dict[str, int]:
         key, value = line.split(":", 1)
         key = key.strip()
         value = value.strip()
-        if not value:
+        if not value or not value.endswith("kB"):
             continue
         metrics[key] = parse_kb_value(value)
     return metrics

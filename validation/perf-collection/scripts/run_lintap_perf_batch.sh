@@ -23,7 +23,20 @@ ARGS=(
 )
 
 if [[ -n "${DOTNET_COUNTERS_COMMAND:-}" ]]; then
-  ARGS+=(--dotnet-counters-command "$DOTNET_COUNTERS_COMMAND")
+  printf 'DOTNET_COUNTERS_COMMAND is no longer supported; use DOTNET_COUNTERS_FORMAT/DOTNET_COUNTERS_REFRESH_INTERVAL with capture_lintap_perf_for_user.sh or wpc-perf-batch\n' >&2
+  exit 1
+fi
+
+if [[ -n "${DOTNET_COUNTERS_FORMAT:-}" ]]; then
+  ARGS+=(--dotnet-counters-format "$DOTNET_COUNTERS_FORMAT")
+fi
+
+if [[ -n "${DOTNET_COUNTERS_BINARY:-}" ]]; then
+  ARGS+=(--dotnet-counters-binary "$DOTNET_COUNTERS_BINARY")
+fi
+
+if [[ -n "${DOTNET_COUNTERS_REFRESH_INTERVAL:-}" ]]; then
+  ARGS+=(--dotnet-counters-refresh-interval "$DOTNET_COUNTERS_REFRESH_INTERVAL")
 fi
 
 if [[ -n "${LINTAP_DIAG_COMMAND:-}" ]]; then

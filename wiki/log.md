@@ -1653,3 +1653,52 @@ Known gap: not yet exercised against a live Linux `Lintap` process from this rep
 Pages created: `work/improve-etl-and-qa/dev_handoff.md`.
 Pages updated: `index.md`; `log.md`.
 Summary: recorded a host-oriented continuation handoff for the live Lintap experiment. It points the next session at the perf-collection package, the current QA notebook, and the new instrumentation plan; captures the real-run parquet row counts already observed on-host; and explicitly elevates embedded DuckDB inside the long-running .NET process as a major memory-growth suspect alongside file-pipeline and runtime/allocator hypotheses.
+
+## [2026-08-29] code | Live-host perf collector tightening on spk16
+
+Source: direct inspection of `/tmp/lintap-perf` parquet plus follow-up validation commands on the live `spk16` host against PID `743557` (`/usr/lib/lintap/Lintap`).
+Files changed: `validation/perf-collection/src/wintap_perf_collection/{procfs.py,cli/manual_batch.py}`; `validation/perf-collection/tests/{test_procfs.py,test_manual_batch.py}`; `validation/perf-collection/README.md`; `wiki/work/improve-etl-and-qa/{implementation_plan.md,verification.md}`; `wiki/log.md`.
+Implemented: tightened `smaps_rollup` parsing so the address-range header line no longer becomes a bogus parquet column, and added structured `perf_dotnet_counters` row derivation from captured `dotnet-counters monitor` console output while retaining `perf_dotnet_counters_raw`.
+Verification: `cd validation/perf-collection && uv run --project . --extra dev pytest` passed (`6 passed`). Existing on-host raw `dotnet-counters` parquet (`478` lines) now parses into `26` structured counter rows. Existing root-run `smaps`/`status` parquet still points toward anonymous/private memory (`RssAnon 2060344..2112368 kB`, flat `RssFile 169448 kB`, flat `AnonHugePages 1177600 kB`) with stable FD/map counts (`open_fd_count 485..487`, `mapped_regions 4776..4787`).
+Permission note: as the current unprivileged user on `spk16`, fresh live collection against the root-owned `Lintap` service can read `/proc/<pid>/status` but not `/proc/<pid>/smaps_rollup`, `/proc/<pid>/fd`, or the .NET diagnostics socket. End-to-end live verification of the fixed `smaps` path and a new `dotnet-counters` capture therefore remains blocked pending a host permission change.
+
+## [2026-08-29] code | Focused root-wrapper added for live spk16 captures
+
+Source: follow-up implementation request after the `spk16` permission check showed that the active `Lintap` service is root-owned and blocks fresh unprivileged `smaps`, `fd`, and .NET diagnostics access.
+Files changed: `validation/perf-collection/scripts/capture_lintap_perf_for_user.sh`; `validation/perf-collection/README.md`; `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Implemented: added a tactical root-side wrapper that self-escalates via `sudo`, resolves the live `Lintap` PID as `root`, runs `wpc-perf-batch` against that PID, auto-enables `dotnet-counters monitor ...` when available, and `chown`s the output tree back to the invoking user so the resulting parquet is immediately usable without wider host permission changes.
+Verification: `cd validation/perf-collection && bash -n scripts/capture_lintap_perf_for_user.sh` passed.
+
+## [2026-08-29] test | Fresh root-wrapper capture validated on spk16
+
+Source: operator-ran `validation/perf-collection/scripts/capture_lintap_perf_for_user.sh` against the live root-owned `Lintap` service on `spk16`, producing run `perf-1788028744` under `/tmp/lintap-perf/parquet/raw_sensor/`.
+Files changed: `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Results: fresh readable user-owned parquet landed for `perf_smaps_rollup`, `perf_proc_status`, `perf_fd_map`, `perf_dotnet_counters_raw`, and structured `perf_dotnet_counters`. The fixed `smaps_rollup` parser worked on live host data with no bogus header-derived column. Current memory remains mostly anonymous/private (`VmRSS 2405416..2452760 kB`, `RssAnon 2125524..2172868 kB`, flat `RssFile 169448 kB`, `Anonymous 2130236..2176124 kB`, `AnonHugePages 1208320..1292288 kB`) while FD/map counts stayed relatively stable (`open_fd_count 485..487`, `mapped_regions 4770..4791`). Structured runtime counters also landed successfully (`34` parsed rows across `26` counters), including `working_set_mb`, `gc_heap_size_mb`, `gc_committed_bytes_mb`, `cpu_usage`, and `allocation_rate_b_5_sec`.
+
+## [2026-08-29] test | One-hour idle baseline on spk16
+
+Source: operator-ran `capture_lintap_perf_for_user.sh` with run id `lintap-perf-60m` while the host was mostly idle.
+Files changed: `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Results: the one-hour procfs baseline completed with `714` rows each for `perf_smaps_rollup`, `perf_proc_status`, and `perf_fd_map`, covering `2026-08-29T19:01:21Z -> 2026-08-29T20:01:17Z`. RSS and anonymous memory fluctuated within roughly an 80-90 MB band but ended lower than they started (`smaps.Rss 2421536 -> 2389236 kB`, `status.VmRSS 2419140 -> 2386360 kB`, `Anonymous 2141500 -> 2109196 kB`, `RssAnon 2139248 -> 2106472 kB`), while FD/map counts remained broadly stable (`open_fd_count 486..494`, `mapped_regions 4765..4838`). This is useful negative evidence: on an idle host, the current `Lintap` instance did not keep ratcheting upward over an hour.
+Runtime-counter caveat: the raw `perf_dotnet_counters_raw` stream spans the full hour (`478` rows through `2026-08-29T20:01:22Z`), but the structured `perf_dotnet_counters` derivation only captured an initial burst (`44` parsed rows) because later `dotnet-counters monitor` screen-refresh output collapses multiple updates into ANSI-heavy composite lines. That points the next runtime-counter improvement toward `dotnet-counters collect --format json|csv` or a richer ANSI-aware parser.
+
+## [2026-08-29] code | dotnet-counters path moved to collect/json-csv
+
+Source: follow-up implementation request after the hour-long idle baseline showed that the old `dotnet-counters monitor` screen-scrape path was too lossy for durable long-run structured parsing.
+Files changed: `validation/perf-collection/src/wintap_perf_collection/cli/manual_batch.py`; `validation/perf-collection/scripts/{capture_lintap_perf_for_user.sh,run_lintap_perf_batch.sh}`; `validation/perf-collection/tests/test_manual_batch.py`; `validation/perf-collection/README.md`; `wiki/work/improve-etl-and-qa/{dev_handoff.md,verification.md}`; `wiki/log.md`.
+Implemented: removed the old monitor/raw `.NET` path, added direct parsing for `dotnet-counters collect --format json|csv`, and switched the root wrapper to auto-enable file-based `collect` output by default. The only remaining raw external-command capture in this package is the future-facing `perf_lintap_diag_raw` path.
+Verification: `cd validation/perf-collection && uv run --project . --extra dev pytest` passed (`8 passed`), covering JSON parsing, CSV parsing, and a fake-collector end-to-end parquet write. Also verified the real export schema locally by collecting both JSON and CSV from a temporary sample .NET process under `/tmp/opencode`.
+Host note: an assistant-run live smoke of the new root wrapper could not complete from this noninteractive session because `sudo` on `spk16` requires a terminal/password prompt. A user-run rerun on-host is still needed to replace the older monitor-derived `perf_dotnet_counters` host artifacts with new collect-based ones.
+
+## [2026-08-29] test | collect-based dotnet-counters host smoke validated on spk16
+
+Source: operator-ran `capture_lintap_perf_for_user.sh` with `RUN_ID=lintap-perf-collect-smoke`, `DOTNET_COUNTERS_FORMAT=json`, and `WINTAP_DATA_ROOT=/tmp/lintap-perf-collect` against the live root-owned `Lintap` service.
+Files changed: `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Results: the new collect-based `.NET` path worked end to end on the real host. `perf_dotnet_counters` landed as structured parquet with `108` rows across `27` distinct counter keys over `2026-08-29T20:36:46Z -> 2026-08-29T20:37:00Z`, including stable provider/name/type/tag/value fields and counters such as working set, GC heap size, GC committed bytes, allocation rate, CPU usage, exception count, threadpool metrics, and per-generation sizes/counts. Matching procfs smoke rows also landed (`4` each for `perf_smaps_rollup`, `perf_proc_status`, and `perf_fd_map`). This replaces the old monitor-derived host validation as the preferred runtime-counter capture path.
+
+## [2026-08-29] test | collect-based one-hour rerun on spk16
+
+Source: operator-ran a second `lintap-perf-60m` host capture after the collector switched to `dotnet-counters collect`, producing fresh `hourPK=21` parquet under `/tmp/lintap-perf/parquet/raw_sensor/`.
+Files changed: `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
+Results: the collect-based long run produced `9720` structured `perf_dotnet_counters` rows across `27` counter keys for `2026-08-29T20:41:27Z -> 2026-08-29T21:41:16Z`, plus `714` matching rows each for `perf_smaps_rollup`, `perf_proc_status`, and `perf_fd_map`. Memory again stayed within a bounded band rather than showing obvious monotonic runaway (`smaps.Rss 2389332 -> 2420164 kB`, range `2313792..2433876`; `VmRSS 2387040 -> 2416260 kB`, range `2308556..2428896`; `Anonymous 2109032 -> 2140112 kB`, range `2033484..2153568`). FD/map counts also stayed broadly stable (`open_fd_count 485..488`, `mapped_regions 4756..4866`). The new `.NET` telemetry spans the full hour cleanly, with examples including `working_set_mb 2384.67 -> 2471.87`, `gc_heap_size_mb 541.85 -> 659.10`, `gc_committed_bytes_mb 1252.23 -> 1254.89`, and `cpu_usage 12.06..23.06`.
+Operator note: this rerun reused the historical `run_id` value `lintap-perf-60m`, which caused naive cross-partition queries to blend the earlier monitor-era run with the new collect-based rerun. Future comparison runs should use distinct `RUN_ID`s.

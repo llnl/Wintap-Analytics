@@ -23,7 +23,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-08-27
+last_validated: 2026-08-29
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -225,5 +225,5 @@ First-slice minimum verification:
 - [ ] Stage 6 Analytics-side conflicts aligned, retired, or explicitly marked
 - [x] Reproducible `dbt build` and `dbt test` verification recorded
 - [x] Dashboard smoke verification recorded
-- [ ] Stage 8 Lintap memory-growth instrumentation planned and manual-batch tooling implemented
+- [x] Stage 8 Lintap memory-growth instrumentation planned and manual-batch tooling implemented
 - [ ] Durable facts promoted into canonical wiki pages

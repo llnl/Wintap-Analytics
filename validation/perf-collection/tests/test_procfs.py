@@ -20,6 +20,16 @@ Swap:                  0 kB
     assert parsed["RssFile"] == 444
 
 
+def test_parse_smaps_rollup_ignores_rollup_header_line() -> None:
+    text = """
+55eeec363000-7ffd5b538000 ---p 00000000 00:00 0                              [rollup]
+Rss:                1234 kB
+Anonymous:           333 kB
+""".strip()
+    parsed = parse_smaps_rollup(text)
+    assert parsed == {"Rss": 1234, "Anonymous": 333}
+
+
 def test_parse_status() -> None:
     text = """
 Name:\tLintap

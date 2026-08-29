@@ -220,6 +220,8 @@ Why:
 Recommended collection path:
 
 - use the lightest stable .NET counter path available on the target host
+- prefer file-oriented `dotnet-counters collect --format json|csv` over
+  terminal-oriented `monitor` scraping so long runs stay machine-parseable
 - record as timestamped rows in a separate table or CSV/parquet stream
 - raw event type: `perf_dotnet_counters`
 

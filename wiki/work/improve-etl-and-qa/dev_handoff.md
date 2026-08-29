@@ -59,14 +59,23 @@ Current state:
   - `perf_smaps_rollup`
   - `perf_proc_status`
   - `perf_fd_map`
+  - `perf_dotnet_counters` via file-based `dotnet-counters collect`
   - optional raw command captures:
-    - `perf_dotnet_counters_raw`
     - `perf_lintap_diag_raw`
 - A real host run has already been performed. Row counts reported by the user:
   - `perf_smaps_rollup`: `60`
   - `perf_proc_status`: `60`
   - `perf_fd_map`: `60`
-  - `perf_dotnet_counters_raw`: `478`
+  - older monitor-based `.NET` capture produced `478` raw lines, but the
+    current collector code now targets structured `perf_dotnet_counters` via
+    `dotnet-counters collect`
+- The new collect-based host paths are now verified on `spk16`:
+  - short smoke run under `/tmp/lintap-perf-collect/` produced `108`
+    `perf_dotnet_counters` rows across `27` counter keys plus matching procfs
+    rows
+  - a collect-based one-hour rerun produced `9720` `perf_dotnet_counters` rows
+    across `27` counter keys plus `714` rows each for `perf_smaps_rollup`,
+    `perf_proc_status`, and `perf_fd_map`
 
 Most important current insight:
 
@@ -76,6 +85,15 @@ Most important current insight:
   buffer retention rather than file-mapping growth.
 - The current pidstat/event-volume analysis also suggests file-event workload is
   the strongest external correlate of the stair-step memory pattern.
+- On the mostly idle host, the collect-based one-hour rerun did not show simple
+  monotonic memory ratcheting. RSS, anonymous memory, and AnonHugePages all
+  stayed within bounded bands, which strengthens the earlier burst/workload
+  hypothesis over a purely time-since-start explanation.
+- Lintap CPU during the collect-based one-hour rerun was still moderate rather
+  than near-zero: about `12.9%` min, `23.1%` max, `19.0%` average. CPU had only
+  weak-to-moderate correlation with memory (`corr(cpu, working_set) ~= 0.31`,
+  `corr(cpu, rss) ~= 0.28`), so CPU activity alone does not explain the memory
+  shape.
 
 Critical caveat for the next operator/dev to keep in mind:
 
@@ -99,31 +117,36 @@ Critical caveat for the next operator/dev to keep in mind:
 
    Start with:
 
-   - `perf_smaps_rollup`
-   - `perf_proc_status`
-   - `perf_fd_map`
-   - `perf_dotnet_counters_raw`
+    - `perf_smaps_rollup`
+    - `perf_proc_status`
+    - `perf_fd_map`
+    - `perf_dotnet_counters`
 
-   Confirm whether the memory stairs align more with:
+    Confirm whether the memory stairs align more with:
 
-   - anonymous/private memory growth
-   - fd/mmap growth
-   - or runtime/heap signals from .NET
+    - anonymous/private memory growth
+    - fd/mmap growth
+    - or runtime/heap signals from .NET
 
-2. Fix the current `smaps_rollup` parser artifact.
+   Important operational note:
 
-   The current rows show an obviously bogus extra column derived from the first
-   header line. The collector is useful already, but the parser should be
-   tightened before we rely on it for repeated runs.
+   - use a unique `RUN_ID` for every future host capture; an earlier rerun reused
+     `lintap-perf-60m`, which made naive cross-partition DuckDB queries blend an
+     older monitor-era run with the newer collect-based rerun
 
-3. Improve `dotnet-counters` capture from raw console text toward something more
-   machine-parseable.
+2. Confirm the current `smaps_rollup` parser stays clean on repeated runs.
 
-   Today it proves the command runs and is captured, but the output still
-   contains headers/control text. The next step is either:
+   The previous bogus extra column derived from the first header line has been
+   fixed. The next operator should just confirm new host parquet still has the
+   expected schema.
 
-   - choose a better `dotnet-counters` invocation/output mode, or
-   - add a parser that extracts structured counter rows from the raw lines.
+3. Keep using the new file-based `dotnet-counters collect` path on-host.
+
+   The old terminal-scraping `monitor` path has been removed. The current code
+   now runs `dotnet-counters collect --format json|csv` and parses the emitted
+   file into structured `perf_dotnet_counters` rows. This path is now validated
+   both by fixtures and by real host smoke/one-hour runs on `spk16`, and should
+   be treated as the canonical runtime-counter collection path for future runs.
 
 4. Keep DuckDB-in-process explicitly in the hypothesis set.
 
@@ -133,6 +156,14 @@ Critical caveat for the next operator/dev to keep in mind:
    - with write throughput?
    - with counter/heap changes?
    - or with patterns that look more like embedded DuckDB buffering / retention?
+
+5. Run the next contrast experiment under known workload.
+
+   The idle-baseline and collect-based idle rerun now suggest that simple
+   elapsed time is not enough to force continued memory ratcheting. The next
+   highest-value experiment is a controlled file-heavy perturbation run, using a
+   distinct `RUN_ID`, so CPU/heap/RSS behavior can be compared directly against
+   the idle baseline.
 
 ## Non-Goals For This Slice
 
@@ -147,8 +178,8 @@ Critical caveat for the next operator/dev to keep in mind:
 - Re-run the manual-batch collectors on the host after any collector/parser
   change.
 - Validate the resulting parquet with quick DuckDB queries on-host.
-- If `dotnet-counters` parsing changes, verify a small real capture rather than
-  relying only on fixtures.
+- If `dotnet-counters` collection/parsing changes, verify a small real capture
+  rather than relying only on fixtures.
 
 ## Closeout Instructions
 
