@@ -9,7 +9,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/esper/file.epl
   - ../wintap/wintap/core/etl/extract/FileSerializer.cs
 policy: agent-editable
-last_validated: 2026-08-27
+last_validated: 2026-08-31
 repo_scope: wintap
 implementation_area: data-pipeline
 event_domain: file
@@ -23,6 +23,12 @@ tags: [wintap, lintap, ebpf, file-events, aggregation, esper, parquet, cross-rep
 
 Promoted from [[wiki/work/optimize-fileops-poller/brief]] (closed
 2026-08-27). Kernel-to-parquet path for Linux file events.
+
+Owning implementation is currently on the sibling `../wintap` feature branch;
+its durable commit anchors are `1db7137` and `2d3f795`. Until those
+placeholder is replaced, use the live source paths above plus
+[[wiki/work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31]]
+for the hash-, run-, and window-qualified field evidence.
 
 ## Stages And Contracts
 
@@ -43,6 +49,17 @@ Promoted from [[wiki/work/optimize-fileops-poller/brief]] (closed
   timestamps, identity stamped at first occurrence. Count AND byte
   conservation field-proven by the kill-switch A/B differential.
 - **Sender queue**: bounded 524,288, drop-newest, counted.
+- **Sender execution**: one `FileOps-Sender` thread dequeues one event at a time,
+  then synchronously runs EventChannel attribution and Esper submission. A
+  current-process cache miss can fall through to DuckDB under the resolver's
+  global lock. The 2026-08-30 saturated run averaged 5.14 ms sampled send time
+  and 118 cache misses/s; isolated `file.epl` itself handled about 179k events/s,
+  making attribution/miss handling the leading optimization target.
+- **Historical identity fast path**: a File active-cache miss now checks a
+  bounded, PID-reuse-safe cache of closed process intervals before DuckDB.
+  Periodic diagnostics expose its hits/misses/entries/evictions, while sampled
+  sender timing separately reports average and maximum resolve, health, Esper,
+  and total duration.
 - **Esper composition** (`file.epl`): 10s `time_batch`, group by
   (path, PidHash, PID, activityType, ProcessName, AgentId),
   `sum(eventCount)`/`sum(bytesRequested)`, min/max first/last seen.
@@ -70,9 +87,24 @@ Promoted from [[wiki/work/optimize-fileops-poller/brief]] (closed
   [[wiki/work/extended-deployment-monitoring/brief]].
 - Aggregation-OFF mode floods the serializer queue; only for short
   diagnostics (the A/B raises the cap for its run).
+- NEsper `time_batch` expiration can contend with concurrent ingress at high
+  cardinality, but outbound listener threading did not improve that benchmark.
+  Replacing File EPL with the TCP/UDP context pattern failed an exact-count
+  concurrent-boundary test and is not an accepted optimization.
+- The 2026-08-30/31 overnight run showed the userspace FD-path cache growing
+  `24 -> 11184` entries (about `1058/hour`) while process RSS continued rising
+  post-warm-up at about `35 MB/hour`, slowing to about `19 MB/hour` over the
+  final four hours. RSS/FD-entry level correlation was `0.929` overall and
+  `0.938` after 22:00, while minute-delta correlation was only `0.253`.
+  Conservative process-exit plus age/capacity eviction is the leading residual
+  memory follow-up, but causation is not yet proven.
 
 ## Verification
 
 Milestone tests T1-T6 in [[wiki/work/optimize-fileops-poller/test_plan]];
 the kill-switch A/B (`validation/fileops-differential/run_fop11_ab.sh`)
 is THE regression gate for this pipeline.
+
+The historical-cache and long-run FileOps findings are verified in
+[[wiki/work/improve-etl-and-qa/esper-sender-path-analysis-2026-08-30]] and
+[[wiki/work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31]].
