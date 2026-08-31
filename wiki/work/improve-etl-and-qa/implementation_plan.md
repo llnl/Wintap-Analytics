@@ -23,7 +23,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-08-29
+last_validated: 2026-08-31
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -137,6 +137,8 @@ First-slice target notebook changes:
 - Add .NET runtime counter capture for the `Lintap` process.
 - Add periodic internal queue/cache/backlog counters, starting with the file
   pipeline and serializer path.
+- Add CPU-attribution timing/cardinality signals before behavior-changing
+  optimizations, then validate them in a short controlled capture.
 - Write those streams as raw-style parquet event types so later promotion to
   long-term sidecar collection does not require a storage-contract rewrite.
 - Extend QA views so memory-growth diagnosis can compare RSS/heap/backlog/event
@@ -226,4 +228,24 @@ First-slice minimum verification:
 - [x] Reproducible `dbt build` and `dbt test` verification recorded
 - [x] Dashboard smoke verification recorded
 - [x] Stage 8 Lintap memory-growth instrumentation planned and manual-batch tooling implemented
-- [ ] Durable facts promoted into canonical wiki pages
+- [x] Stage 8 CPU observability and serializer safety first slice implemented
+- [x] Stage 8 FileSerializer cadence and no-drop smoke gate implemented
+- [x] Stage 8 FileSerializer high-water burst drain and stress gate implemented
+- [x] Stage 8 generic kernel FileOps deny-policy primitive implemented
+- [x] Stage 8 FileOps sender/Esper path benchmarked and empty subscriber route removed
+- [x] Stage 8 bounded historical process-identity cache and sender stage timing implemented
+- [ ] Stage 8 FileOps FD-path cache process-exit/age/capacity eviction
+- [x] Durable FileOps, process-identity-cache, Esper, and CPU-unit facts promoted
+  into canonical wiki pages; broader ETL family-contract promotion remains open
+
+## Future Investigations
+
+- Design rate/type-aware adaptive FileOps sampling that retains representative
+  events and weighted count/byte estimates instead of hard-dropping all matched
+  activity.
+- Promote queue, timing, cache, policy, resolver, serializer, and loss
+  diagnostics from log-only summaries into versioned raw-style Parquet and DBT
+  models. See [[future-adaptive-fileops-and-diagnostics-data]].
+- Turn the overnight pidstat/FileOps phase, trend, correlation, and recovery
+  analysis into a focused Marimo notebook or a dedicated section of the
+  canonical Wintappy QA notebook.

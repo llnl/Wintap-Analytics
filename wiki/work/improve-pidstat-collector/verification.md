@@ -213,6 +213,10 @@ Result: per-file row counts were `4731`, `19839`, `19631`, and `14896`.
 - S3 upload was not exercised; this slice intentionally kept upload verification
   read-only/manual because deployment-specific `ETLConfig.json` enablement is
   required and no external access is assumed.
+- 2026-08-31 operator update: the current field deployment now pushes pidstat
+  Parquet to S3 through the sensor upload path. This supersedes the preceding
+  gap for that deployment only; shipped defaults still require explicit S3
+  enablement. Retrieval of the `spk16` overnight partitions is pending.
 
 ## Independent Review (2026-08-12)
 

@@ -1702,3 +1702,160 @@ Source: operator-ran a second `lintap-perf-60m` host capture after the collector
 Files changed: `wiki/work/improve-etl-and-qa/verification.md`; `wiki/log.md`.
 Results: the collect-based long run produced `9720` structured `perf_dotnet_counters` rows across `27` counter keys for `2026-08-29T20:41:27Z -> 2026-08-29T21:41:16Z`, plus `714` matching rows each for `perf_smaps_rollup`, `perf_proc_status`, and `perf_fd_map`. Memory again stayed within a bounded band rather than showing obvious monotonic runaway (`smaps.Rss 2389332 -> 2420164 kB`, range `2313792..2433876`; `VmRSS 2387040 -> 2416260 kB`, range `2308556..2428896`; `Anonymous 2109032 -> 2140112 kB`, range `2033484..2153568`). FD/map counts also stayed broadly stable (`open_fd_count 485..488`, `mapped_regions 4756..4866`). The new `.NET` telemetry spans the full hour cleanly, with examples including `working_set_mb 2384.67 -> 2471.87`, `gc_heap_size_mb 541.85 -> 659.10`, `gc_committed_bytes_mb 1252.23 -> 1254.89`, and `cpu_usage 12.06..23.06`.
 Operator note: this rerun reused the historical `run_id` value `lintap-perf-60m`, which caused naive cross-partition queries to blend the earlier monitor-era run with the new collect-based rerun. Future comparison runs should use distinct `RUN_ID`s.
+
+## [2026-08-29] review | Lintap long-run CPU readiness
+
+Sources read: current committed `../wintap` Lintap paths for serializer, FileOps aggregation/cache, cache/upload, EventChannel, and process retention; current `validation/perf-collection` collectors; and the `spk16` one-hour verification record.
+Pages created: `work/improve-etl-and-qa/cpu-growth-review-2026-08-29.md`.
+Pages updated: `work/improve-etl-and-qa/dev_handoff.md`; `index.md`; `log.md`.
+Findings: the current roughly 19% idle-host CPU result is a baseline, not a growth trend. Review identified queue/flush work, unmatched FileOps FD-path state, aggregation sweeps, cache/upload cycles, and process-retention maintenance as concrete CPU or joint CPU/memory candidates. Next work is measurement-first: long baseline, per-thread/stack attribution, cadence correlation, and low-overhead queue/cache/cycle diagnostics, all gated by zero-drop and count/byte-conservation evidence.
+
+## [2026-08-29] code | Lintap CPU observability and serializer safety first slice
+
+Branch: `../wintap` `grantj-lintap-cpu-observability` from current `develop` after `git fetch --all --prune`.
+Files changed: `../wintap/wintap/core/etl/extract/Serializer.cs`; `../wintap/wintap/platform/linux/sensor/ebpf/{FileOpsAggregator,FileOpsSensor}.cs`; `../wintap/wintap/core/etl/load/CacheManager.cs`; `../wintap/wintap/core/infrastructure/ProcessResolver.cs`; `../wintap/tests/Wintap.Tests/FileOpsAggregatorTests.cs`; feature verification/plan/handoff records.
+Implemented: serializer flushes cannot overlap, emit drain/duration/remaining-queue/Parquet-backlog diagnostics, and group message types in a single pass. FileOps now reports FD-cache cardinality and aggregation flush timing. Cache/upload and process-retention cycles report elapsed time and bounded-state context. No sensor filters, aggregation semantics, queue limits, or drop policies changed.
+Verification: `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter "FullyQualifiedName~FileOpsAggregatorTests"` passed (10/10). The unfiltered Wintap test project remains Linux-incompatible because pre-existing Windows SID/ETW tests fail and the test host aborts during ETW cleanup.
+
+## [2026-08-30] test | First CPU-observability one-hour Lintap capture
+
+Source: `/tmp/lintap-perf/parquet/raw_sensor/*/dayPK=20260830/hourPK=00/` and `/var/log/lintap/Logs/Lintap.log` on `spk16`, targeting Lintap PID `2400026`.
+Results: CPU averaged `11.42%`; the first and second halves averaged `11.39%` and `11.44%`, so no within-hour CPU ratchet was observed. This was startup-adjacent, with service start eight minutes before sampling. The critical result is fidelity failure: `fileserializer` reached its active 10,000-event cap continuously and had dropped at least `394529` file events by 17:25 PDT. Its flushes took `2..19 ms` with no overlap, FileOps sender drops were zero, and aggregation cap bypass was zero, isolating the immediate problem to serializer admission/batch cadence. FD-cache metrics rose from `20` PID maps / `24` entries to `1439` / `1784`, confirming the long-run cache-growth risk. Cache-cycle and resolver-maintenance timing are recorded in the verification artifact.
+
+## [2026-08-30] review | FileOps aggregation regression check
+
+Sources read: last-week FileOps/fop history in `../wintap`, current eBPF-to-Esper-to-serializer path, deployed `/usr/lib/lintap/ETLConfig.json`, `/usr/lib/lintap/esper/file.epl`, and deployed BPF-object hashes.
+Result: no evidence that the recent fop aggregation work regressed or that aggregation is bypassed. The deployed EPL and FileOps BPF object exactly match current source; the EPL contains the `AgentId` grouping fix for the historical n-squared inflation bug. Positive `repeats_folded` and zero `cap_bypass` show aggregation is active. Its emit-first, `(pid,path,operation)`-keyed, one-second design intentionally does not reduce high-cardinality unique file activity, so it cannot prevent the demonstrated downstream 10,000-event serializer-cap loss by itself. The cap and drop policy predate the last-week fop work.
+
+## [2026-08-30] code | FileSerializer no-drop cadence
+
+Prediction recorded before implementation: a five-second FileSerializer-only flush cadence should keep observed post-aggregation file volume below the existing 10,000-event cap, eliminating serializer-drop warnings without changing FileOps count/byte semantics or other serializers' 60-second cadence.
+Branch: `../wintap` `grantj-lintap-cpu-observability`.
+Implemented: added `FileSerializationIntervalSec` (default `5`) to ETL configuration and used a unit-tested serializer schedule resolver so only `fileserializer` overrides the general interval. Older ETL configs that omit the field default to five seconds. Extended `devtools/file_capture_smoke_test.py` with a post-start FileSerializer-drop log gate and configurable observation window.
+Verification: focused `FileOpsAggregatorTests` plus `SerializerScheduleTests` passed (`14/14`); `dotnet build wintap/Lintap.csproj` passed with 0 errors; `python3 -m py_compile devtools/file_capture_smoke_test.py` passed. Host validation remains required after redeploy.
+
+## [2026-08-30] test | FileSerializer five-second redeploy result
+
+Result: deployment logged `fileserializer: serializer flush interval=5s`, and the bounded no-drop smoke passed. The strict prediction did not hold across early live bursts: the log shows cap hits at `18:59:52` (`dropped=1`) and `19:03:12` (`dropped=434`). Five seconds materially reduced loss from the prior run but did not eliminate it. Next slice: schedule a single non-overlapping immediate FileSerializer drain below the 10,000-event cap, retaining the periodic cadence as a backstop; validate it with a controlled high-volume no-drop test before another long capture.
+
+## [2026-08-30] code | FileSerializer high-water burst drain
+
+Prediction recorded before implementation: one immediate non-overlapping drain at a 5,000-event FileSerializer high-water mark leaves 5,000 events of burst headroom below the existing cap, eliminating serializer drops without changing event semantics or idle batching.
+Branch: `../wintap` `grantj-lintap-cpu-observability`.
+Implemented: added `FileSerializationHighWaterEvents` default `5000`; FileSerializer schedules one worker at threshold, waits behind an active drain if needed, and rechecks state after completion. High-water drains log `trigger=high_water`. The file smoke test now supports `--unique-file-count` for a high-cardinality burst and avoids per-file fsync for that stress mode.
+Verification: focused `FileOpsAggregatorTests` plus `SerializerScheduleTests` passed (`18/18`); `dotnet build wintap/Lintap.csproj` passed with 0 errors; `python3 -m py_compile devtools/file_capture_smoke_test.py` passed. Host stress validation remains required after redeploy.
+
+## [2026-08-30] test | FileSerializer high-water stress gate passed
+
+Source: live `spk16` `/var/log/lintap/Logs/Lintap.log` after the high-water redeploy and controlled `--unique-file-count 6000` smoke.
+Result: the log recorded the 5,000-event threshold, 18 high-water requests, and corresponding `trigger=high_water` drains of about 5,000 rows. Drains were normally `2..16 ms` with one `86 ms` outlier, had `skipped_overlap=0`, and left only `2..542` rows queued. No new FileSerializer backlog-cap warning appeared after the smoke marker. The controlled no-drop burst prediction passed; next acceptance gate is a warmed-up unique-run-ID one-hour capture with concurrent log review.
+
+## [2026-08-30] review | Lintap eBPF path, diagnostics, and validation audit
+
+Sources read: `../wintap` Linux subscription, eBPF base/sensor/tracer, EventChannel, Esper, devtools, and tests; Analytics performance-collector CLI and both wrappers.
+Pages created: `work/improve-etl-and-qa/ebpf-path-audit-2026-08-30.md`.
+Pages updated: `index.md`; `log.md`.
+Findings: sensor overlap is mostly intentional layered coverage. Concrete cleanup candidates are mismatched documented sensor toggle names, fallback capability visibility, Network extra-attach cleanup, invalid EventChannel rate accounting, bounded FileOps FD-cache cleanup, ambiguous generic BPF map polling, fidelity snapshots in perf capture, stale OpenAt source, and wrapper PID/ownership/counter inconsistencies. The work note also seeds the later developer, architect, and reviewer documentation set.
+
+## [2026-08-30] analysis | Tenable scan storm overwhelms FileOps sender
+
+Source: `lintap-perf-20260830` parquet plus `/var/log/lintap/Logs/Lintap.log` during the matching hour.
+Pages created: `work/improve-etl-and-qa/tenable-scan-storm-response-2026-08-30.md`.
+Pages updated: `index.md`; `log.md`.
+Results: FileSerializer remained free of backlog warnings, but FileOps sender depth climbed from about 419k to the 524288 cap and then dropped events continuously. Aggregation cap bypass and summary-enqueue failures appeared at saturation. The storm therefore bottlenecks synchronous FileOps sender/EventChannel/Esper work upstream of serialization. Recommended future slice: an opt-in generic kernel exact-`comm` deny policy with per-rule/per-operation pre-ring suppression counters, preceded by local evidence identifying actual worker names; do not hard-code a Tenable name or infer scanner process-tree membership.
+
+## [2026-08-30] code | Generic kernel FileOps deny policy
+
+Prediction: an empty list changes no behavior; each configured exact raw Linux `comm` policy hit is counted by rule and operation before ring reservation, so it removes selected activity from all downstream capacity domains without claiming to count all vendor filesystem activity.
+Branch: `../wintap` `grantj-lintap-cpu-observability`.
+Implemented: added empty-by-default `FileOpsDenyComms` / `WINTAP_FILEOPS_DENY_COMMS`, a bounded exact-name parser, CO-RE and tracepoint fallback BPF deny maps and policy-stat maps, post-load map installation with fail-closed startup for a configured-but-uninstallable policy, and periodic policy counter deltas in FileOps logs. Rules are exact/case-sensitive, max 15 UTF-8 names, each max 15 bytes.
+Verification: both FileOps BPF tiers compiled through `make build_ebpf`; `dotnet build wintap/Lintap.csproj` passed with 0 errors; focused aggregation/policy/schedule tests passed (`22/22`). No live rule test ran because scanner-exclusive worker names have not yet been established.
+
+## [2026-08-30] evidence | First scanner deny-rule candidate identified
+
+Source: live `spk16` process tree during the active weekly scan.
+Result: `nessus-agent-module` runs multiple `tenable-utils-LINUX-x86_64.bin find / ...` workers. Their exact Linux `comm` is `tenable-utils-L` (15 bytes), making it the first defensible policy candidate. Generic helpers (`find`, `rpm`, `sed`, `sh`) remain out of scope. The controlled first rollout is `WINTAP_FILEOPS_DENY_COMMS=tenable-utils-L` with a 10-minute in-scan fidelity check.
+
+## [2026-08-30] test | Tenable worker kernel policy live gate passed
+
+Source: active `spk16` weekly scan and `/var/log/lintap/Logs/Lintap.log` FileOps summaries.
+Result: `WINTAP_FILEOPS_DENY_COMMS=tenable-utils-L` suppressed `dir_open=114102` then `117327` attempts in consecutive 60-second windows. Sender depth was `853` then `192`, with zero sender drops, aggregation cap bypass, and summary enqueue failures. This contrasts with the prior scan's sustained 524288-entry queue saturation. The policy's pre-ring accounting and containment contract is validated for the observed Tenable utility workers.
+
+## [2026-08-30] code | Normalize pidstat CPU naming and documentation
+
+Sources changed: `../Lintap/pidstat-collector.py`; `../Lintap/README.md`; `../Wintappy/wintap_dbt/models/{silver/pidstat_metrics,gold/pidstat_process_summary}.sql`; `../Wintappy/notebooks/wintap_dbt_overview.py`; `../Wintappy/wintap_dbt/README.md`.
+Implemented: retained raw `cpu_percent` compatibility, added normalized `cpu_core_percent` and gold core-percent aliases, updated canonical QA labels to `CPU (core-summed %)`, and documented conversion to host-normalized CPU. Created canonical `concept/lintap-cpu-unit-conventions.md`.
+Verification: Lintap pidstat collector tests passed (`14/14`); Wintappy dashboard compiled; full Wintappy `make dbt-build` passed (`PASS=78 WARN=0 ERROR=0`).
+
+## [2026-08-30] test | One-hour Tenable-filtered capture
+
+Source: `lintap-perf-20260830-tenable-filter` perf parquet under `dayPK=20260830/hourPK=20` plus matching Lintap log records.
+Results: the capture covered `19:13:55Z -> 20:13:54Z` with 714 procfs samples. The policy-enabled pipeline recorded no FileOps sender drops, aggregation cap bypass, summary enqueue failures, or FileSerializer backlog warnings. Runtime CPU averaged `22.4%` host-normalized, about `7.2` core-summed CPUs on the 32-logical-CPU host. Limitation: the latter half overlapped a Wintappy DBT build, increasing FileOps queue depth and CPU/memory, so this is a no-loss policy/stress success rather than a clean performance baseline. Follow-up: run a quiet-host one-hour comparison after scan and analytics activity finish.
+
+## [2026-08-30] analysis | No-Tenable capture reveals persistent FileOps saturation
+
+Source: `lintap-perf-20260830-no-tenable` perf parquet under `dayPK=20260830/hourPK=22` plus `/var/log/lintap/Logs/Lintap.log` for the matching `14:49:06-15:49:05 PDT` window.
+Pages created: `work/improve-etl-and-qa/no-tenable-run-analysis-2026-08-30.md`.
+Pages updated: `work/improve-etl-and-qa/verification.md`; `work/improve-etl-and-qa/dev_handoff.md`; `work/improve-etl-and-qa/tenable-scan-storm-response-2026-08-30.md`; `index.md`; `log.md`.
+Results: all 60 policy summaries reported zero suppression, but FileOps sender depth remained near its 524288 cap and the hour recorded `601126` sender drops plus `192774` summary enqueue failures. FileSerializer stayed healthy (`0` warnings, `26` high-water drains, max remaining `170`, max drain `3 ms`). CPU averaged `30.82%` host-normalized; RSS and anonymous memory were stable within the hour. The filtered run's queue had grown `7860 -> 338592` and first dropped 23 minutes after its capture; queue/RSS correlation during that growth was `r=0.749`. Conclusion: the policy controlled its exact Tenable worker, but the non-policy sender path is not sustainable and another long baseline is blocked pending sender CPU/throughput attribution and a zero-loss low-depth gate.
+
+## [2026-08-30] analysis | FileOps sender and Esper throughput
+
+Sources: `../wintap` FileOps sender, EventChannel, ProcessResolver, PluginManager, File EPL/serializer, NEsper 8.9 threading API, the no-Tenable log window, and new isolated benchmark runs in `diagnostics/nesper-repro`.
+Pages created: `work/improve-etl-and-qa/esper-sender-path-analysis-2026-08-30.md`.
+Pages updated: `pipeline/nesper-esper-event-stream-processing.md`; `component/fileops-event-pipeline.md`; `work/improve-etl-and-qa/{verification,dev_handoff,implementation_plan}.md`; `index.md`; `log.md`.
+Code changed in `../wintap`: added deterministic NEsper throughput/fidelity scenarios; stopped deploying the broad all-event subscriber statement when ETL is enabled but no subscriber plugin exists; corrected nested-enum EPL generation from `.` to `$` without enabling the opt-in rewrite.
+Results: production-shaped `file.epl` sustained a median `178756` synthetic events/s with exact count/byte conservation, versus the live sender's implied `194.7/s` ceiling and `118.3` process-cache misses/s. The redundant broad statement reduced isolated throughput to `62785/s`. Outbound threading gave no meaningful gain; context aggregation reduced ingress and failed concurrent-boundary fidelity. Lintap build passed with 0 errors and the default NEsper repro passed all queries. No live redeploy was performed because the low-risk Esper cleanup is not sufficient by itself to resolve the dominant process-resolution bottleneck.
+
+## [2026-08-30] code | Bounded historical process identity cache
+
+Sources changed: `../wintap/wintap/core/infrastructure/{BoundedEventTimeCache,IProcessResolver,ProcessResolver,EventChannel}.cs`; `../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs`; `../wintap/tests/Wintap.Tests/{BoundedEventTimeCacheTests,ProcessResolverTests}.cs`; `../wintap/diagnostics/nesper-repro/{Program.cs,README.md}`.
+Implemented: File-only historical identity resolution now uses a configurable 32,768-entry LRU of closed process intervals before DuckDB; retention seeds entries before deletion and the triggering lookup retries after maintenance. Newest valid create time wins across PID reuse. Event-time and Stop/reconciliation SQL preserves sub-second timestamps. Removed per-query debug logging. FileOps sampled timing now reports atomic average/max totals split into resolve, health, and Esper stages, plus historical-cache counters.
+Verification: Lintap build passed with 0 errors; combined cache/resolver/FileOps/policy/serializer tests passed `39/39`; resolver tests include sub-second PID reuse and lookup-triggered retention deletion. Simulated 5 ms miss cost produced about `200/s`, `400/s`, `799/s`, `1995/s`, and `1.06M/s` at 0%, 50%, 75%, 90%, and 100% hits. A 50k-key/32,768-cap run evicted exactly 17,232 entries and stayed bounded. Independent review found no deployment blocker after fixes. Live deployment was not run because noninteractive sudo requires a password.
+
+## [2026-08-30] test | Historical identity-cache ten-minute live gate
+
+Source: operator-deployed `lintap-0.3.4-1.el8.x86_64`, `/var/log/lintap/Logs/Lintap.log`, and `/var/log/lintap/parquet/fileserializer` on `spk16`.
+Deployment verification: installed DLL hash matched the `0.3.4` publish payload (`7bd7ab38...`); PID `3322161` started at `20:54:30 PDT`; startup logged cache capacity `32768`, plugin count zero, and no redundant broad subscriber EPL.
+Results: ten FileOps intervals had queue depth `0..1889`, zero sender drops/summary failures/cap bypass/cache evictions, and an `82.7%` historical-cache hit rate (`32700/39537`). Weighted sender latency fell from the prior `5135.7 us` to `449.7 us`; resolution was `445.1 us` and Esper `2.7 us`. FileSerializer drained `221668` rows through 63 flushes with zero warnings/errors and current Parquet output remained readable. Short gate PASS; continue extended monitoring for cache-capacity and rare ~56 ms resolution stalls.
+
+## [2026-08-31] test | Historical identity-cache overnight and recovery gate
+
+Source: uninterrupted `lintap-0.3.4` PID `3322161`, `/var/log/lintap/Logs/Lintap.log`, readable serializer Parquet, and the existing 6,000-file high-cardinality smoke.
+Pages created: `work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31.md`.
+Pages updated: `component/process-table-retention.md`; `work/improve-etl-and-qa/{verification,dev_handoff}.md`; `index.md`; `log.md`.
+Passive results: 10h23m, 617 FileOps intervals, queue average/max `5205.5/17387`, cache hit rate `75.4%`, 394252 bounded evictions, sender/resolve/Esper averages `560.6/547.1/12.0 us`, and zero sender drops, summary failures, cap bypass, serializer warnings, or send errors. FileSerializer drained 11.2M rows. Controlled result: 6,000-file smoke PASS with all five activities; queue high-water `71802`, next-interval depth below pre-burst, and zero fidelity loss. Limitation: logs/Parquet-only mode supplied no overnight CPU/RSS/GC/FD/map slopes.
+
+## [2026-08-31] backlog | Adaptive FileOps sampling and diagnostic Parquet
+
+Source: operator future-work requests after the historical-cache overnight validation.
+Pages created: `work/improve-etl-and-qa/future-adaptive-fileops-and-diagnostics-data.md`.
+Pages updated: `work/improve-etl-and-qa/implementation_plan.md`; `index.md`; `log.md`.
+Future items: investigate event-rate/type-aware adaptive sampling that preserves representative scan telemetry with weighted count/byte estimates; convert timing, queue, cache, policy, resolver, serializer, and loss diagnostics from log text into first-class partitioned Parquet and DBT data. No implementation decision was made.
+
+## [2026-08-31] backlog | Reusable Marimo performance analysis
+
+Source: operator request while analyzing the retrieved overnight pidstat aggregate.
+Pages updated: `work/improve-etl-and-qa/future-adaptive-fileops-and-diagnostics-data.md`; `work/improve-etl-and-qa/implementation_plan.md`; `log.md`.
+Future item: promote the current local-time partition selection, passive/burst phase labeling, pidstat resource trends, FileOps diagnostic alignment, correlations, and recovery metrics into a focused Marimo notebook or a separated section of Wintappy's canonical QA notebook.
+
+## [2026-08-31] analysis | Retrieved overnight pidstat resource trends
+
+Source: `/tmp/spk16-lintap-pidstat-overnight-1m.parquet`, retrieved from S3 using local `dayPK`/`hourPK` pruning and aligned with the overnight Lintap log.
+Pages updated: `work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31.md`; `component/fileops-event-pipeline.md`; `work/improve-etl-and-qa/verification.md`; `log.md`.
+Results: passive CPU averaged `10.12%` host-normalized and was stable post-warm-up. RSS continued increasing post-22:00 at about `35 MB/hour`, slowing to about `19 MB/hour` over the last four hours. FileOps FD-path entries grew `24 -> 11184` at about `1058/hour`; RSS/entry level correlation was `0.929` overall (`0.938` post-22), while minute-delta correlation was `0.253`. FD-cache cleanup is now the leading residual memory hypothesis. The controlled 6,000-file phase averaged `10.44%` host CPU and did not leave a material RSS step.
+
+## [2026-08-31] closeout | Owning commits anchored and Wintap gates strengthened
+
+Owning commits: `../wintap` `c03d731..2d3f795`; `../Lintap` `1b23f77`; `../Wintappy` `a53cce6..e4b3bc3`.
+Wintap cleanup: explicit zero serializer settings now retain inherit/disable semantics, policy counter reporting has an event-independent timer, unresolved historical-cache retries no longer double-count misses, and the high-cardinality smoke requires at least 95% distinct-path coverage.
+Verification: Wintap Linux build passed, both BPF tiers built, focused tests passed `41/41`, and the strengthened live smoke captured `6000/6000` distinct paths with open/read/write/close/delete and no serializer loss.
+
+## [2026-08-31] maintenance | ETL/QA documentation current-state cleanup
+
+Pages updated: `work/improve-etl-and-qa/{verification,dev_handoff,implementation_plan,no-tenable-run-analysis-2026-08-30,tenable-scan-storm-response-2026-08-30,esper-sender-path-analysis-2026-08-30,historical-cache-overnight-validation-2026-08-31}.md`; `component/{fileops-event-pipeline,process-table-retention}.md`; `pipeline/nesper-esper-event-stream-processing.md`; `concept/lintap-cpu-unit-conventions.md`; `index.md`; `log.md`.
+Summary: removed superseded current-state instructions, separated chronological field results from active gaps, and made partial canonical promotion explicit. Replaced high-confidence `/tmp` and `/var/log` frontmatter anchors with durable wiki/source evidence; retained ephemeral locations only as qualified artifact locators with run IDs, exact windows, commands, and SHA-256 values. Canonical pages now carry explicit pending sibling commit placeholders.
+Checks: all 116 wiki Markdown files passed required-frontmatter and wikilink
+validation; all changed pages passed `grounded_by` and `source_paths` resolution;
+no `/tmp` or `/var/log` frontmatter anchors remain; hash/coverage commands and
+`git diff --check` passed. `.nfs` files were excluded. No commit or push performed.

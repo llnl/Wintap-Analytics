@@ -3,13 +3,13 @@ title: "Dev Handoff: Improve ETL and QA"
 type: concept
 confidence: medium
 grounded_by:
-  - ../Wintappy/notebooks/wintap_dbt_overview.py
   - wiki/work/improve-etl-and-qa/verification.md
-  - wiki/work/improve-etl-and-qa/instrumentation-plan-lintap-memory-growth.md
-  - validation/perf-collection/README.md
-  - validation/perf-collection/src/wintap_perf_collection/cli/manual_batch.py
+  - wiki/work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31.md
+  - wiki/work/improve-etl-and-qa/esper-sender-path-analysis-2026-08-30.md
+  - wiki/component/fileops-event-pipeline.md
+  - wiki/component/process-table-retention.md
 policy: agent-editable
-last_validated: 2026-08-29
+last_validated: 2026-08-31
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -23,167 +23,98 @@ tags: [feature-work, dev-handoff, lintap, pidstat, memory, perf]
 
 ## Copy/Paste Prompt
 
-Use this prompt to continue the live memory-growth experiment on the host that is
-currently running `Lintap`:
-
     Switch to code-development mode for improve-etl-and-qa.
 
-    Use these wiki files as the handoff context:
-
-    - wiki/work/improve-etl-and-qa/brief.md
-    - wiki/work/improve-etl-and-qa/design.md
+    Read AGENTS.md and these artifacts before editing:
     - wiki/work/improve-etl-and-qa/implementation_plan.md
     - wiki/work/improve-etl-and-qa/verification.md
-    - wiki/work/improve-etl-and-qa/instrumentation-plan-lintap-memory-growth.md
-    - wiki/work/improve-etl-and-qa/milestone-2026-08-28.md
+    - wiki/work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31.md
+    - wiki/component/fileops-event-pipeline.md
+    - wiki/component/process-table-retention.md
 
-    Goal: continue the live Lintap performance experiment directly on the host,
-    inspect the newly collected parquet, and tighten the collectors/analysis so
-    we can distinguish true retained state from allocator/runtime ratcheting.
+    Continue from the August 31 current state, not the superseded serializer or
+    sender gates. Implement conservative process-exit plus age/capacity eviction
+    for the FileOps FD-path cache, preserve telemetry fidelity, and repeat a
+    unique-run-ID long comparison with exact windows and artifact hashes.
 
-    Before editing code, read AGENTS.md and confirm code-development mode is
-    active for this task.
+    Owning sibling commits are ../wintap c03d731..2d3f795,
+    ../Lintap 1b23f77, and ../Wintappy a53cce6..e4b3bc3.
 
-## Handoff Summary
+## Current State
 
-Current state:
+- Wintappy's pidstat bronze/silver/gold path and canonical Marimo QA flow are
+  implemented and exercised with non-empty data. Broader event-family cleanup
+  and Analytics-side legacy conflict handling remain open.
+- The Analytics `validation/perf-collection/` package writes raw-style procfs and
+  structured `.NET` counter parquet. The focused root wrapper is the validated
+  path for the root-owned `Lintap` service on `spk16`; every future run must use
+  a unique `RUN_ID`.
+- FileSerializer's five-second cadence alone was insufficient, but the later
+  5,000-event high-water drain passed the controlled 6,000-file gate and the
+  10h23m deployment with zero serializer backlog warnings.
+- The exact `tenable-utils-L` pre-ring policy passed its controlled scan gate.
+  It is a narrow operator policy, not a general claim about all Tenable work.
+- The no-Tenable run then proved the pre-cache FileOps sender was unsustainable:
+  run `lintap-perf-20260830-no-tenable`, exact UTC window
+  `2026-08-30T21:49:06Z..22:49:05Z`, recorded `601126` sender drops while
+  FileSerializer remained healthy. See [[no-tenable-run-analysis-2026-08-30]].
+- Isolated NEsper testing ruled out Esper statement evaluation as the primary
+  live ceiling. The empty broad subscriber route was removed, while outbound
+  threading and context replacement were rejected. See
+  [[esper-sender-path-analysis-2026-08-30]].
+- A bounded 32,768-entry historical process-identity cache was deployed in RPM
+  `lintap-0.3.4-1.el8.x86_64`. The installed DLL SHA-256 was
+  `7bd7ab380ac07b004f04357e5bb46d23bf45f0bdca871949137b080cc7e9a235`.
+- The cache passed 10h23m plus a 6,000-file recovery burst with zero sender,
+  summary, aggregation, serializer, or File-send loss. Aggregate cache hit rate
+  was `75.4%`; weighted sender latency was `560.6 us`, versus `5135.7 us` in the
+  prior saturated run.
+- Retrieved pidstat SHA-256
+  `17e19df37746f2cb5f2126e79d6199c1ddecae2759e17f0c08bbc20d8b883230`
+  showed stable CPU but post-warm-up RSS growth. FD-path entries grew
+  `24 -> 11184`; level correlation with RSS was `0.929` overall and `0.938`
+  after 22:00. This makes FD-path cache eviction the leading residual memory
+  hypothesis, not a proven sole cause.
 
-- Wintappy now has a useful pidstat QA notebook with:
-  - metric-selectable Plotly time series
-  - host filter
-  - command substring filter
-  - `Per process instance` vs `Aggregate by command`
-  - event-volume correlation chart by event family
-- A manual-batch collector now exists in this repo under
-  `validation/perf-collection/` and writes raw-style parquet event types:
-  - `perf_smaps_rollup`
-  - `perf_proc_status`
-  - `perf_fd_map`
-  - `perf_dotnet_counters` via file-based `dotnet-counters collect`
-  - optional raw command captures:
-    - `perf_lintap_diag_raw`
-- A real host run has already been performed. Row counts reported by the user:
-  - `perf_smaps_rollup`: `60`
-  - `perf_proc_status`: `60`
-  - `perf_fd_map`: `60`
-  - older monitor-based `.NET` capture produced `478` raw lines, but the
-    current collector code now targets structured `perf_dotnet_counters` via
-    `dotnet-counters collect`
-- The new collect-based host paths are now verified on `spk16`:
-  - short smoke run under `/tmp/lintap-perf-collect/` produced `108`
-    `perf_dotnet_counters` rows across `27` counter keys plus matching procfs
-    rows
-  - a collect-based one-hour rerun produced `9720` `perf_dotnet_counters` rows
-    across `27` counter keys plus `714` rows each for `perf_smaps_rollup`,
-    `perf_proc_status`, and `perf_fd_map`
+## Next Slice
 
-Most important current insight:
+Implement bounded FileOps FD-path state without weakening path or event
+fidelity:
 
-- `smaps_rollup` suggests the Lintap process is carrying mostly private /
-  anonymous memory, not primarily file-backed growth.
-- `AnonHugePages` is large, which pushes suspicion toward heap/allocator/native
-  buffer retention rather than file-mapping growth.
-- The current pidstat/event-volume analysis also suggests file-event workload is
-  the strongest external correlate of the stair-step memory pattern.
-- On the mostly idle host, the collect-based one-hour rerun did not show simple
-  monotonic memory ratcheting. RSS, anonymous memory, and AnonHugePages all
-  stayed within bounded bands, which strengthens the earlier burst/workload
-  hypothesis over a purely time-since-start explanation.
-- Lintap CPU during the collect-based one-hour rerun was still moderate rather
-  than near-zero: about `12.9%` min, `23.1%` max, `19.0%` average. CPU had only
-  weak-to-moderate correlation with memory (`corr(cpu, working_set) ~= 0.31`,
-  `corr(cpu, rss) ~= 0.28`), so CPU activity alone does not explain the memory
-  shape.
+1. Add process-exit cleanup where identity is reliable.
+2. Add conservative age and capacity bounds for orphaned entries.
+3. Emit eviction reasons and cardinality counters in existing diagnostics.
+4. Add short-lived-process, PID-reuse, active-FD, and capacity-pressure tests.
+5. Re-run focused build/tests and the file-capture smoke.
+6. Deploy only after review, then repeat a unique-run-ID long comparison against
+   the August 31 evidence window.
 
-Critical caveat for the next operator/dev to keep in mind:
+Acceptance requires zero ring/sender/summary/serializer loss, FileOps count and
+byte conservation, successful controlled recovery, bounded FD-path state, and
+no regression in sender latency or historical identity-cache behavior.
 
-- DuckDB is long-running in the `Lintap` .NET process. That means a meaningful
-  portion of the stair-step memory behavior could come from the in-process
-  DuckDB engine itself, its buffering, or its interaction with the .NET process,
-  not just from sensor queues or the file pipeline. Treat DuckDB-in-process as a
-  first-class suspect, not an afterthought.
+## Evidence Discipline
 
-## Primary Sources For The Dev Agent
+- Do not use `/tmp` or `/var/log` as high-confidence frontmatter anchors.
+- Record ephemeral paths only as artifact locators accompanied by SHA-256, run
+  ID, host/PID, exact UTC/local windows, and the exact analysis command.
+- Use [[historical-cache-overnight-validation-2026-08-31]] as the durable
+  August 31 comparison record.
+- Owning commits now exist: `../wintap@c03d731..2d3f795`,
+  `../Lintap@1b23f77`, and `../Wintappy@a53cce6..e4b3bc3`.
 
-- `validation/perf-collection/README.md`
-- `validation/perf-collection/src/wintap_perf_collection/cli/manual_batch.py`
-- `validation/perf-collection/src/wintap_perf_collection/procfs.py`
-- `../Wintappy/notebooks/wintap_dbt_overview.py`
-- `wiki/work/improve-etl-and-qa/instrumentation-plan-lintap-memory-growth.md`
+## Non-Goals
 
-## Recommended First Live-Host Tasks
+- Do not redesign the QA notebook in the FD-cache slice.
+- Do not enable adaptive sampling as a substitute for fixing bounded state.
+- Do not increase queue caps to mask throughput or fidelity defects.
+- Do not infer causality from level correlation alone.
+- Do not modify sibling repositories without explicit authorization.
 
-1. Inspect the collected parquet directly on the host.
+## Closeout
 
-   Start with:
-
-    - `perf_smaps_rollup`
-    - `perf_proc_status`
-    - `perf_fd_map`
-    - `perf_dotnet_counters`
-
-    Confirm whether the memory stairs align more with:
-
-    - anonymous/private memory growth
-    - fd/mmap growth
-    - or runtime/heap signals from .NET
-
-   Important operational note:
-
-   - use a unique `RUN_ID` for every future host capture; an earlier rerun reused
-     `lintap-perf-60m`, which made naive cross-partition DuckDB queries blend an
-     older monitor-era run with the newer collect-based rerun
-
-2. Confirm the current `smaps_rollup` parser stays clean on repeated runs.
-
-   The previous bogus extra column derived from the first header line has been
-   fixed. The next operator should just confirm new host parquet still has the
-   expected schema.
-
-3. Keep using the new file-based `dotnet-counters collect` path on-host.
-
-   The old terminal-scraping `monitor` path has been removed. The current code
-   now runs `dotnet-counters collect --format json|csv` and parses the emitted
-   file into structured `perf_dotnet_counters` rows. This path is now validated
-   both by fixtures and by real host smoke/one-hour runs on `spk16`, and should
-   be treated as the canonical runtime-counter collection path for future runs.
-
-4. Keep DuckDB-in-process explicitly in the hypothesis set.
-
-   Ask, for each newly observed memory rise:
-
-   - does it line up with event bursts?
-   - with write throughput?
-   - with counter/heap changes?
-   - or with patterns that look more like embedded DuckDB buffering / retention?
-
-5. Run the next contrast experiment under known workload.
-
-   The idle-baseline and collect-based idle rerun now suggest that simple
-   elapsed time is not enough to force continued memory ratcheting. The next
-   highest-value experiment is a controlled file-heavy perturbation run, using a
-   distinct `RUN_ID`, so CPU/heap/RSS behavior can be compared directly against
-   the idle baseline.
-
-## Non-Goals For This Slice
-
-- Do not redesign the whole QA notebook again.
-- Do not prematurely promote the manual-batch collectors into a long-running
-  sidecar until the command set and signal usefulness are proven on-host.
-- Do not assume the issue is purely a Lintap queue/cache leak without checking
-  the embedded DuckDB angle.
-
-## Testing Expectations
-
-- Re-run the manual-batch collectors on the host after any collector/parser
-  change.
-- Validate the resulting parquet with quick DuckDB queries on-host.
-- If `dotnet-counters` collection/parsing changes, verify a small real capture
-  rather than relying only on fixtures.
-
-## Closeout Instructions
-
-- Update `wiki/work/improve-etl-and-qa/verification.md` with commands run and results.
-- Update `wiki/work/improve-etl-and-qa/implementation_plan.md` done checklist if a stage meaningfully advances.
-- Append a concise entry to `wiki/log.md`.
-- Promote durable facts into canonical wiki pages once the behavior stabilizes.
+- Update `verification.md` with exact commands, hashes, windows, and results.
+- Update the implementation-plan checklist accurately; partial canonical
+  promotion must remain described as partial.
+- Append a new `wiki/log.md` entry without rewriting earlier chronology.
+- Replace sibling commit placeholders only with actual committed IDs.

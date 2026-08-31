@@ -12,7 +12,7 @@ grounded_by:
   - ../Wintappy/wintap_dbt/models/monitoring/network_chart.sql
   - ../Wintappy/wintap_dbt/models/schema.yml
 policy: agent-editable
-last_validated: 2026-08-29
+last_validated: 2026-08-31
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -25,6 +25,41 @@ tags: [feature-work, verification, wintappy, qa, dbt, pidstat]
 # Verification: Improve ETL and QA
 
 ## Test Commands
+
+### Serializer Cadence Prediction
+
+Before implementation: set only `FileSerializationIntervalSec` to `5` seconds,
+leaving the 10,000-event cap and all other serializer intervals unchanged. The
+observed FileOps post-aggregation rate should then fit below the cap within each
+five-second interval, eliminating `fileserializer` backlog-drop warnings while
+preserving event count/byte semantics. The host smoke must fail if any new
+`fileserializer: in-memory backlog limit reached` line appears after its start
+  marker.
+
+### Serializer High-Water Prediction
+
+Before implementation: request one non-overlapping FileSerializer drain when
+queue depth reaches `5000`, retaining the five-second timer and 10,000-event
+cap. The 5,000-row margin should absorb the observed burst arrival while the
+worker begins its fast drain, eliminating cap warnings without reducing event
+fidelity or creating periodic small files during idle operation. A controlled
+high-cardinality workload must produce zero serializer drops and retain
+FileOps count/byte conservation.
+
+The high-water validation must include at least one
+`serializer_flush trigger=high_water` record. A clean no-drop result without
+that marker does not exercise the new burst path.
+
+### FileOps Deny Policy Prediction
+
+Before implementation: an empty deny list leaves FileOps behavior unchanged.
+For an explicitly configured exact Linux `comm` rule, each matched covered
+operation will increment one kernel `policy_suppressed_attempts[rule,op]`
+counter and return before ring-buffer reservation; matching work therefore will
+not contribute to ring pressure, sender backlog, or FileOps parquet. Nonmatching
+work must retain its current telemetry semantics. The metric is a policy-gate
+count of covered syscall attempts, not a claim about all filesystem activity by
+a vendor product.
 
 1. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && make dbt-build`
 2. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && make dbt-test`
@@ -49,6 +84,38 @@ tags: [feature-work, verification, wintappy, qa, dbt, pidstat]
 21. `duckdb -c "with smaps as (select * from read_parquet('/tmp/lintap-perf/parquet/raw_sensor/perf_smaps_rollup/dayPK=20260829/hourPK=20/*.parquet')), status as (select * from read_parquet('/tmp/lintap-perf/parquet/raw_sensor/perf_proc_status/dayPK=20260829/hourPK=20/*.parquet')), fd as (select * from read_parquet('/tmp/lintap-perf/parquet/raw_sensor/perf_fd_map/dayPK=20260829/hourPK=20/*.parquet')), counters as (select * from read_parquet('/tmp/lintap-perf/parquet/raw_sensor/perf_dotnet_counters/dayPK=20260829/hourPK=20/*.parquet')) ... summarize row counts, time ranges, first/last/min/max RSS-anon-fd values, and selected counter ranges for run lintap-perf-60m ..."`
 22. `ls "/tmp" && RUN_ID=lintap-perf-collect-smoke DURATION_SECONDS=20 INTERVAL_SECONDS=5 DOTNET_COUNTERS_REFRESH_INTERVAL=5 DOTNET_COUNTERS_FORMAT=json WINTAP_DATA_ROOT=/tmp/lintap-perf-collect bash scripts/capture_lintap_perf_for_user.sh` (assistant-run smoke attempt from the noninteractive session; blocked by `sudo` requiring a terminal)`
 23. `duckdb -c "describe select * from read_parquet('/tmp/lintap-perf-collect/parquet/raw_sensor/perf_dotnet_counters/dayPK=20260829/hourPK=20/*.parquet'); select count(*) as counter_rows, count(distinct counter_key) as distinct_counter_keys, min(time) as first_time, max(time) as last_time from read_parquet('/tmp/lintap-perf-collect/parquet/raw_sensor/perf_dotnet_counters/dayPK=20260829/hourPK=20/*.parquet'); select counter_provider, counter_name, counter_key, counter_type, counter_tags, value from read_parquet('/tmp/lintap-perf-collect/parquet/raw_sensor/perf_dotnet_counters/dayPK=20260829/hourPK=20/*.parquet') order by time, counter_key limit 40; select count(*) as smaps_rows from read_parquet('/tmp/lintap-perf-collect/parquet/raw_sensor/perf_smaps_rollup/dayPK=20260829/hourPK=20/*.parquet'); select count(*) as status_rows from read_parquet('/tmp/lintap-perf-collect/parquet/raw_sensor/perf_proc_status/dayPK=20260829/hourPK=20/*.parquet'); select count(*) as fd_rows from read_parquet('/tmp/lintap-perf-collect/parquet/raw_sensor/perf_fd_map/dayPK=20260829/hourPK=20/*.parquet');"`
+
+24. `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter "FullyQualifiedName~FileOpsAggregatorTests|FullyQualifiedName~SerializerScheduleTests"`
+25. `dotnet build wintap/Lintap.csproj`
+26. `python3 devtools/file_capture_smoke_test.py --data-root /var/log/lintap --timeout 120 --poll-interval 2 --require-no-serializer-drops --serializer-observation-seconds 70`
+27. `python3 devtools/file_capture_smoke_test.py --data-root /var/log/lintap --timeout 180 --poll-interval 2 --unique-file-count 6000 --require-no-serializer-drops --serializer-observation-seconds 70`
+28. `make build_ebpf`
+29. `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter "FullyQualifiedName~FileOpsAggregatorTests|FullyQualifiedName~FileOpsDenyPolicyTests|FullyQualifiedName~SerializerScheduleTests"`
+30. `duckdb -c "..."` over the four explicit
+    `lintap-perf-20260830-no-tenable` parquet files plus DuckDB regex parsing of
+    `/var/log/lintap/Logs/Lintap.log` for `2026-08-30 14:49:06-15:49:05 PDT`;
+    calculated first/last/range/half-average/linear-slope resource metrics,
+    FileOps and serializer fidelity totals, maintenance timing, and aligned
+    queue/resource correlations against `lintap-perf-20260830-tenable-filter`.
+31. `dotnet run --project diagnostics/nesper-repro/nesper-repro.csproj --
+    --benchmark --events 100000 --cardinality 10000 --rounds 3 --scenario
+    <scenario>` for `baseline-no-epl`, `file-cast`, `file-native-enum`,
+    `file-cast-plus-broad`, `file-cast-outbound-1`, both concurrent-expiry
+    variants, and both context variants.
+32. `dotnet build wintap/Lintap.csproj`
+33. `dotnet run --project diagnostics/nesper-repro/nesper-repro.csproj`
+34. `dotnet run --project diagnostics/nesper-repro/nesper-repro.csproj --
+    --cache-benchmark --operations 100000 --keys 10000 --capacity 10000
+    --miss-penalty-us 1`
+35. `dotnet run --project diagnostics/nesper-repro/nesper-repro.csproj --
+    --cache-benchmark --operations 20000 --keys 50000 --capacity 32768
+    --miss-penalty-us 250`
+36. `dotnet run --project diagnostics/nesper-repro/nesper-repro.csproj --
+    --cache-benchmark --operations 2000 --keys 1000 --capacity 1000
+    --miss-penalty-us 5000`
+37. `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter
+    "FullyQualifiedName~BoundedEventTimeCacheTests|FullyQualifiedName~ProcessResolverTests|FullyQualifiedName~FileOpsAggregatorTests|FullyQualifiedName~FileOpsDenyPolicyTests|FullyQualifiedName~SerializerScheduleTests"
+    --no-restore`
 
 ## Manual Checks
 
@@ -124,13 +191,71 @@ tags: [feature-work, verification, wintappy, qa, dbt, pidstat]
 - Live-host constraint on `spk16`: direct unprivileged `/proc` and `.NET` diagnostics access to the root-owned `Lintap` service is still blocked, but the new focused root-wrapper path is now validated and provides the intended operator workflow for collecting fresh readable parquet without broader host permission changes.
 - Root-owned-service operator path: `validation/perf-collection/scripts/capture_lintap_perf_for_user.sh` now provides the narrow escalation path for this host by running the capture as `root` and returning file ownership to the invoking user afterward.
 - Idle-baseline result on `spk16`: with the machine mostly quiet, the one-hour run did not show continued upward ratcheting. That strengthens the earlier suspicion that burst-correlated workload windows matter more than simple time-since-start or unavoidable idle background drift.
-- Runtime-counter design update: the old `dotnet-counters monitor` caveat has been addressed in code by replacing that path with file-based `dotnet-counters collect` parsing. A fresh host rerun is still needed to replace the old monitor-derived host artifacts.
+- Intermediate runtime-counter state: the old `dotnet-counters monitor` caveat
+  had been addressed in code, but a fresh host rerun was still pending at that
+  point. The next two entries close that historical gap.
 - Runtime-counter design update: the old `dotnet-counters monitor` caveat has now been addressed both in code and in a real host smoke. Future runs should rely on `dotnet-counters collect` output rather than any terminal-derived path.
 - Runtime-counter design update: the collect-based one-hour rerun confirms the new path stays structured across the full capture window rather than collapsing after initial samples the way the old monitor-derived path did.
+- Confirmed that the first CPU-observability code slice builds for Linux: the
+  serializer now rejects overlapping timer flushes, emits per-flush drain/
+  duration/backlog diagnostics, and groups queued messages in one pass rather
+  than repeated list scans/removals. No queue-drop policy or sensor fidelity
+  setting was changed.
+- Confirmed that FileOps now reports FD-cache PID/entry cardinality and
+  aggregation flush count/average/max duration in its existing 60-second log
+  record. Cache/upload cycles and process-resolver maintenance now emit elapsed
+  time plus their relevant cardinality context.
+- Implemented the predicted FileSerializer-only cadence change:
+  `FileSerializationIntervalSec` defaults to `5` seconds, while the existing
+  `SerializationIntervalSec=60` remains the cadence for every other serializer.
+  The 10,000-event cap remains a safety backstop, and older deployed ETL configs
+  that lack the new property also default to five seconds.
+- Added `SerializerScheduleTests` and extended the existing parquet-based file
+  smoke test with `--require-no-serializer-drops` plus an explicit post-capture
+  log-observation period. The smoke must find generated file activity and see no
+  new FileSerializer backlog-drop line after redeploy.
+- Implemented the second prediction slice: FileSerializer requests one
+  non-overlapping immediate drain at `FileSerializationHighWaterEvents=5000`.
+  The five-second timer and 10,000-event cap remain in place. High-water drains
+  log `serializer_flush trigger=high_water`; the smoke can now generate a
+  configurable high-cardinality burst using `--unique-file-count`.
+- Implemented the generic opt-in kernel FileOps exact-`comm` deny policy. An
+  empty `FileOpsDenyComms` configuration leaves behavior unchanged. Configured
+  exact names install into both FileOps tracer tiers after object load; each
+  matching operation increments a pre-ring `policy_suppressed_attempts` counter
+  by rule and operation. A configured policy whose maps cannot be installed
+  fails FileOps startup rather than silently collecting without the policy.
+- Policy parser tests cover empty configuration, exact deduplication, Linux
+  `comm` length rejection, and bounded rule count. Both CO-RE and fallback
+  tracers compile with the new maps and gate.
+- CPU-unit naming update: raw pidstat `cpu_percent` remains compatible, while
+  the normalized model now exposes `cpu_core_percent`, gold exposes
+  `max_cpu_core_percent` / `avg_cpu_core_percent`, and the canonical dashboard
+  labels it `CPU (core-summed %)`. Lintap and Wintappy user-facing READMEs
+  explain conversion to host-normalized CPU by dividing by logical CPU count.
+- Critical live-host result: `/var/log/lintap/Logs/Lintap.log` shows the active
+  `fileserializer` 10,000-event cap dropping newest file events continuously,
+  reaching at least `394529` drops by `17:25:13 PDT`. File flushes repeatedly
+  drained exactly 10,000 events in `2..19 ms`, with `skipped_overlap=0` and
+  `parquet_backlog=1`; the immediate fidelity defect is admission/batch cadence,
+  not slow flush CPU.
+- FileOps sender drops remained `0` and aggregation `cap_bypass` remained `0`.
+  FD-cache state nevertheless grew from `pids=20,entries=24` at `16:38:19 PDT`
+  to `pids=1439,entries=1784` at `18:04:37 PDT`, validating the cache-growth
+  hypothesis. Cache cycles remained `1.9..6.0 s`; resolver maintenance settled
+  around `8.6..13.3 s` every five minutes after startup.
+- Regression check: the deployed `/usr/lib/lintap/esper/file.epl` and
+  `tracers/file_ops_tracer.bpf.o` SHA-256 hashes exactly match the current
+  source. The deployed EPL includes the recently fixed `AgentId` grouping,
+  excluding the historical n-squared Esper event-count inflation defect as the
+  explanation for this capture. The FileOps `repeats_folded` counters are
+  positive, while aggregation cap bypass is zero, proving aggregation is active
+  but only folds repeat `(pid,path,operation)` keys inside its one-second window.
+  The 10,000-event serializer cap was introduced in June, before this week's
+  fop-11/fop-12/fop-13 work.
 
-## Known Gaps
+## Current Gaps
 
-- The current configured dataset/window still contains no pidstat parquet, so the new pidstat gold path is structurally verified but not yet validated with non-empty pidstat data.
 - `file_chart` now buckets on `process_file.min_event` as a first-slice silver-based replacement for raw file-event timing. This removes the raw-backed dependency, but timeline fidelity versus raw file event times remains a follow-up question.
 - Legacy Analytics-side Streamlit/DataQA alignment is not part of this first coding slice yet.
 - The mixed-schema time hotfix has only been validated through DBT execution on the current dataset mix; there is not yet a dedicated model-level regression test specifically for timestamp-typed versus numeric-typed `eventtime` inputs.
@@ -142,16 +267,231 @@ tags: [feature-work, verification, wintappy, qa, dbt, pidstat]
 - The pidstat and event-volume charts still do not share truly linked zoom because they remain separate Plotly figures; the current improvement is comparable interaction style rather than synchronized navigation.
 - Live-host follow-up on `spk16`: direct unprivileged access to the root-owned `Lintap` service is still restricted for `smaps_rollup`, `fd`, and `.NET` diagnostics, but the focused root-wrapper path is now validated and provides a working way to collect fresh readable parquet for those signals.
 - Future long runs should use a unique `RUN_ID` each time so collect-based and historical monitor-era captures cannot be merged accidentally in downstream DuckDB queries.
+- The historical identity cache passed 10h23m plus controlled recovery, but
+  higher-churn hosts, queue-age percentiles, and rare multi-second resolution
+  stalls remain uncharacterized.
+- The retrieved pidstat closes CPU/RSS/I/O trends for the overnight run, but
+  smaps composition, GC, process-FD, and map-count coverage was not collected.
+- FileOps FD-path state remained unbounded in the validated implementation;
+  conservative process-exit plus age/capacity eviction is the active next code
+  slice.
+- Owning sibling-repo changes are now durably anchored. Canonical owning
+  changes are at `../wintap@c03d731..2d3f795`,
+  `../Lintap@1b23f77`, and `../Wintappy@a53cce6..e4b3bc3`.
+
+## Field Validation Timeline
+
+The entries below preserve chronological outcomes, including failed or
+superseded gates. They are evidence history, not current instructions.
+
+- Initial DBT smoke used a dataset with zero pidstat rows. Later notebook and
+  overnight S3-pidstat runs exercised non-empty pidstat data; the original zero-
+  row observation is no longer a current gap.
+- Live policy validation passed under the active weekly scan with
+  `WINTAP_FILEOPS_DENY_COMMS=tenable-utils-L`. The policy suppressed
+  `dir_open=114102` then `117327` attempts per 60-second interval. FileOps
+  sender depth was only `853` then `192`, with `drops=0`, `cap_bypass=0`, and
+  `summary_enqueue_fail=0`, in contrast to the previous 524288-entry sender
+  saturation. Non-policy FileOps telemetry continued to emit.
+- Filtered one-hour capture `lintap-perf-20260830-tenable-filter` ran from
+  `2026-08-30T19:13:55Z` through `20:13:54Z` with `714` procfs samples. The
+  policy remained active and no FileOps sender drops, aggregation cap bypass,
+  summary enqueue failures, or FileSerializer backlog warnings appeared in the
+  capture window. Runtime CPU averaged `22.4%` host-normalized (`1.94..31.44%`),
+  equivalent to about `7.2` core-summed CPUs on the 32-core host.
+- This run is a no-loss policy validation but not a clean CPU/memory baseline:
+  a Wintappy DBT build overlapped its latter half and coincided with FileOps
+  sender depth rising into the hundreds of thousands without reaching loss.
+  Runtime working set half-averages rose `1543.76 -> 1775.22 MB`, GC heap
+  `274.05 -> 350.42 MB`, and CPU `19.39 -> 25.41%`; RSS ranged
+  `1429840..2428548 kB`. FD count remained `487..495`.
+- High-water redeploy result: the controlled `--unique-file-count 6000` smoke
+  passed. The deployed log shows `serializer high-water flush threshold=5000`,
+  18 high-water drain requests, and matching `trigger=high_water` drains of
+  about 5,000 rows each. Drains took `2..16 ms` except one `86 ms` outlier;
+  all had `skipped_overlap=0` and left only `2..542` rows queued. No new
+  FileSerializer backlog-limit warning appeared after the smoke marker. This
+  validates the high-water prediction for the controlled burst.
+- Post-redeploy result: the no-drop smoke passed its bounded observation window
+  and the log confirms `fileserializer: serializer flush interval=5s`. The
+  strict prediction nevertheless failed under early live bursts: the serializer
+  again reached 10,000 at `18:59:52` and `19:03:12 PDT`, with cumulative drops
+  of `1` then `434`. This is a large improvement over the prior hundreds of
+  thousands of drops, but it is not acceptable as a no-loss result. The next
+  design must request an immediate flush below the cap during a burst rather
+  than only shorten the periodic interval further.
+- The planned post-Tenable comparison completed; the result below supersedes
+  the expectation that it would be a quiet-host baseline.
+- The requested follow-up, `lintap-perf-20260830-no-tenable`, completed over
+  `2026-08-30T21:49:06Z -> 22:49:05Z` with `715` samples in each procfs stream
+  and `9720` runtime-counter rows. It is not a quiet/no-loss baseline: every
+  FileOps policy summary reported `suppressed_attempts=0`, but sender depth was
+  already `524148` at the first matching summary and stayed near its `524288`
+  cap (`513561..524223`, average `523313`). The hour recorded `601126` sender
+  drops and `192774` summary enqueue failures; aggregation cap bypass remained
+  zero.
+- FileSerializer passed its own gate during that failed upstream run: zero
+  backlog warnings, `385` non-empty flushes (`26` high-water), `654769` rows
+  drained, maximum `170` rows remaining, maximum `3 ms` drain time, and zero
+  overlap. This localizes the fidelity failure to the FileOps sender boundary,
+  not Parquet serialization.
+- Within the cap-bound hour, memory was stable: `smaps.Rss 2013792 -> 2015180
+  kB` (range `1959768..2041840`, half means `2011872 -> 2013742 kB`) and
+  runtime working-set half means `2057.61 -> 2058.42 MB`. CPU remained high but
+  flat-to-declining (`30.82%` host-normalized average, half means `31.12% ->
+  30.52%`), equivalent to about `9.86` core-summed CPUs on this host.
+- The apparent `AnonHugePages 849920 -> 1169408 kB` rise was not net RSS growth:
+  total anonymous memory rose only `1052 kB`. GC heap endpoints were also
+  misleading (`523.90 -> 765.95 MB`) because the sawtooth range was
+  `258.78..778.25 MB`; heap half means differed by only `9.37 MB`, thread-pool
+  queue length stayed zero, and total GC pause time was `7.30 s`.
+- The internal FileOps FD cache continued to grow (`pids 3146 -> 4052`, entries
+  `3890 -> 4899`) while process FDs stayed `487..490`. ProcessResolver's 12
+  maintenance cycles averaged `9.70 s`. These remain independent long-run
+  state/CPU concerns even though process RSS did not ratchet during the hour.
+- Post-window review refines the earlier filtered-run result: that capture was
+  loss-free in its exact hour, but sender depth rose `7860 -> 338592`, reached
+  its first drop at `13:36:36 PDT` about 23 minutes later, and never recovered.
+  During the filtered hour, aligned queue depth correlated with RSS at `r=0.749`
+  and anonymous memory at `r=0.748` (`r=0.583` with runtime working set, only
+  `r=0.191` with GC heap). This supports bounded sender-backlog occupancy as a
+  material contributor to the earlier memory climb, without proving causality
+  because the DBT workload remains a confounder.
+- Sender/Esper benchmark result: current production-shaped `file.epl` sustained
+  a median `178756` synthetic input events/s after warm-up with exact event and
+  byte conservation. The no-EPL baseline was `538882/s`. The live sender's
+  `5135.7 us` mean sampled call time implies only `194.7/s`, while the same hour
+  recorded `425815` process-cache misses (`118.3/s`). Esper statement evaluation
+  alone therefore does not explain the live ceiling; synchronous historical
+  process resolution is the leading target.
+- Esper alternatives were not promoted: one outbound listener thread was
+  effectively unchanged (`176280/s` median), native enum literals were slightly
+  slower (`162381/s`), and the context-based aggregation pattern reduced input
+  throughput to about `51716/s` and failed exact event-count conservation under
+  concurrent boundary stress. Concurrent `time_batch` expiration did reduce
+  ingress throughput (`83925/s` median), confirming contention but not a safe
+  replacement design.
+- The broad all-event subscriber statement reduced isolated throughput to
+  `62785/s`. The live host had zero plugins but still deployed it because ETL
+  was enabled. `PluginManager` now deploys that statement only when subscriber
+  plugins exist. The dormant native-enum formatter was also corrected to use
+  NEsper's `$` nested-type syntax, but remains disabled.
+- Post-change verification passed: `dotnet build wintap/Lintap.csproj` completed
+  with 0 errors (existing warnings remain), the default NEsper compile/deploy
+  repro passed all six queries, the focused FileOps/policy/serializer suite
+  passed `22/22`, and all accepted benchmark variants preserved exact
+  represented event counts and bytes. The rejected concurrent context scenario
+  intentionally remains recorded as a fidelity failure.
+- Implemented the process-attribution follow-on as a 32,768-entry bounded LRU
+  of closed process identities. Lookups require the event timestamp to fall in
+  the cached create/exit interval and choose the newest matching instance for
+  overlapping PID histories. Open rows are not cached. Retention seeds the
+  cache before deleting rows and the maintenance-triggering lookup retries it,
+  protecting delayed File events beyond the one-hour durable retention window.
+- Resolver SQL for event-time lookup, direct/pending Stop, and startup/runtime
+  reconciliation now uses timestamp parameters rather than whole-second string
+  formatting. Resolver-level tests prove two PID instances within one second
+  resolve correctly and that a first lookup which triggers retention deletion
+  still receives the deleted row's identity.
+- Cache tests passed for interval boundaries, PID reuse, overlapping intervals
+  in both insertion orders, identity updates, LRU eviction, 100,000 concurrent
+  reads, disabled mode, and clear/reset behavior. The combined focused suite
+  passed `39/39`.
+- Simulated cache-load results: raw cache hits sustained about `4.94M/s` for a
+  10k-entry working set. With a synthetic 5 ms durable miss penalty, throughput
+  was approximately `200/s` at 0% hits, `400/s` at 50%, `799/s` at 75%,
+  `1995/s` at 90%, and `1.06M/s` at 100%. A 50k-key population against the
+  production 32,768 cap evicted exactly 17,232 oldest entries and remained at
+  its configured bound.
+- FileOps one-in-64 sender diagnostics now report average and maximum total,
+  process-resolution, health-check, and Esper durations from one atomically
+  snapshotted sample set. Historical identity-cache hits, misses, entries, and
+  evictions appear beside the existing active-process-cache counters.
+- Independent review found no remaining deployment-blocking correctness or
+  event-time fidelity issue after adding the post-maintenance cache retry,
+  newest-overlap selection, retention pre-seeding, sub-second timestamp
+  parameters, and atomic timing snapshots. Deployment was then performed by the
+  operator because this session cannot perform passworded `sudo`.
+- Operator deployed RPM `lintap-0.3.4-1.el8.x86_64`; installed
+  `/usr/lib/lintap/Lintap.dll` SHA-256 `7bd7ab38...` matched the RPM publish
+  payload. Service PID `3322161` started at `20:54:30 PDT`. Startup logged
+  historical identity-cache capacity `32768`, plugin count `0`, and no broad
+  `Creating Subscriber EPL` statement.
+- The first deployed ten-minute gate passed across ten FileOps summaries:
+  queue depth `0..1889` (`1 -> 152`, then `100` in the next interval), maximum
+  interval high-water `13917`, and zero sender drops, summary enqueue failures,
+  aggregation cap bypass, or historical-cache evictions. Historical-cache
+  totals were `32700` hits and `6837` misses (`82.7%` hit rate), with `8750`
+  entries at the tenth interval.
+- Weighted sampled sender time was `449.7 us`, a `91.2%` reduction from the
+  prior `5135.7 us`. Resolution accounted for `445.1 us`; Esper averaged only
+  `2.7 us`. Maximum sampled sender/resolve times were `56.5/56.5 ms`, so rare
+  durable/maintenance stalls remain visible despite the large average gain.
+- FileSerializer remained healthy over the gate: `63` non-empty flushes,
+  `28` high-water drains, `221668` rows drained, maximum `291` rows remaining,
+  maximum `14 ms` drain, one safely skipped overlap, and zero backlog warnings,
+  worker errors, or File send errors. Current fileserializer Parquet continued
+  to materialize; the post-merge directory held ten recent files with `33647`
+  rows over `21:04:53-21:05:53 PDT`.
+- Extended passive validation continued on the same PID for 10h23m despite the
+  SSH control connection dropping. Across `617` FileOps summaries, queue depth
+  was `0..17387` (average `5205.5`), maximum interval high-water was `38707`,
+  and sender drops, summary failures, and aggregation cap bypass remained zero.
+- The cache stayed bounded at `32768` entries while processing `1667417` hits
+  and `542811` misses (`75.4%`) with `394252` evictions. Weighted sender,
+  resolution, and Esper averages were `560.6`, `547.1`, and `12.0 us`.
+  Full-hour hit rate remained `68.2%..83.0%` and sender averages `482..673 us`,
+  showing no degradation trend under sustained eviction churn.
+- Passive FileSerializer evidence covered `11208824` drained rows through
+  `3447` non-empty flushes (`1260` high-water), maximum remaining depth `353`,
+  maximum duration `218 ms`, four safely skipped overlaps, and zero warnings or
+  errors.
+- The post-baseline `--unique-file-count 6000` smoke passed with all five file
+  activities. It drove sender interval high-water to `71802` with zero loss;
+  queue depth fell from `8590` to `5416` in the next interval, below the
+  pre-burst value. Later natural bursts remained below the passive maximum.
+- Limitation: the operator selected logs/Parquet-only monitoring, and no current
+  overnight pidstat files were present. CPU, RSS, GC, FD, and map slopes were
+  therefore not measured in this run.
+- The operator retrieved S3 pidstat as
+  `/tmp/spk16-lintap-pidstat-overnight-1m.parquet` (SHA-256
+  `17e19df37746f2cb5f2126e79d6199c1ddecae2759e17f0c08bbc20d8b883230`),
+  containing 626 passive and 7 burst/recovery minute rows. This closes CPU/RSS/
+  I/O trends but not smaps, GC, process-FD, or map-count coverage.
+- Passive pidstat CPU averaged `10.12%` host-normalized (`323.8%` core-summed),
+  with post-22:00 slope only `+0.124` host percentage points/hour. Controlled
+  burst CPU averaged `10.44%`. CPU therefore remained broadly stable and far
+  below the prior saturated run's `30.82%` host-normalized average.
+- Passive RSS grew `443452 -> 1911876 kB`, with large startup warm-up. Excluding
+  that phase, post-22:00 RSS grew `1488404 -> 1911876 kB` at `+35157 kB/hour`;
+  the final four-hour slope slowed to `+18973 kB/hour` but did not reach a clear
+  plateau. Burst RSS ended only `8876 kB` above its first sample despite a
+  transient `2209064 kB` peak.
+- FileOps FD-cache state grew `pids 21 -> 9921`, `entries 24 -> 11184`, and
+  directory index `658 -> 2137`. Minute alignment produced RSS/FD-entry level
+  correlations `r=0.929` overall and `r=0.938` post-22:00, but only `r=0.253`
+  for minute deltas. This makes FD-cache eviction the leading residual memory
+  hypothesis without claiming sole causality. RSS correlation was only `0.130`
+  with sender queue and `0.192` with CPU.
 
 ## Follow-Ups
 
-- Re-run the same verification against a dataset/window with actual `raw_sensor/pidstat` parquet so `pidstat_metrics`, `pidstat_process_summary`, and `perf_chart` are exercised with non-empty data.
 - Consider a second iteration on the pidstat chart UX: container-only narrowing, alternate bucket sizes, or anomaly-focused ranking modes beyond the current peak-selected-metric rule.
 - Consider whether `By command` should grow additional aggregation styles (`sum`, `average`, `max`) now that the basic family-level series pattern is validated.
 - Consider whether the event-volume correlation chart should stay notebook-only or be promoted into a named monitoring view if it becomes a stable QA concept.
 - If linked navigation becomes important, consider collapsing the two charts into a single multi-row Plotly subplot figure so zoom/pan is naturally shared.
 - Decide whether `file_chart` and possibly `network_chart` need a later chart-specific detail contract for higher-fidelity timelines.
-- Run the new `validation/perf-collection` tooling on a Linux host against a real `Lintap` process, confirm parquet lands under `raw_sensor/perf_*`, and decide which of the provisional raw event types should be promoted from manual-batch usage to long-term sidecar collection.
 - Continue with the later feature slices: broader event-family cleanup and Analytics-side conflict handling.
 - Use the new focused root wrapper on `spk16` for the next live run instead of trying to broaden general host permissions for `/proc` or .NET diagnostics.
-- Compare this collect-based one-hour rerun against a future intentionally file-heavy perturbation run, using distinct `RUN_ID`s, to see whether `gc_heap_size_mb` and `working_set_mb` climb in lockstep with the workload-linked RSS stairs or whether RSS outpaces managed-heap growth.
+- Add process-exit plus conservative age/capacity cleanup for the FileOps
+  FD-path cache, with eviction counters and short-lived-process validation, then
+  repeat the same hash/window-qualified long-run comparison.
+- Decide which provisional `perf_*` streams should become durable sidecar/DBT
+  contracts rather than manual-batch diagnostics.
+- Preserve the owning commit anchors when preparing the cross-repo PRs.
+- For any aggregation A/B experiment, use repeated operations on the same path,
+  PID, and operation inside one second. A general filesystem workload is mostly
+  high-cardinality and is not expected to be materially reduced by the
+  intentionally emit-first aggregation contract.
+- Preserve unique run IDs, exact windows, artifact hashes, and zero-loss/count-
+  and-byte-conservation gates for future comparisons.
