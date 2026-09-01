@@ -174,6 +174,14 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/optimize-fileops-poller/fop-11-proposal-2026-08-25]] | medium | Concrete designer-review proposal for the gated fop-11 step: emit-first short-interval aggregation of repeat `open` / `openat` activity, based on fop-10 duplicate-open evidence and paired with a revised count-conservation differential contract. |
 | [[wiki/work/optimize-fileops-poller/milestone-2026-08-25-phase2-wrapup]] | medium | Phase-2 milestone closeout: summarizes what landed, the strongest deployed evidence, why fop-12 is still not accepted, and the best current next-fix hypotheses for the design follow-up. |
 | [[wiki/work/optimize-fileops-poller/fop-12-gap-analysis-2026-08-25]] | medium | Root-cause diagnosis of the fop-12 relative-open miss floor (decode-time /proc reads racing millisecond-lived producers; O_DIRECTORY opens discarded in-kernel) with the ranked fop-13 fix: kernel-time directory identity index plus file dev:ino as the fop-11 aggregation key. |
+| [[wiki/work/support-docker-contexts-linux/interview]] | medium | Confirmed interview for a research prototype comparing cgroup, namespace, eBPF, shared-resolver, runtime, and systemd approaches to Linux context enrichment and inventory. |
+| [[wiki/work/support-docker-contexts-linux/brief]] | medium | Feature brief for broad Linux cgroup context support across process, file, network, and pidstat telemetry, with schema deferred until prototype evidence is available. |
+| [[wiki/work/support-docker-contexts-linux/references]] | medium | Live source and external reference map for Linux cgroup, namespace, OCI, runtime, systemd, and eBPF context collection. |
+| [[wiki/work/support-docker-contexts-linux/design]] | speculative | Comparison design for phase-1 cgroup v2 host/systemd/Docker and phase-2 v1/hybrid/Podman research fixtures. |
+| [[wiki/work/support-docker-contexts-linux/spike]] | speculative | Prototype question and hypothesis for identifying the most valid cross-event context acquisition strategy. |
+| [[wiki/work/support-docker-contexts-linux/implementation_plan]] | medium | Research implementation sequence from diagnostic observation contract through cross-event comparison and schema recommendation. |
+| [[wiki/work/support-docker-contexts-linux/dev_handoff]] | medium | Code-development handoff for the first diagnostic cgroup/namespace observation slice, with sibling-repo authorization boundaries. |
+| [[wiki/work/support-docker-contexts-linux/verification]] | medium | Verification scaffold awaiting Linux fixture execution and comparison results. |
 ---
 
 *Last updated: 2026-08-31 (reconciled ETL/QA current state after the historical-cache overnight gate, promoted durable findings, and replaced ephemeral field anchors with hash/window-qualified wiki evidence)*
