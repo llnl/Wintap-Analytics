@@ -14,6 +14,9 @@ grounded_by:
   - ../wintap/tests/Wintap.Tests/WindowsStateManagerDriveMapTests.cs
   - ../Wintap-Analytics/wiki/work/windows-sensor-health-check/design.md
   - ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/verification.md
+  - ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/implementation_plan.md
+  - ../wintap/wintap/core/etl/WintapETL.cs
+  - ../wintap/wintap/core/etl/extract/RegistrySerializer.cs
 policy: agent-editable
 last_validated: 2026-08-25
 repo_scope: wintap
@@ -34,7 +37,9 @@ open (interview, 2026-08-24): "sweep through all non-process sensors for
 Windows, evaluate them for efficiency and accuracy, fix any obvious bugs."
 Fixing these was explicitly a non-goal of the health-check feature; the
 health check exists to make them visible. Later features append here too
-(items 13–14 from `improve-windows-registry-collection`'s live verification).
+(items 13–14 from `improve-windows-registry-collection`'s live verification;
+items 15–19 from that feature's 2026-08-25 close-out; item 6 resolved by its
+wrc-06 rewrite).
 
 Sources: the feature's exploration/grounding passes
 ([[wiki/work/windows-sensor-health-check/design]]), the shc-02/shc-03 test
@@ -112,14 +117,19 @@ name through the sink so lines read e.g. `[SensorHealthMonitor.Flush]`.
 All recorded in [[wiki/work/windows-sensor-health-check/design]] with
 ground-truth cites; consolidated here as the sweep's working list.
 
-### 6. Ungated Registry CreateKey/DeleteKey/DeleteValue emit sites
+### 6. Ungated Registry CreateKey/DeleteKey/DeleteValue emit sites — RESOLVED 2026-08-25 by wrc-06
 
-`parseRegSetValue`/query paths are gated on `Path.StartsWith("registry")`,
-but the CreateKey/DeleteKey/DeleteValue emit sites are ungated — a
-`RegParents` entry whose parent chain was never rooted can egress as a
-relative key fragment. The `path_unqualified` check now counts exactly
-these; the sweep fixes the sensor.
-<!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/RegistrySensor.cs §parseRegCreateKCB/§parseRegSetValue/§sendRegEventToEsper -->
+`parseRegSetValue`/query paths were gated on `Path.StartsWith("registry")`,
+but the CreateKey/DeleteKey/DeleteValue emit sites were ungated — a
+`RegParents` entry whose parent chain was never rooted could egress as a
+relative key fragment. **Resolved by construction in the
+`improve-windows-registry-collection` rewrite (wrc-06):** the manifest-only
+sensor takes full paths from the event's own `KeyName` (CreateKey:
+`Join(BaseName, RelativeName)`) behind an `IsQualifiedRegistry`-mirroring
+qualification gate — fragments are dropped, never emitted, and the legacy
+parse/cache machinery (`RegParents` included) was deleted. Kept here as a
+closed item; the `path_unqualified` check remains the regression watch.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/RegistrySensor.cs (post-wrc-06 rewrite); resolution recorded in ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/implementation_plan.md §wrc-06 -->
 
 ### 7. Dead `Serializer.Listen` direct SendEventBean — deletion candidate
 
@@ -202,9 +212,69 @@ monitoring; not currently severe"). Likely related to item 13's short-lived
 process races; evaluate together when root-causing.
 <!-- GROUND_TRUTH: ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/verification.md §Live verification — Architect-run record -->
 
+## Findings from improve-windows-registry-collection close-out (2026-08-25)
+
+Cataloged at the wrc feature's close-out (feature accepted and closed
+2026-08-25) from the feature's plan/instruction carry-overs — observed and
+recorded during wrc work, deliberately not handled there.
+
+### 15. Dead `RegWorker_DoWork`/`FileWorker_DoWork` handlers referencing nonexistent EPL files — deletion candidates
+
+`WintapETL.cs:163-166` (`RegWorker_DoWork`) references a nonexistent
+`reg-activity.epl` and has **no callers**; the sibling `FileWorker_DoWork`
+(`WintapETL.cs:158-162`, `file-activity.epl`) is the same dead pattern.
+Observed and recorded during wrc-08 grounding; explicitly out of that unit's
+scope. Delete in the sweep (cf. item 7, the same dead-code class).
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/WintapETL.cs §RegWorker_DoWork/§FileWorker_DoWork (lines 158-166); recorded in ../wintap/developer_docs/instructions/wrc-08-parquet-value-plumbing.md §Out of Scope -->
+
+### 16. Registry Read events carry `Data=""` / `DataType=NONE` — documented data gap, by design
+
+The `Microsoft-Windows-Kernel-Registry` QueryValueKey payload has **no
+`Type` field** (probe schema evidence), so its `CapturedData` cannot be
+type-decoded, and the frozen wrc criteria forbade the legacy live-read/cache
+fallback (TOCTOU). Read events therefore emit `Data=""`/`DataType=NONE` —
+an Architect-approved documented limitation (wrc-06 approval stamp), NOT a
+defect. Cataloged so the sweep does not "rediscover" it; any future fix
+would need a different evidence source, not a sensor bug hunt.
+<!-- GROUND_TRUTH: ../Wintap-Analytics/wiki/decision/registry-provider-strategy.md §mechanism record (QueryValueKey schema); wrc-06 approval recorded in ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/implementation_plan.md -->
+
+### 17. Capture-flag reboot persistence and deliberate-clear semantics — documented unknowns (probe7 never run)
+
+The provider capture flag is sticky global state; whether it survives
+reboot and how to deliberately clear it (valid 4-byte descriptor with
+flags=0) remain **documented unknowns** — probe7 was never run, by
+Architect decision 2026-08-25. The shipped 5-minute periodic re-assert
+covers both cases operationally regardless. Standing consequence for
+deployment/uninstall docs: Wintap enables host-wide capture for this
+provider and does not attempt to restore prior state. Revisit only if the
+re-assert design ever changes.
+<!-- GROUND_TRUTH: ../Wintap-Analytics/wiki/decision/registry-provider-strategy.md §Known unknowns; ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/interview.md §Playback (probe7 not run) -->
+
+### 18. `Registry.PID` left unset upstream — retained legacy-parity wart
+
+The rewritten sensor deliberately leaves `Registry.PID` unset (legacy
+parity, retained at wrc-06 approval; the Architect may flip). Downstream,
+the envelope `PID` is what the EPL/serializer use. Sweep call: set it or
+delete the field.
+<!-- GROUND_TRUTH: wrc-06 approval stamp recorded in ../Wintap-Analytics/wiki/work/improve-windows-registry-collection/implementation_plan.md §status banner -->
+
+### 19. Preserved registry EPL/serializer warts — cosmetic/consistency cleanup candidates
+
+Deliberately preserved by wrc-08's existing-contract rule, cataloged as a
+group: the `HostHame` column-name typo; the EPL selecting `AgentId` without
+grouping it (NEsper leniency — not extended to the new fields);
+`FirstSeenMs`/`LastSeenMs` naming vs. FileSerializer's
+`FirstSeen`/`LastSeen`; `EventTime` derived from `FromFileTimeUtc(firstSeen)`
+vs. FileSerializer's `GetUnixNowTime()`. Any fix is a breaking column-name/
+semantics change for name-based consumers — batch them, version them, or
+leave them; a sweep-level decision, not a drive-by.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/RegistrySerializer.cs §BuildFlatMessage; ../wintap/wintap/core/etl/esper/registry.epl; preserved-warts rule in ../wintap/developer_docs/instructions/wrc-08-parquet-value-plumbing.md -->
+
 ## Related
 
 - [[wiki/work/windows-sensor-health-check/design]] — grounding and provenance for items 6–12
 - [[wiki/work/windows-sensor-health-check/verification]] — anchor-run evidence for item 4
 - [[wiki/work/improve-windows-registry-collection/verification]] — Architect-run record behind items 13–14
+- [[wiki/work/improve-windows-registry-collection/implementation_plan]] — carry-over provenance for items 15–19 and the item-6 resolution
+- [[wiki/component/registry-sensor]] — the rewritten sensor items 16–19 attach to
 - [[wiki/component/sensor-health-monitor]] — the shipped health-check layer these findings flow from
