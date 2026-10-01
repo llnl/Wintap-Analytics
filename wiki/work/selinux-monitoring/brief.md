@@ -64,6 +64,13 @@ transitions, and mislabeled objects surface while they occur.
   (`../Lintap/merge_raw_tsv.sh` SELinux loop, `../Lintap/sql/selinux.sql`) —
   it remains as the documented superseded POC.
 - No RHEL 8 (kernel 4.18) support in v1.
+  <!-- CONTRADICTION[soft]: the validation environment providing the spike
+  and sel-02 evidence uses RHEL 8.10 with a 4.18-series kernel, which this
+  non-goal excludes. Resolution pending a human decision at the sel-03
+  gate: wrapper-only interaction coverage on 8.10
+  (avc_has_perm_noaudit kprobe is EINVAL-blocked there), a working noaudit
+  attach, or re-scoping the v1 target tier. Flagged 2026-09-18; see
+  verification.md sel-02. -->
 - No auditd dependency in the capture path.
 
 ## User-Facing Behavior
@@ -113,19 +120,25 @@ See [[wiki/work/selinux-monitoring/references]].
 
 ## Open Questions
 
-- Attach points: BPF LSM hooks vs `avc:selinux_audited` tracepoint vs
-  kprobes on avc/security functions — the spike question
-  ([[wiki/work/selinux-monitoring/spike]]).
-- Context representation: numeric SIDs (kernel-internal, need resolution)
-  vs full context strings at capture time; whether to split
-  user:role:type:category at capture, at ETL, or at query time (the legacy
-  `SELINUX_CONTEXT` view splits at query time).
-- Is the target host enforcing or permissive? (Affects the provoked-denial
-  procedure and whether denials block or only log.)
-- Novel-tuple dedup residency: in-kernel map vs userspace sensor dedup, and
-  the flush interval / map-size bounds.
-- How interaction-map records join to process identity (PidHash stamping vs
-  context-only records).
+Status 2026-09-17 — most were closed by the spike
+([[wiki/work/selinux-monitoring/spike]]) and are now design decisions in
+[[wiki/work/selinux-monitoring/design]]:
+
+- ~~Attach points~~ **ANSWERED**: tracepoint for AVC events (context
+  strings at capture), kprobe `avc_has_perm_noaudit` for the interaction
+  map, kprobe `selinux_bprm_committed_creds` for transitions; BPF LSM
+  rejected for the critical path (silently inert without `bpf` in lsm=).
+- Context representation: strings at capture for the AVC stream (free from
+  the tracepoint); numeric SIDs + a resolution strategy for
+  transitions/interaction map (the design's slice-1 prototype decision);
+  splitting stays at query time.
+- ~~Enforcing or permissive?~~ **ANSWERED**: the validation environment is
+  Permissive (denials log, don't block).
+- ~~Dedup residency~~ **ANSWERED**: in-kernel 16k LRU map (421 distinct
+  tuples measured, Dropped 0); flush interval default 30 s (design
+  tunable).
+- PidHash joining: design proposes event-time identity capture with
+  first-seen stamping on interaction records (final naming in handoff).
 
 ## Test Plan
 
@@ -143,7 +156,7 @@ Sketch; finalized in `implementation_plan.md`:
 
 ## Done When
 
-- All four acceptance criteria pass on the target RHEL 9-class host.
+- All four acceptance criteria pass in an RHEL 9-class validation environment.
 - Streams run in parallel with process/file/network with the health gate
   green.
 - Verification recorded in `verification.md`; durable facts promoted to

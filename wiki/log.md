@@ -1549,3 +1549,219 @@ vs kprobes) delegated to an on-host spike; spike stub created. Sealed human
 estimates recorded in interview.md (seal intact for downstream agents).
 Pages created: `work/selinux-monitoring/{interview,brief,references,spike}.md`.
 Pages updated: `wiki/index.md`; `log.md`.
+
+## [2026-09-17] spike | selinux-monitoring attach-point probe executed on localhost (lintap-dev)
+
+Ran the spike's census + throwaway probes in an Ubuntu 24.04 / kernel 6.8 /
+arm64 local validation environment, separate from the RHEL environment: SELinux compiled
+in but inactive (AppArmor is the MAC; getenforce Disabled), so attach
+mechanics and formats were fully verified while denial/transition
+provocation and true AVC rates remained open for the SELinux-enabled environment. Key findings:
+(1) `avc:selinux_audited` tracepoint present with scontext/tcontext/tclass
+as strings — no SID resolution needed for the denial/audited-grant stream;
+(2) BPF LSM programs load AND attach successfully without `bpf` in the
+boot lsm= list but silently never fire (0 hits) — do not build on BPF LSM,
+or gate hard on /sys/kernel/security/lsm; (3) fentry/kprobe tiers all
+attach: `avc_has_perm(ssid,tsid,tclass,requested,…)` is a one-hook source
+for the interaction-map tuple (numeric SIDs — SID→context resolution is now
+THE design problem), `avc_audit` is inlined (hook `slow_avc_audit`),
+transition candidates `selinux_bprm_committed_creds`/`security_transition_sid`
+verified attachable; (4) allow-side rate proxy via generic LSM hooks:
+~2.5k/s idle → ~118k/s under fs load — in-kernel dedup mandatory, sizing
+keys on tuple cardinality not rate. Recommendation: three-hook hybrid
+(tracepoint + avc_has_perm fentry w/ novel-tuple dedup + transition kprobe),
+no BPF LSM tier. Spike stays open pending the RHEL 9 re-run (backport
+deltas, enforcing-mode tests, real rates). Probes were throwaway in
+/tmp/selinux-spike; nothing landed in ../wintap.
+Pages updated: `work/selinux-monitoring/spike.md` (results+recommendation,
+status stub→draft, confidence low→medium); `wiki/index.md`; `log.md`.
+
+## [2026-09-17] feature-progress | selinux-monitoring: RHEL 9 spike collector built
+
+Built a temporary self-contained collector that reruns the spike census and every
+probe left open by the localhost run: tracepoint capture in a private
+tracefs instance vs ausearch ground truth, provoked denials (runcon
+attempts designed to be refused), transition workload under a
+security_transition_sid/selinux_bprm_committed_creds probe, attach-mode
+tests (kfunc/fentry/kprobe + BTF signatures), and 15s idle/load
+avc_has_perm rate + distinct-tuple cardinality windows for dedup-map
+sizing. Degrades gracefully without bpftrace (tracefs kprobe_profile hit
+counts). Output: one self-sufficient tarball per the field-workflow bundle
+rule; cleanup trap removes all tracefs state. Smoke-tested end-to-end on
+lintap-dev (SELinux-inactive degraded mode): all phases run, attach tests
+and BTF dumps correct, zero-event paths handled. Next: run in the RHEL
+validation environment and retain a minimized, sanitized digest; results
+are transcribed into spike.md before design.md opens.
+Pages updated: `work/selinux-monitoring/spike.md` (prototype location,
+follow-ups); `log.md`.
+
+## [2026-09-17] feature-progress | selinux-monitoring: RHEL validation results transcribed; collector v2
+
+Collector v1 ran in the RHEL validation environment (bpftrace absent →
+tracefs fallback); a sanitized digest was transcribed into spike.md. The
+environment confirmed SELinux enabled/Permissive; CONFIG_LSM includes
+bpf AND selinux; selinux_audited tracepoint present with the identical
+string-bearing field set as 6.8; all candidate kallsyms present; Tier 1
+proven end to end (2 provoked runcon denials captured with full context
+strings in the private tracefs instance). Real rates via kprobe_profile:
+avc_has_perm ~4.6k/s idle, ~13.1k/s under fs load; security_transition_sid
+~40/s; slow_avc_audit 0 baseline (denial stream naturally low-volume).
+Recommendation updated: kprobe avc_has_perm as verified interaction-map
+baseline (fentry as later optimization); BPF LSM viable on RHEL 9 but kept
+out of the critical path with the startup lsm-list gate. Collector v2
+built and smoke-tested (forced-fallback mode, clean teardown verified):
+fixes the ausearch -ts quoting bug that voided ground truth, adds
+no-bpftrace distinct-tuple cardinality + transition tuples via tracefs
+hist triggers (Entries: line = dedup-map sizing), adds the bprm-commit
+kprobe to fallback rates; make-digest now captures active-LSM/auditd
+lines. Remaining before design freeze: one v2 validation rerun
+(cardinality + ausearch match); design.md can start now on the answered
+attach-point basis.
+Pages updated: `work/selinux-monitoring/spike.md`; `log.md`.
+
+## [2026-09-17] feature-progress | selinux-monitoring: spike ANSWERED (v2 validation run); design.md drafted
+
+Collector v2 ran in the RHEL validation environment; a sanitized digest
+was transcribed into spike.md and the spike is now ANSWERED
+(confidence high, status reviewed). v2 closed the gaps: active LSM list
+confirmed `capability,yama,selinux,bpf`; ausearch ground truth recovered
+(19 AVC records, shape-matches the tracepoint — masks vs decoded perm
+names); THE sizing number measured via hist trigger: 421 distinct
+(ssid,tsid,tclass) tuples over ~30s (212,960 hits, Dropped 0, top tuple
+43%, top-10 ≈89%); rates ~2.4k/s idle, ~11.8k/s load; transitions 15
+distinct tuples, bprm ~2/s. The window also captured background AVC
+denials (file/tcp_socket/dir classes, permissive=1), validating the
+feature's policy-debugging purpose. Drafted
+work/selinux-monitoring/design.md: three streams on the verified hooks —
+tracepoint AVC events; bprm-commit transition kprobe (osid!=sid filter,
+blob-offset startup self-handshake); interaction map on
+**avc_has_perm_noaudit** (design correction: it's the single choke point —
+avc_has_perm wraps it and inode_permission calls it directly) with 16k
+in-kernel LRU emit-first dedup; SID→context resolution as slice-1
+prototype-then-fallback (sidtab string cache vs /proc-attr + learned
+tables); policy-epoch via SELinux netlink; schema/EPL (group-by
+invariant)/serializer shapes; kill switch WINTAP_SELINUX_ENABLED;
+counters incl. ring_fail_total=0 gate. Brief Open Questions annotated
+with answers.
+Pages updated: `work/selinux-monitoring/{spike,brief}.md`;
+`work/selinux-monitoring/design.md` (new); `wiki/index.md`; `log.md`.
+
+## [2026-09-17] decision | selinux-monitoring design: five open questions decided (human, one-at-a-time review)
+
+All five design.md open questions decided, each taking the recommended
+option: (1) SID→context resolution — timeboxed R1 sidtab string-cache
+prototype in slice 1, R2+R3 composite as shipping fallback; (2)
+interaction-stream permissions — one row per permission, mask exploded at
+ETL to match the acceptance tuple; (3) MessageType names FROZEN now:
+SELINUX_AVC / SELINUX_TRANSITION / SELINUX_INTERACTION (parquet subdirs
+selinux_avc/transition/interaction); (4) flush policy — 30 s default,
+zero-delta tuples skipped; (5) fentry — overhead-gated upgrade only
+(kprobe ships; switch only if criterion-4 overhead gate is crowded).
+design.md Open Questions converted to a Decisions section; body text
+synced. Design is now unblocked for implementation_plan.md +
+dev_handoff.md (slice-1 outputs to record back: R1 adopt/reject,
+avc_has_perm_noaudit rate/cardinality confirmation, measured overhead).
+Pages updated: `work/selinux-monitoring/design.md`; `log.md`.
+
+## [2026-09-17] feature-progress | selinux-monitoring: implementation_plan + dev_handoff published
+
+Published the two remaining pre-implementation artifacts. Implementation
+plan declares abbreviation `sel`, five slices evidence-first: sel-01
+validation-environment measurements (avc_has_perm_noaudit rate/cardinality via the
+spike hist method, timeboxed R1 sidtab-cache prototype with adopt/reject
+recorded back into design.md, cred-blob self-handshake) — no production
+code; sel-02 tracer + sensor skeleton; sel-03 resolver/dedup-flush/
+policy-epoch; sel-04 ETL (frozen SELINUX_* types, row-per-permission
+explode, EPL group-by rule); sel-05 the four frozen acceptance criteria
+in the validation environment with assets in this repo. Dev handoff authorizes
+../wintap changes (platform/linux/sensor/ebpf, core/etl, additive-only
+collect/models) + Analytics validation/, carries the copy/paste prompt
+(with the interview-seal warning), the spike traps (hook noaudit not the
+wrapper; avc_audit inlined; BPF LSM silent-inert; ausearch -ts recent),
+field-workflow rules (pull-only deploys, environment-local tracer rebuilds,
+and minimized, sanitized evidence digests),
+delegated decisions, and closeout/promotion duties. Feature is ready for
+the code-development agent; recommended first slice sel-01 (sel-02
+permitted first if the validation environment is unavailable).
+Pages created: `work/selinux-monitoring/{implementation_plan,dev_handoff}.md`.
+Pages updated: `wiki/index.md`; `log.md`.
+
+## [2026-09-18] feature-progress | selinux-monitoring sel-02: tracer + sensor skeleton validated; RHEL 8.10 variance flagged
+
+sel-02 executed in ../wintap (SELinux exploration branch; transcribed from
+implementor summaries): selinux_tracer.bpf.c (tracepoint + bprm-commit
+kprobe + interaction kprobe preferring avc_has_perm_noaudit with runtime
+wrapper fallback, ringbuf/stats/self-PID filter, 16k LRU novel-emit dedup),
+SELinuxSensor.cs skeleton (census, load/attach+fallback, decode, heartbeat
++ 60s counters; ETL=sel-04, resolver/flush=sel-03), plus registration,
+config keys (WINTAP_ENABLE_SELINUX_SENSOR, WINTAP_API_URLS w/ Program.cs
+listen-URL configurability), libbpf_get_error P/Invoke, and a
+ProcessRundown disable-override fix. build_ebpf/build_dotnet PASS. In the
+validation environment, all three streams captured — 16 AVC events, 20 transitions,
+interaction stream folding 2,907,492 checks into 2,748 novel tuples
+(~99.9% in-kernel fold, decode_errors=0, map occupancy ≪16k — validates
+spike sizing). The environment uses RHEL 8.10 with a 4.18-series kernel,
+not RHEL 9-class — a soft contradiction was flagged in brief.md against
+the "No RHEL 8 in v1" non-goal; spike environment
+labels corrected (data stands; tracepoint is a 4.18 backport; fentry
+doubtful). New trap: avc_has_perm_noaudit in kallsyms but perf kprobe
+attach EINVAL(-22) on this kernel; wrapper fallback runs with the inode
+fast-path coverage caveat. GATE added before sel-03 acceptance: fix the
+noaudit attach (tracefs form/legacy opts/offset/fentry attempt) or human
+scope decision (wrapper-only 8.10 vs out-of-scope). verification.md
+created with the full sel-02 record.
+Pages created: `work/selinux-monitoring/verification.md`.
+Pages updated: `work/selinux-monitoring/{implementation_plan,design,
+dev_handoff,brief,spike}.md`; `wiki/index.md`; `log.md`.
+
+## [2026-09-18] lint | selinux-monitoring: hook-language normalization + sel-02 date provenance
+
+Implementor review flagged an interaction-hook naming drift across the
+feature docs (spike.md's recommendation had been reworded to plain
+"kprobe on avc_has_perm" when measured rates were inserted, while
+design.md/dev_handoff.md kept noaudit-preferred). Normalized all three to
+one policy statement: preferred production hook remains
+`avc_has_perm_noaudit` where attachable (covers the inode fast path); in
+the RHEL 8.10 validation environment it is kallsyms-visible but rejects
+perf-event kprobe attach with EINVAL, so sel-02 uses `avc_has_perm` as a
+validated fallback with an explicit coverage caveat. Also corrected
+sel-02 evidence dates 2026-09-17 → 2026-09-18 to match runtime log
+provenance (design decisions keep their true 2026-09-17 date), rephrased
+the sel-02 checklist note ("implementation and smoke validation
+complete via wrapper fallback; formal checkbox open pending decode unit
+tests and noaudit attach resolution"), and recorded two sel-02 details
+from the code-alignment review: ringbuf wakeup fix (userspace now
+receives novel-tuple events) and attach-error surfacing via
+libbpf_get_error. sel-03 gate unchanged.
+Pages updated: `work/selinux-monitoring/{spike,design,dev_handoff,
+implementation_plan,verification,brief}.md`; `wiki/index.md`; `log.md`.
+
+## [2026-09-18] feature-progress | selinux-monitoring sel-03: core mechanics package-validated
+
+sel-03 partial implementation validated under the packaged service in an
+RHEL 8.10 validation environment with a 4.18-series kernel. Results were
+transcribed from a minimized, sanitized validation summary.
+Green across the new mechanics: class/permission decoder (132 classes /
+2,150 perms from selinuxfs, per-event class+perm names in samples), R2/R3
+resolver skeleton (hit=2854/miss=1365/learned=27 — live source contexts
+resolve via /proc/<pid>/attr/current, targets mostly numeric until
+learned), interaction LRU flush (rows=1703, events=259171, zero_delta=770,
+iterations=2473, errors=0), policy-epoch via /sys/fs/selinux/policy
+polling (delegated netlink-vs-poll choice exercised as polling),
+unknown-perm-mask telemetry (counted+top-N, never a drop; fd/sem
+concentration flagged as a sel-04 decode-test watch item),
+decode_errors=0 throughout; in-kernel dedup at packaged scale 322,851
+folded vs 1,301 novel per interval. noaudit EINVAL reproduces identically
+under the service — wrapper fallback confirmed in both run modes; sel-03
+hook-scope GATE unchanged. Doc changes: verification.md sel-03 section;
+plan sel-03 "IN PROGRESS — package-validated"; design confirms
+unknown-bits-as-telemetry + R2 validation + polling note + explicit
+unresolved-context schema rule for sel-04 (SSid/TSid always present,
+SContext/TContext nullable when unresolved); handoff records
+packaged-service testing as the preferred validation path and documents
+the local test-port override; spike gets the volume-prediction-confirmed
+follow-up note.
+Remaining before sel-03 closes: EventChannel emission, decode/flush/
+resolver unit tests (sel-02 holdover included), hook-scope decision.
+Pages updated: `work/selinux-monitoring/{verification,implementation_plan,
+design,dev_handoff,spike}.md`; `wiki/index.md`; `log.md`.
