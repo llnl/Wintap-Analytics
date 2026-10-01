@@ -128,19 +128,19 @@ units:
   - id: wrc-05
     est_hours: 1.5
     basis: "Recorded 2026-08-25 at plan drafting (unit Proposed): WintapMessage RegActivityObject/DataTypeEnum extension per the Architect's schema decision — small isolated diff plus round-trip tests; risk is downstream (EPL/Parquet) review, not code volume. CONFIRMED unchanged at instruction drafting 2026-08-25 (decided shape is the minimal two-field/two-member extension assumed)."
-    actual_hours: null
+    actual_hours: null  # MISSING DATA (never-gates): audit (Complete, 2026-08-25, 14/14 wrc-05 tests) records only the date; same derivation gap.
   - id: wrc-06
     est_hours: 4.0
     basis: "Recorded 2026-08-25 at plan drafting (unit Proposed): RegistrySensor rewrite on wrc-03/04/05 plus deletion of four legacy files (parsers, manager, two models); mapping tests per event ID and create-vs-overwrite semantics; roughly a wpc-02-scale sensor-core unit but with the decode core already landed. CONFIRMED unchanged (4.0 h) at instruction drafting 2026-08-25: scope landed as planned — the emission contract and payload schemas are fully pre-specified from probe8 (no discovery left in the unit), and the two small additions (EtwProviderSensor OnEtwSessionStarted hook + one-line Counter++ statistics fix) are offset by the decode core already being landed; ~16 no-ETW tests via wpc-style DI seams (injected emit + Read-gate)."
-    actual_hours: null
+    actual_hours: null  # MISSING DATA (never-gates): audit (Complete, 2026-08-25, 34/34 wrc-06 tests) records only the date; same derivation gap.
   - id: wrc-07
     est_hours: 3.0
     basis: "Recorded 2026-08-25 at plan drafting (unit Proposed): keyword-mask config + canary wire-up + overhead measurement + Architect-run live verification support; includes manual-run coordination overhead (shc-02 precedent); blocked on the mask and canary decisions. CONFIRMED unchanged at instruction drafting 2026-08-25 after probe8 PASS: drafting resolved the blocks without growing scope — mask wiring shrank to a two-value selector off the existing CollectRegistryRead setting (no new config surface), and the canary landed as one seam-driven state-machine class (~11 no-ETW tests) roughly as assumed; live-verification effort is Architect-side by design."
-    actual_hours: null
+    actual_hours: null  # MISSING DATA (never-gates): audit (Complete, 2026-08-25, 14/14 wrc-07 tests) records only the date; Architect live-run time not separable.
   - id: wrc-08
     est_hours: 2.0
     basis: "Recorded 2026-08-25 at instruction drafting, BEFORE implementation (unit rolled in by Architect decision the same day — scoped Non-Goals exception per the shc-03 realize-now precedent; NOT a criteria amendment, criteria_amendments stays empty): two-file additive diff fully pre-specified in the instruction (2 EPL select lines + 2 group-by terms; 3 new Reg_ columns via an order-preserving static BuildFlatMessage seam in RegistrySerializer), ~9 no-Esper-runtime tests; the only novelty risk is the standalone NEsper compile smoke test (config mirrored from EventChannel.cs:169-178, documented fallback if the environment fights it); the live DuckDB query addendum is Architect-side by design."
-    actual_hours: null
+    actual_hours: null  # MISSING DATA (never-gates): audit (Complete, 2026-08-25, 9/9 wrc-08 tests; Developer worked in an external harness) records only the date; same derivation gap.
 
 # --- Human sealed estimates (copied verbatim from interview.md at close-out 2026-08-25) ---
 human_est_solo_hours: 240            # Q1 answer verbatim: "6 weeks" — interpreted as 240 working hours (6 x 40 h) per the interview record
@@ -158,10 +158,56 @@ findings: "Widest sealed-estimate spread in the series (240 vs 80 solo-hours, 3x
 
 ## Close-Out Tabulation
 
-<Filled at close-out.>
+| Measure | Human estimate (sealed) | Engineer estimate (sealed) | Observed |
+|---|---:|---:|---:|
+| Solo-hours | 240 ("6 weeks") | 80 | n/a — counterfactual |
+| Solo availability date | missing (derived ~2026-10-06, not stated) | 2026-10-06 | n/a — counterfactual |
+| AI-workflow availability date | 2026-08-26..2026-08-27 ("2 days") | 2026-08-28 | **2026-08-25** (same day) |
+| Feature Velocity | — | — | **42.0** (uncertainty 7–84) |
+| Attention diagnostic | — | — | omitted (multi-harness; not cheap) |
+| API cost | — | — | unavailable |
+
+The calculation is `240 / (5.714 × 1) = 42.0`, on the minimum 1-day
+denominator (same-day open→available; the protocol is silent on same-day
+features, so 1 is used and stated). The two independently sealed solo
+estimates imply Velocities of 14.0 (80 h) and 42.0 (240 h); widening that
+band ±2× per protocol gives the reported **7–84** range. This is by
+construction the noisiest point in the series — a 3× estimator spread on a
+1-day denominator — and even so its floor (7×) matches shc's headline. The
+trend across features, not this point, remains the product.
+
+**Calibration notes.** Both AI-workflow date predictions were pessimistic:
+the human's "2 days" by 1–2 days, the Engineer's 2026-08-28 by 3 days —
+actual availability landed same-day. Both estimators underweighted the same
+structural fact recorded in the estimation note above: the pre-open POC
+spike had already retired the feature's discovery risk before `ts_open`, so
+the measured AI-workflow window contained only fold-in plus a well-specified
+build (the spikes-in-feature model shifts risk outside the measured
+boundary — a standing calibration lesson for POC-first features). The
+solo-hours spread (240 vs. 80, 3×) is the widest yet, versus shc's tight
+1.2× — unsurprising: the dominant unknown is how long an unassisted
+developer would take to reverse-engineer an undocumented ETW capture mode
+from a cryptic conference note, which neither estimator can ground.
+
+**Per-unit quality loop.** Estimates: wrc-03 2.5 h, wrc-04 3.5 h,
+wrc-05 1.5 h, wrc-06 4.0 h, wrc-07 3.0 h, wrc-08 2.0 h (16.5 h total, all
+recorded pre-implementation; wrc-01/wrc-02 retroactive spikes excluded by
+definition). Per-unit actuals are missing data across the board (audits
+record verification evidence and dates, not durations; `developer_docs/` is
+gitignored so no artifact commit trail). What is observable: all six units
+completed within a single calendar day with **zero instruction rework
+cycles** and zero mid-unit stops — including wrc-08, rolled in the same day
+it was drafted, approved, implemented, and audited (9/9 unit tests, 134/134
+`Category~wrc`, 299/299 full suite). The whole feature landed as a single
+commit on `develop-wrc`: `1f66a47` ("Add wrc: manifest-only registry sensor
+via undocumented capture-mode filter (wrc-01..08)", 32 files) — unlike shc's
+per-unit commits, so no per-unit commit trail exists either.
 
 ## Related
 
 - [[wiki/concept/velocity-metric]] — approved definition and framing
 - [[wiki/decision/ai-velocity-roi-mini-lab]] — measurement protocol (v2.1)
-- [[wiki/metrics]] — cross-feature rollup (row appended at close-out)
+- [[wiki/metrics]] — cross-feature rollup (this feature's row appended 2026-08-25)
+- [[wiki/work/improve-windows-registry-collection/verification]] — availability anchor
+- [[wiki/component/registry-sensor]] — canonical fold-in of the stabilized sensor
+- [[wiki/diagnostic/windows-sensor-sweep-queue]] — findings cataloged at close-out

@@ -14,12 +14,25 @@ repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: registry
 audience: llm-agent
-status: draft
+status: closed
 source_paths: wiki/work/improve-windows-registry-collection/implementation_plan.md
 tags: [feature-work, registry, etw, windows-sensor, capture-mode, instruction-units]
 ---
 
 # Implementation Plan: Improve Windows Registry Collection
+
+> **CLOSED (2026-08-25, close-out dispatch): the Architect accepted the
+> feature against the frozen brief criteria on 2026-08-25.** All eight units
+> complete (wrc-01/02 retroactive spikes; wrc-03..08 implemented and
+> audited, all audits Status: Complete on disk — 134/134 `Category~wrc`,
+> 299/299 full suite). Availability anchor: the 2026-08-25 Architect-run
+> live verification plus the wrc-08 live smoke test (verdict, verbatim:
+> "smoke test looks fantastic") — record in
+> [[wiki/work/improve-windows-registry-collection/verification]]. Mini-lab
+> closed in [[wiki/work/improve-windows-registry-collection/metrics]]
+> (Feature Velocity 42.0, uncertainty 7–84, comparability willingness-only).
+> Canonical fold-in: [[wiki/component/registry-sensor]]. Follow-ons live in
+> [[wiki/diagnostic/windows-sensor-sweep-queue]] items 13–19.
 
 > **Status (2026-08-25, fifth dispatch): the Architect APPROVED wrc-03
 > through wrc-07 (all stamps 2026-08-25)** — Developer handoff on
@@ -450,10 +463,17 @@ consequences, which it is.
   [[wiki/work/improve-windows-registry-collection/verification]]
   (evidence-contract coverage table there: items 5 covered, 1/6 partial,
   2/3/4 missing data — recorded, never invented)
-- [ ] wrc-08 rolled in by Architect decision 2026-08-25 (scoped Non-Goals
-  exception, NOT a criteria amendment); instructed and APPROVED 2026-08-25;
-  implement + audit; Architect live-query addendum in
-  verification.md (three new columns populated)
-- [ ] Architect accepts against the frozen brief criteria (close-out waits
-  on wrc-08)
-- [ ] Wiki fold-in + mini-lab close-out
+- [x] wrc-08 rolled in by Architect decision 2026-08-25 (scoped Non-Goals
+  exception, NOT a criteria amendment); instructed and APPROVED 2026-08-25
+  (approval conveyed at Developer handoff — formal stamp leapfrogged by the
+  handoff, recorded in the instruction header); implemented and audited
+  (audit filed, Status: Complete, 9/9 tests); Architect live smoke test
+  accepted 2026-08-25 ("smoke test looks fantastic") — the DuckDB query
+  output was not pasted into the session, recorded as Architect-verbal with
+  query evidence missing data (never-gates) in verification.md
+- [x] Architect accepted against the frozen brief criteria 2026-08-25
+  (availability anchor finalized: ts_available 2026-08-25)
+- [x] Wiki fold-in + mini-lab close-out completed 2026-08-25
+  (metrics.md closed; rollup row appended to [[wiki/metrics]]; canonical
+  page [[wiki/component/registry-sensor]] created; sweep-queue items 15–19
+  cataloged and item 6 marked resolved)

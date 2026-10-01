@@ -27,7 +27,7 @@ tags: [feature-work, selinux, lintap, ebpf, telemetry-semantics]
 > monitor the interactions between selinux contexts as they relate to system
 > events happening in the system.
 
-Branch: `lindseyw/selinux-monitoring`.
+Branch: feature branch.
 
 ## Context Established Before Questioning
 

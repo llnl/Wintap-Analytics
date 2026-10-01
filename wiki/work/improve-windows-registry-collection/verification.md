@@ -8,6 +8,7 @@ grounded_by:
   - ../wintap/developer_docs/audits/wrc-05-wintapmessage-registry-schema.md
   - ../wintap/developer_docs/audits/wrc-06-manifest-registry-sensor.md
   - ../wintap/developer_docs/audits/wrc-07-mask-canary-live-verification.md
+  - ../wintap/developer_docs/audits/wrc-08-parquet-value-plumbing.md
 policy: agent-editable
 last_validated: 2026-08-25
 repo_scope: wintap
@@ -31,18 +32,25 @@ Verification record against the frozen acceptance criteria in
 
 ## Unit audits (2026-08-25)
 
-All five Developer units are implemented on branch `develop-wrc` with audits
-filed, each **Status: Complete** (verified on disk 2026-08-25):
+All six Developer units are implemented on branch `develop-wrc` — committed
+as **`1f66a47`** ("Add wrc: manifest-only registry sensor via undocumented
+capture-mode filter (wrc-01..08)", 32 files; single feature commit, added at
+close-out) — with audits filed, each **Status: Complete** (verified on disk
+2026-08-25):
 
 - `../wintap/developer_docs/audits/wrc-03-payload-decode-core.md`
 - `../wintap/developer_docs/audits/wrc-04-capture-enablement-engine.md`
 - `../wintap/developer_docs/audits/wrc-05-wintapmessage-registry-schema.md`
 - `../wintap/developer_docs/audits/wrc-06-manifest-registry-sensor.md`
 - `../wintap/developer_docs/audits/wrc-07-mask-canary-live-verification.md`
+- `../wintap/developer_docs/audits/wrc-08-parquet-value-plumbing.md`
+  (added at close-out: 9/9 wrc-08 tests, 134/134 `Category~wrc`, 299/299
+  full suite; the standalone NEsper compile smoke test passed — the
+  documented fallback was not needed)
 
 The recurring root-solution `MSB4249` Wintap-Workbench deviation appears in
-the wrc-06/wrc-07 audits; the documented project-scoped fallback builds
-passed. Per-unit test commands and counts live in the audits.
+the wrc-06/wrc-07/wrc-08 audits; the documented project-scoped fallback
+builds passed. Per-unit test commands and counts live in the audits.
 
 ## Live verification — Architect-run record (2026-08-25)
 
@@ -110,13 +118,30 @@ interval ≈ **17–37 events/s** typical steady state — consistent with probe
   not registry capture or serialization (Architect's verdict); queued as
   sweep items 13–14 in [[wiki/diagnostic/windows-sensor-sweep-queue]].
 
-## Availability-anchor candidate
+## Close-out addendum (2026-08-25): wrc-08 live smoke test — Architect-verbal acceptance
 
-This 2026-08-25 Architect-run record is the feature's
-**availability-anchor candidate** (per the wrc-07 instruction: "This record
-is the feature's availability-anchor candidate"). It becomes the anchor only
-on the **Architect's explicit acceptance against the frozen brief criteria**;
-that acceptance sets `ts_available` at the close-out dispatch. As of this
-writing the feature is **not closed**: close-out (acceptance + mini-lab
-unsealing) is a separate Architect-gated step, and the sealed sections of
-`interview.md` remain untouched.
+Per the wrc-08 instruction (§Architect Verification Addendum), the owed
+evidence was a single live-data DuckDB query showing the three new columns
+(`Reg_DataType`, `Reg_PreviousData`, `Reg_PreviousDataType`) populated. The
+Architect ran the live smoke test on 2026-08-25 and accepted it;
+**verdict, verbatim: "smoke test looks fantastic."**
+
+Honest accounting per the never-gates rule: the DuckDB query output itself
+was **not pasted into the close-out session** — the acceptance is recorded
+here as **Architect-verbal, with the query evidence as missing data** (never
+invented, never a gate). The unit-test layer (18-column contract, enum-name
+rendering, first-write `NONE` encoding, null guards — 9/9 in the wrc-08
+audit) plus the verbal acceptance stand as the recorded evidence.
+
+## Availability anchor — FINALIZED at close-out (2026-08-25)
+
+The Architect **accepted the feature against the frozen brief criteria on
+2026-08-25**. The availability anchor is the Architect-run live
+verification of 2026-08-25 (the wrc-07 record above) **together with the
+wrc-08 live smoke test** (addendum above) — the first Architect-accepted
+dated demonstration of the frozen criteria on a branch build.
+**`ts_available` = 2026-08-25**; lead time from the 2026-08-25 open is
+same-day, recorded as the minimum 1 calendar day in
+[[wiki/work/improve-windows-registry-collection/metrics]] (the protocol is
+silent on same-day features; the choice is stated there). Feature closed
+2026-08-25.
