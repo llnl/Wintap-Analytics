@@ -2063,4 +2063,17 @@ Key finding: Debian packaging already exists (`../Lintap/packaging/lintap-deb/`,
 Interview (2 rounds + playback, confirmed): Ubuntu amd64 + arm64 both validated (native arm64 host available); field-parity env with Snappy kept as deliberate divergence (Ubuntu glibc satisfies libnironcompress); MCP matches RPM behavior incl. --skip-mcp; selinux_tracer.bpf.o packaged if built, never required; ldd-verified Depends and upgrade-case maintainer scripts in scope; lintian/changelog/copyright, hardening, apt hosting, extended gates, RPM-builder and ../wintap changes out of scope. Sealed estimates recorded in interview.md.
 Pages created: `work/debian-package-refresh/{interview,brief,references,implementation_plan,dev_handoff,verification}.md`.
 Pages updated: `index.md`; `log.md`.
+
+## [2026-10-03] implementation | Debian package refresh arm64 slice
+
+Implemented dpr-01 through dpr-04 and dpr-06 on matching branch
+`grantj/debian-package-refresh` in `../Lintap`. The Debian builder now uses a
+native `/var/tmp` work root, tier-aware eBPF validation, separate MCP publish
+with `--skip-mcp` isolation, field-parity environment settings while keeping
+Snappy, upgrade-safe maintainer scripts, and ldd-based dependency checks. The
+arm64 native fresh publish, package inspection, install/start, upgrade, remove,
+purge, and skip-MCP checks passed. Ubuntu 24.04 leaves the optional .NET
+diagnostic provider's old `liblttng-ust.so.0` unresolved; this is retained as a
+warning and documented in the feature verification. dpr-05 amd64 validation is
+next.
 Branch: `grantj/debian-package-refresh` created in Wintap-Analytics. Next: dev handoff (dpr-01+dpr-02 first slice) — implementation writes authorized for ../Lintap/packaging/lintap-deb only.

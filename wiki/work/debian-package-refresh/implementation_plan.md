@@ -120,10 +120,10 @@ installed-host migration needed beyond reinstalling a prior .deb.
 
 ## Done Checklist
 
-- [ ] dpr-01 build-deb.sh parity refresh
-- [ ] dpr-02 lintap.env field-parity sync
-- [ ] dpr-03 maintainer scripts + ldd-verified Depends
-- [ ] dpr-04 docs refresh
+- [x] dpr-01 build-deb.sh parity refresh
+- [x] dpr-02 lintap.env field-parity sync
+- [x] dpr-03 maintainer scripts + ldd-verified Depends
+- [x] dpr-04 docs refresh
 - [ ] dpr-05 amd64 build + smoke PASS
-- [ ] dpr-06 arm64 build + smoke PASS
+- [x] dpr-06 arm64 build + smoke PASS (sensor attach caveat recorded)
 - [ ] dpr-07 closeout (promotion, metrics, log)
