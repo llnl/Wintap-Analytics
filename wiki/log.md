@@ -2077,3 +2077,28 @@ diagnostic provider's old `liblttng-ust.so.0` unresolved; this is retained as a
 warning and documented in the feature verification. dpr-05 amd64 validation is
 next.
 Branch: `grantj/debian-package-refresh` created in Wintap-Analytics. Next: dev handoff (dpr-01+dpr-02 first slice) — implementation writes authorized for ../Lintap/packaging/lintap-deb only.
+
+## [2026-10-03] implementation | Debian package refresh amd64 cross-build
+
+No native x86_64 Multipass host is available on the Apple Silicon validation
+machine. Ran the authorized cross-build from `lintap-dev` (`aarch64`) for
+`amd64/linux-x64`: fresh publish, separate MCP publish, package structure, ELF
+architecture, maintainer-script syntax, and tracepoint-only object validation
+passed. Artifact `lintap_0.1.0-11_amd64.deb` SHA-256 is
+`c4bd44e47a94f12498e95aaa2bac7430750d03303e39e9d842232d025179bcda`.
+Native amd64 install/start/upgrade smoke remains pending until an x86_64 host
+is available.
+
+## [2026-10-03] verification | Debian package refresh native amd64
+
+Native amd64 validation completed on the UTM Debian 12 VM at `192.168.252.5`.
+Fresh revision `12` build and package inspection passed; revision `13` was
+installed over it with the service remaining enabled and active. The service
+produced readable parquet output (105 rows across host and macip files).
+Remove preserved data and the conffile; purge removed `/etc/lintap` while
+preserving the data marker. Revision `12` SHA-256:
+`dccc2f923b3b5f0a9fe300dc67c86b15c965d1bd608cc96534401e4ad12974f9`.
+Revision `13` SHA-256:
+`497d5ee0aa7720118b8c84db0c808661b5b693237bdd0bc38bcacb0d4a199df9`.
+The UTM Debian host required `CPATH=/usr/include/x86_64-linux-gnu` for the
+multiarch eBPF headers; no source change was made for that environment issue.

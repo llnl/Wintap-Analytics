@@ -16,8 +16,8 @@ tags: [feature-work, lintap-packaging, debian, verification]
 
 # Verification: Debian Package Refresh
 
-Arm64 implementation and native smoke evidence are recorded below. The amd64
-build and smoke remain outstanding.
+Arm64 and native amd64 implementation and smoke evidence are recorded below.
+An amd64 cross-build is also retained for comparison.
 
 ## Test Commands
 
@@ -55,6 +55,51 @@ dpkg-deb --contents /home/ubuntu/git/artifacts/lintap-deb/lintap_0.1.0-9_arm64.d
 Result: PASS. The package built with no `/usr/lib/lintap/mcp/` content after
 stale MCP work-root cleanup was added. SHA-256:
 `0ab7ad3826b3e0f1384a3441f5106e48d7d629e5de7a07e62dd06b486aaa29ad`.
+
+### Amd64 cross-build
+
+Host: `lintap-dev`, Ubuntu 24.04, `aarch64`; target: `amd64` / `linux-x64`.
+
+```sh
+/home/ubuntu/git/Lintap/packaging/lintap-deb/build-deb.sh \
+  --version 0.1.0 --revision 11 \
+  --arch amd64 --runtime linux-x64 --host-arch aarch64
+dpkg-deb --info /home/ubuntu/git/artifacts/lintap-deb/lintap_0.1.0-11_amd64.deb
+```
+
+Result: PASS for cross-build and structural validation. The package reports
+`Architecture: amd64`; `file` reports x86-64 `Lintap` and MCP executables; all
+six tracepoint objects are present and no CO-RE objects are required. SHA-256:
+`c4bd44e47a94f12498e95aaa2bac7430750d03303e39e9d842232d025179bcda`.
+
+### Native amd64 build and smoke
+
+Host: UTM VM `192.168.252.5`, Debian 12, `x86_64`, kernel
+`6.1.0-50-amd64`. Debian's multiarch headers required
+`CPATH=/usr/include/x86_64-linux-gnu`; this was an environment-only build
+setting and no source files were changed.
+
+```sh
+env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
+  CPATH=/usr/include/x86_64-linux-gnu \
+  /home/eyeon/git/Lintap/packaging/lintap-deb/build-deb.sh \
+  --version 0.1.0 --revision 12 --host-arch x86_64
+sudo apt-get install -y /home/eyeon/git/artifacts/lintap-deb/lintap_0.1.0-12_amd64.deb
+sudo systemctl start lintap.service
+sudo apt-get install -y /home/eyeon/git/artifacts/lintap-deb/lintap_0.1.0-13_amd64.deb
+sudo touch /var/log/lintap/package-refresh-marker
+sudo apt-get remove -y lintap
+sudo apt-get purge -y lintap
+```
+
+Results: PASS. Revision `12` installed enabled and initially inactive, then
+started active. Revision `13` upgraded in place with the service still
+enabled and active. The service produced 105 readable parquet rows across the
+host and macip outputs. Remove preserved `/var/log/lintap` and the conffile;
+purge removed `/etc/lintap` while preserving the data marker. Native revision
+`12` SHA-256: `dccc2f923b3b5f0a9fe300dc67c86b15c965d1bd608cc96534401e4ad12974f9`.
+Native revision `13` SHA-256:
+`497d5ee0aa7720118b8c84db0c808661b5b693237bdd0bc38bcacb0d4a199df9`.
 
 ### Install, upgrade, remove, purge
 
@@ -100,6 +145,8 @@ host/kernel sensor-attach caveat, not a package installation failure.
 ## Known Gaps
 
 - Native arm64 host validation is complete; amd64 validation remains.
+- Native amd64 validation is complete on the UTM VM. The Multipass cross-build
+  remains useful for validating tracepoint-only cross-build behavior.
 - `--no-restore` cannot be used from a clean native work root until assets are
   restored into that work root; fresh publish with restore succeeds.
 - Ubuntu 24.04's .NET optional diagnostic provider requests the older
@@ -109,5 +156,5 @@ host/kernel sensor-attach caveat, not a package installation failure.
 
 ## Follow-Ups
 
-- Run dpr-05 on a native amd64 Ubuntu host.
-- Recheck the optional .NET diagnostic-provider dependency on the amd64 host.
+- Recheck the optional .NET diagnostic-provider dependency on future Ubuntu
+  amd64 hosts; Debian 12 resolved it through `liblttng-ust1`.

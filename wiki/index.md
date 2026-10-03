@@ -197,7 +197,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/debian-package-refresh/references]] | high | Source map: stale deb builder pieces, the RPM builder sections to mirror (and the RHEL 8-specific ones not to), the two-tier eBPF Makefile contract, Lintap.csproj MCP coupling, and the 2026-06 packaging review backlog split. |
 | [[wiki/work/debian-package-refresh/implementation_plan]] | medium | Seven dpr-NN slices: script parity, env sync, upgrade-safe maintainer scripts + ldd-verified Depends, docs refresh, amd64 then arm64 build+smoke, closeout promotion. |
 | [[wiki/work/debian-package-refresh/dev_handoff]] | medium | Handoff authorizing writes to ../Lintap/packaging/lintap-deb only, with copy/paste prompt, parity do/don't lists, cross-build validation expectations, and smoke/upgrade testing duties. |
-| [[wiki/work/debian-package-refresh/verification]] | low | Verification scaffold awaiting dpr-01..dpr-06 evidence; arm64 host access and NuGet availability flagged as known gaps. |
+| [[wiki/work/debian-package-refresh/verification]] | medium | Arm64 native and amd64 native UTM build/install/start/upgrade/remove/purge evidence recorded; cross-build evidence retained, with Debian multiarch CPATH and optional .NET diagnostic-provider caveats documented. |
 ---
 
 *Last updated: 2026-10-03 (opened the debian-package-refresh feature)*
