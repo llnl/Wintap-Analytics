@@ -2055,3 +2055,12 @@ no `/tmp` or `/var/log` frontmatter anchors remain; hash/coverage commands and
 ## [2026-08-31] diagnosis+instruction | [wintap] improve-windows-process-collection reboot lineage follow-ups
 
 Recorded the WPC reboot-lineage follow-up thread at a summary level: wpc-11 repaired parent linkage on boot-replay dedup, wpc-12 addressed DuckDB UTC `DateTimeKind` round-trips, and wpc-13 was drafted for sub-second `ResolveProcessAtTime` comparisons. Open state: wpc-13 awaits approval/implementation; expected evidence is a reboot smoke with increased parent-link repair count and one lineage PASS.
+
+## [2026-10-03] feature-open | Debian package refresh (debian-package-refresh)
+
+Source: operator request "I'd like to now have a package for debian", scoped against `../Lintap/packaging/`.
+Key finding: Debian packaging already exists (`../Lintap/packaging/lintap-deb/`, the June 2026 original the RPM was derived from) but drifted behind the field-proven RPM builder: pre-two-tier tracer validation (fails cross-builds), stale lintap.env missing the field 0.3.4 sensor block, no MCP publish isolation/--skip-mcp, repo-mount work root. Feature is a parity refresh, not greenfield.
+Interview (2 rounds + playback, confirmed): Ubuntu amd64 + arm64 both validated (native arm64 host available); field-parity env with Snappy kept as deliberate divergence (Ubuntu glibc satisfies libnironcompress); MCP matches RPM behavior incl. --skip-mcp; selinux_tracer.bpf.o packaged if built, never required; ldd-verified Depends and upgrade-case maintainer scripts in scope; lintian/changelog/copyright, hardening, apt hosting, extended gates, RPM-builder and ../wintap changes out of scope. Sealed estimates recorded in interview.md.
+Pages created: `work/debian-package-refresh/{interview,brief,references,implementation_plan,dev_handoff,verification}.md`.
+Pages updated: `index.md`; `log.md`.
+Branch: `grantj/debian-package-refresh` created in Wintap-Analytics. Next: dev handoff (dpr-01+dpr-02 first slice) — implementation writes authorized for ../Lintap/packaging/lintap-deb only.
