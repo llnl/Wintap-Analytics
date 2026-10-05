@@ -2143,3 +2143,8 @@ verification, release README, and missing-data metrics artifacts; and updated
 the index. Native arm64 and amd64 Debian validation passed. RPM builder parity
 remains explicitly out of scope and the published RPM is documented as an
 independently versioned release asset.
+
+## [2026-10-05] closeout | Pull requests opened
+
+Implementation PR: https://github.com/llnl/Lintap/pull/6
+Analytics/wiki closeout PR: https://github.com/llnl/Wintap-Analytics/pull/24
