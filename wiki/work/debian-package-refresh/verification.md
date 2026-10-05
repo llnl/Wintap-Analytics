@@ -9,7 +9,7 @@ repo_scope: Lintap
 implementation_area: packaging
 event_domain: none
 audience: mixed
-status: draft
+status: reviewed
 source_paths: wiki/work/debian-package-refresh/verification.md
 tags: [feature-work, lintap-packaging, debian, verification]
 ---
@@ -100,6 +100,51 @@ purge removed `/etc/lintap` while preserving the data marker. Native revision
 `12` SHA-256: `dccc2f923b3b5f0a9fe300dc67c86b15c965d1bd608cc96534401e4ad12974f9`.
 Native revision `13` SHA-256:
 `497d5ee0aa7720118b8c84db0c808661b5b693237bdd0bc38bcacb0d4a199df9`.
+
+### Release artifact rebuild
+
+Fresh Debian artifacts were rebuilt on `lintap-dev` with application version
+`0.1.0` and revision `14`:
+
+- `artifacts/lintap-deb/lintap_0.1.0-14_arm64.deb` — SHA-256
+  `c26c48290997a4120a18b227913722b22d288386b8abafd23c02df915325e961`
+- `artifacts/lintap-deb/lintap_0.1.0-14_amd64.deb` — SHA-256
+  `ea2f2659736a1f81d97ee2780315d8033ae4dcdeb7ae835f0c0bc382da8eaa2f`
+
+The existing RPM artifact is stale and was not replaced:
+`artifacts/lintap-rpm/x86_64/lintap-0.1.0-3.el8.x86_64.rpm`, built 2026-06-18,
+SHA-256 `38bfecbad374b2ecc8dc0f9b85cfd50eaaa3c7936aca61b18055ef0b0dd1657f`.
+A fresh RPM build stopped during staged-content validation because the RPM
+builder still requires the obsolete single-tier `file_ops_tracer.bpf.o`
+contract. Refreshing that builder is outside this feature's authorization.
+
+### Live sensor smoke tests on lintap-dev
+
+The installed arm64 sensor was running against `/var/log/lintap` on
+`lintap-dev`.
+
+```sh
+sudo python3 /home/ubuntu/git/wintap/devtools/process_capture_smoke_test.py \
+  --data-root /var/log/lintap --timeout 180
+sudo python3 /home/ubuntu/git/wintap/devtools/file_capture_smoke_test.py \
+  --data-root /var/log/lintap --timeout 180
+sudo python3 /home/ubuntu/git/wintap/devtools/network_capture_smoke_test.py \
+  --data-root /var/log/lintap --timeout 180
+```
+
+Results: all three passed on 2026-10-03.
+
+- Process creation/tree: PASS. All three variants (`fork_exec`, `posix_spawn`,
+  `execveat_fexecve`) produced process records with valid expected parent/child
+  linkage and parent hashes. The `posix_spawn` case required additional parquet
+  flush wait time before passing.
+- File activity: PASS. Captured five rows across one generated path with
+  `open`, `read`, `write`, `close`, and `delete` activities. The test waited
+  for parquet visibility before passing.
+- Network activity: PASS. Three rounds of HTTP/HTTPS traffic to four endpoints
+  and three rounds of UDP probes to `8.8.8.8:53` and `1.1.1.1:53` completed.
+  Recent parquet rows included TCP port 443 and UDP port 53 records. Exact
+  endpoint-IP matching was not required by the test.
 
 ### Install, upgrade, remove, purge
 

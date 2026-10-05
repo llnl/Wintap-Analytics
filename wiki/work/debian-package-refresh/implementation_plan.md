@@ -11,7 +11,7 @@ repo_scope: Lintap
 implementation_area: packaging
 event_domain: none
 audience: llm-agent
-status: draft
+status: reviewed
 source_paths: wiki/work/debian-package-refresh/implementation_plan.md
 tags: [feature-work, lintap-packaging, debian, implementation-plan]
 ---
@@ -126,4 +126,4 @@ installed-host migration needed beyond reinstalling a prior .deb.
 - [x] dpr-04 docs refresh
 - [x] dpr-05 amd64 build + smoke PASS
 - [x] dpr-06 arm64 build + smoke PASS (sensor attach caveat recorded)
-- [ ] dpr-07 closeout (promotion, metrics, log)
+- [x] dpr-07 closeout (promotion, metrics, log)

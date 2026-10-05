@@ -2102,3 +2102,44 @@ Revision `13` SHA-256:
 `497d5ee0aa7720118b8c84db0c808661b5b693237bdd0bc38bcacb0d4a199df9`.
 The UTM Debian host required `CPATH=/usr/include/x86_64-linux-gnu` for the
 multiarch eBPF headers; no source change was made for that environment issue.
+
+## [2026-10-03] verification | lintap-dev live sensor smoke tests
+
+Ran the available live integration tests against the running arm64 sensor on
+`lintap-dev` using `/var/log/lintap`: process creation/tree, file activity, and
+network activity. All passed. Process coverage included `fork_exec`,
+`posix_spawn`, and `execveat_fexecve` with valid parent linkage and hashes; file
+coverage captured open/read/write/close/delete; network coverage captured three
+rounds of HTTP/HTTPS and UDP traffic with TCP 443 and UDP 53 parquet rows.
+SELinux was not tested because the VM has no SELinux filesystem, tools, or
+policy packages installed.
+
+## [2026-10-03] release-prep | Debian artifacts rebuilt; RPM stale blocker recorded
+
+Rebuilt Debian arm64 and amd64 artifacts at application version `0.1.0`,
+revision `14`: arm64 SHA-256
+`c26c48290997a4120a18b227913722b22d288386b8abafd23c02df915325e961`; amd64
+SHA-256 `ea2f2659736a1f81d97ee2780315d8033ae4dcdeb7ae835f0c0bc382da8eaa2f`.
+The latest RPM remains `0.1.0-3.el8`, built 2026-06-18, SHA-256
+`38bfecbad374b2ecc8dc0f9b85cfd50eaaa3c7936aca61b18055ef0b0dd1657f`.
+Attempting a fresh RPM build on the arm64 Multipass host stopped at the RPM
+builder's obsolete `file_ops_tracer.bpf.o` assertion; no RPM builder changes
+were made because that path is outside the authorized feature scope.
+
+## [2026-10-05] documentation | Release README draft for package assets
+
+Created `work/debian-package-refresh/release-README.md` for the proposed RPM
+`lintap-0.3.5-12.el8.x86_64.rpm` and Debian `0.1.0-14` amd64/arm64 assets. The
+draft documents the mixed package versions explicitly, installation and
+service commands, runtime layout, upgrade/removal behavior, Snappy divergence,
+and the required `SHA256SUMS` release companion. The final RPM checksum was
+verified from `~/Downloads` and added to the README.
+
+## [2026-10-05] closeout | Debian package refresh
+
+Closed dpr-01 through dpr-07. Promoted the Debian package-builder contract and
+compression divergence to `repo/lintap-supporting-repo.md`; finalized
+verification, release README, and missing-data metrics artifacts; and updated
+the index. Native arm64 and amd64 Debian validation passed. RPM builder parity
+remains explicitly out of scope and the published RPM is documented as an
+independently versioned release asset.
