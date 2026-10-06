@@ -1,0 +1,70 @@
+schema_version: 1
+catalog_version: 1
+project:
+  project_name: Wintap-Analytics
+  project_description: Wintap ecosystem analytics and research wiki host
+  host_repo: .
+  primary_repo: ../wintap
+  sibling_repos:
+  - ../Lintap
+  - ../Wintappy
+  domain_context: Wintap ecosystem host telemetry, analytics, and research workflows
+  page_types:
+  - tension
+  - decision
+  - concept
+  - component
+  - data_model
+  - event_type
+  - pipeline
+  - schema
+  - tool
+  - workflow
+  - repo
+  - diagnostic
+  extra_frontmatter_fields: []
+  example_tags: []
+  key_questions: []
+  reasoning_lint_checks: []
+  staleness_days: 60
+  feature_workflow: true
+  stubs: []
+  scanned_sources:
+  - .
+  - ../wintap
+  - ../Lintap
+  - ../Wintappy
+features:
+  adaptive-feature-interview: 1
+  canonical-promotion: 1
+  contradiction-workflow: 1
+  decisions: 1
+  developer-handoff: 1
+  domain-frontmatter: 1
+  feature-workflow: 2
+  frontmatter-governance: 1
+  grounding-markers: 1
+  index-log: 1
+  lint-contract: 1
+  live-repo-source-policy: 1
+  managed-sections: 1
+  opencode-integration: 1
+  operations: 1
+  project-profile: 1
+  raw-provenance: 1
+  research-threads: 1
+  role-governance: 1
+  session-startup: 1
+  speculative-marker: 1
+  tensions: 1
+  vault-layout: 1
+  velocity-metrics: 1
+  verification-audit: 1
+  write-boundaries: 1
+ownership:
+  managed_sections: []
+  detached_features:
+  - approval-gated-handoff
+  - domain-frontmatter
+  - role-governance
+  - velocity-metrics
