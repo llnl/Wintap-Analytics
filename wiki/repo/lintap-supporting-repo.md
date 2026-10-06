@@ -6,7 +6,7 @@ grounded_by:
   - ../Lintap/README.md
   - ../Lintap/teletap/README.md
 policy: agent-editable
-last_validated: 2026-08-11
+last_validated: 2026-10-05
 repo_scope: Lintap
 implementation_area: packaging
 event_domain: cross-domain
@@ -41,6 +41,29 @@ The older sysdig workflow captures process, file, network, and optional SELinux 
 <!-- GROUND_TRUTH: ../Lintap/pidstat-collector.py; ../Lintap/packaging/lintap-rpm/lintap-pidstat.service; ../Lintap/README.md §Managed pidstat collector -->
 
 Open watch item: collector CPU usage looked higher than expected in early RHEL 8 field runs — investigate with data from more systems (tracked in [[wiki/work/improve-pidstat-collector/implementation_plan]]).
+
+## Package Builder Contract (promoted 2026-10-05)
+
+The Debian builder under `../Lintap/packaging/lintap-deb/` is the refreshed
+package path for Debian/Ubuntu amd64 and arm64. It uses a native `/var/tmp`
+work root, validates the tracepoint eBPF tier on every build, validates the
+four functional CO-RE objects on native BTF builds, stages SELinux objects
+opportunistically, publishes the main application with MCP disabled, and
+publishes the MCP helper separately unless `--skip-mcp` is requested.
+<!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/build-deb.sh -->
+
+The Debian environment follows the field sensor settings while deliberately
+retaining Snappy Parquet compression because current Ubuntu glibc supports the
+bundled compression library. The RHEL 8 RPM environment retains its separate
+uncompressed compatibility setting; this is a compression/configuration
+divergence, not a semantic event-model divergence.
+<!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/lintap.env; ../Lintap/packaging/lintap-rpm/lintap.env -->
+
+The 2026-10 release candidate assets are Debian `0.1.0-14` for amd64 and arm64
+and RPM `0.3.5-12.el8` for x86_64. They are independently versioned package
+artifacts and should be identified by their package-manager versions when
+deployed.
+<!-- GROUND_TRUTH: wiki/work/debian-package-refresh/release-README.md -->
 
 ## Wiki Boundary
 

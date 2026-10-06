@@ -192,6 +192,14 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/support-docker-contexts-linux/implementation_plan]] | medium | Research implementation sequence from diagnostic observation contract through cross-event comparison and schema recommendation. |
 | [[wiki/work/support-docker-contexts-linux/dev_handoff]] | medium | Code-development handoff for the first diagnostic cgroup/namespace observation slice, with sibling-repo authorization boundaries. |
 | [[wiki/work/support-docker-contexts-linux/verification]] | medium | Verification scaffold awaiting Linux fixture execution and comparison results. |
+| [[wiki/work/debian-package-refresh/interview]] | high | Interview record for the Debian package refresh: parity-refresh framing (deb packaging pre-exists and drifted behind the field RPM), both-arch Ubuntu targets, field-parity env, MCP/RPM parity, opportunistic selinux object; carries the sealed human estimates. |
+| [[wiki/work/debian-package-refresh/brief]] | high | Feature brief: refresh ../Lintap/packaging/lintap-deb to parity with the field-proven RPM builder (tier-aware tracer validation, MCP publish parity, field env, Snappy kept as a deliberate divergence), validated by install + short smoke on native Ubuntu amd64 and arm64. |
+| [[wiki/work/debian-package-refresh/references]] | high | Source map: stale deb builder pieces, the RPM builder sections to mirror (and the RHEL 8-specific ones not to), the two-tier eBPF Makefile contract, Lintap.csproj MCP coupling, and the 2026-06 packaging review backlog split. |
+| [[wiki/work/debian-package-refresh/implementation_plan]] | medium | Seven dpr-NN slices: script parity, env sync, upgrade-safe maintainer scripts + ldd-verified Depends, docs refresh, amd64 then arm64 build+smoke, closeout promotion. |
+| [[wiki/work/debian-package-refresh/dev_handoff]] | medium | Handoff authorizing writes to ../Lintap/packaging/lintap-deb only, with copy/paste prompt, parity do/don't lists, cross-build validation expectations, and smoke/upgrade testing duties. |
+| [[wiki/work/debian-package-refresh/verification]] | medium | Arm64 native and amd64 native UTM build/install/start/upgrade/remove/purge evidence recorded; cross-build evidence retained, with Debian multiarch CPATH and optional .NET diagnostic-provider caveats documented. |
+| [[wiki/work/debian-package-refresh/release-README]] | medium | Draft release README for the RPM `0.3.5-12.el8` asset and Debian `0.1.0-14` amd64/arm64 assets, with installation, runtime, upgrade, removal, and checksum guidance. |
+| [[wiki/work/debian-package-refresh/metrics]] | low | Closeout metrics record with missing sealed estimates, native arm64/amd64 validation evidence, and the RPM builder parity follow-up boundary. |
 ---
 
-*Last updated: 2026-09-18 (merged current main catalog entries with the selinux-monitoring validation and implementation records)*
+*Last updated: 2026-10-03 (opened the debian-package-refresh feature)*

@@ -2055,3 +2055,96 @@ no `/tmp` or `/var/log` frontmatter anchors remain; hash/coverage commands and
 ## [2026-08-31] diagnosis+instruction | [wintap] improve-windows-process-collection reboot lineage follow-ups
 
 Recorded the WPC reboot-lineage follow-up thread at a summary level: wpc-11 repaired parent linkage on boot-replay dedup, wpc-12 addressed DuckDB UTC `DateTimeKind` round-trips, and wpc-13 was drafted for sub-second `ResolveProcessAtTime` comparisons. Open state: wpc-13 awaits approval/implementation; expected evidence is a reboot smoke with increased parent-link repair count and one lineage PASS.
+
+## [2026-10-03] feature-open | Debian package refresh (debian-package-refresh)
+
+Source: operator request "I'd like to now have a package for debian", scoped against `../Lintap/packaging/`.
+Key finding: Debian packaging already exists (`../Lintap/packaging/lintap-deb/`, the June 2026 original the RPM was derived from) but drifted behind the field-proven RPM builder: pre-two-tier tracer validation (fails cross-builds), stale lintap.env missing the field 0.3.4 sensor block, no MCP publish isolation/--skip-mcp, repo-mount work root. Feature is a parity refresh, not greenfield.
+Interview (2 rounds + playback, confirmed): Ubuntu amd64 + arm64 both validated (native arm64 host available); field-parity env with Snappy kept as deliberate divergence (Ubuntu glibc satisfies libnironcompress); MCP matches RPM behavior incl. --skip-mcp; selinux_tracer.bpf.o packaged if built, never required; ldd-verified Depends and upgrade-case maintainer scripts in scope; lintian/changelog/copyright, hardening, apt hosting, extended gates, RPM-builder and ../wintap changes out of scope. Sealed estimates recorded in interview.md.
+Pages created: `work/debian-package-refresh/{interview,brief,references,implementation_plan,dev_handoff,verification}.md`.
+Pages updated: `index.md`; `log.md`.
+
+## [2026-10-03] implementation | Debian package refresh arm64 slice
+
+Implemented dpr-01 through dpr-04 and dpr-06 on matching branch
+`grantj/debian-package-refresh` in `../Lintap`. The Debian builder now uses a
+native `/var/tmp` work root, tier-aware eBPF validation, separate MCP publish
+with `--skip-mcp` isolation, field-parity environment settings while keeping
+Snappy, upgrade-safe maintainer scripts, and ldd-based dependency checks. The
+arm64 native fresh publish, package inspection, install/start, upgrade, remove,
+purge, and skip-MCP checks passed. Ubuntu 24.04 leaves the optional .NET
+diagnostic provider's old `liblttng-ust.so.0` unresolved; this is retained as a
+warning and documented in the feature verification. dpr-05 amd64 validation is
+next.
+Branch: `grantj/debian-package-refresh` created in Wintap-Analytics. Next: dev handoff (dpr-01+dpr-02 first slice) — implementation writes authorized for ../Lintap/packaging/lintap-deb only.
+
+## [2026-10-03] implementation | Debian package refresh amd64 cross-build
+
+No native x86_64 Multipass host is available on the Apple Silicon validation
+machine. Ran the authorized cross-build from `lintap-dev` (`aarch64`) for
+`amd64/linux-x64`: fresh publish, separate MCP publish, package structure, ELF
+architecture, maintainer-script syntax, and tracepoint-only object validation
+passed. Artifact `lintap_0.1.0-11_amd64.deb` SHA-256 is
+`c4bd44e47a94f12498e95aaa2bac7430750d03303e39e9d842232d025179bcda`.
+Native amd64 install/start/upgrade smoke remains pending until an x86_64 host
+is available.
+
+## [2026-10-03] verification | Debian package refresh native amd64
+
+Native amd64 validation completed on the UTM Debian 12 VM at `192.168.252.5`.
+Fresh revision `12` build and package inspection passed; revision `13` was
+installed over it with the service remaining enabled and active. The service
+produced readable parquet output (105 rows across host and macip files).
+Remove preserved data and the conffile; purge removed `/etc/lintap` while
+preserving the data marker. Revision `12` SHA-256:
+`dccc2f923b3b5f0a9fe300dc67c86b15c965d1bd608cc96534401e4ad12974f9`.
+Revision `13` SHA-256:
+`497d5ee0aa7720118b8c84db0c808661b5b693237bdd0bc38bcacb0d4a199df9`.
+The UTM Debian host required `CPATH=/usr/include/x86_64-linux-gnu` for the
+multiarch eBPF headers; no source change was made for that environment issue.
+
+## [2026-10-03] verification | lintap-dev live sensor smoke tests
+
+Ran the available live integration tests against the running arm64 sensor on
+`lintap-dev` using `/var/log/lintap`: process creation/tree, file activity, and
+network activity. All passed. Process coverage included `fork_exec`,
+`posix_spawn`, and `execveat_fexecve` with valid parent linkage and hashes; file
+coverage captured open/read/write/close/delete; network coverage captured three
+rounds of HTTP/HTTPS and UDP traffic with TCP 443 and UDP 53 parquet rows.
+SELinux was not tested because the VM has no SELinux filesystem, tools, or
+policy packages installed.
+
+## [2026-10-03] release-prep | Debian artifacts rebuilt; RPM stale blocker recorded
+
+Rebuilt Debian arm64 and amd64 artifacts at application version `0.1.0`,
+revision `14`: arm64 SHA-256
+`c26c48290997a4120a18b227913722b22d288386b8abafd23c02df915325e961`; amd64
+SHA-256 `ea2f2659736a1f81d97ee2780315d8033ae4dcdeb7ae835f0c0bc382da8eaa2f`.
+The latest RPM remains `0.1.0-3.el8`, built 2026-06-18, SHA-256
+`38bfecbad374b2ecc8dc0f9b85cfd50eaaa3c7936aca61b18055ef0b0dd1657f`.
+Attempting a fresh RPM build on the arm64 Multipass host stopped at the RPM
+builder's obsolete `file_ops_tracer.bpf.o` assertion; no RPM builder changes
+were made because that path is outside the authorized feature scope.
+
+## [2026-10-05] documentation | Release README draft for package assets
+
+Created `work/debian-package-refresh/release-README.md` for the proposed RPM
+`lintap-0.3.5-12.el8.x86_64.rpm` and Debian `0.1.0-14` amd64/arm64 assets. The
+draft documents the mixed package versions explicitly, installation and
+service commands, runtime layout, upgrade/removal behavior, Snappy divergence,
+and the required `SHA256SUMS` release companion. The final RPM checksum was
+verified from `~/Downloads` and added to the README.
+
+## [2026-10-05] closeout | Debian package refresh
+
+Closed dpr-01 through dpr-07. Promoted the Debian package-builder contract and
+compression divergence to `repo/lintap-supporting-repo.md`; finalized
+verification, release README, and missing-data metrics artifacts; and updated
+the index. Native arm64 and amd64 Debian validation passed. RPM builder parity
+remains explicitly out of scope and the published RPM is documented as an
+independently versioned release asset.
+
+## [2026-10-05] closeout | Pull requests opened
+
+Implementation PR: https://github.com/llnl/Lintap/pull/6
+Analytics/wiki closeout PR: https://github.com/llnl/Wintap-Analytics/pull/24
