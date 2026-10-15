@@ -200,6 +200,10 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/debian-package-refresh/verification]] | medium | Arm64 native and amd64 native UTM build/install/start/upgrade/remove/purge evidence recorded; cross-build evidence retained, with Debian multiarch CPATH and optional .NET diagnostic-provider caveats documented. |
 | [[wiki/work/debian-package-refresh/release-README]] | medium | Draft release README for the RPM `0.3.5-12.el8` asset and Debian `0.1.0-14` amd64/arm64 assets, with installation, runtime, upgrade, removal, and checksum guidance. |
 | [[wiki/work/debian-package-refresh/metrics]] | low | Closeout metrics record with missing sealed estimates, native arm64/amd64 validation evidence, and the RPM builder parity follow-up boundary. |
+| [[wiki/work/privileged-ebpf-helper/future-privileged-ebpf-helper-boundary]] | speculative | Future least-privilege design separating a privileged eBPF helper from the unprivileged .NET processing service through a protected Unix-domain socket. |
+| [[wiki/work/refactor-data-log-paths/interview]] | high | Interview record for the data/log path refactor: four Q&A rounds resolving the data/runtime tree split, two independent roots, knob repurposing, FHS-style defaults, mount-time hostname convention, frozen parquet internals, and no-auto-migration; sealed estimates skipped. |
+| [[wiki/work/refactor-data-log-paths/brief]] | high | Feature brief for splitting the single mixed root into a shared archivable `data` tree (mountable by axon-aegis-micro-range VMs) and a host-only `runtime` tree, with WINTAP_DATA_ROOT repurposed, new WINTAP_RUNTIME_ROOT, cross-repo packaging/pipeline tracking, and Linux-gated acceptance. |
+| [[wiki/work/refactor-data-log-paths/references]] | high | Source map for the path refactor: Env.cs/ConfigManager root resolution, data-tree vs runtime-tree derivation sites, the hardcoded /var/lib/lintap/diag defect, Lintap deb/rpm packaging and pidstat spool, and downstream Wintappy/Analytics consumers to track. |
 ---
 
-*Last updated: 2026-10-03 (opened the debian-package-refresh feature)*
+*Last updated: 2026-10-15 (opened the refactor-data-log-paths feature)*

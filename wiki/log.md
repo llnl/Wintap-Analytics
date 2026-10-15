@@ -2148,3 +2148,41 @@ independently versioned release asset.
 
 Implementation PR: https://github.com/llnl/Lintap/pull/6
 Analytics/wiki closeout PR: https://github.com/llnl/Wintap-Analytics/pull/24
+
+## [2026-10-12] future-work | Privileged eBPF helper boundary
+
+Source: `../Lintap` packaging units, packaging review, and README.
+Pages created: `wiki/work/privileged-ebpf-helper/future-privileged-ebpf-helper-boundary.md`.
+Pages updated: `wiki/index.md`.
+Summary: recorded a speculative least-privilege deployment pattern that moves
+eBPF loading and BPF-object ownership into a privileged helper while running
+the .NET processing service as a dedicated non-root user over a protected
+Unix-domain socket. Captured capability, systemd hardening, IPC, migration,
+and validation questions; current root-service behavior remains grounded in
+Lintap packaging sources.
+Contradictions flagged: none.
+
+## [2026-10-15] feature-open | Refactor file system data and log paths (refactor-data-log-paths)
+
+Source: operator request via the LLM-assisted feature workflow invocation.
+Grounding: Env.cs/ConfigManager root resolution, ETL Paths.cs derivations,
+WintapLogger/ProcessResolver/EventChannel/controllers runtime paths, the
+hardcoded `/var/lib/lintap/diag` literal in NetworkSensor.cs, Lintap deb/rpm
+packaging (`WINTAP_DATA_ROOT=/var/log/lintap`), and the pidstat collector
+spool.
+Interview (4 rounds + playback, confirmed): split the single mixed root into a
+shared archivable `data` tree (today's parquet event tables; the mountable
+piece for axon-aegis-micro-range multi-VM shared storage) and a host-only
+`runtime` tree (logs, duckdb event store, csv, recordings, spool, diag,
+workbench state, ai). Two independent roots: `WINTAP_DATA_ROOT` repurposed to
+mean the data tree; new `WINTAP_RUNTIME_ROOT`. FHS-style sibling defaults under
+the per-OS app root. Cross-platform code scope; Linux-gated acceptance (package
+smoke, two-instance shared-mount simulation, Wintappy DBT run). Constraints:
+raw_sensor internals and leaf naming frozen; no auto-migration (wpc-09
+precedent). Hostname layer for cross-VM runtime visibility is a mount-time
+convention (`<shared>/hosts/<hostname>/`), not sensor code. Partially
+supersedes decision/platform-runtime-data-root-defaults at close-out. Sealed
+estimate questions skipped (missing data).
+Pages created: `work/refactor-data-log-paths/{interview,brief,references}.md`.
+Pages updated: `index.md`; `log.md`.
+Contradictions flagged: none.
