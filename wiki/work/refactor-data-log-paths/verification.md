@@ -51,6 +51,12 @@ Commands and results:
 - `sudo dpkg -i lintap_0.1.0-1_arm64.deb` — PASS. Installed env explicitly
   contains both new roots; post-install created both directories with mode
   `0750`; `/var/lib/lintap/data/parquet` was not created.
+- Bounded `systemctl start lintap.service` probe — PASS. The service stayed
+  active for 15 seconds and journal output reported data path
+  `/var/lib/lintap/data`, raw sensor path `/var/lib/lintap/data/raw_sensor`,
+  runtime root `/var/lib/lintap/runtime`, and event store/log files under the
+  runtime tree. The service was stopped after the probe; no event-output
+  count is claimed from this short run.
 - RPM smoke — BLOCKED: `rpmbuild` is not installed in the Ubuntu arm64 VM;
   the RPM builder remains statically validated only.
 - Full service-start and event-output acceptance remains pending for rdp-05;

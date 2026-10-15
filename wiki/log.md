@@ -41,6 +41,10 @@ post-install checks passed for `/var/lib/lintap/data` and
 RPM validation is blocked by missing `rpmbuild`; service-start/event-output
 acceptance remains pending.
 
+The installed Debian service also passed a bounded 15-second start probe and
+reported the split data/raw_sensor/runtime paths in journald; no short-run
+event count was used as an acceptance result.
+
 ## [2026-09-01] feature-start | Support for Docker contexts on Linux
 
 Interview completed and playback confirmed. Feature artifacts created:
