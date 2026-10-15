@@ -5,6 +5,17 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-15] code | refactor-data-log-paths rdp-01/rdp-02
+
+Implemented the two-root Wintap resolution core and moved runtime-tree
+consumers to centralized `Paths` members. Data now directly contains
+`raw_sensor/`; runtime owns logs, event store, csv, recordings, diagnostics,
+AI state, and workbench state. Added RuntimeRoot config/env support, startup
+root logging and same-root warning, uploader relative-key coverage, and test
+project execution metadata. Multipass `lintap-dev` build passed; focused
+path tests passed 20/20; grep gates passed. Full suite retains 17 known
+Linux-incompatible Windows sensor failures.
+
 ## [2026-09-01] feature-start | Support for Docker contexts on Linux
 
 Interview completed and playback confirmed. Feature artifacts created:
