@@ -145,8 +145,8 @@ with validation gates last. Slice IDs: `rdp-NN`.
 
 - [x] rdp-01 two-root core + unit tests
 - [x] rdp-02 runtime consumers moved + grep gates + uploader key test
-- [ ] rdp-03 packaging split (deb + rpm) + pidstat + docs
-- [ ] rdp-04 Wintappy/Analytics tracking
+- [x] rdp-03 packaging split (deb + rpm) + pidstat + docs
+- [x] rdp-04 Wintappy/Analytics tracking
 - [ ] rdp-05 Linux package smoke (gate 1)
 - [ ] rdp-06 shared-mount simulation (gate 2)
 - [ ] rdp-07 Wintappy DBT run (gate 3)

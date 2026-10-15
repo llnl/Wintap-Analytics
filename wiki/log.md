@@ -16,6 +16,23 @@ project execution metadata. Multipass `lintap-dev` build passed; focused
 path tests passed 20/20; grep gates passed. Full suite retains 17 known
 Linux-incompatible Windows sensor failures.
 
+## [2026-10-15] code | refactor-data-log-paths rdp-03
+
+Committed Lintap packaging split as `301ff63` on
+`grantj/debian-package-refresh`. Debian/RPM packages now default to
+`/var/lib/lintap/data` for shared `raw_sensor/` output and
+`/var/lib/lintap/runtime` for host-local state; maintainer scripts preserve
+the data tree and stop creating `/var/log/lintap`. Updated pidstat defaults,
+tests, and packaging documentation. Shell/static gates passed; pytest was
+blocked by missing VM dependencies and unavailable PyPI access.
+
+## [2026-10-15] code | refactor-data-log-paths rdp-04
+
+Committed Wintappy downstream default update as `018f541`: DBT dataset and
+day-range discovery now use the direct `WINTAP_DATA_ROOT/raw_sensor` layout,
+and the example environment drops `/parquet`. Analytics Streamlit/notebook
+scan found no additional live old-layout input coupling.
+
 ## [2026-09-01] feature-start | Support for Docker contexts on Linux
 
 Interview completed and playback confirmed. Feature artifacts created:

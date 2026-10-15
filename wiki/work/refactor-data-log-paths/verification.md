@@ -64,3 +64,36 @@ class is the applicable gate for this slice.
 - Runtime consumers use centralized `Paths` members.
 - Uploader relative keys remain rooted at `raw_sensor/` under the new data
   root.
+
+## 2026-10-15 — rdp-03 packaging checkpoint
+
+Packaging worktree: `../Lintap-rdp`, branch `grantj/debian-package-refresh`,
+commit `301ff63`.
+
+- Debian and RPM env files explicitly set `WINTAP_DATA_ROOT=/var/lib/lintap/data`
+  and `WINTAP_RUNTIME_ROOT=/var/lib/lintap/runtime`.
+- Package staging and maintainer scripts create the two new directories and no
+  longer create `/var/log/lintap`; purge paths preserve `/var/lib/lintap`.
+- The pidstat collector defaults parquet output to the data root and its spool
+  to `<runtime-root>/pidstat-spool`; explicit `PIDSTAT_PARQUET_ROOT` and
+  `PIDSTAT_SPOOL_DIR` overrides remain supported.
+- Deb/RPM README, build/test, and restart documentation now describes the
+  split and direct `data/raw_sensor` layout.
+- `bash -n` for both package builders — PASS.
+- `git diff --check` — PASS.
+- VM `python3 -m py_compile pidstat-collector.py` — PASS.
+- VM collector-root gate with duckdb import stub — PASS.
+- `python3 -m pytest -q tests/test_pidstat_collector.py` — BLOCKED: pytest is
+  not installed in the VM; `uv` could not fetch pytest/duckdb because PyPI
+  network access timed out. No test result is claimed for this blocked gate.
+
+## 2026-10-15 — rdp-04 downstream checkpoint
+
+Wintappy commit: `018f541` on `main`.
+
+- `WINTAP_DBT_DATASET` now defaults directly to `WINTAP_DATA_ROOT`.
+- DBT start/end day discovery now scans `WINTAP_DATA_ROOT/raw_sensor`.
+- The example environment no longer suggests a `/parquet` suffix.
+- A targeted scan of Analytics `streamlit/` and notebooks found no live
+  hardcoded old-layout input to change.
+- `git diff --check` and Makefile dry-run configuration gate — PASS.
