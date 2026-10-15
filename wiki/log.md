@@ -2182,7 +2182,34 @@ raw_sensor internals and leaf naming frozen; no auto-migration (wpc-09
 precedent). Hostname layer for cross-VM runtime visibility is a mount-time
 convention (`<shared>/hosts/<hostname>/`), not sensor code. Partially
 supersedes decision/platform-runtime-data-root-defaults at close-out. Sealed
-estimate questions skipped (missing data).
+estimates supplied shortly after interview close and recorded verbatim in the
+sealed section of interview.md (values not repeated here — sealed until
+close-out).
 Pages created: `work/refactor-data-log-paths/{interview,brief,references}.md`.
 Pages updated: `index.md`; `log.md`.
+Contradictions flagged: none.
+
+## [2026-10-15] planning | refactor-data-log-paths design, plan, and dev handoff
+
+Source: continued feature planning on branch `grantj/refactor-data-log-paths`
+(created this session), plus design-time scans of ../Wintappy and Analytics
+tooling for path couplings.
+Key design choices: the repurposed data root directly contains `raw_sensor/`
+(no `parquet/` level — keeping it was explicitly rejected; only a human can
+un-reject); runtime tree keeps existing child names under a new parent; single
+derivation point per tree in Paths.cs with grep gates; Wintappy tracks via one
+Makefile default change (`WINTAP_DBT_DATASET` drops `/parquet`) since DBT
+macros funnel through `raw_sensor_dataset_path()`; pidstat collector spool
+moves to the runtime root. Design-time scan found no hardcoded path couplings
+in Analytics streamlit/notebooks (dev agent re-verifies).
+Plan: eight rdp-NN slices — two-root core (rdp-01) and consumer moves
+(rdp-02) gated before packaging (rdp-03), Wintappy tracking (rdp-04), then
+the three acceptance gates (rdp-05..07) and closeout (rdp-08).
+Handoff: authorizes ../wintap, ../Lintap packaging+collector, ../Wintappy;
+first slice rdp-01+rdp-02; interview.md sealed-section warning included;
+micro-range layout conflicts escalate to the human. Implementation moves to
+an environment containing ../axon-aegis-micro-range.
+Pages created: `work/refactor-data-log-paths/{design,implementation_plan,dev_handoff}.md`.
+Pages updated: `work/refactor-data-log-paths/interview.md` (sealed estimates
+recorded); `index.md`; `log.md`.
 Contradictions flagged: none.

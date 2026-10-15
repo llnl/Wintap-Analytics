@@ -201,11 +201,17 @@ Engineer at exploration start) must not read this section until feature
 close-out. See [[wiki/decision/ai-velocity-roi-mini-lab]] (v2.1) and
 [[wiki/concept/velocity-metric]].
 
+(Answered 2026-10-15, shortly after interview close rather than at it — the
+human returned to supply the estimates before any implementation estimate
+existed.)
+
 **Q: If you had to build this exact scope alone, without AI, how many working
 hours would it take? And on what date would it realistically have been
 available?**
-**A:** (skipped — not answered at interview close; missing data is fine)
+**A:** "I think it would take a human 1 week." (No separate calendar
+availability date given; 1 week is the stated answer, verbatim.)
 
 **Q: With the AI workflow, on what date do you predict this feature will be
 available?**
-**A:** (skipped — not answered at interview close; missing data is fine)
+**A:** "With AI assistance, 1 day." (Given as a duration, not a calendar date,
+verbatim.)
