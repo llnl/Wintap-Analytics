@@ -33,6 +33,14 @@ day-range discovery now use the direct `WINTAP_DATA_ROOT/raw_sensor` layout,
 and the example environment drops `/parquet`. Analytics Streamlit/notebook
 scan found no additional live old-layout input coupling.
 
+## [2026-10-15] verification | refactor-data-log-paths rdp-05
+
+Built and installed the Debian arm64 package in `lintap-dev`; staged and
+post-install checks passed for `/var/lib/lintap/data` and
+`/var/lib/lintap/runtime`, with no `/var/log/lintap` package creation.
+RPM validation is blocked by missing `rpmbuild`; service-start/event-output
+acceptance remains pending.
+
 ## [2026-09-01] feature-start | Support for Docker contexts on Linux
 
 Interview completed and playback confirmed. Feature artifacts created:

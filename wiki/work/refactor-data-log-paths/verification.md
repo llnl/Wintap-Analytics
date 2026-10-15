@@ -41,6 +41,21 @@ Commands and results:
 - Grep gate for legacy `/var/lib/lintap` or `/var/log/lintap` literals outside `Env.cs` defaults — PASS.
 - `git diff --check` — PASS.
 
+## 2026-10-15 — rdp-05 package smoke (partial)
+
+- Debian arm64 package build on `lintap-dev` — PASS. The builder completed
+  eBPF compilation, framework-dependent .NET publish, staged validation, and
+  produced `lintap_0.1.0-1_arm64.deb`.
+- `dpkg-deb --contents` — PASS: package contains `/var/lib/lintap/data/` and
+  `/var/lib/lintap/runtime/`, with no `/var/log/lintap` package directory.
+- `sudo dpkg -i lintap_0.1.0-1_arm64.deb` — PASS. Installed env explicitly
+  contains both new roots; post-install created both directories with mode
+  `0750`; `/var/lib/lintap/data/parquet` was not created.
+- RPM smoke — BLOCKED: `rpmbuild` is not installed in the Ubuntu arm64 VM;
+  the RPM builder remains statically validated only.
+- Full service-start and event-output acceptance remains pending for rdp-05;
+  this package-install check does not claim sensor runtime coverage.
+
 The test project required `<IsTestProject>true</IsTestProject>` before
 `dotnet test` would execute tests; without it, the SDK silently skipped the
 test run with exit code 0. This configuration correction is included with the
