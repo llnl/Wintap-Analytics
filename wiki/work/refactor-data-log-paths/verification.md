@@ -62,6 +62,21 @@ Commands and results:
 - Full service-start and event-output acceptance remains pending for rdp-05;
   this package-install check does not claim sensor runtime coverage.
 
+## 2026-10-15 — Debian arm64 artifact exported to Mac host
+
+The Multipass data mount is shared with the Mac, so no byte-copy step was
+needed. The package is available on the host at:
+
+`/Users/johnson30/data/lintap/artifacts/lintap-deb/lintap_0.1.0-1_arm64.deb`
+
+- Size: 33 MiB.
+- Mac SHA-256: `916407eafa64d4347e718d60cae58a50c368667c3dcd3dd83d40ea777d8f55a1`.
+- VM SHA-256: identical, from
+  `/home/ubuntu/data/lintap/artifacts/lintap-deb/lintap_0.1.0-1_arm64.deb`.
+- Package target: Debian/Ubuntu `arm64`.
+- Current status: ready for external-session testing; rdp-05 remains open
+  pending external service/event validation and RPM coverage.
+
 The test project required `<IsTestProject>true</IsTestProject>` before
 `dotnet test` would execute tests; without it, the SDK silently skipped the
 test run with exit code 0. This configuration correction is included with the

@@ -45,6 +45,13 @@ The installed Debian service also passed a bounded 15-second start probe and
 reported the split data/raw_sensor/runtime paths in journald; no short-run
 event count was used as an acceptance result.
 
+## [2026-10-15] artifact | refactor-data-log-paths Debian arm64
+
+Confirmed the built package is available on the Mac host through the mounted
+data directory at `/Users/johnson30/data/lintap/artifacts/lintap-deb/`.
+SHA-256 `916407eafa64d4347e718d60cae58a50c368667c3dcd3dd83d40ea777d8f55a1`.
+Marked ready for external-session testing; rdp-05 remains open.
+
 ## [2026-09-01] feature-start | Support for Docker contexts on Linux
 
 Interview completed and playback confirmed. Feature artifacts created:
