@@ -34,8 +34,9 @@ with validation gates last. Slice IDs: `rdp-NN`.
 - Add `RuntimeRoot` to `ConfigRoot` in `ConfigManager.cs` (env mapping
   `WINTAP_RUNTIME_ROOT` follows from the existing name mapping).
 - Defaults: `<app-root>/data` and `<app-root>/runtime` per design.
-- Extend `Paths.cs`: `ParquetDataPath` → data root itself; add runtime-tree
-  members (`LogDataPath`, `EventStorePath`, `CsvDataPath`, `RecordingDataPath`,
+- Extend `Paths.cs`: `ParquetDataPath` → data root itself; add
+  `EsperStagingPath` under the runtime root and add runtime-tree members
+  (`LogDataPath`, `EventStorePath`, `CsvDataPath`, `RecordingDataPath`,
   `DiagDataPath`, `AiDataPath`, `WorkbenchStatePath`) — names at dev agent's
   discretion, one derivation point per tree is the requirement.
 - Unit tests: extend `RuntimeDataRootTests.cs` to both roots × three

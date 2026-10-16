@@ -5,6 +5,24 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-15] verification | refactor-data-log-paths Esper staging correction
+
+Moved serializer/meta parquet staging and merge inputs to
+`runtime/esper_staging`, leaving finalized output under `data/raw_sensor`.
+Wintap build and focused path tests passed 21/21; Debian revision 2 was built,
+installed over the default package layout, and its bounded service probe
+reported both resolved roots. RPM, shared-mount, and full event-output gates
+remain open.
+
+## [2026-10-15] docs | refactor-data-log-paths operator path guide
+
+Added `../Lintap-rdp/packaging/PATHS_AND_CONFIGURATION.md` as the dedicated
+operator guide for data/runtime roots, `WINTAP_DATA_ROOT` and
+`WINTAP_RUNTIME_ROOT` overrides, shared-mount examples, pidstat exceptions, and
+verification commands. Linked it from the repository and package READMEs and
+included it in generated Debian/RPM documentation. Corrected the remaining
+active TeleTap README example to use direct `raw_sensor/` output.
+
 ## [2026-10-15] code | refactor-data-log-paths rdp-01/rdp-02
 
 Implemented the two-root Wintap resolution core and moved runtime-tree

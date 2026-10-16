@@ -62,6 +62,29 @@ Commands and results:
 - Full service-start and event-output acceptance remains pending for rdp-05;
   this package-install check does not claim sensor runtime coverage.
 
+## 2026-10-15 — rdp-02/rdp-05 Esper staging correction and Debian revision 2
+
+- Wintap build gates — PASS: `make build_ebpf`, `make build_dotnet`, and the
+  focused `RuntimeDataRootTests` run passed **21/21**.
+- Debian arm64 revision 2 built in `lintap-dev` — PASS:
+  `lintap_0.1.0-2_arm64.deb`.
+  Mac and VM SHA-256 agree: `69427f3ca252d9c232e818249cded936f56bf00025f11ead92923bb81404a1ba`.
+- Upgrade install with default package roots — PASS:
+  `sudo dpkg -i lintap_0.1.0-2_arm64.deb`; package metadata contains only
+  `/var/lib/lintap/data` and `/var/lib/lintap/runtime` roots, with no
+  `/var/log/lintap` package path.
+- Bounded service probe — PASS: service started for 15 seconds and stopped
+  cleanly. Startup logs reported `Parquet data path:
+  /var/lib/lintap/data` and `Esper staging path:
+  /var/lib/lintap/runtime/esper_staging`.
+- Filesystem boundary observed: runtime staging contained `host/` and
+  `macip/`; the data tree contained no new serializer staging directories.
+  Existing `data/host` and `data/macip` directories predated the revision-2
+  probe from the earlier package install and are not included by the revision-2
+  package file list.
+- RPM smoke remains blocked because `rpmbuild` is unavailable. Shared-mount
+  and full event-output acceptance remain separate open gates.
+
 ## 2026-10-15 — Debian arm64 artifact exported to Mac host
 
 The Multipass data mount is shared with the Mac, so no byte-copy step was

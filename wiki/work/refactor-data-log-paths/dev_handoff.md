@@ -154,8 +154,7 @@ acceptance gates) → rdp-08 (closeout).
 
 ## Non-Goals For This Slice
 
-- Anything inside `raw_sensor/` (layout, naming, schemas, `merged/` staging,
-  `.active` handling).
+- Anything inside finalized `raw_sensor/` (layout, naming, schemas).
 - Migration/symlink logic of any kind.
 - Hostname-aware paths in sensor code.
 - S3/uploader protocol changes beyond the relative-key regression test.
@@ -194,8 +193,8 @@ acceptance gates) → rdp-08 (closeout).
 
 ## Escalate To The Human (do not decide)
 
-- Any need to touch `raw_sensor` internals or relocate `merged/`/`.active`
-  (frozen-internals exception).
+- Any need to touch `raw_sensor` internals or move finalized output outside
+  `data/raw_sensor`.
 - Any migration behavior beyond no-auto-migration.
 - Conflicts between the design and the actual `axon-aegis-micro-range`
   layout.

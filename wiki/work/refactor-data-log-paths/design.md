@@ -62,8 +62,10 @@ The repurposed `WINTAP_DATA_ROOT` points at the tree that *directly contains*
 Rationale: the interview renamed the tree from format-centric "parquet" to
 "data"; keeping a `parquet/` intermediate directory would preserve the old name
 inside the new one and add a pointless level to every mount and S3 prefix.
-Internals below the root (`raw_sensor/…`, leaf naming, `merged/` staging) are
-frozen. <!-- SYNTHESIS: inferred from the interview naming decision and ../Wintappy/Makefile WINTAP_DBT_DATASET default -->
+Internals below the root (`raw_sensor/…`, leaf naming, and finalized output
+layout) remain frozen. Esper serializer and merge staging is explicitly
+host-local under `<runtime-root>/esper_staging/`; it is not part of the shared
+data tree. <!-- SYNTHESIS: inferred from the interview naming decision, ../Wintappy/Makefile WINTAP_DBT_DATASET default, and ../wintap/wintap/core/etl/shared/Paths.cs -->
 
 Consequence: `Paths.ParquetDataPath` becomes the data root itself. The
 uploader's `getParquetRelativePathForFile` already computes keys relative to
@@ -154,10 +156,10 @@ None. `raw_sensor` internals, leaf naming, and parquet schemas are frozen.
   than adding wait logic.
 - Read-only or full shared mount: existing error paths apply; serializer
   retries/backlog behavior unchanged (out of scope to harden here).
-- `merged/` staging and `.active` files still live inside the data tree
-  (frozen internals). On a shared mount they are host-distinguishable by leaf
-  naming, so no collision, but they are transient clutter on shared storage —
-  recorded as a known gap / follow-up candidate, not changed this feature.
+- Esper serializer output, host/macip metadata, merge inputs, and `.active`
+  files live under `<runtime-root>/esper_staging/` and are excluded from the
+  shared data tree. Finalized output is materialized only under
+  `<data-root>/raw_sensor/`.
 
 ## Error Handling
 
