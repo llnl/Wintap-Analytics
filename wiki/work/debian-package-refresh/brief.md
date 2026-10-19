@@ -87,8 +87,9 @@ Per validated architecture (amd64 and arm64):
 2. Clean install on a current Ubuntu LTS host; service starts via systemd.
 3. Expected tracer tier(s) attach: tracepoint tier always; CO-RE tier on
    native builds with BTF.
-4. Parquet output appears under `/var/log/lintap` and is readable.
-5. Clean remove preserves `/var/log/lintap` data; purge removes config only.
+4. Parquet output appears under `/var/log/lintap/data/raw_sensor` and is readable.
+5. Clean remove preserves `/var/log/lintap/data` and `/var/log/lintap/runtime`;
+   purge removes config only.
 6. Upgrade in place (install new revision over old) leaves the service
    enabled and running.
 7. `Depends:` verified against `ldd` output of the staged binaries.

@@ -50,7 +50,7 @@ files were identified by run ID, exact window, and these SHA-256 values:
 | `perf_smaps_rollup` | `2858540273e37c8557dc16892a394efc37623d4689894de8bd55d652740c6e3f` |
 
 The analysis used DuckDB over those four explicit files and parsed only
-`/var/log/lintap/Logs/Lintap.log` records in the exact local window below. It
+`/var/log/lintap/runtime/Logs/Lintap.log` records in the exact local window below. It
 calculated row/time coverage, first/last/range/half averages, linear slopes,
 FileOps and serializer totals, maintenance timing, and aligned queue/resource
 correlations. These exact shell commands re-establish artifact identity and

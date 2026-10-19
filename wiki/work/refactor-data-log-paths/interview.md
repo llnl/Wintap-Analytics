@@ -6,7 +6,7 @@ grounded_by:
   - ../wintap/wintap/core/shared/Env.cs
   - ../wintap/wintap/core/etl/shared/Paths.cs
 policy: agent-editable
-last_validated: 2026-10-15
+last_validated: 2026-10-19
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -26,7 +26,7 @@ tags: [feature-work, packaging, data-pipeline, paths, shared-mount]
 
 - [[wiki/decision/platform-runtime-data-root-defaults]] (2026-08-19): `Env.cs`
   owns platform data-root defaults (Windows `%ProgramData%\Wintap`, macOS
-  `/Library/Application Support/Mactap`, Linux `/var/lib/lintap`), with
+  `/Library/Application Support/Mactap`, Linux `/var/log/lintap`), with
   programmatic → `WINTAP_DATA_ROOT` → JSON `DataRoot` precedence.
   <!-- GROUND_TRUTH: ../wintap/wintap/core/shared/Env.cs §ResolveDataRoot -->
 - Everything today nests under one root: `Logs/`, `csv/`, `parquet/`,
@@ -35,15 +35,15 @@ tags: [feature-work, packaging, data-pipeline, paths, shared-mount]
   <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/WintapLogger.cs §ComponentLogger ctor -->
   <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/ProcessResolver.cs §MAIN_DB_PATH -->
 - One stray hardcoded path bypasses the root entirely: BPF diag counters CSV at
-  literal `/var/lib/lintap/diag`.
+  literal `/var/log/lintap/runtime/diag`.
   <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs §diag CSV writer -->
 - Field packaging (Lintap branch `grantj/debian-package-refresh`, deb + rpm)
-  sets `WINTAP_DATA_ROOT=/var/log/lintap` in `/etc/lintap/lintap.env`, so
-  deployed hosts put *everything* (data + logs + duckdb + spool) under
-  `/var/log/lintap`.
+  sets `WINTAP_DATA_ROOT=/var/log/lintap/data` and
+  `WINTAP_RUNTIME_ROOT=/var/log/lintap/runtime` in `/etc/lintap/lintap.env`.
   <!-- GROUND_TRUTH: ../Lintap packaging/lintap-deb/lintap.env (branch grantj/debian-package-refresh) -->
-- The pidstat collector reads the same `WINTAP_DATA_ROOT` and spools under
-  `<data_root>/pidstat-spool`.
+- The pidstat collector reads both roots and spools under
+  `<runtime_root>/pidstat-spool`, while completed parquet is published under
+  `<data_root>/raw_sensor/pidstat`.
   <!-- GROUND_TRUTH: ../Lintap pidstat-collector.py §load config (branch grantj/debian-package-refresh) -->
 - The S3/upload path selects files only from the parquet tree
   (`Paths.ParquetDataPath`, `raw_sensor` marker fallback).
@@ -126,8 +126,8 @@ where pointed but logs/duckdb move to the runtime default unless also set;
 release-notes callout required.
 
 **Q:** Default locations per platform when unconfigured?
-**A:** FHS-style split under one app root: Linux `/var/lib/lintap/data` +
-`/var/lib/lintap/runtime`; Windows `%ProgramData%\Wintap\data` + `\runtime`;
+**A:** FHS-style split under one app root: Linux `/var/log/lintap/data` +
+`/var/log/lintap/runtime`; Windows `%ProgramData%\Wintap\data` + `\runtime`;
 macOS `/Library/Application Support/Mactap/{data,runtime}`.
 **Outcome:** decision.
 
@@ -146,7 +146,7 @@ as a watch item.
 3. `WINTAP_DATA_ROOT` repurposed to mean the data tree; new
    `WINTAP_RUNTIME_ROOT` added; same programmatic → env → JSON precedence model.
 4. Unconfigured defaults: sibling `data`/`runtime` dirs under the existing
-   per-OS app root (`/var/lib/lintap`, `%ProgramData%\Wintap`,
+   per-OS app root (`/var/log/lintap`, `%ProgramData%\Wintap`,
    `/Library/Application Support/Mactap`).
 5. Cross-platform scope (Windows and macOS layouts change too).
 6. Hostname layer for host-only dirs is a mount-time deployment convention

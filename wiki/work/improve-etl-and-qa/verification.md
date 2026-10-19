@@ -65,7 +65,7 @@ a vendor product.
 2. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && make dbt-test`
 3. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && uv run --isolated --dev --project . python - <<'PY' ... query smoke for build_summary, telemetry_event_summary, file_chart, network_chart, perf_chart, pidstat_process_summary, and the notebook's pidstat summary/top queries ... PY`
 4. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && uv run --isolated --dev --project . python - <<'PY' ... verify the notebook availability expression against an empty pidstat_process_summary result ... PY`
-5. `source "wintap-run.env" && export WINTAP_DBT_DATASET="${WINTAP_DBT_DATASET:-$WINTAP_DATA_ROOT/parquet}" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && uv run --isolated --dev --project . dbt run --project-dir wintap_dbt --profiles-dir wintap_dbt --select process_registry host host_ip process_file process_image_load process_registry_summary process_file_summary process_summary build_summary`
+5. `source "wintap-run.env" && export WINTAP_DBT_DATASET="${WINTAP_DBT_DATASET:-$WINTAP_DATA_ROOT}" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && uv run --isolated --dev --project . dbt run --project-dir wintap_dbt --profiles-dir wintap_dbt --select process_registry host host_ip process_file process_image_load process_registry_summary process_file_summary process_summary build_summary`
 6. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && make dbt-build`
 7. `ls -la .venv && make rebuild-venv && uv run --dev --project . python -c "import plotly, marimo; print(plotly.__version__)"`
 8. `source "wintap-run.env" && export WINTAP_DBT_DATABASE="${WINTAP_DBT_DATABASE:-$WINTAP_DATA_ROOT/duckdb/wintap.duckdb}" && uv run --dev --project . python - <<'PY' ... execute the new pidstat time-series query (1-minute buckets, peak CPU threshold 25, top 12 processes) and inspect row count / elapsed time ... PY`
@@ -87,13 +87,13 @@ a vendor product.
 
 24. `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter "FullyQualifiedName~FileOpsAggregatorTests|FullyQualifiedName~SerializerScheduleTests"`
 25. `dotnet build wintap/Lintap.csproj`
-26. `python3 devtools/file_capture_smoke_test.py --data-root /var/log/lintap --timeout 120 --poll-interval 2 --require-no-serializer-drops --serializer-observation-seconds 70`
-27. `python3 devtools/file_capture_smoke_test.py --data-root /var/log/lintap --timeout 180 --poll-interval 2 --unique-file-count 6000 --require-no-serializer-drops --serializer-observation-seconds 70`
+26. `python3 devtools/file_capture_smoke_test.py --data-root /var/log/lintap/data --timeout 120 --poll-interval 2 --require-no-serializer-drops --serializer-observation-seconds 70`
+27. `python3 devtools/file_capture_smoke_test.py --data-root /var/log/lintap/data --timeout 180 --poll-interval 2 --unique-file-count 6000 --require-no-serializer-drops --serializer-observation-seconds 70`
 28. `make build_ebpf`
 29. `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter "FullyQualifiedName~FileOpsAggregatorTests|FullyQualifiedName~FileOpsDenyPolicyTests|FullyQualifiedName~SerializerScheduleTests"`
 30. `duckdb -c "..."` over the four explicit
     `lintap-perf-20260830-no-tenable` parquet files plus DuckDB regex parsing of
-    `/var/log/lintap/Logs/Lintap.log` for `2026-08-30 14:49:06-15:49:05 PDT`;
+    `/var/log/lintap/runtime/Logs/Lintap.log` for `2026-08-30 14:49:06-15:49:05 PDT`;
     calculated first/last/range/half-average/linear-slope resource metrics,
     FileOps and serializer fidelity totals, maintenance timing, and aligned
     queue/resource correlations against `lintap-perf-20260830-tenable-filter`.
@@ -233,7 +233,7 @@ a vendor product.
   `max_cpu_core_percent` / `avg_cpu_core_percent`, and the canonical dashboard
   labels it `CPU (core-summed %)`. Lintap and Wintappy user-facing READMEs
   explain conversion to host-normalized CPU by dividing by logical CPU count.
-- Critical live-host result: `/var/log/lintap/Logs/Lintap.log` shows the active
+- Critical live-host result: `/var/log/lintap/runtime/Logs/Lintap.log` shows the active
   `fileserializer` 10,000-event cap dropping newest file events continuously,
   reaching at least `394529` drops by `17:25:13 PDT`. File flushes repeatedly
   drained exactly 10,000 events in `2..19 ms`, with `skipped_overlap=0` and

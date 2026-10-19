@@ -8,7 +8,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/shared/Paths.cs
   - ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs
 policy: agent-editable
-last_validated: 2026-10-15
+last_validated: 2026-10-19
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -39,7 +39,7 @@ Add a second root alongside the existing one, same resolution shape:
 | Data | `Env.SetDataRoot` | `WINTAP_DATA_ROOT` | `DataRoot` | `<app-root>/data` |
 | Runtime | `Env.SetRuntimeRoot` | `WINTAP_RUNTIME_ROOT` | `RuntimeRoot` | `<app-root>/runtime` |
 
-`<app-root>` is the existing per-OS value: Linux `/var/lib/lintap`, Windows
+`<app-root>` is the existing per-OS value: Linux `/var/log/lintap`, Windows
 `%ProgramData%\Wintap`, macOS `/Library/Application Support/Mactap`.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/shared/Env.cs §ResolveDataRoot -->
 
@@ -82,7 +82,7 @@ uploader's `getParquetRelativePathForFile` already computes keys relative to
   csv/                  ← Paths.CsvDataPath
   recordings/           ← Paths.RecordingDataPath (WintapRecorder)
   pidstat-spool/        ← pidstat collector spool
-  diag/                 ← NetworkSensor BPF diag CSV (currently hardcoded /var/lib/lintap/diag — fixed here)
+  diag/                 ← NetworkSensor BPF diag CSV
   ai/                   ← LLMController api-key.txt
   workbench-state.json  ← EventChannel
 ```
@@ -94,13 +94,13 @@ cannot silently re-mix trees.
 
 ### Packaging (../Lintap deb + rpm)
 
-- `lintap.env`: replace `WINTAP_DATA_ROOT=/var/log/lintap` with both knobs,
-  explicit for clarity: `WINTAP_DATA_ROOT=/var/lib/lintap/data`,
-  `WINTAP_RUNTIME_ROOT=/var/lib/lintap/runtime` (explicit-but-default keeps
+- `lintap.env`: set both knobs explicitly for clarity:
+  `WINTAP_DATA_ROOT=/var/log/lintap/data`,
+  `WINTAP_RUNTIME_ROOT=/var/log/lintap/runtime` (explicit-but-default keeps
   the operator discoverability the field relies on). Comment block explains
   the split and the shared-mount pattern.
-- Build/maintainer scripts: create/chmod both trees instead of
-  `/var/log/lintap{,/Logs,/parquet}`; purge preserves both (data especially).
+- Build/maintainer scripts: create/chmod `/var/log/lintap/data` and
+  `/var/log/lintap/runtime`; purge preserves both (data especially).
 - pidstat collector: spool default moves to `<runtime-root>/pidstat-spool`
   (reads `WINTAP_RUNTIME_ROOT`, keeps `PIDSTAT_SPOOL_DIR` override);
   `parquet_root` default becomes the data root itself (drop the `/parquet`
@@ -109,8 +109,8 @@ cannot silently re-mix trees.
 
 ### Downstream (../Wintappy, Analytics)
 
-- `../Wintappy/Makefile`: `WINTAP_DBT_DATASET ?= $(WINTAP_DATA_ROOT)/parquet`
-  → `$(WINTAP_DATA_ROOT)`. All DBT macros already resolve through
+- `../Wintappy/Makefile`: `WINTAP_DBT_DATASET ?= $(WINTAP_DATA_ROOT)`.
+  All DBT macros already resolve through
   `raw_sensor_dataset_path()`, so nothing else changes.
   <!-- GROUND_TRUTH: ../Wintappy/Makefile §WINTAP_DBT_DATASET -->
   <!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/macros/paths.sql §raw_sensor_dataset_path -->
@@ -135,12 +135,10 @@ None. `raw_sensor` internals, leaf naming, and parquet schemas are frozen.
 ## Interfaces And User Experience
 
 - New env/JSON knobs: `WINTAP_RUNTIME_ROOT` / `RuntimeRoot`.
-- **Semantic change:** `WINTAP_DATA_ROOT` narrows from "parent of everything"
-  to "the shared data tree, directly containing `raw_sensor/`". An old env
-  file setting `WINTAP_DATA_ROOT=/var/log/lintap` yields
-  `/var/log/lintap/raw_sensor/...` (previously
-  `/var/log/lintap/parquet/raw_sensor/...`) and runtime state at the new
-  default. Release notes must state both effects.
+- **Semantic change:** `WINTAP_DATA_ROOT` means "the shared data tree,
+  directly containing `raw_sensor/`". The packaged default is
+  `/var/log/lintap/data`; runtime state defaults independently to
+  `/var/log/lintap/runtime`. Release notes must state both effects.
 - Startup logging (CacheManager startup configuration block) reports both
   resolved roots.
 

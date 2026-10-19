@@ -7,7 +7,7 @@ grounded_by:
   - ../wintap/wintap/core/shared/ConfigManager.cs
   - ../wintap/wintap/core/etl/shared/Paths.cs
 policy: agent-editable
-last_validated: 2026-10-15
+last_validated: 2026-10-19
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -31,7 +31,7 @@ one configured root (`Env.FileDataRoot`):
   <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/shared/Paths.cs -->
 - **Host-specific runtime state** — `Logs/`, `event_store/main.duckdb`, `csv/`,
   `recordings/`, `workbench-state.json`, `ai/`, pidstat spool, and a stray
-  hardcoded `/var/lib/lintap/diag` CSV — none of which should land on a shared
+  hardcoded `/var/log/lintap/runtime/diag` CSV — none of which should land on a shared
   path.
   <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/WintapLogger.cs §ComponentLogger ctor -->
   <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/ProcessResolver.cs §MAIN_DB_PATH -->
@@ -56,7 +56,7 @@ from the parquet tree.
    (programmatic → environment → JSON): `WINTAP_DATA_ROOT` (repurposed: now
    the data tree) and new `WINTAP_RUNTIME_ROOT`.
 3. Unconfigured defaults: sibling dirs under the per-OS app root —
-   Linux `/var/lib/lintap/data` + `/var/lib/lintap/runtime`;
+   Linux `/var/log/lintap/data` + `/var/log/lintap/runtime`;
    Windows `%ProgramData%\Wintap\data` + `%ProgramData%\Wintap\runtime`;
    macOS `/Library/Application Support/Mactap/{data,runtime}`.
 4. Update `../Lintap` packaging (deb + rpm: env files, directory creation,

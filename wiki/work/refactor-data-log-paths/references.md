@@ -7,7 +7,7 @@ grounded_by:
   - ../wintap/wintap/core/shared/ConfigManager.cs
   - ../wintap/wintap/core/etl/shared/Paths.cs
 policy: agent-editable
-last_validated: 2026-10-15
+last_validated: 2026-10-19
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -26,7 +26,7 @@ tags: [feature-work, packaging, data-pipeline, paths]
 - `../wintap/wintap/core/shared/Env.cs` — `FileDataRoot`, `ResolveDataRoot`
   (programmatic override → configured value → per-OS default: Windows
   `%ProgramData%\Wintap`, macOS `/Library/Application Support/Mactap`, Linux
-  `/var/lib/lintap`), `SetDataRoot`, `AppName`. The single point every path
+  `/var/log/lintap`), `SetDataRoot`, `AppName`. The single point every path
   below derives from; the refactor adds a second root here.
 - `../wintap/wintap/core/shared/ConfigManager.cs` — `WINTAP_CONFIG_PATH`,
   env-override mapping (`DataRoot` ↔ `WINTAP_DATA_ROOT` via the
@@ -71,16 +71,16 @@ tags: [feature-work, packaging, data-pipeline, paths]
 - `../wintap/wintap/core/api/LLMController.cs` —
   `<FileDataRoot>/ai/api-key.txt`.
 - `../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs` — hardcoded
-  literal `/var/lib/lintap/diag/diag_counters.csv`, bypassing the configured
+  literal `/var/log/lintap/runtime/diag/diag_counters.csv`, bypassing the configured
   root entirely. Known defect to fold into the refactor.
 
 ### Packaging and collector (`../Lintap`, branch `grantj/debian-package-refresh`)
 
 - `packaging/lintap-deb/lintap.env` and `packaging/lintap-rpm/lintap.env` —
-  `WINTAP_DATA_ROOT=/var/log/lintap` plus `PIDSTAT_*` knobs; the field
+  `WINTAP_DATA_ROOT=/var/log/lintap/data` plus `WINTAP_RUNTIME_ROOT` and `PIDSTAT_*` knobs; the field
   convention this feature's knob-repurposing must handle.
 - `packaging/lintap-deb/build-deb.sh` — creates/chmods
-  `/var/log/lintap{,/Logs,/parquet}`; preserves data on purge. RPM builder
+  `/var/log/lintap/{data,runtime}`; preserves data on purge. RPM builder
   mirrors the layout.
 - `packaging/lintap-deb/lintap.service`, `lintap-pidstat.service` —
   `EnvironmentFile=-/etc/lintap/lintap.env`.

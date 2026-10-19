@@ -79,7 +79,8 @@ Both package families use the following operational locations:
 /usr/lib/lintap/                Published sensor application
 /usr/lib/lintap/tracers/        eBPF tracer objects
 /usr/lib/lintap/mcp/            Optional MCP helper, when packaged
-/var/log/lintap/                Logs, Parquet, and runtime data
+/var/log/lintap/data/           Shared raw_sensor data
+/var/log/lintap/runtime/        Logs, DuckDB, and host-local runtime data
 ```
 
 The package enables the systemd services during installation but does not
@@ -91,7 +92,7 @@ starting it.
 The default data root is:
 
 ```text
-WINTAP_DATA_ROOT=/var/log/lintap
+WINTAP_DATA_ROOT=/var/log/lintap/data
 ```
 
 The field-parity Linux sensor settings disable MCP and DuckDB UI at runtime,

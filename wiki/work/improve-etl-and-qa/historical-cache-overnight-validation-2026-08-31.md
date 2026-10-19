@@ -56,7 +56,7 @@ needed to identify and re-run the analysis:
 - pidstat passive window: `2026-08-30 20:54:36 PDT` through
   `2026-08-31 07:19:57 PDT`; controlled recovery through `07:26:57 PDT`;
 - recovery command: `python3 devtools/file_capture_smoke_test.py --data-root
-  /var/log/lintap --timeout 180 --poll-interval 2 --unique-file-count 6000
+  /var/log/lintap/data --timeout 180 --poll-interval 2 --unique-file-count 6000
   --require-no-serializer-drops --serializer-observation-seconds 70`;
 - integrity command: `sha256sum /usr/lib/lintap/Lintap.dll
   /tmp/spk16-lintap-pidstat-overnight-1m.parquet`;

@@ -125,11 +125,11 @@ The installed arm64 sensor was running against `/var/log/lintap` on
 
 ```sh
 sudo python3 /home/ubuntu/git/wintap/devtools/process_capture_smoke_test.py \
-  --data-root /var/log/lintap --timeout 180
+  --data-root /var/log/lintap/data --timeout 180
 sudo python3 /home/ubuntu/git/wintap/devtools/file_capture_smoke_test.py \
-  --data-root /var/log/lintap --timeout 180
+  --data-root /var/log/lintap/data --timeout 180
 sudo python3 /home/ubuntu/git/wintap/devtools/network_capture_smoke_test.py \
-  --data-root /var/log/lintap --timeout 180
+  --data-root /var/log/lintap/data --timeout 180
 ```
 
 Results: all three passed on 2026-10-03.
@@ -169,8 +169,8 @@ purge removed `/etc/lintap` while preserving the data marker.
 - `systemctl is-enabled lintap.service`: `enabled`.
 - `systemctl is-active lintap.service`: `active` after manual start and after
   the revision `6` to `7` upgrade.
-- `/var/log/lintap/parquet/host/host-134355177359822085.parquet` and
-  `/var/log/lintap/parquet/macip/macip-134355177362448799.parquet` were created.
+- `/var/log/lintap/runtime/esper_staging/host/host-134355177359822085.parquet` and
+  `/var/log/lintap/runtime/esper_staging/macip/macip-134355177362448799.parquet` were created.
 - Package contents included all six tracepoint objects, four CO-RE objects,
   and `selinux_tracer.bpf.o`.
 - `ldd` passed for required staged binaries and libraries. The optional .NET

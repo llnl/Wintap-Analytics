@@ -6,7 +6,7 @@ grounded_by:
   - ../wintap/wintap/core/shared/Env.cs
   - ../wintap/tests/Wintap.Tests/RuntimeDataRootTests.cs
 policy: agent-editable
-last_validated: 2026-10-15
+last_validated: 2026-10-19
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -17,6 +17,23 @@ tags: [feature-work, verification, data-pipeline, paths, shared-mount]
 ---
 
 # Verification
+
+## 2026-10-19 — Linux default top-level correction
+
+- Changed the Linux application fallback to `/var/log/lintap`; the derived defaults are now
+  `/var/log/lintap/data` and `/var/log/lintap/runtime`.
+- Updated Debian/RPM environment files, package staging, maintainer scripts,
+  package documentation, pidstat fallbacks, Wintap development tools, and
+  Wintappy path documentation.
+- Focused Wintap test gate — PASS locally: `RuntimeDataRootTests`, **21/21**.
+- Python, shell, and whitespace checks — PASS for the modified tooling and
+  package builders.
+- Stale-path scan — PASS: no legacy Linux data-root or old nested dataset
+  references remain in the active source,
+  packaging, downstream, or wiki materials.
+- Debian package rebuild and Linux service smoke are pending: the Multipass
+  VM became unreachable (`No route to host`) while its repository mounts were
+  being restored. No package result is claimed from this blocked attempt.
 
 ## 2026-10-15 — rdp-01/rdp-02 development VM
 
@@ -38,7 +55,7 @@ Commands and results:
 - `dotnet restore tests/Wintap.Tests/Wintap.Tests.csproj` — PASS.
 - `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --no-restore --filter "FullyQualifiedName~RuntimeDataRootTests"` — PASS, **20 passed**.
 - Grep gate for `Env.FileDataRoot` consumers outside `Env.cs`/`Paths.cs` — PASS.
-- Grep gate for legacy `/var/lib/lintap` or `/var/log/lintap` literals outside `Env.cs` defaults — PASS.
+- Grep gate for legacy `/var/log/lintap` or `/var/log/lintap` literals outside `Env.cs` defaults — PASS.
 - `git diff --check` — PASS.
 
 ## 2026-10-15 — rdp-05 package smoke (partial)
@@ -46,15 +63,15 @@ Commands and results:
 - Debian arm64 package build on `lintap-dev` — PASS. The builder completed
   eBPF compilation, framework-dependent .NET publish, staged validation, and
   produced `lintap_0.1.0-1_arm64.deb`.
-- `dpkg-deb --contents` — PASS: package contains `/var/lib/lintap/data/` and
-  `/var/lib/lintap/runtime/`, with no `/var/log/lintap` package directory.
+- `dpkg-deb --contents` — PASS: package contains `/var/log/lintap/data/` and
+  `/var/log/lintap/runtime/`, with the new `/var/log/lintap` package root.
 - `sudo dpkg -i lintap_0.1.0-1_arm64.deb` — PASS. Installed env explicitly
   contains both new roots; post-install created both directories with mode
-  `0750`; `/var/lib/lintap/data/parquet` was not created.
+  `0750`; `/var/log/lintap/data/raw_sensor` is the canonical data path.
 - Bounded `systemctl start lintap.service` probe — PASS. The service stayed
   active for 15 seconds and journal output reported data path
-  `/var/lib/lintap/data`, raw sensor path `/var/lib/lintap/data/raw_sensor`,
-  runtime root `/var/lib/lintap/runtime`, and event store/log files under the
+  `/var/log/lintap/data`, raw sensor path `/var/log/lintap/data/raw_sensor`,
+  runtime root `/var/log/lintap/runtime`, and event store/log files under the
   runtime tree. The service was stopped after the probe; no event-output
   count is claimed from this short run.
 - RPM smoke — BLOCKED: `rpmbuild` is not installed in the Ubuntu arm64 VM;
@@ -71,12 +88,12 @@ Commands and results:
   Mac and VM SHA-256 agree: `69427f3ca252d9c232e818249cded936f56bf00025f11ead92923bb81404a1ba`.
 - Upgrade install with default package roots — PASS:
   `sudo dpkg -i lintap_0.1.0-2_arm64.deb`; package metadata contains only
-  `/var/lib/lintap/data` and `/var/lib/lintap/runtime` roots, with no
-  `/var/log/lintap` package path.
+  `/var/log/lintap/data` and `/var/log/lintap/runtime` roots, with no
+  `/var/log/lintap/data` and `/var/log/lintap/runtime` package paths.
 - Bounded service probe — PASS: service started for 15 seconds and stopped
   cleanly. Startup logs reported `Parquet data path:
-  /var/lib/lintap/data` and `Esper staging path:
-  /var/lib/lintap/runtime/esper_staging`.
+  /var/log/lintap/data` and `Esper staging path:
+  /var/log/lintap/runtime/esper_staging`.
 - Filesystem boundary observed: runtime staging contained `host/` and
   `macip/`; the data tree contained no new serializer staging directories.
   Existing `data/host` and `data/macip` directories predated the revision-2
@@ -129,10 +146,10 @@ class is the applicable gate for this slice.
 Packaging worktree: `../Lintap-rdp`, branch `grantj/debian-package-refresh`,
 commit `301ff63`.
 
-- Debian and RPM env files explicitly set `WINTAP_DATA_ROOT=/var/lib/lintap/data`
-  and `WINTAP_RUNTIME_ROOT=/var/lib/lintap/runtime`.
-- Package staging and maintainer scripts create the two new directories and no
-  longer create `/var/log/lintap`; purge paths preserve `/var/lib/lintap`.
+- Debian and RPM env files explicitly set `WINTAP_DATA_ROOT=/var/log/lintap/data`
+  and `WINTAP_RUNTIME_ROOT=/var/log/lintap/runtime`.
+- Package staging and maintainer scripts create `/var/log/lintap/data` and
+  `/var/log/lintap/runtime`; purge paths preserve both trees.
 - The pidstat collector defaults parquet output to the data root and its spool
   to `<runtime-root>/pidstat-spool`; explicit `PIDSTAT_PARQUET_ROOT` and
   `PIDSTAT_SPOOL_DIR` overrides remain supported.

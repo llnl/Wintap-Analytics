@@ -6,7 +6,7 @@ grounded_by:
   - ../wintap/wintap/core/shared/Env.cs
   - ../wintap/wintap/core/etl/shared/Paths.cs
 policy: agent-editable
-last_validated: 2026-10-15
+last_validated: 2026-10-19
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -47,9 +47,9 @@ with validation gates last. Slice IDs: `rdp-NN`.
 - `WintapLogger.cs` (Logs), `ProcessResolver.cs` (event_store),
   `EventChannel.cs` (workbench-state.json ×2), `EsperServiceController.cs`
   (log tails), `LLMController.cs` (ai/), `NetworkSensor.cs` (replace hardcoded
-  `/var/lib/lintap/diag` with the runtime diag path).
+  `/var/log/lintap/runtime/diag` with the runtime diag path).
 - Grep gate: no `Env.FileDataRoot` reference outside `Env.cs`/`Paths.cs`; no
-  literal `/var/lib/lintap` or `/var/log/lintap` in `wintap/` sources.
+  legacy Linux data-root literal remains in active `wintap/` sources.
 - Startup configuration logging reports both resolved roots.
 - Unit test: uploader `getParquetRelativePathForFile` still yields
   `raw_sensor/…` keys under the new data root.
@@ -59,8 +59,8 @@ with validation gates last. Slice IDs: `rdp-NN`.
 - `lintap.env` (both packagings): set both knobs explicitly to the new
   defaults; comment block explaining the split and shared-mount use.
 - `build-deb.sh` / `build-rpm.sh` + maintainer scripts: create/chmod
-  `/var/lib/lintap/data` and `/var/lib/lintap/runtime`; purge behavior
-  preserves data tree; drop `/var/log/lintap` creation.
+  `/var/log/lintap/data` and `/var/log/lintap/runtime`; purge behavior
+  preserves both trees.
 - pidstat collector: spool default `<runtime-root>/pidstat-spool` via
   `WINTAP_RUNTIME_ROOT`; `parquet_root` default = data root (drop `/parquet`
   suffix); overrides retained; pytest updated.
@@ -76,11 +76,11 @@ with validation gates last. Slice IDs: `rdp-NN`.
 ### rdp-05 — Linux package smoke (acceptance gate 1)
 
 - Fresh deb (and rpm if an el8 host is available) install: service starts,
-  event tables under `/var/lib/lintap/data/raw_sensor/…`, logs/duckdb/spool
-  under `/var/lib/lintap/runtime/…`.
-- Upgrade over a deployment with the old `/var/log/lintap` env file: data
-  continues to the pointed root (now sans `parquet/` level — release-note
-  check), runtime relocates, old tree untouched.
+  event tables under `/var/log/lintap/data/raw_sensor/…`, logs/duckdb/spool
+  under `/var/log/lintap/runtime/…`.
+- Upgrade over a deployment with an old explicit env file: data continues to
+  the pointed root; fresh defaults use `/var/log/lintap/data` and
+  `/var/log/lintap/runtime`.
 
 ### rdp-06 — Shared-mount simulation (acceptance gate 2)
 

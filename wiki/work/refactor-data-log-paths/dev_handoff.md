@@ -6,7 +6,7 @@ grounded_by:
   - ../wintap/wintap/core/shared/Env.cs
   - ../wintap/wintap/core/etl/shared/Paths.cs
 policy: agent-editable
-last_validated: 2026-10-15
+last_validated: 2026-10-19
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -64,7 +64,7 @@ rooted trees:
   programmatic → env → JSON → per-OS-default precedence as the data root.
 
 Unconfigured defaults: `<app-root>/data` + `<app-root>/runtime`, where
-app-root is Linux `/var/lib/lintap`, Windows `%ProgramData%\Wintap`, macOS
+app-root is Linux `/var/log/lintap`, Windows `%ProgramData%\Wintap`, macOS
 `/Library/Application Support/Mactap`.
 
 Hard constraints (human decisions — do not revisit silently):
@@ -103,7 +103,7 @@ Runtime-tree consumers to move (complete list from the design-time sweep):
 - `../wintap/wintap/core/api/EsperServiceController.cs` — `Logs/Wintap.log`, `Logs/WintapETL.log` tails.
 - `../wintap/wintap/core/api/LLMController.cs` — `ai/api-key.txt`.
 - `../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs` — hardcoded
-  literal `/var/lib/lintap/diag` → runtime diag path (known defect, fix here).
+  literal `/var/log/lintap/runtime/diag` → runtime diag path (known defect, fix here).
 - `../wintap/wintap/core/etl/load/CacheManager.cs` — startup logging of roots;
   upload sweep stays on the data tree.
 - `../wintap/wintap/core/etl/load/adapters/base/Uploader.cs` —
@@ -147,7 +147,7 @@ rdp-01 + rdp-02 as one reviewed unit (see
      (programmatic > env > JSON > default), same-dir warning case.
    - Uploader key regression test (`raw_sensor/…` under new data root).
    - Grep gates: no `Env.FileDataRoot` outside `Env.cs`/`Paths.cs`; no literal
-     `/var/lib/lintap` or `/var/log/lintap` in `wintap/` sources.
+     `/var/log/lintap` or `/var/log/lintap` in `wintap/` sources.
 
 Then rdp-03 (packaging) → rdp-04 (downstream) → rdp-05/06/07 (the three
 acceptance gates) → rdp-08 (closeout).

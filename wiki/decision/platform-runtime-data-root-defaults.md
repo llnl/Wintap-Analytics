@@ -9,7 +9,7 @@ grounded_by:
   - ../wintap/wintap/core/shared/ConfigManager.cs
   - ../wintap/wintap/core/etl/ETLConfig.json
 policy: human-review-required
-last_validated: 2026-08-19
+last_validated: 2026-10-19
 repo_scope: wintap
 implementation_area: packaging
 event_domain: none
@@ -35,7 +35,8 @@ An unconfigured deployment uses the platform defaults owned by `Env.cs`:
 
 - Windows: `%ProgramData%\Wintap`
 - macOS: `/Library/Application Support/Mactap`
-- Linux and other Unix: `/var/lib/lintap`
+- Linux and other Unix: `/var/log/lintap/data` for data and
+  `/var/log/lintap/runtime` for host-local runtime state
 
 The shared shipped `ETLConfig.json` does not specify `DataRoot`, and
 `ConfigRoot.DataRoot` has no non-empty initializer. Explicit programmatic,

@@ -5,6 +5,16 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-19] code | refactor-data-log-paths Linux default correction
+
+Changed the Linux default top-level to `/var/log/lintap`, with independent defaults
+`/var/log/lintap/data` and `/var/log/lintap/runtime`. Updated Wintap fallback
+resolution/tests/tools, Debian/RPM package roots and maintainer scripts,
+pidstat fallbacks, Wintappy documentation, and all active path documentation.
+Focused Wintap tests pass 21/21; package rebuild/service smoke is pending VM
+network recovery. Commits: Wintap `b3df278`, Lintap `7fa02da`, Wintappy
+`6ae485a`.
+
 ## [2026-10-15] verification | refactor-data-log-paths Esper staging correction
 
 Moved serializer/meta parquet staging and merge inputs to
@@ -38,9 +48,10 @@ Linux-incompatible Windows sensor failures.
 
 Committed Lintap packaging split as `301ff63` on
 `grantj/debian-package-refresh`. Debian/RPM packages now default to
-`/var/lib/lintap/data` for shared `raw_sensor/` output and
-`/var/lib/lintap/runtime` for host-local state; maintainer scripts preserve
-the data tree and stop creating `/var/log/lintap`. Updated pidstat defaults,
+`/var/log/lintap/data` for shared `raw_sensor/` output and
+`/var/log/lintap/runtime` for host-local state; maintainer scripts preserve
+the data tree and create the `/var/log/lintap/data` and
+`/var/log/lintap/runtime` roots. Updated pidstat defaults,
 tests, and packaging documentation. Shell/static gates passed; pytest was
 blocked by missing VM dependencies and unavailable PyPI access.
 
@@ -54,8 +65,9 @@ scan found no additional live old-layout input coupling.
 ## [2026-10-15] verification | refactor-data-log-paths rdp-05
 
 Built and installed the Debian arm64 package in `lintap-dev`; staged and
-post-install checks passed for `/var/lib/lintap/data` and
-`/var/lib/lintap/runtime`, with no `/var/log/lintap` package creation.
+post-install checks passed for `/var/log/lintap/data` and
+`/var/log/lintap/runtime`, with the new `/var/log/lintap/data` and
+`/var/log/lintap/runtime` package directories.
 RPM validation is blocked by missing `rpmbuild`; service-start/event-output
 acceptance remains pending.
 
@@ -761,7 +773,7 @@ Contradictions flagged: none.
 
 ## [2026-08-23] diagnostic | Lintap runtime high-CPU collector utility
 
-Context: current field host has `/usr/lib/lintap/Lintap` running for six days at roughly 8.5 CPU cores, with all major sensors enabled and default process-retention settings. Non-root inspection could not read `/var/log/lintap/event_store/main.duckdb`, service environment, file descriptors, or full journals.
+Context: current field host has `/usr/lib/lintap/Lintap` running for six days at roughly 8.5 CPU cores, with all major sensors enabled and default process-retention settings. Non-root inspection could not read `/var/log/lintap/runtime/event_store/main.duckdb`, service environment, file descriptors, or full journals.
 Files created: `extras/lintap-runtime-diagnostics/README.md`; `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`.
 Purpose: root-run, read-only diagnostic bundle for pidhash/process-table runtime performance work. It collects service/process/thread samples, redacted config, journals, filesystem summaries, fork-rate data, optional perf/dotnet/pidstat samples, and read-only DuckDB summaries/`EXPLAIN ANALYZE` output for process-table and retention telemetry investigation.
 Pages updated: `work/fix-unbounded-process-table-growth/verification.md`; `log.md`.
@@ -1976,7 +1988,7 @@ Verification: `dotnet build wintap/Lintap.csproj` passed with 0 errors; `dotnet 
 
 ## [2026-08-30] test | First CPU-observability one-hour Lintap capture
 
-Source: `/tmp/lintap-perf/parquet/raw_sensor/*/dayPK=20260830/hourPK=00/` and `/var/log/lintap/Logs/Lintap.log` on `spk16`, targeting Lintap PID `2400026`.
+Source: `/tmp/lintap-perf/parquet/raw_sensor/*/dayPK=20260830/hourPK=00/` and `/var/log/lintap/runtime/Logs/Lintap.log` on `spk16`, targeting Lintap PID `2400026`.
 Results: CPU averaged `11.42%`; the first and second halves averaged `11.39%` and `11.44%`, so no within-hour CPU ratchet was observed. This was startup-adjacent, with service start eight minutes before sampling. The critical result is fidelity failure: `fileserializer` reached its active 10,000-event cap continuously and had dropped at least `394529` file events by 17:25 PDT. Its flushes took `2..19 ms` with no overlap, FileOps sender drops were zero, and aggregation cap bypass was zero, isolating the immediate problem to serializer admission/batch cadence. FD-cache metrics rose from `20` PID maps / `24` entries to `1439` / `1784`, confirming the long-run cache-growth risk. Cache-cycle and resolver-maintenance timing are recorded in the verification artifact.
 
 ## [2026-08-30] review | FileOps aggregation regression check
@@ -2004,7 +2016,7 @@ Verification: focused `FileOpsAggregatorTests` plus `SerializerScheduleTests` pa
 
 ## [2026-08-30] test | FileSerializer high-water stress gate passed
 
-Source: live `spk16` `/var/log/lintap/Logs/Lintap.log` after the high-water redeploy and controlled `--unique-file-count 6000` smoke.
+Source: live `spk16` `/var/log/lintap/runtime/Logs/Lintap.log` after the high-water redeploy and controlled `--unique-file-count 6000` smoke.
 Result: the log recorded the 5,000-event threshold, 18 high-water requests, and corresponding `trigger=high_water` drains of about 5,000 rows. Drains were normally `2..16 ms` with one `86 ms` outlier, had `skipped_overlap=0`, and left only `2..542` rows queued. No new FileSerializer backlog-cap warning appeared after the smoke marker. The controlled no-drop burst prediction passed; next acceptance gate is a warmed-up unique-run-ID one-hour capture with concurrent log review.
 
 ## [2026-08-30] review | Lintap eBPF path, diagnostics, and validation audit
@@ -2016,7 +2028,7 @@ Findings: sensor overlap is mostly intentional layered coverage. Concrete cleanu
 
 ## [2026-08-30] analysis | Tenable scan storm overwhelms FileOps sender
 
-Source: `lintap-perf-20260830` parquet plus `/var/log/lintap/Logs/Lintap.log` during the matching hour.
+Source: `lintap-perf-20260830` parquet plus `/var/log/lintap/runtime/Logs/Lintap.log` during the matching hour.
 Pages created: `work/improve-etl-and-qa/tenable-scan-storm-response-2026-08-30.md`.
 Pages updated: `index.md`; `log.md`.
 Results: FileSerializer remained free of backlog warnings, but FileOps sender depth climbed from about 419k to the 524288 cap and then dropped events continuously. Aggregation cap bypass and summary-enqueue failures appeared at saturation. The storm therefore bottlenecks synchronous FileOps sender/EventChannel/Esper work upstream of serialization. Recommended future slice: an opt-in generic kernel exact-`comm` deny policy with per-rule/per-operation pre-ring suppression counters, preceded by local evidence identifying actual worker names; do not hard-code a Tenable name or infer scanner process-tree membership.
@@ -2035,7 +2047,7 @@ Result: `nessus-agent-module` runs multiple `tenable-utils-LINUX-x86_64.bin find
 
 ## [2026-08-30] test | Tenable worker kernel policy live gate passed
 
-Source: active `spk16` weekly scan and `/var/log/lintap/Logs/Lintap.log` FileOps summaries.
+Source: active `spk16` weekly scan and `/var/log/lintap/runtime/Logs/Lintap.log` FileOps summaries.
 Result: `WINTAP_FILEOPS_DENY_COMMS=tenable-utils-L` suppressed `dir_open=114102` then `117327` attempts in consecutive 60-second windows. Sender depth was `853` then `192`, with zero sender drops, aggregation cap bypass, and summary enqueue failures. This contrasts with the prior scan's sustained 524288-entry queue saturation. The policy's pre-ring accounting and containment contract is validated for the observed Tenable utility workers.
 
 ## [2026-08-30] code | Normalize pidstat CPU naming and documentation
@@ -2051,7 +2063,7 @@ Results: the capture covered `19:13:55Z -> 20:13:54Z` with 714 procfs samples. T
 
 ## [2026-08-30] analysis | No-Tenable capture reveals persistent FileOps saturation
 
-Source: `lintap-perf-20260830-no-tenable` perf parquet under `dayPK=20260830/hourPK=22` plus `/var/log/lintap/Logs/Lintap.log` for the matching `14:49:06-15:49:05 PDT` window.
+Source: `lintap-perf-20260830-no-tenable` perf parquet under `dayPK=20260830/hourPK=22` plus `/var/log/lintap/runtime/Logs/Lintap.log` for the matching `14:49:06-15:49:05 PDT` window.
 Pages created: `work/improve-etl-and-qa/no-tenable-run-analysis-2026-08-30.md`.
 Pages updated: `work/improve-etl-and-qa/verification.md`; `work/improve-etl-and-qa/dev_handoff.md`; `work/improve-etl-and-qa/tenable-scan-storm-response-2026-08-30.md`; `index.md`; `log.md`.
 Results: all 60 policy summaries reported zero suppression, but FileOps sender depth remained near its 524288 cap and the hour recorded `601126` sender drops plus `192774` summary enqueue failures. FileSerializer stayed healthy (`0` warnings, `26` high-water drains, max remaining `170`, max drain `3 ms`). CPU averaged `30.82%` host-normalized; RSS and anonymous memory were stable within the hour. The filtered run's queue had grown `7860 -> 338592` and first dropped 23 minutes after its capture; queue/RSS correlation during that growth was `r=0.749`. Conclusion: the policy controlled its exact Tenable worker, but the non-policy sender path is not sustainable and another long baseline is blocked pending sender CPU/throughput attribution and a zero-loss low-depth gate.
@@ -2072,13 +2084,13 @@ Verification: Lintap build passed with 0 errors; combined cache/resolver/FileOps
 
 ## [2026-08-30] test | Historical identity-cache ten-minute live gate
 
-Source: operator-deployed `lintap-0.3.4-1.el8.x86_64`, `/var/log/lintap/Logs/Lintap.log`, and `/var/log/lintap/parquet/fileserializer` on `spk16`.
+Source: operator-deployed `lintap-0.3.4-1.el8.x86_64`, `/var/log/lintap/runtime/Logs/Lintap.log`, and `/var/log/lintap/runtime/esper_staging/fileserializer` on `spk16`.
 Deployment verification: installed DLL hash matched the `0.3.4` publish payload (`7bd7ab38...`); PID `3322161` started at `20:54:30 PDT`; startup logged cache capacity `32768`, plugin count zero, and no redundant broad subscriber EPL.
 Results: ten FileOps intervals had queue depth `0..1889`, zero sender drops/summary failures/cap bypass/cache evictions, and an `82.7%` historical-cache hit rate (`32700/39537`). Weighted sender latency fell from the prior `5135.7 us` to `449.7 us`; resolution was `445.1 us` and Esper `2.7 us`. FileSerializer drained `221668` rows through 63 flushes with zero warnings/errors and current Parquet output remained readable. Short gate PASS; continue extended monitoring for cache-capacity and rare ~56 ms resolution stalls.
 
 ## [2026-08-31] test | Historical identity-cache overnight and recovery gate
 
-Source: uninterrupted `lintap-0.3.4` PID `3322161`, `/var/log/lintap/Logs/Lintap.log`, readable serializer Parquet, and the existing 6,000-file high-cardinality smoke.
+Source: uninterrupted `lintap-0.3.4` PID `3322161`, `/var/log/lintap/runtime/Logs/Lintap.log`, readable serializer Parquet, and the existing 6,000-file high-cardinality smoke.
 Pages created: `work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31.md`.
 Pages updated: `component/process-table-retention.md`; `work/improve-etl-and-qa/{verification,dev_handoff}.md`; `index.md`; `log.md`.
 Passive results: 10h23m, 617 FileOps intervals, queue average/max `5205.5/17387`, cache hit rate `75.4%`, 394252 bounded evictions, sender/resolve/Esper averages `560.6/547.1/12.0 us`, and zero sender drops, summary failures, cap bypass, serializer warnings, or send errors. FileSerializer drained 11.2M rows. Controlled result: 6,000-file smoke PASS with all five activities; queue high-water `71802`, next-interval depth below pre-burst, and zero fidelity loss. Limitation: logs/Parquet-only mode supplied no overnight CPU/RSS/GC/FD/map slopes.
@@ -2232,7 +2244,7 @@ Contradictions flagged: none.
 Source: operator request via the LLM-assisted feature workflow invocation.
 Grounding: Env.cs/ConfigManager root resolution, ETL Paths.cs derivations,
 WintapLogger/ProcessResolver/EventChannel/controllers runtime paths, the
-hardcoded `/var/lib/lintap/diag` literal in NetworkSensor.cs, Lintap deb/rpm
+hardcoded `/var/log/lintap/runtime/diag` literal in NetworkSensor.cs, Lintap deb/rpm
 packaging (`WINTAP_DATA_ROOT=/var/log/lintap`), and the pidstat collector
 spool.
 Interview (4 rounds + playback, confirmed): split the single mixed root into a

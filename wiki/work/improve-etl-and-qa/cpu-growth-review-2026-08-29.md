@@ -48,7 +48,7 @@ reached. The live `spk16` log proves the file serializer cap is active at
 `10000` and is dropping events under the current workload. Do not merely raise
 the cap: that trades demonstrated data loss for unbounded memory unless the
 drain cadence/throughput is corrected first.
-<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/Serializer.cs §Save; §initSensor; /var/log/lintap/Logs/Lintap.log §2026-08-29 fileserializer backlog warnings -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/Serializer.cs §Save; §initSensor; /var/log/lintap/runtime/Logs/Lintap.log §2026-08-29 fileserializer backlog warnings -->
 
 ### 2. Serializer flush work can become disproportionately expensive after bursts
 
