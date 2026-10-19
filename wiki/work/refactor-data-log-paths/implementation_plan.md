@@ -148,7 +148,17 @@ with validation gates last. Slice IDs: `rdp-NN`.
 - [x] rdp-02 runtime consumers moved + grep gates + uploader key test
 - [x] rdp-03 packaging split (deb + rpm) + pidstat + docs
 - [x] rdp-04 Wintappy/Analytics tracking
-- [ ] rdp-05 Linux package smoke (gate 1)
-- [ ] rdp-06 shared-mount simulation (gate 2)
-- [ ] rdp-07 Wintappy DBT run (gate 3)
+- [x] rdp-05 Debian fresh-package smoke (gate 1; RPM not run because no EL8 host)
+- [ ] rdp-06 shared-mount simulation (gate 2; not exercised)
+- [x] rdp-07 Wintappy DBT run (gate 3)
 - [ ] rdp-08 closeout: release notes, promotion, verification, metrics
+
+## Closeout Review — 2026-10-19
+
+The implementation, single-host package smoke, and downstream DBT gate are
+complete. The original old-deployment upgrade check was intentionally replaced
+by the explicit disposable-host cleanup decision: no migration or retention is
+required for `lintap-dev`. The only unexercised acceptance criterion is
+`rdp-06`, the two-instance shared-mount simulation. It remains a required
+environmental validation before this feature can be marked fully closed; the
+mount layout is documented, but no result is claimed.

@@ -56,6 +56,10 @@ implicitly relied on `/tmp/lintap-data` move to the platform location after
 upgrade unless they set an explicit override. The wpc-09 fix does not migrate,
 copy, merge, or delete an old data store.
 
+The layout portion of this decision is superseded by
+[[wiki/decision/separate-data-and-runtime-roots]]. This page remains the
+decision for platform-owned defaults and configuration precedence.
+
 ## Alternatives Considered
 
 - Require `WINTAP_DATA_ROOT` in every deployment: rejected because clean

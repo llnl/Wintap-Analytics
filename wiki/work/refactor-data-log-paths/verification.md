@@ -30,6 +30,36 @@ tags: [feature-work, verification, data-pipeline, paths, shared-mount]
   `/var/log/lintap/runtime/`.
 - Verified `/var/lib/lintap` is absent and the retained workspace is 4 KiB.
 
+## 2026-10-19 — final review: manual cleanup and downstream DBT gate
+
+- Added and exercised the deliberately manual
+  `../Lintap-rdp/packaging/cleanup-test-install.sh --yes` on the disposable
+  `lintap-dev` host. It stopped Lintap, removed the legacy, data, runtime, and
+  managed pidstat-venv trees, and left package configuration intact. It is not
+  invoked by package maintainer scripts.
+- Restarted `lintap.service` after cleanup. Startup logging again resolved
+  `/var/log/lintap/data` and `/var/log/lintap/runtime`; finalized parquet
+  reappeared beneath `data/raw_sensor/` after the normal merge interval.
+- Copied six newly finalized `raw_sensor` parquet files to a temporary macOS
+  dataset root and ran Wintappy with the database placed under a separate
+  temporary runtime directory:
+
+  ```sh
+  WINTAP_DATA_ROOT=<temporary>/data \
+  WINTAP_DBT_DATABASE=<temporary>/runtime/wintap.duckdb \
+    make dbt-build
+  ```
+
+  Result: **PASS** (dbt 1.12.2 / duckdb 1.9.6; 39 models and 39 tests).
+  This confirms the direct `$WINTAP_DATA_ROOT/raw_sensor` contract works with
+  freshly produced package output.
+- Final source and wiki stale-path scans, `git diff --check`, the focused
+  Wintap `RuntimeDataRootTests` (**21/21**), package-shell syntax checks, and
+  the Debian arm64 clean-package smoke are recorded as passing.
+- **Not claimed:** the two-sensor shared-mount simulation (`rdp-06`) and RPM
+  runtime smoke (no EL8/RPM build host). The feature cannot honestly be marked
+  fully closed until `rdp-06` is run or explicitly waived by the human.
+
 ## 2026-10-19 — Linux default top-level correction
 
 - Changed the Linux application fallback to `/var/log/lintap`; the derived defaults are now

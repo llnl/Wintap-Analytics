@@ -29,6 +29,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/decision/consolidate-developer-wiki-into-analytics-wiki]] | high | Records the decision to retire `../wintap/dave-wiki/`, make this Analytics wiki the single Wintap ecosystem knowledge base, and keep Wintap instructions/audits in `../wintap/developer_docs/`. |
 | [[wiki/decision/ai-velocity-roi-mini-lab]] | high | Per-feature velocity/ROI mini-lab, revised to v2.1 (2026-08-19, post external review): headline **Velocity** = solo-hours / (5.714 × days) in Feature and Portfolio views, forced-counterfactual sealed Q1 under the three-question ratchet, point-plus-uncertainty reporting, frozen-criteria/availability-finality/comparability guardrails, per-unit quality loop, attention proxy as coverage-annotated diagnostic, never-gates rule. |
 | [[wiki/decision/platform-runtime-data-root-defaults]] | high | Records that unconfigured Wintap deployments use the OS defaults owned by Env.cs while explicit programmatic, environment, and JSON overrides remain supported. |
+| [[wiki/decision/separate-data-and-runtime-roots]] | high | Accepted layout decision: durable `raw_sensor` data and host-local runtime state use independently configurable roots; Linux defaults are `/var/log/lintap/{data,runtime}` with no automatic migration. |
 | [[wiki/decision/registry-provider-strategy]] | high | Accepted (2026-08-25, session-handle sub-decision OPEN): manifest-only Windows registry collection via an undocumented Microsoft-Windows-Kernel-Registry capture mode (4-byte 0xFFFFFFFF EVENT_FILTER_DESCRIPTOR at EnableTraceEx2) — standalone mechanism record with the probe matrix, sticky-global-state finding, KCB-correlation negative result, and framed session-handle options. |
 ## Concept
 
@@ -207,6 +208,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/refactor-data-log-paths/design]] | medium | Design: two-root resolution in Env.cs/ConfigManager, data root directly containing raw_sensor (no parquet/ level), runtime tree keeping existing child names, Esper serializer staging under runtime/esper_staging, packaging/pidstat/Wintappy changes, and mount-time hosts/<hostname> pattern. |
 | [[wiki/work/refactor-data-log-paths/implementation_plan]] | medium | Eight rdp-NN slices: two-root core + runtime-consumer moves with grep gates first, then deb/rpm + pidstat packaging, Wintappy tracking, the three Linux acceptance gates, and closeout promotion. |
 | [[wiki/work/refactor-data-log-paths/dev_handoff]] | medium | Detailed handoff authorizing ../wintap, ../Lintap packaging+collector, and ../Wintappy changes: copy/paste prompt with interview-seal warning, complete consumer-move list, hard constraints (frozen internals, no migration, no hostname code), delegated vs escalate-to-human decisions, and per-gate testing duties. |
+| [[wiki/work/refactor-data-log-paths/verification]] | medium | Validation record: focused root tests, Debian arm64 package/install and fresh event-output smoke, manual disposable-host cleanup, and a DBT build against fresh direct-root output passed; two-instance shared-mount validation remains open. |
 ---
 
-*Last updated: 2026-10-15 (opened the refactor-data-log-paths feature)*
+*Last updated: 2026-10-19 (refactor-data-log-paths final review; shared-mount gate remains open)*

@@ -16,7 +16,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-08-20
+last_validated: 2026-10-19
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -48,6 +48,11 @@ Component boundaries are explicit in the repo's own review notes: the `wintap` r
 
 DBT bronze models own raw-source schema compatibility: they scan `raw_sensor` parquet partitioned by `dayPK`/`hourPK`(/`protoPK` for network), tolerate optional or missing raw sources, and normalize source drift such as synthesizing missing `ProcessArgs` from `CommandLine`.
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/DataModel.md §DBT bronze models -->
+
+For the Linux split-root layout, `WINTAP_DBT_DATASET` defaults directly to
+`WINTAP_DATA_ROOT`, so DBT resolves `$WINTAP_DATA_ROOT/raw_sensor/...` rather
+than a nested `parquet/` directory.
+<!-- GROUND_TRUTH: ../Wintappy/Makefile -->
 
 DBT silver models are the normalized, process-centric detail objects: `host`, `host_ip`, `process`, `process_conn_incr`, `process_net_conn`, `process_file`, `process_registry`, `process_image_load`, `files`, `all_files`, and `process_path`, keyed by `pid_hash` as the primary process entity key used by downstream summaries and labels.
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/DataModel.md §DBT silver detail models -->

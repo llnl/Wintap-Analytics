@@ -6,7 +6,7 @@ grounded_by:
   - ../Lintap/README.md
   - ../Lintap/teletap/README.md
 policy: agent-editable
-last_validated: 2026-10-05
+last_validated: 2026-10-19
 repo_scope: Lintap
 implementation_area: packaging
 event_domain: cross-domain
@@ -58,6 +58,14 @@ bundled compression library. The RHEL 8 RPM environment retains its separate
 uncompressed compatibility setting; this is a compression/configuration
 divergence, not a semantic event-model divergence.
 <!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/lintap.env; ../Lintap/packaging/lintap-rpm/lintap.env -->
+
+Linux packaging explicitly separates the data root
+(`/var/log/lintap/data`, directly containing `raw_sensor/`) from the runtime
+root (`/var/log/lintap/runtime`, containing logs, DuckDB, and Esper staging).
+The manual `packaging/cleanup-test-install.sh --yes` utility is only for
+disposable test hosts; package install and upgrade do not migrate or delete
+telemetry.
+<!-- GROUND_TRUTH: ../Lintap-rdp/packaging/PATHS_AND_CONFIGURATION.md -->
 
 The 2026-10 release candidate assets are Debian `0.1.0-14` for amd64 and arm64
 and RPM `0.3.5-12.el8` for x86_64. They are independently versioned package

@@ -2297,4 +2297,30 @@ an environment containing ../axon-aegis-micro-range.
 Pages created: `work/refactor-data-log-paths/{design,implementation_plan,dev_handoff}.md`.
 Pages updated: `work/refactor-data-log-paths/interview.md` (sealed estimates
 recorded); `index.md`; `log.md`.
+
+## [2026-10-19] review | refactor-data-log-paths closeout preparation
+
+Source: final implementation review across `../wintap`, `../Lintap-rdp`, and
+`../Wintappy`, plus the disposable `lintap-dev` package host.
+
+Confirmed: two-root resolution and focused tests, Debian arm64 fresh package
+event-output smoke, runtime/data filesystem boundary, manual test-host cleanup,
+and Wintappy `make dbt-build` against six fresh files under a direct data root.
+Promoted the durable split-root decision and updated upload/cache, Lintap, and
+Wintappy canonical pages. Added a deliberately manual cleanup utility for
+disposable test hosts; package install and runtime still do not migrate or
+delete data.
+
+Open validation: the two-instance shared-mount simulation is not claimed, and
+RPM runtime smoke remains unavailable without an EL8/RPM host. The feature is
+therefore prepared for closure but remains open until the shared-mount gate is
+performed or explicitly waived.
+
+Pages created: `decision/separate-data-and-runtime-roots.md`.
+Pages updated: `decision/platform-runtime-data-root-defaults.md`,
+`component/sensor-upload-cache-pipeline.md`,
+`repo/{lintap-supporting-repo,wintappy-pipeline-repo}.md`,
+`work/refactor-data-log-paths/{implementation_plan,verification}.md`,
+`index.md`, `log.md`.
+Contradictions flagged: none.
 Contradictions flagged: none.
