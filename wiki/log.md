@@ -15,6 +15,14 @@ Focused Wintap tests pass 21/21; package rebuild/service smoke is pending VM
 network recovery. Commits: Wintap `b3df278`, Lintap `7fa02da`, Wintappy
 `6ae485a`.
 
+## [2026-10-19] verification | refactor-data-log-paths lintap-dev cleanup
+
+Cleaned the test-only `lintap-dev` instance after installing package
+`0.1.0-99`: removed the legacy data tree and stale build/test artifacts,
+disabled the broken pidstat unit, and restarted Lintap. Clean-package smoke
+verified active output under `/var/log/lintap/data/raw_sensor` and
+`/var/log/lintap/runtime`.
+
 ## [2026-10-15] verification | refactor-data-log-paths Esper staging correction
 
 Moved serializer/meta parquet staging and merge inputs to

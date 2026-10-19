@@ -18,6 +18,18 @@ tags: [feature-work, verification, data-pipeline, paths, shared-mount]
 
 # Verification
 
+## 2026-10-19 — lintap-dev cleanup and clean-package smoke
+
+- Removed the test-only `/var/lib/lintap` tree and stale VM artifacts under
+  `/home/ubuntu/data/lintap` and `/var/tmp/lintap-deb-build`.
+- Disabled the broken `lintap-pidstat.service`, which was crash-looping because
+  `/opt/lintap/pidstat-collector/.venv/bin/python` was absent.
+- Restarted the installed `lintap.service` with package `0.1.0-99`.
+- Verified the service is active and writes finalized parquet beneath
+  `/var/log/lintap/data/raw_sensor/` and runtime state beneath
+  `/var/log/lintap/runtime/`.
+- Verified `/var/lib/lintap` is absent and the retained workspace is 4 KiB.
+
 ## 2026-10-19 — Linux default top-level correction
 
 - Changed the Linux application fallback to `/var/log/lintap`; the derived defaults are now
