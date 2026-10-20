@@ -5,6 +5,50 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-20] closeout | fix-hardcoded-agentid
+
+Feature closed after final wiki validation. Changed feature artifacts have
+complete frontmatter, valid internal feature links, current validation dates,
+and no broken feature wikilinks. Repository-wide lint still reports pre-existing
+wiki debt (9 broken template/relative links, 60 stale pages, and 56 orphan-page
+candidates), none introduced by this feature.
+
+## [2026-10-20] code | fix-hardcoded-agentid implementation and validation
+
+In `../wintap`, replaced TCP's literal `grantj` AgentId with the event AgentId,
+shared platform-neutral TCP/UDP inactivity wording, sanitized the tracked
+`wintap/wintapstate.json` template, and added focused serializer/template
+contracts plus a repeat-miss resolver profile. Multipass `lintap-dev` (Ubuntu
+24.04.5, kernel 6.8) build, focused tests, eBPF attachment inspection, traffic
+smoke, and fresh TCP staging/raw parquet checks passed. Post-restart raw rows
+had the active UUID and zero `grantj`; lifecycle output included
+connect/send/receive/disconnect. The 621.46-us unresolved lookup profile did
+not justify a negative cache without evidence of sustained live miss volume.
+Updated `wiki/work/fix-hardcoded-agentid/{implementation_plan,verification}.md`,
+`wiki/diagnostic/linux-tcp-investigation-2026-06.md`, and the index.
+
+## [2026-10-20] feature-start | fix-hardcoded-agentid
+
+Interview completed and playback confirmed. Created matching
+`fix/hardcoded-agentid` branches in Wintap-Analytics and Wintap. Feature
+artifacts created: `wiki/work/fix-hardcoded-agentid/{interview,brief,references,implementation_plan,dev_handoff,verification}.md`.
+
+Scope: restore TCP event AgentId propagation; sanitize only the tracked
+`wintap/wintapstate.json` template; make TCP/UDP watchdog text platform-neutral;
+validate existing attachment/PID/protocol/rundown behavior; profile before any
+bounded resolver negative cache; retain Linux live-validation as a closure gate.
+Human estimates recorded verbatim: “3 days” solo, “1 day” AI workflow.
+
+## [2026-10-20] ingest | Linux TCP investigation (June 2026)
+
+Created `wiki/diagnostic/linux-tcp-investigation-2026-06.md` as the
+source-policy-compliant Analytics wiki home for
+`../wintap/linux-tcp-investigation-2026-06.md`; the live Wintap original remains
+read-only. Current-source validation found attachment, socket-keyed PID,
+protocol-fallback, Parquet null/logging, and default ProcessRundown claims
+addressed; hardcoded TCP AgentId, tracked state-template UUID, and Linux
+watchdog wording remain open. Contradictions flagged: none.
+
 ## [2026-10-19] code | refactor-data-log-paths Linux default correction
 
 Changed the Linux default top-level to `/var/log/lintap`, with independent defaults
