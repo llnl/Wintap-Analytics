@@ -89,6 +89,45 @@ Confirmed the built package is available on the Mac host through the mounted
 data directory at `/Users/johnson30/data/lintap/artifacts/lintap-deb/`.
 SHA-256 `916407eafa64d4347e718d60cae58a50c368667c3dcd3dd83d40ea777d8f55a1`.
 Marked ready for external-session testing; rdp-05 remains open.
+## [2026-09-03] instruction | fio-03 disable FileSensor fallback diagnostic
+
+Decision made: Architect requested and approved a diagnostic code change to remove Wintap's fallback dictionary from FileSensor emitted path selection so live Parquet output can show whether paths are coming from TraceEvent's `obj.FileName` resolution. Instruction created: `../wintap/developer_docs/instructions/fio-03-disable-file-fallback-diagnostic.md` (Approved 2026-09-03).
+
+Scope: read/write/delete emission should use only TraceEvent-resolved `obj.FileName`; retain dictionary population code, `FileIOInit | DiskFileIO`, and close suppression. Follow-up depends on live validation results.
+
+## [2026-09-03] approval | fio-02 suppress File CLOSE events
+
+Decision made: Architect approved `../wintap/developer_docs/instructions/fio-02-suppress-file-close-events.md` after review amendments. Approved scope suppresses Wintap FileSensor Close emission, preserves read/write/delete/name/create behavior and `FileIOInit | DiskFileIO`, and allows only a temporary local live diagnostic probe to defeat Wintap's fallback resolver for TraceEvent path-provenance measurement; that probe must be reverted before the final production diff.
+
+Instructions updated: `../wintap/developer_docs/instructions/fio-02-suppress-file-close-events.md` status changed from Draft to Approved; Architect approval stamped 2026-09-03.
+
+Open questions: Whether to create a separate FileSensor resolver instrumentation/cleanup unit remains evidence-gated after fio-02 audit/live observations.
+
+## [2026-09-03] instruction | fio-02 suppress File CLOSE events
+
+Finding from Architect live observation after `fio-01`: File path resolution appears to be working, but most emitted File events are `CLOSE`.
+
+Instruction written: `../wintap/developer_docs/instructions/fio-02-suppress-file-close-events.md` (Draft; Architect review pending). Scope: stop subscribing Wintap's FileSensor emission path to `FileIOClose`, preserve write/delete/name/create/read behavior, preserve `FileIOInit | DiskFileIO`, and keep rundown/cache cleanup out of scope. Clarified during review that `obj.FileName` on TraceEvent FileIO read/write/info/simple-op events is already resolved via TraceEvent's internal file-ID lookup, while Wintap's `resolveIoFilePath(...)` is an additional fallback. Draft amended to allow a temporary local live probe that disables Wintap's fallback after checking `obj.FileName`, solely to measure TraceEvent path provenance; any such probe must be reverted before final production diff.
+
+Open questions: Architect review/approval pending. Separate FileSensor resolver cleanup and possible rundown work remain future evidence-gated items.
+
+## [2026-09-03] approval | fio-01 FileIO DiskFileIO path-resolution flag
+
+Decision made: Architect approved `../wintap/developer_docs/instructions/fio-01-fileio-diskfileio-path-resolution.md` as written, with rundown deliberately deferred to a potential later unit if `DiskFileIO` does not sufficiently improve FileSensor path resolution.
+
+Instructions updated: `../wintap/developer_docs/instructions/fio-01-fileio-diskfileio-path-resolution.md` status changed from Draft to Approved; Architect approval stamped 2026-09-03.
+
+Open questions: Whether FileIO rundown needs to be reintroduced remains evidence-gated follow-up after `fio-01` implementation/audit.
+
+## [2026-09-02] instruction | FileIO DiskFileIO path-resolution flag
+
+Sources read: `../wintap/wintap/platform/windows/sensor/etw/FileSensor.cs`; `../wintap/wintap/platform/windows/infrastructure/WindowsSubscriptionManager.cs`; `../wintap/wintap/platform/windows/sensor/shared/EtwKernelCollector.cs`; prior Wintap startup instruction/audit; `C:\PUBLIC\perfview-src\src\TraceEvent\Parsers\KernelTraceEventParser.cs`; `TraceEventSession.cs`; `TraceEventNativeMethods.cs`; `Microsoft-Windows-Kernel-File.cs`.
+
+Finding: TraceEvent documents `KernelTraceEventParser.Keywords.DiskFileIO` as the classic-kernel flag that logs file-ID to file-name mappings, while real-time default parser tracking keeps `FileNameToObject` enabled. No TraceEvent-grounded FileIO equivalent of the Registry `EnableTraceEx2` capture-filter path was found.
+
+Instruction written: `../wintap/developer_docs/instructions/fio-01-fileio-diskfileio-path-resolution.md` (Draft; Architect approval pending). Scope is intentionally minimal: add `DiskFileIO` beside `FileIOInit` for `FileSensor`, update shared-kernel flag tests, and do not rewrite FileSensor caches or add manifest-provider/capture-filter machinery.
+
+Contradictions flagged: none. Follow-up: separate FileSensor resolver cleanup remains advisable for unsubscribe, split FileKey/FileObject maps, update-over-add behavior, and cache cleanup.
 
 ## [2026-09-01] feature-start | Support for Docker contexts on Linux
 
@@ -2324,3 +2363,12 @@ Pages updated: `decision/platform-runtime-data-root-defaults.md`,
 `index.md`, `log.md`.
 Contradictions flagged: none.
 Contradictions flagged: none.
+## [2026-10-19] documentation | Sanitized Windows attribution validation executive summary
+
+Architect requested preservation of the reviewed developer-archive summary without source references because the original archives are intended for deletion. Created [[wiki/diagnostic/windows-attribution-validation-executive-summary]] and updated the index. The nine-paragraph historical record preserves architecture, reported test counts, attribution metrics, negative/inconclusive outcomes, and evidence limitations while omitting machine-specific identifiers and source locators. Confidence is low because source references are intentionally not retained; no tests were rerun and no current implementation signoff is implied.
+
+Open questions: sustained Registry attribution, validator cleanup reliability, the full 24-hour acceptance gate, and finalized-Parquet linkage verification remain unresolved in the reviewed evidence. No new architecture decision was made. No original archive, source code, or test file was modified or deleted; no commit or push performed.
+
+## [2026-10-19] documentation | Preserve attribution and FILE-path correctness contracts
+
+Created [[wiki/concept/windows-attribution-and-file-path-correctness-contracts]] at the Architect's request and added it to the index. Retained only technical predicates, compatibility boundaries, tradeoffs, regression expectations, and open validation work; separated accepted contracts, reported implementation, and unverified approved design. Original source references and machine-specific observations are omitted. No new architecture decisions, source/test changes, archive deletions, commits, or pushes. Open validation gaps remain as recorded in the companion executive summary.

@@ -35,6 +35,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/concept/windows-attribution-and-file-path-correctness-contracts]] | low | Sanitized historical correctness contracts: attribution metrics, stable identity, Windows routing/maintenance boundaries, timestamp regressions, validation gaps, and approved FILE-path design; current implementation not reverified. |
 | [[wiki/concept/llm-assisted-feature-workflow]] | medium | Lightweight workflow for LLM-assisted feature work (interview → brief → references → design → spike → plan → handoff → verification → closeout), with the interactive interview protocol, sealed metrics questions, invocation phrase, and promote-to-canonical operating rule. |
 | [[wiki/concept/feature-work-template]] | medium | Full markdown skeletons for every `wiki/work/<feature-slug>/` artifact, including optional metrics files that open with plain-language Results and keep canonical fields under Technical Record; only `brief.md` is required. |
 | [[wiki/concept/metrics-template]] | high | Defines the parseable `wiki/work/<feature-slug>/metrics.md` format: plain-language **Results** (estimated delivery speed, plausible range, confidence and reason) followed by the canonical Velocity YAML under **Technical Record**, plus availability, comparability, sealed estimates, per-unit rows, cost, and optional attention diagnostics. |
@@ -101,6 +102,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/diagnostic/dependency-inventory-and-update-status]] | medium | Inventories Python, npm, and .NET dependency manifests across the ecosystem and records observed update availability with tooling caveats. |
 | [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]] | medium | RHEL 8 field findings: clone sensor attaches (Fedora failure doesn't generalize), the fork-without-exec warning signature (parent = child−1), and a suspected ~500-700 forks/sec storm with event-processing lag under investigation. |
 | [[wiki/diagnostic/windows-sensor-sweep-queue]] | high | Consolidated defect/finding queue the follow-on Windows sensor sweep feature opens from (19 items across shc and wrc; item 6 resolved by wrc-06): WintapLogger sync-context capture and live-log truncation, Env.SetDataRoot fixture guidance, the health check's first live catch, dead Serializer.Listen and WintapETL handlers, WintapAlert self-PID drop, TranslateTransientPath authority bug, QueryDosDevice consolidation, MemoryMap reroute question, registry attribution burstiness + stop_without_start growth, the Read-event data gap, capture-flag unknowns, and preserved registry warts. |
+| [[wiki/diagnostic/windows-attribution-validation-executive-summary]] | low | Sanitized historical summary of 46 developer-archive files: architecture, reported tests and attribution metrics, improved File unresolved rates, unresolved Registry/validator reliability, and evidence limitations; original source references omitted at Architect request ahead of archive deletion. |
 ## Work
 
 | Page | Confidence | Summary |
