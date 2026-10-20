@@ -67,7 +67,7 @@ run this after ANY harness/comparator change before trusting a field run.
 After deploy + `systemctl restart lintap`, wait ~2 min, then:
 
 ```bash
-sudo grep 'FileOps counters' /var/log/lintap/Logs/Lintap.log | tail -1
+sudo grep 'FileOps counters' /var/log/lintap/runtime/Logs/Lintap.log | tail -1
 ```
 
 Checklist on that one line: `agg=[enabled=true, ...]` present;
@@ -125,7 +125,7 @@ the EPL grouped-output fix is missing from the deployed build
 Not a gate — the standing observation during longer deployments:
 
 ```bash
-sudo grep -c 'backlog limit reached' /var/log/lintap/Logs/Lintap.log
+sudo grep -c 'backlog limit reached' /var/log/lintap/runtime/Logs/Lintap.log
 ```
 
 Zero or near-zero expected in normal operation post-EPL-fix. Sustained

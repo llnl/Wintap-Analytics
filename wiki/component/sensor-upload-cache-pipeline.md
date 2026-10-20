@@ -10,7 +10,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/ETLConfig.json
   - ../Lintap/pidstat-collector.py
 policy: agent-editable
-last_validated: 2026-08-17
+last_validated: 2026-10-19
 repo_scope: wintap
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -29,9 +29,14 @@ fix-upload-cache-deletion and improve-pidstat-collector feature work
 
 ## Layout And Cycle
 
-- Cache root is the parquet data path; upload-eligible data lives under
+- The cache root is `WINTAP_DATA_ROOT`; upload-eligible data lives under
   `raw_sensor/<event_type>/dayPK=YYYYMMDD/hourPK=HH/*.parquet`
   (network adds `protoPK=`). S3 keys mirror this relative layout.
+- Serializer and merge input parquet live separately under
+  `WINTAP_RUNTIME_ROOT/esper_staging`; it is not upload-eligible canonical
+  data. On Linux the packaged defaults are `/var/log/lintap/data` and
+  `/var/log/lintap/runtime`.
+  <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/shared/Paths.cs -->
 - Every `UploadIntervalSec` (shipped default 300; env override
   `WINTAP_ETL_UPLOAD_INTERVAL_SEC`): `doMerge()` consolidates each
   serializer directory's flush files (written every

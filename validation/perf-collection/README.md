@@ -211,7 +211,7 @@ future Lintap-specific diagnostic command flexible.
 The collector writes canonical partitioned parquet under:
 
 ```text
-$WINTAP_DATA_ROOT/parquet/raw_sensor/
+$WINTAP_DATA_ROOT/raw_sensor/
   perf_smaps_rollup/
   perf_proc_status/
   perf_fd_map/
@@ -224,7 +224,7 @@ Example quick inspection with DuckDB:
 ```bash
 duckdb -c "
   select *
-  from read_parquet('$WINTAP_DATA_ROOT/parquet/raw_sensor/perf_smaps_rollup/**/*.parquet')
+   from read_parquet('$WINTAP_DATA_ROOT/raw_sensor/perf_smaps_rollup/**/*.parquet')
   limit 10
 "
 ```

@@ -160,7 +160,7 @@ No ETL/WintapMessage emission yet (sel-04); no schema changes.
 ### Runtime config (SELinux-only focus)
 
 ```
-WINTAP_DATA_ROOT=/var/log/lintap
+WINTAP_DATA_ROOT=/var/log/lintap/data
 WINTAP_DISABLE_MCP=true
 WINTAP_DISABLE_DUCKDB_UI=true
 WINTAP_DISABLE_ETL=true
