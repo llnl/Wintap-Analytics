@@ -5,6 +5,116 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-21] verification | improve-lintap-data-quality acceptance3
+
+The isolated arm64 acceptance3 capture produced 10,000 file and 42 TCP staged
+rows with no Unknown/empty identities, owner warnings, or FileOps queue drops.
+DBT passed 80/80 and matched every file row, but found one orphan among 27
+network increments. The remaining cause was floating-point `/proc` start-time
+conversion in the live resolver fallback; it is now integer-only with a
+regression test and awaits long-run validation. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] code | improve-lintap-data-quality live attribution fallback
+
+Moved the stable PID-hash fallback to the live file/TCP/UDP callback path so
+rapid children can be attributed before exit; removed callback-time network
+hashes. Local and arm64 source builds passed. The isolated rerun has 24 TCP
+rows with no Unknown identities or owner warnings, but FileOps kernel counters
+advance while userspace file emission remains zero, so file/DBT acceptance is
+blocked rather than inferred from an empty relation. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] verification | improve-lintap-data-quality isolated attribution rerun
+
+The isolated Clone-enabled/retry-10 acceptance rerun is not accepted: staged
+output has 20 Unknown file identities in 13,097 rows and one Unknown network
+identity in 64 rows, with matching owner-resolution warnings. Its raw merge had
+not completed, so no DBT acceptance claim was made. The earlier zero-Unknown
+capture remains pilot evidence only; ldq-03 stays open. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] code | improve-lintap-data-quality ldq-04 DBT attribution QA
+
+Added Wintappy's `attribution_quality_summary` monitoring view, reporting
+orphan and Unknown-name rows/hashes/rates for file and network relations, and
+included it in `build_summary`. DBT passed 80/80. The existing orphan diagnostic
+correctly fails on the shared mixed-capture raw root, so aggregate rates are
+recorded as baseline/intermediate evidence rather than acceptance. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] code | improve-lintap-data-quality ldq-03 lifecycle attribution
+
+Enabled Clone in the controlled source-build runtime and fixed the observed
+cross-poller ownership races: active-cache selection now covers network events,
+file/network retries are bounded to ten seconds, and Clone/Execve/`/proc`
+process-start conversion shares a clock-tick identity basis. The 200-child
+rapid-fork capture recorded 10,769 file rows and 32 network rows with zero
+Unknown names/hashes; it does not prove process-user remediation or replace the
+pending DBT comparison. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] diagnosis | improve-lintap-data-quality ldq-03 lifecycle coverage
+
+The source-build attribution baseline has an evidence-supported cause for its
+file orphans: the active runtime configuration disabled `Clone`. A representative
+cron/PAM child produced 150 Unknown file identities and a later Stop record but
+no Start/Refresh record; the capture log reports failed owner resolution for the
+same PID. The next controlled remediation is enabling Clone for a clean
+before/after capture and comparing DBT orphan composition. This does not yet
+address process-user Unknown values. Corrected the dev handoff to retain the
+completed ldq-00 VM setup rather than restart it. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] verification | improve-lintap-data-quality source baseline
+
+Created fresh arm64 `lintap-quality` source-build VM with the LLNL checkout and
+feature-isolated Wintappy data mount. The initial 6,000-file run recorded
+5,693 paths with zero FileSerializer, FileOps, and BPF ring-buffer drops; a
+rebuild/restart run after 45 seconds captured 6,000/6,000 with zero serializer
+drops. Queue-limit changes are deferred pending warm-up/attach-state evidence.
+Fixed FileSerializer-only lowercase hostname output; refreshed source output
+uses `LINTAP-QUALITY` consistently across process, file, and network rows.
+DBT passed 79/79; file-orphan/user-attribution counts remain baseline work.
+Details: `wiki/work/improve-lintap-data-quality/verification.md` and
+`wiki/work/improve-lintap-data-quality/spike.md`.
+
+## [2026-10-21] verification | fresh lintap package mounted-data smoke
+
+Replaced the disposable `lintap-dev` Multipass deployment, mounted
+`../Wintappy/data` at `/home/ubuntu/data/smoketest`, installed Debian arm64
+package `lintap_0.1.0-101_arm64.deb`, and configured that mount as
+`WINTAP_DATA_ROOT`. Package service startup and process/file/network functional
+smokes passed; Wintappy DBT passed 79/79. Quality is not accepted: the 6,000
+unique-file workload recorded FileSerializer `dropped_total=28533`, although
+the current smoke log-text gate returned a false green; DBT found 717
+`process_file` orphan rows across 496 unknown process hashes. Recorded details
+in `wiki/work/refactor-data-log-paths/verification.md`.
+
+## [2026-10-21] code | smoke QA validation and orphan dashboard drill-down
+
+Updated `../wintap/devtools/file_capture_smoke_test.py` to recognize current
+FileSerializer `dropped_total` flush counters against a pre-workload baseline,
+and restored Wintappy's early `raw_sensor` DBT-root validation. Added a Top 25
+orphan-process-identity drill-down after the dashboard orphan summary, grouped
+by relation/host/reported-name/missing-hash and ranked by event impact with
+affected item and time-range context. Unit-style parser checks, dashboard SQL,
+Marimo syntax/structural checks, and refreshed DBT build passed. The renewed
+6,000-file field workload failed at 4,918/6,000 paths and grew the serializer
+drop total from 28,533 to 55,938; this remains an acceptance failure. Details:
+`wiki/work/refactor-data-log-paths/verification.md`.
+
+## [2026-10-21] feature | improve-lintap-data-quality opened
+
+Completed the adaptive interview and created the `improve-lintap-data-quality`
+feature artifacts. Confirmed scope: measured Linux/Lintap-only remediation for
+serializer loss, PID-hash orphan attribution, hostname consistency, and
+incremental Unknown process/user improvement; source-build iteration first and
+fresh packaged arm64 Multipass acceptance last. The benchmark-and-recommendation
+spike must set queue and orphan thresholds before implementation chooses a
+remedy. Windows parity and RPM acceptance are excluded. Added the feature brief
+to `wiki/index.md`.
+
 ## [2026-10-19] code | refactor-data-log-paths Linux default correction
 
 Changed the Linux default top-level to `/var/log/lintap`, with independent defaults

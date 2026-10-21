@@ -107,6 +107,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/work/improve-lintap-data-quality/brief]] | high | Open feature for measured Linux/Lintap file-loss and attribution quality remediation: source-build benchmarking first; zero-new-drop and >=95% file coverage hard gates; incremental hostname/Unknown identity improvement; final fresh packaged arm64 acceptance. |
 | [[wiki/work/lintap-process-creation-validation/index]] | medium | Research thread for comparing process creation accuracy across Lintap, Tetragon, Tracee, and Sysdig and building cross-sensor validation workloads. |
 | [[wiki/work/lintap-process-creation-validation/research-snapshot-2026-07-31]] | medium | Snapshot of process creation acquisition, known accuracy risks, PID uniqueness strategies, and reference-tool issue findings. |
 | [[wiki/work/lintap-process-creation-validation/handoff-validation-next-steps]] | medium | Handoff plan for sensor-neutral process/file/network workload generation, cross-sensor runs, normalization, and accuracy reporting. |
