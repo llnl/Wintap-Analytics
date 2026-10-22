@@ -5,8 +5,9 @@ confidence: high
 grounded_by:
   - ../Lintap/README.md
   - ../Lintap/teletap/README.md
+  - ../Lintap/packaging/README.md
 policy: agent-editable
-last_validated: 2026-10-19
+last_validated: 2026-10-22
 repo_scope: Lintap
 implementation_area: packaging
 event_domain: cross-domain
@@ -44,6 +45,12 @@ Open watch item: collector CPU usage looked higher than expected in early RHEL 8
 
 ## Package Builder Contract (promoted 2026-10-05)
 
+Current Debian and RPM build, inspection, installation, and smoke-test
+procedures are consolidated in `../Lintap/packaging/README.md`. Format-local
+READMEs point there, while dated handoff and review files are retained as
+historical records rather than competing instructions.
+<!-- GROUND_TRUTH: ../Lintap/packaging/README.md -->
+
 The Debian builder under `../Lintap/packaging/lintap-deb/` is the refreshed
 package path for Debian/Ubuntu amd64 and arm64. It uses a native `/var/tmp`
 work root, validates the tracepoint eBPF tier on every build, validates the
@@ -51,6 +58,14 @@ four functional CO-RE objects on native BTF builds, stages SELinux objects
 opportunistically, publishes the main application with MCP disabled, and
 publishes the MCP helper separately unless `--skip-mcp` is requested.
 <!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/build-deb.sh -->
+
+The RPM builder's current supported artifact is RHEL 8-compatible `x86_64`.
+Although it contains cross-build setup, cross-build mode disables BTF while
+staged-payload validation unconditionally requires the CO-RE
+`file_ops_tracer.bpf.o`. Therefore the current end-to-end RPM build contract is
+a native `x86_64` host with readable BTF; older successful-cross-build notes are
+historical evidence, not validation of the current script.
+<!-- GROUND_TRUTH: ../Lintap/packaging/lintap-rpm/build-rpm.sh §eBPF build; §expected_bpf_objects -->
 
 The Debian environment follows the field sensor settings while deliberately
 retaining Snappy Parquet compression because current Ubuntu glibc supports the
@@ -65,7 +80,7 @@ root (`/var/log/lintap/runtime`, containing logs, DuckDB, and Esper staging).
 The manual `packaging/cleanup-test-install.sh --yes` utility is only for
 disposable test hosts; package install and upgrade do not migrate or delete
 telemetry.
-<!-- GROUND_TRUTH: ../Lintap-rdp/packaging/PATHS_AND_CONFIGURATION.md -->
+<!-- GROUND_TRUTH: ../Lintap/packaging/PATHS_AND_CONFIGURATION.md -->
 
 The 2026-10 release candidate assets are Debian `0.1.0-14` for amd64 and arm64
 and RPM `0.3.5-12.el8` for x86_64. They are independently versioned package

@@ -34,6 +34,10 @@ for connecting evidence to the implementation flow:
 - sequence page `[S1–S12]`: normal event delivery;
 - sequence page `[S13–S18]`: coordinated shutdown and final merge.
 
+Definitions, implementation pointers, operational checks, and detailed-document
+links for every label are in
+[[wiki/work/improve-lintap-data-quality/diagram-glossary]].
+
 For example, dedicated FileSerializer draining is `[A8–A9]` / `[S9–S10]`,
 while coordinated serializer, parquet, and cache shutdown is `[A8–A12]` /
 `[S16–S18]`.
@@ -479,6 +483,28 @@ criteria. Commit `1c048a8` was created locally and was not pushed.
 <!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/packaged-102/Lintap.log §2026-10-22 11:26:06–11:26:07 -->
 <!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/packaged-102/dbt-summary.txt -->
 <!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/build-deb.sh -->
+
+## Post-closeout documentation validation
+
+The companion [`diagram-glossary.md`](diagram-glossary.md) was checked against
+the diagrams.net XML on 2026-10-22. The source contains all 36 expected stable
+anchors (`A1–A13`, `Q1–Q5`, and `S1–S18`), and the glossary contains one
+definition heading for each anchor with no missing or extra identifiers.
+
+Repository-wide deterministic checks found zero broken local Markdown links,
+zero real broken wikilinks, and zero missing required frontmatter fields across
+160 wiki Markdown files. A local `grounded_by` existence scan checked 727
+citations. The 36 unavailable paths that remain are historical deleted-code or
+local-process references, or citations into optional external research
+checkouts not present in this workspace; they were not silently retargeted.
+Clear live-path moves found by the audit were repaired, including the Lintap
+worktree alias, the Linux `ProcReader` helper move, and root-relative analytics
+validation paths.
+
+The Lintap package documentation was also checked for local-link integrity, and
+both package builders' `--help` output was compared with the consolidated
+option summary. No package was rebuilt because this change only consolidates
+documentation and labels historical records.
 
 ## Acceptance result
 

@@ -108,6 +108,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/work/improve-lintap-data-quality/brief]] | high | CLOSED 2026-10-22: adaptive wakeups, dedicated FileSerializer draining, coordinated shutdown, and kernel-time network attribution passed two-hour source and fresh packaged-arm64 gates. |
+| [[wiki/work/improve-lintap-data-quality/diagram-glossary]] | high | Companion glossary for every `[A1–A13]`, `[Q1–Q5]`, and `[S1–S18]` label in the Linux eBPF architecture and shutdown diagrams, with implementation, operations, and evidence references. |
 | [[wiki/work/lintap-process-creation-validation/index]] | medium | Research thread for comparing process creation accuracy across Lintap, Tetragon, Tracee, and Sysdig and building cross-sensor validation workloads. |
 | [[wiki/work/lintap-process-creation-validation/research-snapshot-2026-07-31]] | medium | Snapshot of process creation acquisition, known accuracy risks, PID uniqueness strategies, and reference-tool issue findings. |
 | [[wiki/work/lintap-process-creation-validation/handoff-validation-next-steps]] | medium | Handoff plan for sensor-neutral process/file/network workload generation, cross-sensor runs, normalization, and accuracy reporting. |
@@ -214,4 +215,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/refactor-data-log-paths/verification]] | medium | Validation record: focused root tests, Debian arm64 package/install and fresh event-output smoke, manual disposable-host cleanup, and a DBT build against fresh direct-root output passed; two-instance shared-mount validation remains open. |
 ---
 
-*Last updated: 2026-10-22 (improve-lintap-data-quality closed)*
+*Last updated: 2026-10-22 (package docs and eBPF diagram glossary cleanup)*

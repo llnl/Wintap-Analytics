@@ -7,15 +7,15 @@ confidence: high
 grounded_by:
   - ../wintap/wintap/core/shared/Env.cs
   - ../wintap/wintap/core/etl/shared/Paths.cs
-  - ../Lintap-rdp/packaging/lintap-deb/lintap.env
-  - ../Lintap-rdp/packaging/lintap-rpm/lintap.env
+  - ../Lintap/packaging/lintap-deb/lintap.env
+  - ../Lintap/packaging/lintap-rpm/lintap.env
 policy: human-review-required
 last_validated: 2026-10-19
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: mixed
-source_paths: ../wintap/wintap/core/shared/Env.cs; ../wintap/wintap/core/etl/shared/Paths.cs; ../Lintap-rdp/packaging
+source_paths: ../wintap/wintap/core/shared/Env.cs; ../wintap/wintap/core/etl/shared/Paths.cs; ../Lintap/packaging
 tags: [wintap, lintap, packaging, data-pipeline, paths]
 ---
 

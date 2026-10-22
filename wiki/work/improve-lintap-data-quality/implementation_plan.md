@@ -71,3 +71,5 @@ tags: [feature-work, lintap, data-quality, implementation-plan]
   users; Stop-only user blanks remain a documented model limitation)
 - [x] ldq-04 downstream QA contract
 - [x] ldq-05 source and fresh packaged arm64 acceptance
+- [x] Post-closeout architecture/sequence diagram glossary and documentation
+  link/citation audit

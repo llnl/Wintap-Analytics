@@ -41,7 +41,7 @@ beside process, file, network, and pidstat telemetry.
 ## Primary Sources For The Dev Agent
 
 - `../Lintap/pidstat-collector.py`
-- `../wintap/wintap/platform/linux/sensor/ebpf/ProcReader.cs`
+- `../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs`
 - `../wintap/wintap/platform/linux/sensor/ebpf/{ExecveSensor,FileOpsSensor,NetworkSensor}.cs`
 - Linux cgroup v2 documentation and OCI Linux runtime specification listed in `references.md`.
 

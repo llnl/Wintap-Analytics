@@ -5,6 +5,23 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-22] docs | Lintap packaging guide and eBPF diagram glossary
+
+Consolidated Debian/RPM build, inspection, installation, and smoke-test
+instructions into `../Lintap/packaging/README.md`; reduced format-local guides
+to pointers/installed quick references and marked dated review/handoff records
+as historical. Added the 36-anchor companion glossary for
+`wiki/work/improve-lintap-data-quality/ebpf-quality-flow.drawio`, linked it from
+verification and the index, and repaired supported live-path citation moves.
+The `[A7]`/`[S8]` definitions explicitly cover TCP and UDP's ten-second EPL
+aggregation, not only FileOps batching.
+The review also surfaced and documented the current RPM limitation: cross-build
+mode disables BTF but payload validation still requires the CO-RE FileOps
+object, so the present end-to-end RPM contract is native x86_64 with BTF.
+Deterministic checks found zero broken local Markdown links, real wikilinks, or
+required-frontmatter omissions. Thirty-six unavailable historical/local-only
+or optional external-checkout source anchors remain explicitly unretargeted.
+
 ## [2026-10-22] docs | improve-lintap-data-quality eBPF flow diagrams
 
 Added a two-page diagrams.net source covering the Linux eBPF-to-parquet

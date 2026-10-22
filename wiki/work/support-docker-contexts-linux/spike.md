@@ -4,7 +4,7 @@ type: concept
 confidence: speculative
 grounded_by:
   - ../Lintap/pidstat-collector.py
-  - ../wintap/wintap/platform/linux/sensor/ebpf/ProcReader.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs
   - https://www.kernel.org/doc/html/latest/admin-guide/cgroup-v2.html
 policy: agent-editable
 last_validated: 2026-09-01

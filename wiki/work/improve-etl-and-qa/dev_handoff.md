@@ -57,11 +57,12 @@ tags: [feature-work, dev-handoff, lintap, pidstat, memory, perf]
 - The no-Tenable run then proved the pre-cache FileOps sender was unsustainable:
   run `lintap-perf-20260830-no-tenable`, exact UTC window
   `2026-08-30T21:49:06Z..22:49:05Z`, recorded `601126` sender drops while
-  FileSerializer remained healthy. See [[no-tenable-run-analysis-2026-08-30]].
+  FileSerializer remained healthy. See
+  [[wiki/work/improve-etl-and-qa/no-tenable-run-analysis-2026-08-30]].
 - Isolated NEsper testing ruled out Esper statement evaluation as the primary
   live ceiling. The empty broad subscriber route was removed, while outbound
   threading and context replacement were rejected. See
-  [[esper-sender-path-analysis-2026-08-30]].
+  [[wiki/work/improve-etl-and-qa/esper-sender-path-analysis-2026-08-30]].
 - A bounded 32,768-entry historical process-identity cache was deployed in RPM
   `lintap-0.3.4-1.el8.x86_64`. The installed DLL SHA-256 was
   `7bd7ab380ac07b004f04357e5bb46d23bf45f0bdca871949137b080cc7e9a235`.
@@ -98,7 +99,7 @@ no regression in sender latency or historical identity-cache behavior.
 - Do not use `/tmp` or `/var/log` as high-confidence frontmatter anchors.
 - Record ephemeral paths only as artifact locators accompanied by SHA-256, run
   ID, host/PID, exact UTC/local windows, and the exact analysis command.
-- Use [[historical-cache-overnight-validation-2026-08-31]] as the durable
+- Use [[wiki/work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31]] as the durable
   August 31 comparison record.
 - Owning commits now exist: `../wintap@c03d731..2d3f795`,
   `../Lintap@1b23f77`, and `../Wintappy@a53cce6..e4b3bc3`.
