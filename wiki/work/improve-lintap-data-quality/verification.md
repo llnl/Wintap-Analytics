@@ -6,19 +6,45 @@ grounded_by:
   - ../Lintap/multipass-lintap.sh
   - ../wintap/wintap/core/etl/extract/FileSerializer.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs
+  - ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs
   - ../Wintappy/wintap_dbt/qa/pid_hash_orphan_checks.sql
 policy: agent-editable
-last_validated: 2026-10-21
+last_validated: 2026-10-22
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: developer
-status: draft
+status: stable
 source_paths: wiki/work/improve-lintap-data-quality/verification.md
 tags: [feature-work, verification, lintap, file-events, attribution]
 ---
 
 # Verification: Improve Lintap Data Quality
+
+## Diagram references
+
+The two-page diagrams.net source at
+[`ebpf-quality-flow.drawio`](ebpf-quality-flow.drawio) provides stable anchors
+for connecting evidence to the implementation flow:
+
+- architecture page `[A1–A13]`: event source through `raw_sensor` parquet;
+- architecture quality gates `[Q1–Q5]`: transit, attribution, serializer
+  pressure, durable shutdown, and end-to-end QA;
+- sequence page `[S1–S12]`: normal event delivery;
+- sequence page `[S13–S18]`: coordinated shutdown and final merge.
+
+For example, dedicated FileSerializer draining is `[A8–A9]` / `[S9–S10]`,
+while coordinated serializer, parquet, and cache shutdown is `[A8–A12]` /
+`[S16–S18]`.
+
+| Validation evidence | Diagram anchors | What is measured |
+| --- | --- | --- |
+| Matched ring-notification A/B | `[A3–A4]`, `[Q1]`, `[S2–S3]` | delivery-latency buckets and BPF ring failures |
+| File burst and serializer drain | `[A5]`, `[A8–A10]`, `[Q3]`, `[S4–S10]` | sender drops, queue peak/drops, accepted rows, writer backlog |
+| Process attribution QA | `[A6]`, `[Q2]`, `[S6]` | unresolved owners and orphan/`Unknown` PID hashes |
+| Graceful-shutdown smoke | `[A4–A12]`, `[Q4]`, `[S13–S18]` | worker completion, write/merge status, staging/`.active` leftovers |
+| DBT and workload completeness | `[A13]`, `[Q5]` | expected paths/operations and file/network relationships |
 
 ## ldq-00 — fresh source-build host
 
@@ -290,3 +316,174 @@ acceptance6 output disproves a general zero-orphan claim.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs §createProcessTerminate -->
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/Serializer.cs §Save/FlushToDisk -->
 <!-- GROUND_TRUTH: ../wintap/tests/Wintap.Tests/ProcReaderTimestampTests.cs §RootUidResolvesFromTheLocalPasswdDatabase -->
+
+## ldq-01 — matched two-hour FileOps A/B
+
+Matched source-build runs each completed 120 one-minute rounds and 124,800
+unique workload paths without workload failures. Both arms used the same
+delivery-latency instrumentation; only the BPF ring submission flag differed.
+
+| Measure | Suppressed notifications | Adaptive notifications |
+| --- | ---: | ---: |
+| Delivery samples | 1,555,567 | 1,506,846 |
+| Weighted average delivery latency | 27.9 s | 4.6 s |
+| Maximum delivery latency | 117.3 s | 25.0 s |
+| Delivery samples over 60 s | 484,546 | 0 |
+| FileSerializer drops | 32,489 | 46,705 |
+| Workload paths retained | 120,252 (96.4%) | 117,462 (94.1%) |
+| FileOps sender-queue / BPF ring failures | 0 / 0 | 0 / 0 |
+
+Adaptive ring notifications materially reduce delivery delay and eliminate the
+observed over-60-second tail, but do not by themselves prevent FileSerializer
+loss. The adaptive arm therefore remains selected only in combination with the
+serializer-drain remediation below. Both isolated DBT builds passed 80/80; file
+relationships were clean, while network orphan/`Unknown` rows fell from 780 to
+437. Clean relationships did not imply complete capture: each arm still lost
+workload paths.
+
+The baseline `pidstat` accidentally sampled the `sudo` launcher and is unusable
+for CPU/RSS comparison. The adaptive service had 716 valid samples: 14.94%
+average CPU, 160.2% peak CPU, 730,474 KiB average RSS, and 1,142,192 KiB peak
+RSS. The final remediated run uses the service PID and will provide the valid
+post-change resource point; no baseline resource delta is claimed.
+
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/long-ab-results.json -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/long-ab-baseline/data/duckdb/wintap.duckdb §attribution_quality_summary -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/long-ab-adaptive/data/duckdb/wintap.duckdb §attribution_quality_summary -->
+<!-- GROUND_TRUTH: ../wintap/devtools/lintap_long_ab_report.py -->
+
+## ldq-02 — dedicated drain and coordinated shutdown
+
+The A/B logs localized loss to the bounded 10,000-event FileSerializer queue:
+high-water requests competed for a ThreadPool slot after the queue reached half
+capacity. FileSerializer now uses the existing dedicated flush worker, as the
+registry serializer already did. Adaptive ring notification remains enabled in
+both the CO-RE and tracepoint FileOps tiers.
+
+Shutdown now follows an ordered producer-stop, serializer-drain, parquet-write,
+and final-merge sequence. Linux skips the prior Windows registry write that
+could abort this sequence. The logger drains accepted entries before closing,
+and failed final merges retain source parquet instead of deleting it.
+
+A 5,000-file, 40-worker burst completed in 0.292 seconds with all 5,000 paths
+and 25,000 expected operation rows retained. FileSerializer accepted 33,767
+rows, reported zero drops, and peaked at 5,617 queued events. Graceful shutdown
+drained every serializer, left no staged or `.active` files, and materialized
+all seven observed raw streams. Its isolated DBT build passed 80/80 with zero
+file/network orphan or `Unknown` rows. This was the first passing burst gate;
+the final long and packaged gates are recorded below.
+
+The first final-code repetition exposed a native shutdown race: the two-second
+poll-thread join could expire under burst load and free the libbpf ring buffer
+while its callback was still active, causing a segmentation fault. Poll and
+FileOps sender workers are now fully joined before native cleanup and ETL drain.
+After rebuild, a second 5,000-file/40-worker burst shut down normally. It
+retained all 5,000 paths and the exact 40,000 operations implied by the
+workload: 10,000 each for Open, Read, and Close plus 5,000 each for Write and
+Delete. FileSerializer accepted 46,608 rows with zero serializer/parquet drops;
+the final merge completed and left zero staged or `.active` files. The short
+capture did not emit every optional network stream, so its DBT build correctly
+failed the missing-input assumption and is not represented as an 80/80 gate.
+
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/SerializerSchedule.cs §ResolveOptions -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/Serializer.cs §Shutdown -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/CacheManager.cs §Stop -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/remediation-smoke/data/duckdb/wintap.duckdb §attribution_quality_summary -->
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/shared/BaseEbpfSensor.cs §Stop -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/final-shutdown-smoke-v2/runtime/Logs/Lintap.log §2026-10-22 08:45:45 -->
+
+### Final two-hour source-build remediation
+
+The final-code source run completed all 120 one-minute rounds and generated
+124,800 unique workload files with zero workload failures. It retained all
+124,800 `.dat` paths. DBT counted 998,421 file operations against the workload's
+998,400 minimum (21 additional Open/Read/Close observations), so no exact-count
+claim is made for this long capture.
+
+FileSerializer accepted 972,172 events, dropped zero, and peaked at 5,728 of
+10,000 queued events. FileOps sender drops, BPF ring failures, parquet failures,
+and parquet dropped batches were all zero. Delivery latency averaged 6.1 s,
+peaked at 36.1 s, and had zero samples over 60 s. Shutdown fully drained the
+serializer and writer, completed the final merge, returned status 0, and left
+zero staging or `.active` files. The isolated DBT build passed **80/80** and the
+workload's file rows had zero `Unknown` process names.
+
+The valid post-change resource point is 717 samples: 21.30% average CPU,
+156.6% peak CPU, 639,419 KiB average RSS, and 2,106,660 KiB peak RSS. The
+baseline sampled `sudo`, not the sensor, so no CPU/RSS improvement or regression
+delta is claimed.
+
+This run still had 904 network orphan/`Unknown` identities. Each affected rapid
+process could produce multiple fallback hashes milliseconds after its recorded
+Stop because NetworkSensor used delayed callback time as event time. The tracer
+already supplied `bpf_ktime_get_ns()`; the final remediation converts that
+kernel monotonic timestamp to UTC using integer nanoseconds, shared with
+FileOps, rather than substituting callback time.
+
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/long-ab-remediated/acceptance-status.txt -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/long-ab-remediated/data/duckdb/wintap.duckdb §process_file and attribution_quality_summary -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/long-ab-results.json -->
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs §HandleEvent -->
+
+## ldq-03 — final network event-time validation
+
+A fresh source-build rapid-child run exercised 200 children, 2,000 files, TCP,
+and UDP after the kernel event-time change. It retained all 2,000 paths and the
+exact 16,000 workload operations. DBT passed **80/80**. Across 45,567
+`process_file`, 892 `process_conn_incr`, and 888 `process_net_conn` rows, all
+three relationships had zero orphan rows/hashes and zero `Unknown` process
+names. TCP contributed 610 increments and UDP 282. All 661 observed Start rows
+had known users. FileSerializer accepted 46,356 events with zero drops; shutdown
+and final merge completed with no staging or `.active` files.
+
+This closes the observed rapid-exit network skew without broadening the claim:
+the evidence applies to observed Start rows and the controlled workload.
+Stop-only rows do not gain a user field from `ProcessStopSerializer`.
+
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/network-kernel-time/data/duckdb/wintap.duckdb §attribution_quality_summary -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/network-kernel-time/dbt-summary.txt -->
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs -->
+
+## ldq-05 — fresh packaged arm64 acceptance
+
+Debian arm64 package `lintap_0.1.0-102_arm64.deb` was built from the final source
+later committed as `1c048a8`. Its SHA-256 is
+`0b2e7cc3842c394fc6caab678f843f22f693ad317b685d93f330b54d95ada46c`.
+It was installed on newly created Ubuntu 24.04 arm64 Multipass instance
+`lintap-ldq-package`; BTF and architecture checks passed. The acceptance config
+explicitly enabled Clone and used the feature-isolated mounted data root.
+
+The 200-child burst generated 5,000 files with zero workload failures. DBT
+passed **80/80** and retained all 5,000 distinct paths and exactly 40,000
+operations: 10,000 each for Open, Read, and Close, and 5,000 each for Write and
+Delete. All 25,000 workload aggregate rows had known process names.
+
+The full isolated database reports zero orphan and `Unknown` rows across
+103,266 `process_file`, 877 `process_conn_incr`, and 875 `process_net_conn`
+rows. The network workload included 609 TCP and 268 UDP increments. All 923
+observed Start rows had known users. The 189 Stop-only rows had blank users,
+consistent with the separately documented Stop serializer/model limitation.
+
+FileSerializer accepted 106,155 events, dropped zero, peaked at 5,522, and
+drained its final 3,592 rows during shutdown. Parquet failures/dropped batches,
+FileOps sender drops, and BPF ring failures were zero. Systemd reported a
+successful exit; final merge completed, and zero staging/`.active` files
+remained.
+
+The final focused arm64 suite passed **383/383** and `make build_dotnet` passed
+with zero errors and 567 existing warnings. The package build, source rapid-run,
+two-hour source run, and package acceptance together satisfy the frozen feature
+criteria. Commit `1c048a8` was created locally and was not pushed.
+
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/packaged-102/data/duckdb/wintap.duckdb §attribution_quality_summary and process_file -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/packaged-102/Lintap.log §2026-10-22 11:26:06–11:26:07 -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/packaged-102/dbt-summary.txt -->
+<!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/build-deb.sh -->
+
+## Acceptance result
+
+**PASS — feature closed 2026-10-22.** The selected design is adaptive ring
+notification plus a dedicated FileSerializer drain and coordinated shutdown.
+It meets the source and packaged path-coverage/zero-new-drop gates and the
+capture-isolated DBT attribution contract. The evidence does not claim a valid
+baseline CPU/RSS delta, universal zero-orphan behavior, or Stop-user enrichment.

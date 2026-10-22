@@ -5,6 +5,14 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-22] docs | improve-lintap-data-quality eBPF flow diagrams
+
+Added a two-page diagrams.net source covering the Linux eBPF-to-parquet
+architecture and normal-delivery/coordinated-shutdown sequence. Stable
+`A`/`Q`/`S` anchors now map ring latency, attribution, serializer pressure,
+durable shutdown, and downstream completeness evidence to exact flow stages.
+Linked the anchors and validation matrix from the feature verification page.
+
 ## [2026-10-21] verification | improve-lintap-data-quality acceptance3
 
 The isolated arm64 acceptance3 capture produced 10,000 file and 42 TCP staged
@@ -14,6 +22,18 @@ network increments. The remaining cause was floating-point `/proc` start-time
 conversion in the live resolver fallback; it is now integer-only with a
 regression test and awaits long-run validation. Details:
 `wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-22] closeout | improve-lintap-data-quality accepted
+
+Closed the feature after final source and fresh Debian arm64 acceptance. The
+two-hour source run retained all 124,800 workload paths with zero serializer,
+writer, sender, or ring loss and completed coordinated shutdown. A kernel-time
+network correction then passed a rapid-child source run with zero file/network
+orphans or `Unknown` names. Package `0.1.0-102` repeated the gate on a fresh
+Ubuntu 24.04 arm64 VM: 5,000/5,000 paths, exactly 40,000 operations, DBT 80/80,
+zero attribution failures, and clean final merge. Focused tests passed 383/383;
+the arm64 build passed with zero errors. Promoted durable flow/shutdown facts to
+the FileOps and Esper pages. Wintap commit: `1c048a8`; no push performed.
 
 ## [2026-10-21] code | improve-lintap-data-quality live attribution fallback
 

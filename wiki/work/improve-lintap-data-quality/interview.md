@@ -6,12 +6,12 @@ grounded_by:
   - wiki/work/refactor-data-log-paths/verification.md
   - ../wintap/devtools/file_capture_smoke_test.py
 policy: agent-editable
-last_validated: 2026-10-21
+last_validated: 2026-10-22
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: mixed
-status: draft
+status: stable
 source_paths: wiki/work/improve-lintap-data-quality/interview.md
 tags: [feature-work, lintap, data-quality, file-events, process-events, network-events]
 ---

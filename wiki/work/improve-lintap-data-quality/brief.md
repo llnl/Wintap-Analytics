@@ -6,17 +6,20 @@ grounded_by:
   - wiki/work/refactor-data-log-paths/verification.md
   - ../wintap/wintap/core/etl/extract/Serializer.cs
 policy: agent-editable
-last_validated: 2026-10-21
+last_validated: 2026-10-22
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: developer
-status: draft
+status: stable
 source_paths: wiki/work/improve-lintap-data-quality/brief.md
 tags: [feature-work, lintap, data-quality, file-events, process-events, network-events]
 ---
 
 # Feature Brief: Improve Lintap Data Quality
+
+**CLOSED 2026-10-22 — accepted.** The source and fresh packaged-arm64 gates
+passed. See [[wiki/work/improve-lintap-data-quality/verification]].
 
 ## Problem
 
@@ -66,3 +69,13 @@ Marimo dashboard; this repository's verification/wiki artifacts.
 
 Run focused unit tests and source builds, the benchmark matrix, process/file/
 network smokes, DBT build plus orphan QA, then fresh arm64 packaged acceptance.
+
+## Outcome
+
+Adaptive ring notifications removed the observed over-60-second delivery tail;
+a dedicated FileSerializer drain and coordinated producer-to-merge shutdown
+removed the measured serializer loss. Kernel event-time conversion closed the
+remaining controlled network identity skew. The final package retained all
+5,000 workload paths and 40,000 operations with zero pipeline drops and zero
+file/network attribution failures. Blank users on Stop-only rows remain a
+separate serializer/model limitation; no universal zero-orphan claim is made.

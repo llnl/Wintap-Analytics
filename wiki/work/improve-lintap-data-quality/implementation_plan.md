@@ -1,17 +1,17 @@
 ---
 title: "Implementation Plan: Improve Lintap Data Quality"
 type: concept
-confidence: medium
+confidence: high
 grounded_by:
   - ../wintap/wintap/core/etl/extract/Serializer.cs
   - wiki/work/refactor-data-log-paths/verification.md
 policy: agent-editable
-last_validated: 2026-10-21
+last_validated: 2026-10-22
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: developer
-status: draft
+status: stable
 source_paths: wiki/work/improve-lintap-data-quality/implementation_plan.md
 tags: [feature-work, lintap, data-quality, implementation-plan]
 ---
@@ -39,11 +39,13 @@ tags: [feature-work, lintap, data-quality, implementation-plan]
    bounded retries for file rows; the final residual network orphan was traced
    to a one-100-ns-tick floating-point `/proc` conversion and corrected with
    integer arithmetic. Two long-capture DBT snapshots and the controlled
-   acceptance6 workload validate those paths, but the frozen available
-   acceptance6 output exposes a later system-workload lifecycle gap (stable
-   child identities with no matching process lifecycle rows). Instrument and
-   remediate that gap before
-   treating the work as a general zero-orphan or Unknown-user fix.
+   acceptance6 workload validate those paths. The later acceptance6 output also
+   exposed serializer loss, requiring complete pipeline draining without
+   assigning the lifecycle gap to an unmeasured tracer failure. Kernel-source
+   network event time then removed the remaining rapid-exit skew. Controlled
+   source and packaged workloads now have zero file/network orphans and
+   `Unknown` names. Stop-only user blanks remain out of scope; do not generalize
+   these workload results into a universal zero-orphan claim.
 4. **ldq-04 — Downstream QA contract.** Add/revise DBT checks, categories, and
    dashboard evidence for rates, top identities, and hostname consistency.
 5. **ldq-05 — Acceptance.** Source-build regression suite, then a fresh arm64
@@ -59,11 +61,13 @@ tags: [feature-work, lintap, data-quality, implementation-plan]
 ## Done Checklist
 
 - [x] ldq-00 fresh source-build VM and mounted data root
-- [ ] ldq-01 benchmark and recommendation
-- [ ] ldq-02 file-loss remediation (acceptance6 confirms 32,496 FileSerializer
-  in-memory drops despite zero FileOps sender-queue drops)
-- [ ] ldq-03 attribution remediation (controlled file/network and UID paths
-  pass; the frozen acceptance6 system workload has lifecycle-row gaps, and
-  process-user quality remains separate)
-- [x] ldq-04 downstream QA contract (capture-isolated DBT acceptance gate remains for ldq-05)
-- [ ] ldq-05 source and packaged arm64 acceptance
+- [x] ldq-01 benchmark and recommendation (retain adaptive ring notifications
+  with a dedicated FileSerializer drain; adaptive notification alone reduces
+  latency but does not prevent serializer loss)
+- [x] ldq-02 file-loss remediation (the remediated two-hour run retained all
+  124,800 paths with zero serializer, writer, sender, or ring drops)
+- [x] ldq-03 attribution remediation (source and packaged controlled workloads
+  pass with zero file/network orphans or `Unknown` names and zero unknown Start
+  users; Stop-only user blanks remain a documented model limitation)
+- [x] ldq-04 downstream QA contract
+- [x] ldq-05 source and fresh packaged arm64 acceptance

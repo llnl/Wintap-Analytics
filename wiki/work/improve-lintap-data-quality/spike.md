@@ -1,17 +1,17 @@
 ---
 title: "Feature Spike: Improve Lintap Data Quality"
 type: concept
-confidence: medium
+confidence: high
 grounded_by:
   - ../wintap/wintap/core/etl/extract/Serializer.cs
   - wiki/work/refactor-data-log-paths/verification.md
 policy: agent-editable
-last_validated: 2026-10-21
+last_validated: 2026-10-22
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: developer
-status: draft
+status: stable
 source_paths: wiki/work/improve-lintap-data-quality/spike.md
 tags: [feature-work, spike, lintap, data-quality, file-events]
 ---
@@ -63,3 +63,19 @@ source-build capture ran with `Clone=false`. Forked children can perform file
 operations before exec, yielding Unknown file identities when no Clone Start
 record exists. Enable Clone for a clean before/after capture, then measure the
 orphan composition separately from the queue/flush warm-up matrix.
+
+## Final Results — 2026-10-22
+
+The matched two-hour A/B showed that adaptive ring notifications reduced mean
+delivery latency from 27.9 s to 4.6 s and removed the observed over-60-second
+tail, but did not independently prevent FileSerializer loss. The queue reached
+its 10,000-event cap in both A/B arms while sender and ring drops remained zero.
+
+**Final recommendation:** retain the bounded queue, use adaptive ring
+notifications, give FileSerializer a dedicated drain worker, and enforce
+producer-stop → serializer drain → parquet completion → final merge shutdown
+ordering. The remediated two-hour run and fresh packaged arm64 burst passed the
+coverage and zero-drop gates. Use Clone plus bounded attribution retries and
+kernel-source network event time for the measured rapid-child identity races.
+Detailed evidence and limitations are in
+[[wiki/work/improve-lintap-data-quality/verification]].
