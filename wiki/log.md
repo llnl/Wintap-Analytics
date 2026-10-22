@@ -2482,3 +2482,16 @@ Open questions: sustained Registry attribution, validator cleanup reliability, t
 ## [2026-10-19] documentation | Preserve attribution and FILE-path correctness contracts
 
 Created [[wiki/concept/windows-attribution-and-file-path-correctness-contracts]] at the Architect's request and added it to the index. Retained only technical predicates, compatibility boundaries, tradeoffs, regression expectations, and open validation work; separated accepted contracts, reported implementation, and unverified approved design. Original source references and machine-specific observations are omitted. No new architecture decisions, source/test changes, archive deletions, commits, or pushes. Open validation gaps remain as recorded in the companion executive summary.
+
+## [2026-10-21] verification | improve-lintap-data-quality long isolated captures
+
+The recorded DBT snapshots for acceptance4 and acceptance5 have zero PID-hash
+orphans and `Unknown` names across file and network relations; their explicit
+file workloads also pass. The controlled acceptance6 workload remains clean and
+observes `ubuntu`/`nobody` Start users, but a final rebuild after service stop
+found a 20-second system-workload lifecycle gap: 21,571 file and 12 network
+orphan rows have stable child identities but no matching process row. Its
+FileSerializer also reports 32,496 in-memory drops, although FileOps reports
+zero sender-queue and ring-reservation drops. Thus no full-capture acceptance
+claim is made. The focused restored xUnit suite passed 348/348. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.

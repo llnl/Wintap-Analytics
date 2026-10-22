@@ -214,3 +214,79 @@ values are fixed by this lifecycle coverage change.
 <!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/acceptance3/data/duckdb/wintap.duckdb §attribution_quality_summary -->
 <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/ProcessResolver.cs §ConvertLinuxProcStartTicksToUtc -->
 <!-- GROUND_TRUTH: ../wintap/tests/Wintap.Tests/ProcessResolverLinuxTimestampTests.cs -->
+
+### acceptance4 and acceptance5 — clean recorded DBT snapshots
+
+Three independently started, approximately 30-minute source-build captures
+(`acceptance4`, `acceptance5`, and `acceptance6`) exercised file activity,
+fork/exec, TCP, UDP, and a secondary-user workload. The DBT databases retained
+for the first two captures report no PID-hash relationship or `Unknown`
+process-name failures:
+
+| Capture | `process_file` | `process_conn_incr` | `process_net_conn` | Orphans / Unknown names |
+| --- | ---: | ---: | ---: | --- |
+| acceptance4 | 205,031 | 943 | 795 | 0 / 0 in every relation |
+| acceptance5 | 212,182 | 946 | 774 | 0 / 0 in every relation |
+
+The explicit file workloads also have zero PID-hash or `Unknown`-name failures:
+7,000 rows across 2,800 paths for acceptance4, and 7,650 rows across 3,030
+paths for acceptance5. The acceptance4 secondary-user command was malformed by
+shell interpolation, so only acceptance5 and acceptance6 are process-user
+evidence.
+
+### acceptance6 — controlled workload passes; frozen available output fails QA
+
+The first acceptance6 DBT snapshot was clean (216,113 file rows, 946 network
+increments, and 771 network connections, each with zero relationship or
+`Unknown`-name failures). It was taken before the source-build service was
+stopped and its final output was rebuilt. It is therefore an interim snapshot,
+not the final acceptance result.
+
+After stopping the service and rebuilding DBT from the available isolated raw
+output, the final database has the following results:
+
+| Relation | Rows | Orphan rows / hashes | `Unknown`-name rows / hashes |
+| --- | ---: | ---: | ---: |
+| `process_file` | 241,662 | 21,571 / 349 | 10 / 10 |
+| `process_conn_incr` | 1,003 | 12 / 3 | 0 / 0 |
+| `process_net_conn` | 806 | 12 / 3 | 0 / 0 |
+
+- The file orphans are concentrated between 18:22:24 and 18:22:44 local VM
+  time, during system package-maintenance activity. They carry stable producer
+  hashes and names but lack matching lifecycle rows in `process`; this is a
+  process-lifecycle coverage gap, not a claim that DBT altered the identities.
+  No Clone/Execve/Exit poll or callback-handler error is recorded. The capture
+  does not identify the kernel/userspace cause, so it must not be attributed to
+  a ring-buffer failure without further instrumentation.
+- The explicit `/tmp/lintap-quality-acceptance6/` workload remains clean: 7,650
+  rows across 3,030 paths, with zero orphans and zero `Unknown` names. Its Start
+  rows include `cat` as `ubuntu` and secondary-user `python3` as `nobody`.
+  This is bounded workload evidence for the UID fallback, not a general
+  process-user acceptance claim.
+- There are 755 Stop-only process rows (715 named `cat`). `ProcessStopSerializer`
+  has no user-name field, so their empty user values remain a serializer/model
+  limitation distinct from Start owner attribution.
+- The final log has two failed File owner-resolution warnings. FileOps itself
+  reports zero sender-queue drops and zero BPF ring-reservation failures, but
+  `FileSerializer` reports `dropped_total=32,496` at its in-memory limit. That
+  is confirmed file-output loss and keeps ldq-02 open independently of the
+  PID-hash relationships.
+
+`make build_dotnet` passed on the arm64 source-build host. After restoring the
+local test project, the focused xUnit command for `ProcReaderTimestampTests`,
+`ProcessResolverLinuxTimestampTests`, `AttributionRetryQueueTests`, and
+`EventOwnerSelectionTests` passed **348/348**. Restore/build retain existing
+NuGet compatibility/version warnings.
+
+The final `qa-pid-hash` relationship diagnostic is therefore not accepted for
+acceptance6. The clean acceptance4/acceptance5 databases and the controlled
+acceptance6 workload prove the targeted timing and UID improvements; the frozen
+acceptance6 output disproves a general zero-orphan claim.
+
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/acceptance4/data/duckdb/wintap.duckdb §attribution_quality_summary -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/acceptance5/data/duckdb/wintap.duckdb §attribution_quality_summary -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/acceptance6/data/duckdb/wintap.duckdb §attribution_quality_summary -->
+<!-- GROUND_TRUTH: ../Wintappy/data/improve-lintap-data-quality/acceptance6/runtime/Logs/Lintap.log §2026-10-21 18:22:24–18:24:08 -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs §createProcessTerminate -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/Serializer.cs §Save/FlushToDisk -->
+<!-- GROUND_TRUTH: ../wintap/tests/Wintap.Tests/ProcReaderTimestampTests.cs §RootUidResolvesFromTheLocalPasswdDatabase -->

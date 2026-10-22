@@ -38,8 +38,12 @@ tags: [feature-work, lintap, data-quality, implementation-plan]
    capture has validated Clone, the live cache-/`/proc` PID-hash fallback, and
    bounded retries for file rows; the final residual network orphan was traced
    to a one-100-ns-tick floating-point `/proc` conversion and corrected with
-   integer arithmetic. Validate that correction through repeated long isolated
-   runs before treating this as a general Unknown-user fix.
+   integer arithmetic. Two long-capture DBT snapshots and the controlled
+   acceptance6 workload validate those paths, but the frozen available
+   acceptance6 output exposes a later system-workload lifecycle gap (stable
+   child identities with no matching process lifecycle rows). Instrument and
+   remediate that gap before
+   treating the work as a general zero-orphan or Unknown-user fix.
 4. **ldq-04 — Downstream QA contract.** Add/revise DBT checks, categories, and
    dashboard evidence for rates, top identities, and hostname consistency.
 5. **ldq-05 — Acceptance.** Source-build regression suite, then a fresh arm64
@@ -56,7 +60,10 @@ tags: [feature-work, lintap, data-quality, implementation-plan]
 
 - [x] ldq-00 fresh source-build VM and mounted data root
 - [ ] ldq-01 benchmark and recommendation
-- [ ] ldq-02 file-loss remediation
-- [ ] ldq-03 attribution remediation (file acceptance passed; integer-time network fix awaits repeated long-run validation; process-user quality remains separate)
+- [ ] ldq-02 file-loss remediation (acceptance6 confirms 32,496 FileSerializer
+  in-memory drops despite zero FileOps sender-queue drops)
+- [ ] ldq-03 attribution remediation (controlled file/network and UID paths
+  pass; the frozen acceptance6 system workload has lifecycle-row gaps, and
+  process-user quality remains separate)
 - [x] ldq-04 downstream QA contract (capture-isolated DBT acceptance gate remains for ldq-05)
 - [ ] ldq-05 source and packaged arm64 acceptance
