@@ -2711,3 +2711,13 @@ feature records and main's AgentId/TCP investigation records; refreshed the inde
 date. Verified no unmerged paths or conflict markers, clean staged whitespace,
 and preservation of both parents' wiki log entries and index links. Documentation
 only; source tests not rerun. Unrelated .claude/ files remain untouched.
+
+## [2026-10-23] code | Smoke dashboard PR review correctness fixes
+
+Preserved red failure/observed-violation severity when overlapping runs add an
+ambiguity warning. Validated selector objects and supported domains at manifest
+ingestion, rejecting null/non-object entries without aborting valid-run rendering;
+empty lifecycle selectors remain valid. Added overlap, malformed-input isolation,
+and Streamlit rendering regressions. All 23 dashboard/query tests pass in the
+isolated venv. Updated canonical dashboard semantics and umbrella plan/verification.
+Packaging README review is separate; unrelated local files remain untouched.

@@ -42,6 +42,24 @@ class DashboardTests(unittest.TestCase):
         self.assertEqual(len(app.code), 8)
         self.assertEqual(sum("No smoke runs" in i.value for i in app.info), 8)
 
+    def test_null_selector_manifest_warns_without_aborting_valid_run_rendering(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            valid = dict(smokeManifestVersion=1, test="process-capture", runId="valid",
+                         host={"hostname": "VM-A"}, status="passed",
+                         startedAtUtc="2026-10-22T12:00:00Z", completedAtUtc="2026-10-22T12:00:02Z",
+                         selectors=[])
+            (root / "valid.json").write_text(json.dumps(valid))
+            (root / "bad.json").write_text(json.dumps(dict(valid, runId="invalid", selectors=[None])))
+            app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
+            app.sidebar.text_input[1].set_value(str(root)).run()
+            self.assertFalse(app.exception)
+            self.assertFalse(app.error)
+            self.assertTrue(any("Manifest selector 0 must be an object" in w.value for w in app.warning))
+            self.assertEqual(len(app.selectbox(key="process-capture").options), 1)
+            self.assertEqual(app.selectbox(key="process-capture").value, "valid")
+            self.assertEqual(len(app.header), 8)
+
     def test_separate_runs_query_only_selected_run(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

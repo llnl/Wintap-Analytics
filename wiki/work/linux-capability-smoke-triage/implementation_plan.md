@@ -33,6 +33,8 @@ tags: [feature-work, implementation-plan, retrospective]
   app/wiki/artifacts are included in this feature's Analytics commit, no pushes.
 - [x] Supply concise feature-only PR appendices and record commit references in
   [[wiki/work/linux-capability-smoke-triage/pr_summaries]].
+- [x] Address Analytics PR review: preserve red overlap violations, reject invalid
+  selector entries/domains, and add query plus rendering regressions (23 tests pass).
 
 ## Compatibility and rollback
 

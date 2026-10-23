@@ -21,6 +21,19 @@ tags: [feature-work, verification, retrospective]
 
 # Verification
 
+## Analytics PR review regressions — 2026-10-23
+
+- Isolated venv command: `python -m unittest discover -s
+  streamlit/projects/SmokeTests -p 'test_*.py' -v` — **23 passed**.
+- New tests reproduce two passed process harnesses sharing thread TID 43 with
+  a recorded Start: both remain red after overlap marking, retaining violation
+  and ambiguity reasons. Green overlapping runs still become yellow.
+- Invalid selector entries and missing/null/unknown domains are rejected with
+  indexed warnings; valid companion manifests remain available. Empty selectors
+  remain accepted. Streamlit AppTest confirms a null-selector JSON file does
+  not abort valid-run or overview rendering.
+- No sensor/package changes or live captures required for these dashboard fixes.
+
 ## Fresh pre-commit checks — 2026-10-23
 
 - Wintap: `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --filter

@@ -130,6 +130,48 @@ class DurableTests(unittest.TestCase):
         self.assertEqual(result["state"], "yellow")
         self.assertTrue(any("Clone: partial" in reason for reason in result["reasons"]))
 
+    def test_overlapping_passed_harnesses_preserve_observed_red_violations(self):
+        available = self.events("""SELECT 'vm-a' Hostname, 43 PID, 'Start' ActivityType,
+            'thread' PidHash, 'Process' MessageType,
+            TIMESTAMP '2026-10-23 00:00:01' EventTime""")
+        runs = [dict(self.run, test="process-capture", runId=run_id,
+                     selectors=[dict(domain="process", pids=[], threadIds=[43])])
+                for run_id in ("run-a", "run-b")]
+        evaluations = {(r["test"], r["runId"]): evaluate_run(self.con, r, available) for r in runs}
+        for evaluation in evaluations.values():
+            self.assertEqual(evaluation["harness"], "passed")
+            self.assertEqual(evaluation["state"], "red")
+        mark_overlaps(runs, evaluations)
+        for evaluation in evaluations.values():
+            self.assertEqual(evaluation["state"], "red")
+            self.assertEqual(evaluation["coverage"], "ambiguous")
+            self.assertIn("Thread 43 recorded as a process Start", evaluation["reasons"])
+            self.assertTrue(any("Overlapping" in reason for reason in evaluation["reasons"]))
+
+    def test_overlapping_green_runs_become_yellow(self):
+        available = self.events("SELECT 'vm-a' Hostname, 42 PID, TIMESTAMP '2026-10-23 00:00:01' EventTime, '/qa/file' File_Path, 'Open' ActivityType")
+        runs = [dict(self.run, runId=run_id) for run_id in ("run-a", "run-b")]
+        evaluations = {(r["test"], r["runId"]): evaluate_run(self.con, r, available) for r in runs}
+        self.assertTrue(all(e["state"] == "green" for e in evaluations.values()))
+        mark_overlaps(runs, evaluations)
+        self.assertTrue(all(e["state"] == "yellow" for e in evaluations.values()))
+
+    def test_invalid_selector_entries_are_excluded_without_losing_valid_runs(self):
+        for selector in (None, 43, "process", [], {}, {"domain": None}, {"domain": "unknown"}):
+            with self.subTest(selector=selector):
+                invalid = dict(self.run, runId="invalid", selectors=[selector])
+                runs, errors = load_manifests("", [("bad.json", json.dumps(invalid)),
+                                                 ("valid.json", json.dumps(self.run))])
+                self.assertEqual(runs, [self.run])
+                self.assertEqual(len(errors), 1)
+                self.assertIn("bad.json: Manifest selector 0", errors[0])
+                evaluation = evaluate_run(self.con, runs[0], False)
+                self.assertEqual(len(overview(runs, {(self.run["test"], self.run["runId"]): evaluation})), 8)
+        # Empty selector lists are valid early lifecycle snapshots.
+        runs, errors = load_manifests("", [("early.json", json.dumps(dict(self.run, selectors=[])))])
+        self.assertEqual(len(runs), 1)
+        self.assertFalse(errors)
+
 
 if __name__ == "__main__":
     unittest.main()

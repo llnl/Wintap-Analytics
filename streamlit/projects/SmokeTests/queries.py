@@ -17,6 +17,8 @@ TESTS = {
 
 
 def validate_manifest(value):
+    if not isinstance(value, dict):
+        raise ValueError("Manifest must be an object")
     if value.get("smokeManifestVersion") != 1:
         raise ValueError("Expected smokeManifestVersion=1; re-run the updated smoke test")
     if value.get("test") not in TESTS or not value.get("runId"):
@@ -25,6 +27,11 @@ def validate_manifest(value):
         raise ValueError("Manifest must identify the test hostname")
     if not isinstance(value.get("selectors"), list):
         raise ValueError("Manifest selectors must be a list")
+    for index, selector in enumerate(value["selectors"]):
+        if not isinstance(selector, dict):
+            raise ValueError(f"Manifest selector {index} must be an object")
+        if selector.get("domain") not in ("process", "file", "network", "host"):
+            raise ValueError(f"Manifest selector {index} requires a supported domain")
     return value
 
 
@@ -362,7 +369,7 @@ def mark_overlaps(runs, evaluations, padding=15):
                     reason = "Overlapping same-host runs share PID/time selectors; attribution may be ambiguous"
                     if reason not in evaluation["reasons"]:
                         evaluation["reasons"].append(reason)
-                    if evaluation["harness"] != "failed":
+                    if evaluation["state"] != "red":
                         evaluation["state"] = "yellow"
                     evaluation["coverage"] = "ambiguous"
 

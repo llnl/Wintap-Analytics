@@ -8,7 +8,7 @@ grounded_by:
   - streamlit/projects/SmokeTests/README.md
   - ../wintap/devtools/smoke_manifest.py
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -65,6 +65,12 @@ not direct S3 URLs. JSON directory/upload is optional. VM selector paths remain
 telemetry values, not files the Mac must open. DBT integration is deferred.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §load_manifests -->
 
+Selector entries must be objects with a supported `process`, `file`, `network`
+or `host` domain. Invalid entries (including JSON `null`) warn and exclude that
+manifest without preventing valid runs from rendering. Empty selector lists remain
+valid for early lifecycle snapshots.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §validate_manifest, load_manifests -->
+
 Queries require test hostname + UTC window + PID, plus file paths/prefix or socket
 ports/protocol as available. FirstSeen fields are preferred to serializer flush
 time; FILETIME and Unix time scales normalize to UTC. HOST checks match exact
@@ -94,7 +100,8 @@ green is a scoped passing harness plus required selected observations (trace rep
 only for actual-object trace); gray means no run supplied. Thread absence requires
 positive companion process capture. Elapsed time is not a transfer watermark;
 missing rows remain yellow. Overlapping same-host runs sharing PID/time selectors
-are conservatively ambiguous. An entirely missing host cannot be inferred from
+are conservatively ambiguous, but an existing red failure/violation remains red;
+ambiguity never downgrades it to yellow. An entirely missing host cannot be inferred from
 absent manifests. Aggregate checks cover all matching events; detail reads are bounded.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §evaluate_case, evaluate_run, mark_overlaps, overview; streamlit/projects/SmokeTests/main.py §main -->
 
