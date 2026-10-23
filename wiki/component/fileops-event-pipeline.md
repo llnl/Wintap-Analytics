@@ -8,8 +8,10 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c
   - ../wintap/wintap/core/etl/esper/file.epl
   - ../wintap/wintap/core/etl/extract/FileSerializer.cs
+  - ../wintap/wintap/core/etl/extract/Serializer.cs
+  - ../wintap/wintap/core/etl/load/CacheManager.cs
 policy: agent-editable
-last_validated: 2026-08-31
+last_validated: 2026-10-22
 repo_scope: wintap
 implementation_area: data-pipeline
 event_domain: file
@@ -24,16 +26,16 @@ tags: [wintap, lintap, ebpf, file-events, aggregation, esper, parquet, cross-rep
 Promoted from [[wiki/work/optimize-fileops-poller/brief]] (closed
 2026-08-27). Kernel-to-parquet path for Linux file events.
 
-Owning implementation is currently on the sibling `../wintap` feature branch;
-its durable commit anchors are `1db7137` and `2d3f795`. Until those
-placeholder is replaced, use the live source paths above plus
+Owning implementation is on sibling `../wintap`; relevant durable commit
+anchors include `1db7137`, `2d3f795`, and data-quality/shutdown commit
+`1c048a8`. Use the live source paths above plus
 [[wiki/work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31]]
 for the hash-, run-, and window-qualified field evidence.
 
 ## Stages And Contracts
 
 - **Kernel tracers** (two tiers: CO-RE + tracepoint fallback): self-PID
-  filter map, regular-file filtering, batched wakeups;
+  filter map, regular-file filtering, adaptive ring notifications;
   `ring_fail_total=0` is the health invariant.
 - **Userspace filters** (before enqueue): pseudo paths (`/sys`, `/proc`,
   `/dev`), data-root self-feedback, `.etl`, `.parquet*`. All drops
@@ -49,6 +51,11 @@ for the hash-, run-, and window-qualified field evidence.
   timestamps, identity stamped at first occurrence. Count AND byte
   conservation field-proven by the kill-switch A/B differential.
 - **Sender queue**: bounded 524,288, drop-newest, counted.
+- **Transit latency**: the userspace callback compares the kernel monotonic
+  event timestamp with callback time and reports fixed latency buckets. The
+  matched two-hour A/B reduced average delivery from 27.9 s to 4.6 s and
+  eliminated the observed over-60-second tail when adaptive notifications were
+  enabled; notifications alone did not prevent downstream serializer loss.
 - **Sender execution**: one `FileOps-Sender` thread dequeues one event at a time,
   then synchronously runs EventChannel attribution and Esper submission. A
   current-process cache miss can fall through to DuckDB under the resolver's
@@ -72,9 +79,15 @@ for the hash-, run-, and window-qualified field evidence.
   (lowercased), `FirstSeen`/`LastSeen` (FileTime), `ActivityType`,
   `EventCount`, `BytesRequested`, `PID`, `PidHash`, `ProcessName`,
   `AgentId`, `Hostname`, `File_Hash`, `MessageType='PROCESS_FILE'`.
-  Flush every `SerializationIntervalSec` (60s) to
-  `<dataroot>/parquet/fileserializer/process_file-<filetime>.parquet`;
-  in-memory queue capped (`WINTAP_ETL_MAX_QUEUE_EVENTS_FILESERIALIZER`).
+  Flush every `SerializationIntervalSec` (60s) through runtime
+  `esper_staging/fileserializer/`, then merge into the data root's partitioned
+  `raw_sensor/raw_process_file/`; in-memory queue capped
+  (`WINTAP_ETL_MAX_QUEUE_EVENTS_FILESERIALIZER`).
+- **Serializer and shutdown delivery**: FileSerializer uses a dedicated drain
+  worker so its high-water flush does not compete with callback work for a
+  ThreadPool slot. Shutdown stops and fully joins producers first, drains all
+  serializer queues and parquet batches, performs a final cross-stream merge,
+  and closes the logger last. Failed merges retain their source parquet.
 
 ## Known Caveats
 
@@ -108,3 +121,5 @@ is THE regression gate for this pipeline.
 The historical-cache and long-run FileOps findings are verified in
 [[wiki/work/improve-etl-and-qa/esper-sender-path-analysis-2026-08-30]] and
 [[wiki/work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31]].
+The adaptive-notification, no-loss, shutdown, and fresh packaged-arm64 evidence
+is in [[wiki/work/improve-lintap-data-quality/verification]].

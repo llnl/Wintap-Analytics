@@ -28,8 +28,9 @@ The mutable host log is retained below only as an artifact locator. Durable
 evidence is the dated verification record and the hash-identified follow-up
 analysis. The initial run ID was `lintap-perf-20260830`, with exact UTC window
 `2026-08-30T16:17:46Z` through `17:17:45Z`. The later policy and sustainability
-windows, commands, and counts are recorded in [[verification]] and
-[[no-tenable-run-analysis-2026-08-30]].
+windows, commands, and counts are recorded in
+[[wiki/work/improve-etl-and-qa/verification]] and
+[[wiki/work/improve-etl-and-qa/no-tenable-run-analysis-2026-08-30]].
 
 The unique `lintap-perf-20260830` capture ran from `2026-08-30T16:17:46Z` to
 `17:17:45Z`. FileSerializer backlog warnings did not occur, but FileOps sender

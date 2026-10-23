@@ -3,9 +3,9 @@ title: "Closeout Test Plan: grantj-rhel8-testing Branch (fop + process-table ret
 type: concept
 confidence: high
 grounded_by:
-  - Wintap-Analytics/validation/fileops-differential/run_fop11_ab.sh
-  - Wintap-Analytics/validation/fileops-differential/compare_fileops.py
-  - Wintap-Analytics/extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh
+  - validation/fileops-differential/run_fop11_ab.sh
+  - validation/fileops-differential/compare_fileops.py
+  - extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh
   - ../wintap/tests/Wintap.Tests
 policy: agent-editable
 last_validated: 2026-08-27

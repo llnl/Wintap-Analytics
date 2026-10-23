@@ -4,7 +4,7 @@ type: concept
 confidence: medium
 grounded_by:
   - ../Lintap/pidstat-collector.py
-  - ../wintap/wintap/platform/linux/sensor/ebpf/ProcReader.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs
@@ -28,7 +28,7 @@ tags: [feature-work, references, linux, cgroups, containers]
 - `../Lintap/pidstat-collector.py` — direct `/proc` sampling, cgroup parsing, PID namespace identity, and metadata caching.
 - `../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs` — process event production and event-time fields.
 - `../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs` and `ExitSensor.cs` — process lifetime boundaries.
-- `../wintap/wintap/platform/linux/sensor/ebpf/ProcReader.cs` — existing Linux `/proc` context reads used by file/network paths.
+- `../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs` — existing Linux `/proc` context reads used by file/network paths.
 - `../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs` and `NetworkSensor.cs` — file/network producer integration points.
 - `../wintap/wintap/platform/linux/infrastructure/LinuxSubscriptionManager.cs` — Linux sensor enablement and lifecycle.
 

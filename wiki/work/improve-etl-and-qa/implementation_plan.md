@@ -245,7 +245,8 @@ First-slice minimum verification:
   activity.
 - Promote queue, timing, cache, policy, resolver, serializer, and loss
   diagnostics from log-only summaries into versioned raw-style Parquet and DBT
-  models. See [[future-adaptive-fileops-and-diagnostics-data]].
+  models. See
+  [[wiki/work/improve-etl-and-qa/future-adaptive-fileops-and-diagnostics-data]].
 - Turn the overnight pidstat/FileOps phase, trend, correlation, and recovery
   analysis into a focused Marimo notebook or a dedicated section of the
   canonical Wintappy QA notebook.

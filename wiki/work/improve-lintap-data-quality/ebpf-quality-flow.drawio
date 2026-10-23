@@ -1,0 +1,330 @@
+<mxfile host="65bd71144e">
+    <diagram id="ebpf-architecture" name="Architecture Flow">
+        <mxGraphModel dx="1555" dy="1286" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1000" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=24;fontStyle=1" value="Linux eBPF telemetry to analysis-ready parquet" vertex="1">
+                    <mxGeometry height="40" width="800" x="30" y="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="subtitle" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontColor=#666666" value="Stable labels A1–A13 locate implementation and test evidence; Q1–Q5 identify quality/performance gates." vertex="1">
+                    <mxGeometry height="30" width="920" x="30" y="58" as="geometry"/>
+                </mxCell>
+                <mxCell id="kernelLane" parent="1" style="swimlane;html=1;horizontal=1;startSize=28;rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;opacity=70" value="KERNEL" vertex="1">
+                    <mxGeometry height="190" width="1510" x="30" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="Q1" parent="kernelLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11" value="&lt;b&gt;[Q1] Transit&lt;/b&gt;&lt;br&gt;delivery latency; ring failures" vertex="1">
+                    <mxGeometry height="60" width="190" x="1270" y="65" as="geometry"/>
+                </mxCell>
+                <mxCell id="kernelNote" parent="kernelLane" style="shape=note;whiteSpace=wrap;html=1;size=15;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11" value="CO-RE FileOps tier or tracepoint fallback; equivalent adaptive notification policy" vertex="1">
+                    <mxGeometry height="80" width="270" x="960" y="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="captureLane" parent="1" style="swimlane;html=1;horizontal=1;startSize=28;rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;opacity=70" value="USER SPACE — CAPTURE, ATTRIBUTION, STREAM PROCESSING" vertex="1">
+                    <mxGeometry height="240" width="1510" x="30" y="330" as="geometry"/>
+                </mxCell>
+                <mxCell id="A7" parent="captureLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12" value="&lt;b&gt;[A7] Esper / NEsper&lt;/b&gt;&lt;br&gt;EPL routing, windows,&lt;br&gt;aggregation and serializer callback" vertex="1">
+                    <mxGeometry height="90" width="210" x="1260" y="97.5" as="geometry"/>
+                </mxCell>
+                <mxCell id="A4" parent="captureLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12" value="&lt;b&gt;[A4] libbpf poll + callback&lt;/b&gt;&lt;br&gt;100 ms poll&lt;br&gt;decode ring record&lt;br&gt;delivery-latency buckets" vertex="1">
+                    <mxGeometry height="105" width="190" x="410" y="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="A5" parent="captureLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=12" value="&lt;b&gt;[A5] Sensor handling&lt;/b&gt;&lt;br&gt;path/fd resolution&lt;br&gt;aggregation&lt;br&gt;bounded sender queue" vertex="1">
+                    <mxGeometry height="105" width="190" x="690" y="90" as="geometry"/>
+                </mxCell>
+                <mxCell id="e45" edge="1" parent="captureLane" source="A4" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#6c8ebf" target="A5">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="A6" parent="captureLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12" value="&lt;b&gt;[A6] EventChannel&lt;/b&gt;&lt;br&gt;active-process lookup&lt;br&gt;live /proc fallback&lt;br&gt;bounded attribution retry" vertex="1">
+                    <mxGeometry height="125" width="200" x="970" y="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e56" edge="1" parent="captureLane" source="A5" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#6c8ebf;fontSize=10" target="A6" value="sender worker">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e67" edge="1" parent="captureLane" source="A6" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673a6;fontSize=10" target="A7" value="enriched event">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Q2" parent="captureLane" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11" value="&lt;b&gt;[Q2] Attribution&lt;/b&gt;&lt;br&gt;orphan / Unknown PID hashes" vertex="1">
+                    <mxGeometry height="45" width="210" x="1260" y="35" as="geometry"/>
+                </mxCell>
+                <mxCell id="etlLane" parent="1" style="swimlane;html=1;horizontal=1;startSize=28;rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;opacity=70" value="ETL AND DURABLE OUTPUT" vertex="1">
+                    <mxGeometry height="230" width="1510" x="30" y="630" as="geometry"/>
+                </mxCell>
+                <mxCell id="A1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=12" value="&lt;b&gt;[A1] Host activity&lt;/b&gt;&lt;br&gt;process lifecycle&lt;br&gt;file + socket syscalls" vertex="1">
+                    <mxGeometry height="85" width="160" x="70" y="155" as="geometry"/>
+                </mxCell>
+                <mxCell id="A2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12" value="&lt;b&gt;[A2] eBPF hooks&lt;/b&gt;&lt;br&gt;tracepoint / kprobe&lt;br&gt;policy + identity fields&lt;br&gt;monotonic timestamp" vertex="1">
+                    <mxGeometry height="105" width="190" x="300" y="145" as="geometry"/>
+                </mxCell>
+                <mxCell id="A3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12" value="&lt;b&gt;[A3] BPF ring buffer&lt;/b&gt;&lt;br&gt;reserve event&lt;br&gt;adaptive submit&lt;br&gt;ring-failure counters" vertex="1">
+                    <mxGeometry height="105" width="190" x="570" y="145" as="geometry"/>
+                </mxCell>
+                <mxCell id="A8" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=12" value="&lt;b&gt;[A8] FileSerializer queue&lt;/b&gt;&lt;br&gt;normalized rows&lt;br&gt;bounded capacity&lt;br&gt;depth / accepted / dropped" vertex="1">
+                    <mxGeometry height="105" width="200" x="1290" y="690" as="geometry"/>
+                </mxCell>
+                <mxCell id="A9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12" value="&lt;b&gt;[A9] Dedicated drain worker&lt;/b&gt;&lt;br&gt;high-water wakeup&lt;br&gt;timer fallback&lt;br&gt;single non-overlapping flush" vertex="1">
+                    <mxGeometry height="105" width="200" x="1040" y="690" as="geometry"/>
+                </mxCell>
+                <mxCell id="A10" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12" value="&lt;b&gt;[A10] ParquetWriter&lt;/b&gt;&lt;br&gt;asynchronous batches&lt;br&gt;backlog / failures / drops&lt;br&gt;wait for completion" vertex="1">
+                    <mxGeometry height="105" width="200" x="790" y="690" as="geometry"/>
+                </mxCell>
+                <mxCell id="A11" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=12" value="&lt;b&gt;[A11] Runtime staging&lt;/b&gt;&lt;br&gt;.parquet.active&lt;br&gt;→ finalized .parquet" vertex="1">
+                    <mxGeometry height="105" width="160" x="570" y="690" as="geometry"/>
+                </mxCell>
+                <mxCell id="A12" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12" value="&lt;b&gt;[A12] CacheManager merge&lt;/b&gt;&lt;br&gt;stop worker&lt;br&gt;RawSensorWriter&lt;br&gt;retain sources on failure" vertex="1">
+                    <mxGeometry height="105" width="200" x="320" y="690" as="geometry"/>
+                </mxCell>
+                <mxCell id="A13" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=12" value="&lt;b&gt;[A13] raw_sensor parquet&lt;/b&gt;&lt;br&gt;partitioned process / file / network&lt;br&gt;DBT relationships + completeness QA" vertex="1">
+                    <mxGeometry height="125" width="190" x="70" y="680" as="geometry"/>
+                </mxCell>
+                <mxCell id="e12" edge="1" parent="1" source="A1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#b85450" target="A2">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e23" edge="1" parent="1" source="A2" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#b85450;fontSize=10" target="A3" value="event struct">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e34" edge="1" parent="1" source="A3" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#b85450;fontSize=10" target="A4" value="kernel → user">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="665" y="280"/>
+                            <mxPoint x="535" y="280"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="e78" edge="1" parent="1" source="A7" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#9673a6;fontSize=10" target="A8" value="serializer callback">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e89" edge="1" parent="1" source="A8" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#82b366;fontSize=10" target="A9" value="high-water / timer">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e910" edge="1" parent="1" source="A9" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#82b366;fontSize=10" target="A10" value="Batch">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1011" edge="1" parent="1" source="A10" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#82b366" target="A11">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1112" edge="1" parent="1" source="A11" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#82b366;fontSize=10" target="A12" value="periodic or final">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1213" edge="1" parent="1" source="A12" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#82b366" target="A13">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="Q3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11" value="&lt;b&gt;[Q3] Serializer pressure&lt;/b&gt;&lt;br&gt;queue depth, peak, drops, latency" vertex="1">
+                    <mxGeometry height="45" width="220" x="1060" y="810" as="geometry"/>
+                </mxCell>
+                <mxCell id="Q4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11" value="&lt;b&gt;[Q4] Durable shutdown&lt;/b&gt;&lt;br&gt;worker joins, parquet failures, leftovers" vertex="1">
+                    <mxGeometry height="45" width="250" x="570" y="810" as="geometry"/>
+                </mxCell>
+                <mxCell id="Q5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11" value="&lt;b&gt;[Q5] End-to-end QA&lt;/b&gt;&lt;br&gt;expected paths/operations + DBT joins" vertex="1">
+                    <mxGeometry height="45" width="240" x="60" y="815" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12" value="&lt;b&gt;Current remediation span:&lt;/b&gt; adaptive wakeups [A3], dedicated FileSerializer draining [A8–A9], parquet completion [A10–A11], and coordinated final merge [A12]." vertex="1">
+                    <mxGeometry height="60" width="1040" x="265" y="920" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+    <diagram id="ebpf-sequence" name="Delivery and Shutdown Sequence">
+        <mxGraphModel dx="1471" dy="1217" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+            <root>
+                <mxCell id="s0"/>
+                <mxCell id="s1" parent="s0"/>
+                <mxCell id="stitle" parent="s1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=24;fontStyle=1" value="eBPF event delivery and lossless shutdown sequence" vertex="1">
+                    <mxGeometry height="40" width="900" x="30" y="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="ssubtitle" parent="s1" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;fontSize=12;fontColor=#666666" value="Solid arrows are data/control flow. Dashed arrows are waits or completion acknowledgements. Labels S1–S18 are citation anchors." vertex="1">
+                    <mxGeometry height="30" width="1000" x="30" y="58" as="geometry"/>
+                </mxCell>
+                <mxCell id="p0" parent="s1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontStyle=1" value="Service /&lt;br&gt;workload" vertex="1">
+                    <mxGeometry height="55" width="115" x="35" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="p1" parent="s1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="Kernel&lt;br&gt;eBPF" vertex="1">
+                    <mxGeometry height="55" width="115" x="190" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="p2" parent="s1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1" value="Ring&lt;br&gt;buffer" vertex="1">
+                    <mxGeometry height="55" width="115" x="345" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="p3" parent="s1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1" value="Poll + sensor&lt;br&gt;sender" vertex="1">
+                    <mxGeometry height="55" width="115" x="500" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="p4" parent="s1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1" value="EventChannel&lt;br&gt;attribution" vertex="1">
+                    <mxGeometry height="55" width="115" x="655" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="p5" parent="s1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontStyle=1" value="Esper /&lt;br&gt;NEsper" vertex="1">
+                    <mxGeometry height="55" width="115" x="810" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="p6" parent="s1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" value="FileSerializer&lt;br&gt;+ drain worker" vertex="1">
+                    <mxGeometry height="55" width="125" x="965" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="p7" parent="s1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" value="ParquetWriter&lt;br&gt;+ staging" vertex="1">
+                    <mxGeometry height="55" width="125" x="1130" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="p8" parent="s1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1" value="CacheManager&lt;br&gt;+ raw_sensor" vertex="1">
+                    <mxGeometry height="55" width="125" x="1295" y="100" as="geometry"/>
+                </mxCell>
+                <mxCell id="l0" edge="1" parent="s1" source="p0" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#999999;strokeWidth=4;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="92" y="1110" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l1" edge="1" parent="s1" source="p1" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#999999;strokeWidth=4;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="247" y="1110" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l2" edge="1" parent="s1" source="p2" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#999999;strokeWidth=4;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="402" y="1110" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l3" edge="1" parent="s1" source="p3" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#999999;strokeWidth=4;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="557" y="1110" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l4" edge="1" parent="s1" source="p4" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#999999;strokeWidth=4;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="712" y="1110" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l5" edge="1" parent="s1" source="p5" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#999999;strokeWidth=4;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="867" y="1110" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l6" edge="1" parent="s1" source="p6" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#999999;strokeWidth=4;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1027" y="1110" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l7" edge="1" parent="s1" source="p7" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#999999;strokeWidth=4;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1192" y="1110" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="l8" edge="1" parent="s1" source="p8" style="edgeStyle=none;html=1;dashed=1;endArrow=none;strokeColor=#999999;strokeWidth=4;">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="1357" y="1110" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="normalBand" parent="s1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;align=left;spacingLeft=10" value="NORMAL EVENT DELIVERY" vertex="1">
+                    <mxGeometry height="30" width="1390" x="30" y="180" as="geometry"/>
+                </mxCell>
+                <mxCell id="S1" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;fontSize=11;strokeWidth=3;" value="[S1] syscall / lifecycle event">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint as="offset"/>
+                        <mxPoint x="92" y="235" as="sourcePoint"/>
+                        <mxPoint x="247" y="235" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S2" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;fontSize=11;strokeWidth=3;" value="[S2] reserve + populate + adaptive submit">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="247" y="275" as="sourcePoint"/>
+                        <mxPoint x="402" y="275" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S3" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;fontSize=11;strokeWidth=3;" value="[S3] poll callback (delivery latency sampled)">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="402" y="315" as="sourcePoint"/>
+                        <mxPoint x="557" y="315" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S4" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#6c8ebf;fontSize=11;strokeWidth=3;" value="[S4] decode, resolve path, aggregate, enqueue">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="557" y="355" as="sourcePoint"/>
+                        <mxPoint x="557" y="395" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S5" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#6c8ebf;fontSize=11;strokeWidth=3;" value="[S5] sender worker: Send(message)">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="557" y="415" as="sourcePoint"/>
+                        <mxPoint x="712" y="415" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S6" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#9673a6;fontSize=11;strokeWidth=3;" value="[S6] active cache → live /proc → bounded retry">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="712" y="455" as="sourcePoint"/>
+                        <mxPoint x="712" y="495" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S7" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#9673a6;fontSize=11;strokeWidth=3;" value="[S7] enriched event to EPL runtime">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="712" y="515" as="sourcePoint"/>
+                        <mxPoint x="867" y="515" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S8" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#9673a6;fontSize=11;strokeWidth=3;" value="[S8] aggregate / route → serializer callback">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="867" y="555" as="sourcePoint"/>
+                        <mxPoint x="1027" y="555" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S9" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=11;strokeWidth=3;" value="[S9] Save normalized row to bounded queue">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="1027" y="595" as="sourcePoint"/>
+                        <mxPoint x="1027" y="635" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S10" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=11;strokeWidth=3;" value="[S10] dedicated high-water / timer drain: Batch">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="1027" y="655" as="sourcePoint"/>
+                        <mxPoint x="1192" y="655" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S11" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=11;strokeWidth=3;" value="[S11] write .active → rename .parquet">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="1192" y="695" as="sourcePoint"/>
+                        <mxPoint x="1192" y="735" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S12" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=11;strokeWidth=3;" value="[S12] periodic merge → partitioned raw_sensor">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="1192" y="755" as="sourcePoint"/>
+                        <mxPoint x="1357" y="755" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="shutdownBand" parent="s1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;align=left;spacingLeft=10" value="COORDINATED SHUTDOWN — producers before ETL, durable completion before logger close" vertex="1">
+                    <mxGeometry height="30" width="1390" x="30" y="800" as="geometry"/>
+                </mxCell>
+                <mxCell id="S13" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;fontSize=11;strokeWidth=3;" value="[S13] flush pending attribution retries">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="92" y="855" as="sourcePoint"/>
+                        <mxPoint x="712" y="855" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S14" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#b85450;fontSize=11;strokeWidth=3;" value="[S14] stop producers; join poll before native free">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="92" y="895" as="sourcePoint"/>
+                        <mxPoint x="557" y="895" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S15" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#6c8ebf;fontSize=11;strokeWidth=3;" value="[S15] complete + fully drain sender queue">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="557" y="935" as="sourcePoint"/>
+                        <mxPoint x="557" y="975" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S16" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=11;strokeWidth=3;" value="[S16] stop schedules; drain serializer queue">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="92" y="995" as="sourcePoint"/>
+                        <mxPoint x="1027" y="995" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S17" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;dashed=1;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=11;strokeWidth=3;" value="[S17] wait: backlog=0, failures=0, drops=0">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="1192" y="1035" as="sourcePoint"/>
+                        <mxPoint x="1027" y="1035" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="S18" edge="1" parent="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;endFill=1;strokeColor=#82b366;fontSize=11;strokeWidth=3;" value="[S18] stop cache worker; final cross-stream merge">
+                    <mxGeometry relative="1" y="12" as="geometry">
+                        <mxPoint x="92" y="1075" as="sourcePoint"/>
+                        <mxPoint x="1357" y="1075" as="targetPoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="seqNote" parent="s1" style="shape=note;whiteSpace=wrap;html=1;size=15;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12" value="&lt;b&gt;How to cite this page:&lt;/b&gt; “Dedicated FileSerializer draining” = [S9–S10]. “Coordinated serializer/parquet/cache shutdown” = [S16–S18]. “Native shutdown race” = [S14–S15]. “Adaptive delivery latency” = [S2–S3]." vertex="1">
+                    <mxGeometry height="65" width="980" x="280" y="1125" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

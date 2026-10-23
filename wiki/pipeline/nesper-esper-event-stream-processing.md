@@ -5,10 +5,11 @@ confidence: high
 grounded_by:
   - ../wintap/wintap/core/infrastructure/EventChannel.cs
   - ../wintap/wintap/core/etl/extract/Serializer.cs
+  - ../wintap/wintap/core/etl/load/ParquetWriter.cs
   - ../wintap/wintap/core/etl/esper/esper-context.epl
   - ../wintap/diagnostics/nesper-repro/README.md
 policy: agent-editable
-last_validated: 2026-08-31
+last_validated: 2026-10-22
 repo_scope: wintap
 implementation_area: esper
 event_domain: cross-domain
@@ -52,6 +53,16 @@ The Workbench can create and manage interactive EPL queries through `EventChanne
 
 Serializers maintain in-memory queues before Parquet handoff. Optional environment variables can bound queue depth globally or per serializer and choose drop-newest or drop-oldest behavior. Dropped events are reported through `EventChannel.AddDroppedEvents`.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/Serializer.cs §initSensor; §Save -->
+
+FileSerializer and RegistrySerializer use dedicated drain workers. On service
+shutdown, producers stop before serializers; accepted queue rows are flushed,
+asynchronous parquet batches are awaited, and only then does the cache perform
+its final merge. This ordering is a durability contract, not an Esper query
+semantic: a clean relationship test cannot detect events dropped before
+Parquet. The two-hour and packaged evidence is recorded in
+[[wiki/work/improve-lintap-data-quality/verification]].
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/SerializerSchedule.cs §ResolveOptions -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/Serializer.cs §Shutdown -->
 
 Esper inbound, outbound, timer-execution, and route-execution thread pools use
 their disabled defaults in Wintap. `SendEventBean` therefore evaluates matching

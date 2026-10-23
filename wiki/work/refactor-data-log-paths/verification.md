@@ -6,7 +6,7 @@ grounded_by:
   - ../wintap/wintap/core/shared/Env.cs
   - ../wintap/tests/Wintap.Tests/RuntimeDataRootTests.cs
 policy: agent-editable
-last_validated: 2026-10-19
+last_validated: 2026-10-21
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -17,6 +17,71 @@ tags: [feature-work, verification, data-pipeline, paths, shared-mount]
 ---
 
 # Verification
+
+## 2026-10-21 — fresh arm64 package and mounted-data smoke test
+
+- Removed the disposable Multipass `lintap-dev` deployment with the documented
+  manual cleanup utility, then created a fresh Ubuntu 24.04 arm64 instance.
+  The new VM mounts `../Wintappy/data` at `/home/ubuntu/data/smoketest` and
+  the shared repository checkout at `/home/ubuntu/git`.
+- Installed `../artifacts/lintap-deb/lintap_0.1.0-101_arm64.deb` (package
+  version `0.1.0-101`). A pristine Ubuntu image needed apt to install the
+  package's declared `liblttng-ust1t64` dependency before dpkg configuration
+  could complete.
+- Configured `WINTAP_DATA_ROOT=/home/ubuntu/data/smoketest`; the packaged
+  service remained active with runtime state at `/var/log/lintap/runtime` and
+  startup logging confirmed the direct
+  `/home/ubuntu/data/smoketest/raw_sensor` destination.
+- Live package-service functional smokes passed:
+  - process creation/tree, including fork/exec, posix_spawn, execveat/fexecve,
+    parent hashes, and Stops;
+  - file activity with 6,000 unique files (5,827 distinct captured paths;
+    97.1%, above the smoke utility's 95% threshold) and open/read/write/close/
+    delete activity;
+  - three rounds of HTTP/HTTPS and UDP activity, yielding TCP 80/443 and UDP
+    53 records.
+- Downstream `WINTAP_DATA_ROOT=data WINTAP_DBT_START_DAY=20261021
+  WINTAP_DBT_END_DAY=20261021 make dbt-build` passed: **79 PASS, 0 ERROR**.
+- **Quality result — NOT an acceptance pass:** FileSerializer logs recorded
+  `dropped_total=28533` during the high-cardinality file workload. The current
+  smoke script returned success because its log gate only detects the legacy
+  `in-memory backlog limit reached` text and did not recognize this counter
+  form. The file-quality gate is therefore false-green and must be corrected
+  before this build can claim no-loss file capture.
+- DBT referential QA also remains materially degraded: `process_file` had
+  717 orphan rows across 496 `pid_hash` values (all process name `Unknown`),
+  and `process_file_summary` had 496 orphan rows. For comparison,
+  `process_conn_incr` and `process_net_conn` each had 11 orphan rows; all
+  child rows had non-null hashes. `process` itself had 2,092 unique, non-null
+  hashes. These are downstream data-quality findings, not DBT build failures.
+
+### QA validation follow-up — 2026-10-21
+
+- Corrected `../wintap/devtools/file_capture_smoke_test.py` so its no-loss
+  gate recognizes the current `fileserializer: ... dropped_total=N` flush
+  metric as well as the legacy prose warning. The monotonic counter is compared
+  with its value immediately before stimulus generation, avoiding a false
+  failure from a previous workload.
+- Restored Wintappy's `dbt-check-config` assertion that
+  `$WINTAP_DBT_DATASET/raw_sensor` exists, so an incorrectly rooted DBT run
+  fails before model execution.
+- Added the **Top 25 orphan process identities** table immediately after the
+  orphan summary in `../Wintappy/notebooks/wintap_dbt_overview.py`. It groups
+  each missing identity by child relation, host, reported process name, and
+  hash; ranks by captured event impact; and exposes affected files/endpoints,
+  activities, and observed time range.
+- Re-ran the 6,000-file package-service workload. It now failed functional
+  coverage at **4,918 / 6,000 paths (82.0%)**, below the 95% requirement.
+  FileSerializer's drop counter rose from **28,533 to 55,938** during the run
+  (an additional 27,405 drops). This validates the original data-loss finding;
+  the test must remain an acceptance failure.
+- Re-ran `make dbt-build` against the refreshed mounted output: **79 PASS,
+  0 ERROR**. Referential QA worsened with the additional workload:
+  `process_file` now has **1,077** orphan rows across **845** hashes and
+  `process_file_summary` has **845** orphan rows. `process_conn_incr` and
+  `process_net_conn` each have **17** orphan rows/hashes. DBT model tests do
+  not presently enforce those foreign-key relationships, so the separate QA
+  dashboard/check remains necessary.
 
 ## 2026-10-19 — lintap-dev cleanup and clean-package smoke
 

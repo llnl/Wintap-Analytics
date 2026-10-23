@@ -6,9 +6,34 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+Clone follow-up: [[wiki/work/improve-lintap-data-quality/clone-validation-plan]];
+[[wiki/work/improve-lintap-data-quality/clone-validation-results]] (Ubuntu arm64
+thread/clone3 fixes, duplicate-Start evidence, resolver-ordering regressions).
+
+Durable startup evidence: [[wiki/schema/runtime-capability-receipt]];
+[[wiki/work/improve-lintap-data-quality/runtime-capability-verification]].
+
+Clone default-TRUE acceptance: [[wiki/work/clone-default-true/verification]];
+RHEL transfer: [[wiki/work/clone-default-true/dev_handoff]].
+
+Field-friendly named process/file/network stimulus:
+[[wiki/tool/named-telemetry-smoke-workload]].
+
+Read-only smoke results / cross-host run manifests:
+[[wiki/tool/smoke-test-results-dashboard]];
+[[wiki/work/smoke-test-dashboard/implementation_plan]];
+[[wiki/work/smoke-test-dashboard/verification]].
+
+Accepted durable evidence plan: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]]
+(pidstat-style parquet transport, partitioning and dashboard severity overview).
+
+Retrospective umbrella feature: [[wiki/work/linux-capability-smoke-triage/brief]]
+(Linux collection capability evidence, Clone defaults/correctness and smoke triage;
+same existing branches, feature-only commit/PR scope).
+
 | Page | Confidence | Summary |
 |------|------------|---------|
-| [[wiki/metrics]] | high | Cross-feature Velocity rollup: one row per closed feature (lead time, solo estimate, Feature Velocity ± uncertainty, comparability flag, metrics link), seeded with the WPC pilot row; Portfolio Velocity pending N≥several with trailing window ≥ 4× median lead time. |
+| [[wiki/metrics]] | high | Cross-feature Velocity rollup: one row per closed feature (lead time, solo estimate, Feature Velocity ± uncertainty, comparability flag, metrics link); Portfolio Velocity pending N≥several with trailing window ≥ 4× median lead time. |
 
 ## Tension
 
@@ -51,7 +76,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/component/wintap-recorder]] | high | Captures WintapRecorder recording-session control, registry mode flags, Parquet monitoring, and merge behavior. |
 | [[wiki/component/plugin-and-mcp-samples]] | high | Documents plugin discovery/contracts, sample event subscriber behavior, and research/POC MCP SQL tooling caveats. |
 | [[wiki/component/process-table-retention]] | high | Process retention/reconciliation plus the bounded delayed-event identity cache; 10h23m field gate passed, with the owning Wintap commit ID still pending. |
-| [[wiki/component/fileops-event-pipeline]] | high | Kernel-to-parquet FileOps contracts, bounded historical attribution, long-run no-loss evidence, and the remaining unbounded FD-path cache follow-up; owning Wintap commit ID pending. |
+| [[wiki/component/fileops-event-pipeline]] | high | Kernel-to-parquet FileOps contracts, adaptive ring notification, bounded attribution, dedicated serializer draining, coordinated durable shutdown, and the remaining FD-path cache follow-up. |
 | [[wiki/component/sensor-upload-cache-pipeline]] | high | Canonical page for the shared upload/cache pipeline: merge cycle, type-agnostic ride-along sweep contract, delete-after-upload (fixed 2026-08-17), prune backstop, hang-recovery scoping, deployment prerequisites, and the small-file consolidation follow-up. |
 | [[wiki/component/sensor-health-monitor]] | high | Canonical page for the always-on Windows egress QA layer (shc feature, closed 2026-08-25): InspectForHealth hook on both egress branches + MemoryMap bypass, five constant-time checks, six-stream 5 s liveness watchdog, aggregated Wintap.log reporting, config keys, and the shc-03 QueryDosDevice drive-map/fromNative accuracy fix. |
 | [[wiki/component/registry-sensor]] | high | Canonical page for the manifest-only Windows registry sensor (wrc feature, closed 2026-08-25, commit 1f66a47): undocumented capture-mode enablement (Option A guarded reflection, TraceEvent 3.1.23 pin), 0x5300/0x5700 keyword mask, capture-loss canary + 5-min re-assert, six-REG-type decode with pre/post values, CreateKey Join(BaseName, RelativeName) path assembly, and the 18-column parquet contract incl. Reg_DataType/Reg_PreviousData/Reg_PreviousDataType. |
@@ -70,7 +95,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
-| [[wiki/pipeline/nesper-esper-event-stream-processing]] | high | EventChannel/Esper semantics plus the measured FileOps path decisions: synchronous dispatch retained, empty subscriber route removed, threading/context alternatives rejected; owning Wintap commit ID pending. |
+| [[wiki/pipeline/nesper-esper-event-stream-processing]] | high | EventChannel/Esper semantics plus synchronous dispatch, serializer backpressure, dedicated FileSerializer draining, and producer-to-parquet shutdown ordering. |
 ## Schema
 
 | Page | Confidence | Summary |
@@ -98,6 +123,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/diagnostic/linux-capability-data-quality-matrix]] | medium | Linux build/runtime/distro evidence and per-sensor CO-RE/fallback matrix; explains missing/placeholder fields, thread/identity/byte-count caveats, output permutations, and a recommended dataset capability receipt. |
 | [[wiki/diagnostic/nesper-repro]] | high | Documents the standalone Fedora/shared-mount NEsper repro and the evidence that Bad IL range failures are output-location related. |
 | [[wiki/diagnostic/dependency-inventory-and-update-status]] | medium | Inventories Python, npm, and .NET dependency manifests across the ecosystem and records observed update availability with tooling caveats. |
 | [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]] | medium | RHEL 8 field findings: clone sensor attaches (Fedora failure doesn't generalize), the fork-without-exec warning signature (parent = child−1), and a suspected ~500-700 forks/sec storm with event-processing lag under investigation. |
@@ -108,6 +134,8 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/work/improve-lintap-data-quality/brief]] | high | CLOSED 2026-10-22: adaptive wakeups, dedicated FileSerializer draining, coordinated shutdown, and kernel-time network attribution passed two-hour source and fresh packaged-arm64 gates. |
+| [[wiki/work/improve-lintap-data-quality/diagram-glossary]] | high | Companion glossary for every `[A1–A13]`, `[Q1–Q5]`, and `[S1–S18]` label in the Linux eBPF architecture and shutdown diagrams, with implementation, operations, and evidence references. |
 | [[wiki/work/lintap-process-creation-validation/index]] | medium | Research thread for comparing process creation accuracy across Lintap, Tetragon, Tracee, and Sysdig and building cross-sensor validation workloads. |
 | [[wiki/work/lintap-process-creation-validation/research-snapshot-2026-07-31]] | medium | Snapshot of process creation acquisition, known accuracy risks, PID uniqueness strategies, and reference-tool issue findings. |
 | [[wiki/work/lintap-process-creation-validation/handoff-validation-next-steps]] | medium | Handoff plan for sensor-neutral process/file/network workload generation, cross-sensor runs, normalization, and accuracy reporting. |
@@ -217,4 +245,4 @@ Master catalog of all pages. Updated by the agent on every ingest.
 | [[wiki/work/fix-hardcoded-agentid/verification]] | high | Linux VM validation record: build/contracts, resolver profile decision, live eBPF attachment, smoke traffic, and fresh TCP parquet AgentId/lifecycle evidence all passed. |
 ---
 
-*Last updated: 2026-10-20 (fix-hardcoded-agentid implemented and live-validated; historical Linux TCP investigation migrated and updated)*
+*Last updated: 2026-10-23 (Linux capability smoke triage and main's AgentId/TCP documentation preserved)*

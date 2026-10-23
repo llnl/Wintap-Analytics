@@ -66,9 +66,9 @@ its 524288-row cap would only defer loss and increase retained memory.
 ## Live Rate Arithmetic
 
 Live-rate inputs are grounded through the hash-identified run and exact log
-window in [[no-tenable-run-analysis-2026-08-30]], rather than the mutable
+window in [[wiki/work/improve-etl-and-qa/no-tenable-run-analysis-2026-08-30]], rather than the mutable
 `/var/log` path itself. Benchmark commands and post-change test commands are
-recorded in [[verification]].
+recorded in [[wiki/work/improve-etl-and-qa/verification]].
 
 For the no-Tenable hour:
 

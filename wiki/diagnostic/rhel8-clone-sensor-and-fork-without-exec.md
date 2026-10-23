@@ -60,9 +60,11 @@ A near-zero `retention_miss` count means retention is not the cause.
 
 ## Finding 2: Clone Sensor Attaches Cleanly on RHEL 8
 
-The packaged `lintap.env` ships `WINTAP_ENABLE_CLONE_SENSOR=false` with the
+The package at the time shipped `WINTAP_ENABLE_CLONE_SENSOR=false` with the
 comment that `sched_process_fork` attach failed on Fedora during bring-up.
-<!-- GROUND_TRUTH: ../Lintap/packaging/lintap-rpm/lintap.env §CloneSensor remains opt-in -->
+Current package templates now default true; new CO-RE and receipt RHEL acceptance
+remains pending in [[wiki/work/clone-default-true/dev_handoff]]. This historical
+field finding is not validation of those newer changes.
 
 On the RHEL 8 test machine (2026-08-14), enabling the clone sensor attached
 all three programs successfully:

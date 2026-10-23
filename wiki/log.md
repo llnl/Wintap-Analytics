@@ -5,6 +5,201 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-22] code | Clone default TRUE and Ubuntu package acceptance
+
+User authorized Ubuntu/arm tests and separate RHEL handoff. Debian/RPM Clone
+env defaults now true with opt-out retained; builders require Clone CO-RE payload
+on native/BTF builds. Fresh self-contained arm64 package built and installed on
+new disposable VM. Normal ETL startup exposed lazy plugin receipt reset erasing
+isolation settings; repaired idempotent initialization and added regression
+(127 focused tests pass), rebuilt revision 104. Fallback missing-flags negative
+still misclassifies 60 threads and is explicitly warned, not certified. Normal
+pipeline/churn/restart/opt-out acceptance ongoing; RHEL dev handoff and verification
+created. No commits/pushes; unrelated changes preserved.
+
+## [2026-10-22] code | Durable HOST runtime capability receipts
+
+User-authorized sibling Wintap changes add versioned RuntimeCapabilitiesJson to
+HOST, frozen per-run startup logging/publication even with ETL/sensors disabled,
+effective config/component settings, selected object hashes and candidate/hook
+outcomes. Standardized Linux auxiliary ERR_PTR checks. 126 focused tests and
+Ubuntu arm64 core/fallback/restart/disabled HOST validation pass; sequential
+clone regression retains all 80 births/zero threads. Concurrent harness attempt
+hit API port conflict, not sensor loss. Canonical schema/verification added;
+matrix updated. Defaults/packages/DBT unchanged; run ID not added to other event
+rows, continuous health and downstream temporal joins remain future work.
+
+## [2026-10-22] docs | Linux capability and resulting-data matrix
+
+Created `wiki/diagnostic/linux-capability-data-quality-matrix.md`: separates
+per-sensor object/hook selection from distro evidence; maps process/file/network/
+SELinux tiers, build packaging and output modes to data caveats; proposes a
+dataset capability receipt. Source review highlights placeholder fallback exit
+codes/TCP bytes, missing fallback inode/parent/start evidence, callback-time Stop,
+network request/rate-limit semantics, and nonuniform auxiliary ERR_PTR checks.
+Named Ubuntu/Fedora/RHEL findings are dated, with new-fix/platform gaps explicit.
+Linked from index and clone results. Documentation only; no source/default changes.
+
+## [2026-10-22] code | clone lifecycle follow-up
+
+On current branches, added manifest/libbpf/direct-parquet harnesses and five
+resolver regressions. Live Ubuntu 24.04 arm64 baseline confirmed 40 false thread
+births and 20 worker-TID parents; new CO-RE child pid/tgid filter and updated
+clone3-aware fallback pass 80 process / 60 thread cases with normal hooks.
+Fallback with absent hooks remains unsafe for thread classification. Dual-sensor
+output confirms three Start observations per fork+exec identity; late clone
+resolver guard preserves exec metadata and Stop state without raw deduplication.
+Linux build and 88 focused tests pass; broad macOS suite fails/aborts in Windows
+tests (603 pass, 16 fail). Defaults/packages unchanged. Plan/results added and
+linked from verification/index; durable Linux semantics added to process-events.
+
+## [2026-10-22] docs | Lintap packaging guide and eBPF diagram glossary
+
+Consolidated Debian/RPM build, inspection, installation, and smoke-test
+instructions into `../Lintap/packaging/README.md`; reduced format-local guides
+to pointers/installed quick references and marked dated review/handoff records
+as historical. Added the 36-anchor companion glossary for
+`wiki/work/improve-lintap-data-quality/ebpf-quality-flow.drawio`, linked it from
+verification and the index, and repaired supported live-path citation moves.
+The `[A7]`/`[S8]` definitions explicitly cover TCP and UDP's ten-second EPL
+aggregation, not only FileOps batching.
+The review also surfaced and documented the current RPM limitation: cross-build
+mode disables BTF but payload validation still requires the CO-RE FileOps
+object, so the present end-to-end RPM contract is native x86_64 with BTF.
+Deterministic checks found zero broken local Markdown links, real wikilinks, or
+required-frontmatter omissions. Thirty-six unavailable historical/local-only
+or optional external-checkout source anchors remain explicitly unretargeted.
+
+## [2026-10-22] docs | improve-lintap-data-quality eBPF flow diagrams
+
+Added a two-page diagrams.net source covering the Linux eBPF-to-parquet
+architecture and normal-delivery/coordinated-shutdown sequence. Stable
+`A`/`Q`/`S` anchors now map ring latency, attribution, serializer pressure,
+durable shutdown, and downstream completeness evidence to exact flow stages.
+Linked the anchors and validation matrix from the feature verification page.
+
+## [2026-10-21] verification | improve-lintap-data-quality acceptance3
+
+The isolated arm64 acceptance3 capture produced 10,000 file and 42 TCP staged
+rows with no Unknown/empty identities, owner warnings, or FileOps queue drops.
+DBT passed 80/80 and matched every file row, but found one orphan among 27
+network increments. The remaining cause was floating-point `/proc` start-time
+conversion in the live resolver fallback; it is now integer-only with a
+regression test and awaits long-run validation. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-22] closeout | improve-lintap-data-quality accepted
+
+Closed the feature after final source and fresh Debian arm64 acceptance. The
+two-hour source run retained all 124,800 workload paths with zero serializer,
+writer, sender, or ring loss and completed coordinated shutdown. A kernel-time
+network correction then passed a rapid-child source run with zero file/network
+orphans or `Unknown` names. Package `0.1.0-102` repeated the gate on a fresh
+Ubuntu 24.04 arm64 VM: 5,000/5,000 paths, exactly 40,000 operations, DBT 80/80,
+zero attribution failures, and clean final merge. Focused tests passed 383/383;
+the arm64 build passed with zero errors. Promoted durable flow/shutdown facts to
+the FileOps and Esper pages. Wintap commit: `1c048a8`; no push performed.
+
+## [2026-10-21] code | improve-lintap-data-quality live attribution fallback
+
+Moved the stable PID-hash fallback to the live file/TCP/UDP callback path so
+rapid children can be attributed before exit; removed callback-time network
+hashes. Local and arm64 source builds passed. The isolated rerun has 24 TCP
+rows with no Unknown identities or owner warnings, but FileOps kernel counters
+advance while userspace file emission remains zero, so file/DBT acceptance is
+blocked rather than inferred from an empty relation. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] verification | improve-lintap-data-quality isolated attribution rerun
+
+The isolated Clone-enabled/retry-10 acceptance rerun is not accepted: staged
+output has 20 Unknown file identities in 13,097 rows and one Unknown network
+identity in 64 rows, with matching owner-resolution warnings. Its raw merge had
+not completed, so no DBT acceptance claim was made. The earlier zero-Unknown
+capture remains pilot evidence only; ldq-03 stays open. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] code | improve-lintap-data-quality ldq-04 DBT attribution QA
+
+Added Wintappy's `attribution_quality_summary` monitoring view, reporting
+orphan and Unknown-name rows/hashes/rates for file and network relations, and
+included it in `build_summary`. DBT passed 80/80. The existing orphan diagnostic
+correctly fails on the shared mixed-capture raw root, so aggregate rates are
+recorded as baseline/intermediate evidence rather than acceptance. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] code | improve-lintap-data-quality ldq-03 lifecycle attribution
+
+Enabled Clone in the controlled source-build runtime and fixed the observed
+cross-poller ownership races: active-cache selection now covers network events,
+file/network retries are bounded to ten seconds, and Clone/Execve/`/proc`
+process-start conversion shares a clock-tick identity basis. The 200-child
+rapid-fork capture recorded 10,769 file rows and 32 network rows with zero
+Unknown names/hashes; it does not prove process-user remediation or replace the
+pending DBT comparison. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] diagnosis | improve-lintap-data-quality ldq-03 lifecycle coverage
+
+The source-build attribution baseline has an evidence-supported cause for its
+file orphans: the active runtime configuration disabled `Clone`. A representative
+cron/PAM child produced 150 Unknown file identities and a later Stop record but
+no Start/Refresh record; the capture log reports failed owner resolution for the
+same PID. The next controlled remediation is enabling Clone for a clean
+before/after capture and comparing DBT orphan composition. This does not yet
+address process-user Unknown values. Corrected the dev handoff to retain the
+completed ldq-00 VM setup rather than restart it. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-21] verification | improve-lintap-data-quality source baseline
+
+Created fresh arm64 `lintap-quality` source-build VM with the LLNL checkout and
+feature-isolated Wintappy data mount. The initial 6,000-file run recorded
+5,693 paths with zero FileSerializer, FileOps, and BPF ring-buffer drops; a
+rebuild/restart run after 45 seconds captured 6,000/6,000 with zero serializer
+drops. Queue-limit changes are deferred pending warm-up/attach-state evidence.
+Fixed FileSerializer-only lowercase hostname output; refreshed source output
+uses `LINTAP-QUALITY` consistently across process, file, and network rows.
+DBT passed 79/79; file-orphan/user-attribution counts remain baseline work.
+Details: `wiki/work/improve-lintap-data-quality/verification.md` and
+`wiki/work/improve-lintap-data-quality/spike.md`.
+
+## [2026-10-21] verification | fresh lintap package mounted-data smoke
+
+Replaced the disposable `lintap-dev` Multipass deployment, mounted
+`../Wintappy/data` at `/home/ubuntu/data/smoketest`, installed Debian arm64
+package `lintap_0.1.0-101_arm64.deb`, and configured that mount as
+`WINTAP_DATA_ROOT`. Package service startup and process/file/network functional
+smokes passed; Wintappy DBT passed 79/79. Quality is not accepted: the 6,000
+unique-file workload recorded FileSerializer `dropped_total=28533`, although
+the current smoke log-text gate returned a false green; DBT found 717
+`process_file` orphan rows across 496 unknown process hashes. Recorded details
+in `wiki/work/refactor-data-log-paths/verification.md`.
+
+## [2026-10-21] code | smoke QA validation and orphan dashboard drill-down
+
+Updated `../wintap/devtools/file_capture_smoke_test.py` to recognize current
+FileSerializer `dropped_total` flush counters against a pre-workload baseline,
+and restored Wintappy's early `raw_sensor` DBT-root validation. Added a Top 25
+orphan-process-identity drill-down after the dashboard orphan summary, grouped
+by relation/host/reported-name/missing-hash and ranked by event impact with
+affected item and time-range context. Unit-style parser checks, dashboard SQL,
+Marimo syntax/structural checks, and refreshed DBT build passed. The renewed
+6,000-file field workload failed at 4,918/6,000 paths and grew the serializer
+drop total from 28,533 to 55,938; this remains an acceptance failure. Details:
+`wiki/work/refactor-data-log-paths/verification.md`.
+
+## [2026-10-21] feature | improve-lintap-data-quality opened
+
+Completed the adaptive interview and created the `improve-lintap-data-quality`
+feature artifacts. Confirmed scope: measured Linux/Lintap-only remediation for
+serializer loss, PID-hash orphan attribution, hostname consistency, and
+incremental Unknown process/user improvement; source-build iteration first and
+fresh packaged arm64 Multipass acceptance last. The benchmark-and-recommendation
+spike must set queue and orphan thresholds before implementation chooses a
+remedy. Windows parity and RPM acceptance are excluded. Added the feature brief
+to `wiki/index.md`.
+
 ## [2026-10-20] closeout | fix-hardcoded-agentid
 
 Feature closed after final wiki validation. Changed feature artifacts have
@@ -2416,3 +2611,113 @@ Open questions: sustained Registry attribution, validator cleanup reliability, t
 ## [2026-10-19] documentation | Preserve attribution and FILE-path correctness contracts
 
 Created [[wiki/concept/windows-attribution-and-file-path-correctness-contracts]] at the Architect's request and added it to the index. Retained only technical predicates, compatibility boundaries, tradeoffs, regression expectations, and open validation work; separated accepted contracts, reported implementation, and unverified approved design. Original source references and machine-specific observations are omitted. No new architecture decisions, source/test changes, archive deletions, commits, or pushes. Open validation gaps remain as recorded in the companion executive summary.
+
+## [2026-10-21] verification | improve-lintap-data-quality long isolated captures
+
+The recorded DBT snapshots for acceptance4 and acceptance5 have zero PID-hash
+orphans and `Unknown` names across file and network relations; their explicit
+file workloads also pass. The controlled acceptance6 workload remains clean and
+observes `ubuntu`/`nobody` Start users, but a final rebuild after service stop
+found a 20-second system-workload lifecycle gap: 21,571 file and 12 network
+orphan rows have stable child identities but no matching process row. Its
+FileSerializer also reports 32,496 in-memory drops, although FileOps reports
+zero sender-queue and ring-reservation drops. Thus no full-capture acceptance
+claim is made. The focused restored xUnit suite passed 348/348. Details:
+`wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-22] code | Named cross-domain field stimulus and Ubuntu package result
+
+Added Wintap Python stdlib workload with named process families, current Linux
+FileOps and TCP/UDP stimuli, per-run operation/PID/path/port manifest, explicit
+skips/failures and optional native clone/clone3/vfork probes. Two Linux regressions
+pass; Ubuntu arm64 default/IPv6/native stimulus runs complete. Documentation
+separates generated activity from proven capture and marks mmap-as-Read,
+rename/truncate and IPv6 limits. Added tool page, README and RHEL handoff link.
+Debian revision 104 normal ETL acceptance completed: 80 baseline/400 churn births,
+zero thread Starts/wrong worker parents/identity splits; HOST/restart/opt-out pass.
+Counter/overhead review and RHEL remain open. No commits or pushes.
+
+## [2026-10-22] code | Smoke results app and portable cross-host run manifests
+
+User requested per-test Streamlit sections/commands/queries/run grouping and
+explicitly allowed smoke-script updates, no legacy-data support. Analytics app
+uses independent raw-parquet and portable manifest/upload sources; Wintap scripts
+emit UUID/test-host/time/PID/path/endpoint envelopes including failed validation.
+Queries normalize ETL/direct schemas/time scales, require host attribution and do
+not merge repeated runs by process names. Empty UI and run-isolation/query tests
+pass; Linux manifest/workload and actual-object Clone checks pass. Fresh packaged
+VM→Mac integration collecting; durable app/tool and work records created. No DBT
+state/data modified, no commits/pushes, unrelated dirty files preserved.
+
+## [2026-10-22] verification | Smoke dashboard VM-to-Mac integration
+
+Transferred packaged normal-ETL raw parquet and independent portable manifests
+from Ubuntu arm64 Multipass to approved Mac temp storage. App queries 33 files
+without errors, renders 36 tables and isolates two repeated runs. Second run
+captures process lifecycle/five file activities/client TCP and UDP activity;
+server TCP Accept and UDP Receive are absent and displayed as gaps. First run
+occurred before sensor readiness and remains empty rather than borrowing data.
+Final 11 app/query tests pass; Linux manifest/workload tests pass; diff checks
+clean. No full network acceptance claimed. Service stopped; docs and work checklist
+updated, no commits/pushes.
+
+## [2026-10-22] plan | Durable smoke evidence and dashboard triage
+
+Investigated live CacheManager/uploader, pidstat producer and Wintappy partition
+precedents. Proposed raw_smoke_test typed parquet envelopes with manifest JSON,
+immutable run revisions, runtime spool, UTC publication partitions and dataset
+auto-discovery. Flagged startup raw-parquet deletion with enabled uploaders,
+any-success multi-adapter deletion, partial file-share copy, cache pruning and
+default-disabled transport as deployment gates. Proposed red/yellow/green plus
+gray summary preserving harness/coverage/arrival distinctions; no green from
+stimulus alone or red missing-data from a mere wait timeout. Saved plan and index;
+no source/app/DBT or configuration changes, no transport setup/tests performed.
+
+## [2026-10-22] code | Durable smoke parquet and dashboard triage
+
+User accepted normal destination latency/source deletion and authorized coding.
+Wintap shared smoke wrapper now optionally exports atomic immutable parquet
+snapshots (typed metadata/full JSON/hash) into raw_smoke_test UTC partitions.
+Analytics auto-discovers/deduplicates runs and adds host/test severity counts,
+history/attention filters and section navigation with bounded event detail reads.
+Pending/missing/stimulus-only/limited/ambiguous evidence stays yellow; thread,
+identity and explicit parent violations surface. 19 app/query tests, four producer
+tests and two Linux workload tests pass. Mounted VM→Mac live capture: 23 telemetry
+and six evidence parquet, two isolated runs, no separate manifest transfer/errors.
+Known server TCP Accept/UDP Receive gaps remain yellow. Updated canonical tool,
+plan/checklist and verification. No uploader hardening, DBT, package rebuild,
+commits or pushes; unrelated changes preserved.
+
+## [2026-10-23] feature | Linux capability smoke triage retrospective and commits
+
+User confirmed the cross-repo umbrella feature and authorized commits/PR appendices
+on existing feature/improve-lintap-data-quality branches. Reconstructed brief,
+interview, design, references, implementation/verification and PR summaries under
+wiki/work/linux-capability-smoke-triage; linked existing detailed evidence instead
+of duplicating it. No prospective metrics invented. HOST property retained;
+user-discarded RawSensorWriter mixed-schema branch is not part of committed scope.
+Fresh checks: 127 .NET, 19 dashboard/query, four manifest and two Linux workload
+tests pass; both package builders pass bash syntax checks. Wintap commit 859a47b;
+Lintap commit cfc3f35; Analytics dashboard/wiki/artifacts committed together.
+Wintappy has no tracked change/commit. No pushes/branch changes; local state,
+generated data, FUSE/editor artifacts and unrelated experiments remain excluded.
+RHEL acceptance, isolated Clone overhead review and server-network gaps stay open.
+
+## [2026-10-23] maintenance | Resolve Analytics PR merge conflicts
+
+Merged origin/main into feature/improve-lintap-data-quality at the user's request.
+Resolved wiki/index.md and wiki/log.md by retaining both the capability/smoke
+feature records and main's AgentId/TCP investigation records; refreshed the index
+date. Verified no unmerged paths or conflict markers, clean staged whitespace,
+and preservation of both parents' wiki log entries and index links. Documentation
+only; source tests not rerun. Unrelated .claude/ files remain untouched.
+
+## [2026-10-23] code | Smoke dashboard PR review correctness fixes
+
+Preserved red failure/observed-violation severity when overlapping runs add an
+ambiguity warning. Validated selector objects and supported domains at manifest
+ingestion, rejecting null/non-object entries without aborting valid-run rendering;
+empty lifecycle selectors remain valid. Added overlap, malformed-input isolation,
+and Streamlit rendering regressions. All 23 dashboard/query tests pass in the
+isolated venv. Updated canonical dashboard semantics and umbrella plan/verification.
+Packaging README review is separate; unrelated local files remain untouched.

@@ -64,9 +64,9 @@ All on branch `grantj-rhel8-testing` in `../wintap` unless noted.
   event time (wrong identity basis when called per file event).
 - `../wintap/wintap/platform/linux/infrastructure/LinuxSubscriptionManager.cs`
   — FileOps enable flag (`FileOps=true/false`) and sensor startup.
-- `Wintap-Analytics/extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`
+- `extras/lintap-runtime-diagnostics/collect-lintap-diagnostics.sh`
   — field measurement tool (perf stat, hot threads, DuckDB snapshot).
-- `Wintap-Analytics/validation/process-creation/` — harness pattern (uv +
+- `validation/process-creation/` — harness pattern (uv +
   pytest, workload manifests, run scripts) to extend with a file-ops
   differential scenario.
 

@@ -3,6 +3,9 @@ title: "Process Events"
 type: event_type
 confidence: high
 grounded_by:
+  - ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c
+  - ../wintap/wintap/core/infrastructure/ProcessResolver.cs
   - ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs
   - ../wintap/wintap/platform/windows/sensor/etw/helpers/ProcessTraceDataExtensions.cs
   - ../wintap/wintap/platform/windows/sensor/etw/helpers/BootProcessTraceHelper.cs
@@ -12,7 +15,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/esper/process-stop.epl
   - ../wintap/shared/WintapAPI/WintapMessage.cs
 policy: agent-editable
-last_validated: 2026-08-19
+last_validated: 2026-10-22
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: process
@@ -23,6 +26,32 @@ tags: [process-events, telemetry-semantics, wintap-api, etw]
 ---
 
 # Process Events
+
+## Linux clone/exec boundary (validated 2026-10-22)
+
+Current Debian/RPM package templates enable Clone by default, retaining explicit
+`WINTAP_ENABLE_CLONE_SENSOR=false` opt-out. Existing locally opted-out installs
+are not automatically changed. Per-run HOST records identify effective enablement,
+selected tier and hook outcomes: [[wiki/schema/runtime-capability-receipt]].
+Package validation and separate RHEL gate:
+[[wiki/work/clone-default-true/verification]].
+<!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/lintap.env; ../Lintap/packaging/lintap-rpm/lintap.env -->
+
+Linux `CloneSensor` prefers `clone_core_tracer.bpf.o`: a raw sched-fork hook
+reads child pid/tgid, excludes thread births, and emits parent TGID. Its
+tracepoint-only fallback captures best-effort clone/clone3 flags; absent auxiliary
+hooks remain a thread-as-process risk. This does not alter Windows producers.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §BpfObjectFileName; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c §trace_process_fork -->
+
+Fork and exec are separate Start observations, not necessarily separate identities:
+the Ubuntu arm64 workload produced fork + exec-entry + sched-exec rows sharing
+one PidHash. Clone birth metadata is provisional; `PROC_START_SRC=sched_fork`
+prevents a late clone upsert from overwriting an existing resolver identity or
+reviving its cache after Stop. Raw rows are not suppressed. Count identities rather
+than Start rows for process counts; standard ETL does not persist this Arguments
+breadcrumb. Validation scope and remaining risks:
+[[wiki/work/improve-lintap-data-quality/clone-validation-results]].
+<!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/ProcessResolver.cs §UpsertProcessStart; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent -->
 
 Process events are normalized as `WintapMessage` records with `MessageType = Process` and a nested `ProcessObject` containing process identity, parent identity, path, command line, user, exit/resource fields, and hashes. The schema and the PidHash formula (PID + create-time FileTime) were unchanged by the 2026-08 collection overhaul — all improvements below are population-rate and correctness improvements of existing fields.
 <!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject -->
