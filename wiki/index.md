@@ -6,6 +6,31 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+Clone follow-up: [[wiki/work/improve-lintap-data-quality/clone-validation-plan]];
+[[wiki/work/improve-lintap-data-quality/clone-validation-results]] (Ubuntu arm64
+thread/clone3 fixes, duplicate-Start evidence, resolver-ordering regressions).
+
+Durable startup evidence: [[wiki/schema/runtime-capability-receipt]];
+[[wiki/work/improve-lintap-data-quality/runtime-capability-verification]].
+
+Clone default-TRUE acceptance: [[wiki/work/clone-default-true/verification]];
+RHEL transfer: [[wiki/work/clone-default-true/dev_handoff]].
+
+Field-friendly named process/file/network stimulus:
+[[wiki/tool/named-telemetry-smoke-workload]].
+
+Read-only smoke results / cross-host run manifests:
+[[wiki/tool/smoke-test-results-dashboard]];
+[[wiki/work/smoke-test-dashboard/implementation_plan]];
+[[wiki/work/smoke-test-dashboard/verification]].
+
+Accepted durable evidence plan: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]]
+(pidstat-style parquet transport, partitioning and dashboard severity overview).
+
+Retrospective umbrella feature: [[wiki/work/linux-capability-smoke-triage/brief]]
+(Linux collection capability evidence, Clone defaults/correctness and smoke triage;
+same existing branches, feature-only commit/PR scope).
+
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/metrics]] | high | Cross-feature Velocity rollup: one row per closed feature (lead time, solo estimate, Feature Velocity ± uncertainty, comparability flag, metrics link); Portfolio Velocity pending N≥several with trailing window ≥ 4× median lead time. |
@@ -98,6 +123,7 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/diagnostic/linux-capability-data-quality-matrix]] | medium | Linux build/runtime/distro evidence and per-sensor CO-RE/fallback matrix; explains missing/placeholder fields, thread/identity/byte-count caveats, output permutations, and a recommended dataset capability receipt. |
 | [[wiki/diagnostic/nesper-repro]] | high | Documents the standalone Fedora/shared-mount NEsper repro and the evidence that Bad IL range failures are output-location related. |
 | [[wiki/diagnostic/dependency-inventory-and-update-status]] | medium | Inventories Python, npm, and .NET dependency manifests across the ecosystem and records observed update availability with tooling caveats. |
 | [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]] | medium | RHEL 8 field findings: clone sensor attaches (Fedora failure doesn't generalize), the fork-without-exec warning signature (parent = child−1), and a suspected ~500-700 forks/sec storm with event-processing lag under investigation. |

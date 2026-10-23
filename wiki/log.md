@@ -5,6 +5,54 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-22] code | Clone default TRUE and Ubuntu package acceptance
+
+User authorized Ubuntu/arm tests and separate RHEL handoff. Debian/RPM Clone
+env defaults now true with opt-out retained; builders require Clone CO-RE payload
+on native/BTF builds. Fresh self-contained arm64 package built and installed on
+new disposable VM. Normal ETL startup exposed lazy plugin receipt reset erasing
+isolation settings; repaired idempotent initialization and added regression
+(127 focused tests pass), rebuilt revision 104. Fallback missing-flags negative
+still misclassifies 60 threads and is explicitly warned, not certified. Normal
+pipeline/churn/restart/opt-out acceptance ongoing; RHEL dev handoff and verification
+created. No commits/pushes; unrelated changes preserved.
+
+## [2026-10-22] code | Durable HOST runtime capability receipts
+
+User-authorized sibling Wintap changes add versioned RuntimeCapabilitiesJson to
+HOST, frozen per-run startup logging/publication even with ETL/sensors disabled,
+effective config/component settings, selected object hashes and candidate/hook
+outcomes. Standardized Linux auxiliary ERR_PTR checks. 126 focused tests and
+Ubuntu arm64 core/fallback/restart/disabled HOST validation pass; sequential
+clone regression retains all 80 births/zero threads. Concurrent harness attempt
+hit API port conflict, not sensor loss. Canonical schema/verification added;
+matrix updated. Defaults/packages/DBT unchanged; run ID not added to other event
+rows, continuous health and downstream temporal joins remain future work.
+
+## [2026-10-22] docs | Linux capability and resulting-data matrix
+
+Created `wiki/diagnostic/linux-capability-data-quality-matrix.md`: separates
+per-sensor object/hook selection from distro evidence; maps process/file/network/
+SELinux tiers, build packaging and output modes to data caveats; proposes a
+dataset capability receipt. Source review highlights placeholder fallback exit
+codes/TCP bytes, missing fallback inode/parent/start evidence, callback-time Stop,
+network request/rate-limit semantics, and nonuniform auxiliary ERR_PTR checks.
+Named Ubuntu/Fedora/RHEL findings are dated, with new-fix/platform gaps explicit.
+Linked from index and clone results. Documentation only; no source/default changes.
+
+## [2026-10-22] code | clone lifecycle follow-up
+
+On current branches, added manifest/libbpf/direct-parquet harnesses and five
+resolver regressions. Live Ubuntu 24.04 arm64 baseline confirmed 40 false thread
+births and 20 worker-TID parents; new CO-RE child pid/tgid filter and updated
+clone3-aware fallback pass 80 process / 60 thread cases with normal hooks.
+Fallback with absent hooks remains unsafe for thread classification. Dual-sensor
+output confirms three Start observations per fork+exec identity; late clone
+resolver guard preserves exec metadata and Stop state without raw deduplication.
+Linux build and 88 focused tests pass; broad macOS suite fails/aborts in Windows
+tests (603 pass, 16 fail). Defaults/packages unchanged. Plan/results added and
+linked from verification/index; durable Linux semantics added to process-events.
+
 ## [2026-10-22] docs | Lintap packaging guide and eBPF diagram glossary
 
 Consolidated Debian/RPM build, inspection, installation, and smoke-test
@@ -2532,3 +2580,81 @@ FileSerializer also reports 32,496 in-memory drops, although FileOps reports
 zero sender-queue and ring-reservation drops. Thus no full-capture acceptance
 claim is made. The focused restored xUnit suite passed 348/348. Details:
 `wiki/work/improve-lintap-data-quality/verification.md`.
+
+## [2026-10-22] code | Named cross-domain field stimulus and Ubuntu package result
+
+Added Wintap Python stdlib workload with named process families, current Linux
+FileOps and TCP/UDP stimuli, per-run operation/PID/path/port manifest, explicit
+skips/failures and optional native clone/clone3/vfork probes. Two Linux regressions
+pass; Ubuntu arm64 default/IPv6/native stimulus runs complete. Documentation
+separates generated activity from proven capture and marks mmap-as-Read,
+rename/truncate and IPv6 limits. Added tool page, README and RHEL handoff link.
+Debian revision 104 normal ETL acceptance completed: 80 baseline/400 churn births,
+zero thread Starts/wrong worker parents/identity splits; HOST/restart/opt-out pass.
+Counter/overhead review and RHEL remain open. No commits or pushes.
+
+## [2026-10-22] code | Smoke results app and portable cross-host run manifests
+
+User requested per-test Streamlit sections/commands/queries/run grouping and
+explicitly allowed smoke-script updates, no legacy-data support. Analytics app
+uses independent raw-parquet and portable manifest/upload sources; Wintap scripts
+emit UUID/test-host/time/PID/path/endpoint envelopes including failed validation.
+Queries normalize ETL/direct schemas/time scales, require host attribution and do
+not merge repeated runs by process names. Empty UI and run-isolation/query tests
+pass; Linux manifest/workload and actual-object Clone checks pass. Fresh packaged
+VM→Mac integration collecting; durable app/tool and work records created. No DBT
+state/data modified, no commits/pushes, unrelated dirty files preserved.
+
+## [2026-10-22] verification | Smoke dashboard VM-to-Mac integration
+
+Transferred packaged normal-ETL raw parquet and independent portable manifests
+from Ubuntu arm64 Multipass to approved Mac temp storage. App queries 33 files
+without errors, renders 36 tables and isolates two repeated runs. Second run
+captures process lifecycle/five file activities/client TCP and UDP activity;
+server TCP Accept and UDP Receive are absent and displayed as gaps. First run
+occurred before sensor readiness and remains empty rather than borrowing data.
+Final 11 app/query tests pass; Linux manifest/workload tests pass; diff checks
+clean. No full network acceptance claimed. Service stopped; docs and work checklist
+updated, no commits/pushes.
+
+## [2026-10-22] plan | Durable smoke evidence and dashboard triage
+
+Investigated live CacheManager/uploader, pidstat producer and Wintappy partition
+precedents. Proposed raw_smoke_test typed parquet envelopes with manifest JSON,
+immutable run revisions, runtime spool, UTC publication partitions and dataset
+auto-discovery. Flagged startup raw-parquet deletion with enabled uploaders,
+any-success multi-adapter deletion, partial file-share copy, cache pruning and
+default-disabled transport as deployment gates. Proposed red/yellow/green plus
+gray summary preserving harness/coverage/arrival distinctions; no green from
+stimulus alone or red missing-data from a mere wait timeout. Saved plan and index;
+no source/app/DBT or configuration changes, no transport setup/tests performed.
+
+## [2026-10-22] code | Durable smoke parquet and dashboard triage
+
+User accepted normal destination latency/source deletion and authorized coding.
+Wintap shared smoke wrapper now optionally exports atomic immutable parquet
+snapshots (typed metadata/full JSON/hash) into raw_smoke_test UTC partitions.
+Analytics auto-discovers/deduplicates runs and adds host/test severity counts,
+history/attention filters and section navigation with bounded event detail reads.
+Pending/missing/stimulus-only/limited/ambiguous evidence stays yellow; thread,
+identity and explicit parent violations surface. 19 app/query tests, four producer
+tests and two Linux workload tests pass. Mounted VM→Mac live capture: 23 telemetry
+and six evidence parquet, two isolated runs, no separate manifest transfer/errors.
+Known server TCP Accept/UDP Receive gaps remain yellow. Updated canonical tool,
+plan/checklist and verification. No uploader hardening, DBT, package rebuild,
+commits or pushes; unrelated changes preserved.
+
+## [2026-10-23] feature | Linux capability smoke triage retrospective and commits
+
+User confirmed the cross-repo umbrella feature and authorized commits/PR appendices
+on existing feature/improve-lintap-data-quality branches. Reconstructed brief,
+interview, design, references, implementation/verification and PR summaries under
+wiki/work/linux-capability-smoke-triage; linked existing detailed evidence instead
+of duplicating it. No prospective metrics invented. HOST property retained;
+user-discarded RawSensorWriter mixed-schema branch is not part of committed scope.
+Fresh checks: 127 .NET, 19 dashboard/query, four manifest and two Linux workload
+tests pass; both package builders pass bash syntax checks. Wintap commit 859a47b;
+Lintap commit cfc3f35; Analytics dashboard/wiki/artifacts committed together.
+Wintappy has no tracked change/commit. No pushes/branch changes; local state,
+generated data, FUSE/editor artifacts and unrelated experiments remain excluded.
+RHEL acceptance, isolated Clone overhead review and server-network gaps stay open.

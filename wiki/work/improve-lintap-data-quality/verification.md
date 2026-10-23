@@ -22,6 +22,19 @@ tags: [feature-work, verification, lintap, file-events, attribution]
 
 # Verification: Improve Lintap Data Quality
 
+## Post-closeout runtime capability follow-up
+
+[[wiki/work/improve-lintap-data-quality/runtime-capability-verification]] records
+the canonical HOST JSON contract, 126 focused tests and Ubuntu source-build
+core/fallback/restart/disabled publication checks. Downstream/package gates remain.
+
+## Post-closeout clone follow-up
+
+User-authorized duplicate-start/thread/clone3 investigation and implementation:
+[[wiki/work/improve-lintap-data-quality/clone-validation-plan]] and
+[[wiki/work/improve-lintap-data-quality/clone-validation-results]]. This separate
+follow-up does not reopen or replace the historical packaged acceptance below.
+
 ## Diagram references
 
 The two-page diagrams.net source at

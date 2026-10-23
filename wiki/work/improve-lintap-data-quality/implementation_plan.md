@@ -73,3 +73,10 @@ tags: [feature-work, lintap, data-quality, implementation-plan]
 - [x] ldq-05 source and fresh packaged arm64 acceptance
 - [x] Post-closeout architecture/sequence diagram glossary and documentation
   link/citation audit
+- [x] User-authorized post-closeout clone classification and resolver ordering
+  tests/fixes; Ubuntu arm64 live tracer and dual-sensor validation. See
+  [[wiki/work/improve-lintap-data-quality/clone-validation-results]] for limits.
+- [x] User-authorized HOST runtime receipt follow-up: canonical startup JSON,
+  per-hook checks/outcomes, per-run published HOST, regression and Linux
+  core/fallback/restart/disabled validation. See
+  [[wiki/work/improve-lintap-data-quality/runtime-capability-verification]].
