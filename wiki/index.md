@@ -129,6 +129,7 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]] | medium | RHEL 8 field findings: clone sensor attaches (Fedora failure doesn't generalize), the fork-without-exec warning signature (parent = child−1), and a suspected ~500-700 forks/sec storm with event-processing lag under investigation. |
 | [[wiki/diagnostic/windows-sensor-sweep-queue]] | high | Consolidated defect/finding queue the follow-on Windows sensor sweep feature opens from (19 items across shc and wrc; item 6 resolved by wrc-06): WintapLogger sync-context capture and live-log truncation, Env.SetDataRoot fixture guidance, the health check's first live catch, dead Serializer.Listen and WintapETL handlers, WintapAlert self-PID drop, TranslateTransientPath authority bug, QueryDosDevice consolidation, MemoryMap reroute question, registry attribution burstiness + stop_without_start growth, the Read-event data gap, capture-flag unknowns, and preserved registry warts. |
 | [[wiki/diagnostic/windows-attribution-validation-executive-summary]] | low | Sanitized historical summary of 46 developer-archive files: architecture, reported tests and attribution metrics, improved File unresolved rates, unresolved Registry/validator reliability, and evidence limitations; original source references omitted at Architect request ahead of archive deletion. |
+| [[wiki/diagnostic/linux-tcp-investigation-2026-06]] | high | Historical June Linux TCP investigation with October source and Ubuntu 24.04 live validation: attachment/PID/protocol/rundown work is present; TCP AgentId, state template, and watchdog defects are resolved; no resolver negative cache was justified. |
 ## Work
 
 | Page | Confidence | Summary |
@@ -239,6 +240,9 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/work/refactor-data-log-paths/implementation_plan]] | medium | Eight rdp-NN slices: two-root core + runtime-consumer moves with grep gates first, then deb/rpm + pidstat packaging, Wintappy tracking, the three Linux acceptance gates, and closeout promotion. |
 | [[wiki/work/refactor-data-log-paths/dev_handoff]] | medium | Detailed handoff authorizing ../wintap, ../Lintap packaging+collector, and ../Wintappy changes: copy/paste prompt with interview-seal warning, complete consumer-move list, hard constraints (frozen internals, no migration, no hostname code), delegated vs escalate-to-human decisions, and per-gate testing duties. |
 | [[wiki/work/refactor-data-log-paths/verification]] | medium | Validation record: focused root tests, Debian arm64 package/install and fresh event-output smoke, manual disposable-host cleanup, and a DBT build against fresh direct-root output passed; two-instance shared-mount validation remains open. |
+| [[wiki/work/fix-hardcoded-agentid/brief]] | high | CLOSED 2026-10-20: TCP AgentId propagation, state-template sanitization, neutral watchdog copy, and existing eBPF TCP live validation passed; resolver profiling did not justify a cache. |
+| [[wiki/work/fix-hardcoded-agentid/implementation_plan]] | high | Completed implementation and live-validation plan for the hardcoded AgentId feature. |
+| [[wiki/work/fix-hardcoded-agentid/verification]] | high | Linux VM validation record: build/contracts, resolver profile decision, live eBPF attachment, smoke traffic, and fresh TCP parquet AgentId/lifecycle evidence all passed. |
 ---
 
-*Last updated: 2026-10-22 (package docs and eBPF diagram glossary cleanup)*
+*Last updated: 2026-10-23 (Linux capability smoke triage and main's AgentId/TCP documentation preserved)*
