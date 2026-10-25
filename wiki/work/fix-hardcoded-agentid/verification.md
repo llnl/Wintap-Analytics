@@ -19,6 +19,11 @@ tags: [feature-work, verification, agentid, tcp]
 
 ## Current Status
 
+Scope follow-up (2026-10-23): [[wiki/diagnostic/duplicate-agent-id-and-os-family]]
+confirms a duplicate persisted UUID across two dataset hosts. This completed feature
+verified TCP propagation and template sanitization, not clone-safe deployed state
+or cross-host UUID uniqueness. No earlier acceptance result is withdrawn.
+
 Implementation and Linux VM validation complete on `lintap-dev`.
 
 ## Linux Host and Deployment

@@ -7,6 +7,7 @@ grounded_by:
   - streamlit/projects/SmokeTests/queries.py
   - streamlit/projects/SmokeTests/README.md
   - ../wintap/devtools/smoke_manifest.py
+  - ../wintap/devtools/network_endpoint_smoke_test.py
 policy: agent-editable
 last_validated: 2026-10-23
 repo_scope: cross-repo
@@ -29,7 +30,7 @@ python3 -m streamlit run streamlit/projects/SmokeTests/main.py
 
 Separate sections cover the named cross-domain workload, process/file/network
 capture validators, Clone trace/direct/package harnesses and runtime-capability
-checks. Each offers a run command, run selector, saved result, tailored SQL,
+checks, plus TCP endpoint normalization. Each offers a run command, run selector, saved result, tailored SQL,
 coverage indicators and raw rows. Missing runs/data are expected, never PASS.
 Read-only in-memory DuckDB queries do not start tests, stop collectors, run DBT
 or modify data. Analytics owns the app; Wintap owns scripts/manifest production.
@@ -107,3 +108,16 @@ absent manifests. Aggregate checks cover all matching events; detail reads are b
 
 Workload: [[wiki/tool/named-telemetry-smoke-workload]].
 Verification: [[wiki/work/smoke-test-dashboard/verification]].
+
+### TCP endpoint confirmation
+
+`network-endpoints` manifests exercise separate-process and same-process socket
+ends via one assigned non-loopback IPv4 address. Normal-ETL network capture now
+includes these checks by default. The dashboard independently checks each role's
+Send/Recv using directed SourcePort/DestinationPort, Local/Remote IP-and-port pairs,
+and stable/distinct process hashes. Even same-IP/same-PID receive reversals are red;
+missing directed provenance remains unconfirmed. Explicit network opt-outs remain
+yellow. Old/direct parquet cannot certify normalized endpoint correctness.
+<!-- GROUND_TRUTH: ../wintap/devtools/network_endpoint_smoke_test.py §validate_rows; ../wintap/devtools/network_capture_smoke_test.py §main; streamlit/projects/SmokeTests/queries.py §evaluate_case; §evaluate_run -->
+
+Scoped Ubuntu arm64 live proof: [[wiki/work/network-endpoint-normalization/verification]].

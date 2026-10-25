@@ -8,6 +8,7 @@ import unittest
 import duckdb
 from streamlit.testing.v1 import AppTest
 from test_durable import publish
+from queries import TESTS
 
 
 class DashboardTests(unittest.TestCase):
@@ -25,7 +26,7 @@ class DashboardTests(unittest.TestCase):
             self.assertFalse(app.exception)
             self.assertFalse(app.error)
             self.assertEqual(len(app.selectbox(key="file-capture").options), 2)
-            self.assertEqual([m.value for m in app.metric], ["1", "1", "0", "14"])
+            self.assertEqual([m.value for m in app.metric], ["1", "1", "0", str(2 * (len(TESTS) - 1))])
             self.assertTrue(any("Jump to" in m.value for m in app.markdown))
             target = app.selectbox(key="overview-target")
             target.select(1).run()
@@ -38,9 +39,9 @@ class DashboardTests(unittest.TestCase):
     def test_empty_app_has_all_sections_and_commands(self):
         app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
         self.assertFalse(app.exception)
-        self.assertEqual(len(app.header), 8)
-        self.assertEqual(len(app.code), 8)
-        self.assertEqual(sum("No smoke runs" in i.value for i in app.info), 8)
+        self.assertEqual(len(app.header), len(TESTS))
+        self.assertEqual(len(app.code), len(TESTS))
+        self.assertEqual(sum("No smoke runs" in i.value for i in app.info), len(TESTS))
 
     def test_null_selector_manifest_warns_without_aborting_valid_run_rendering(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -58,7 +59,7 @@ class DashboardTests(unittest.TestCase):
             self.assertTrue(any("Manifest selector 0 must be an object" in w.value for w in app.warning))
             self.assertEqual(len(app.selectbox(key="process-capture").options), 1)
             self.assertEqual(app.selectbox(key="process-capture").value, "valid")
-            self.assertEqual(len(app.header), 8)
+            self.assertEqual(len(app.header), len(TESTS))
 
     def test_separate_runs_query_only_selected_run(self):
         with tempfile.TemporaryDirectory() as directory:

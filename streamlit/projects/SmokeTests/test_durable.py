@@ -8,7 +8,7 @@ import tempfile
 import unittest
 
 import duckdb
-from queries import evaluate_run, load_manifests, mark_overlaps, overview, prepare_data, quote
+from queries import TESTS, evaluate_run, load_manifests, mark_overlaps, overview, prepare_data, quote
 
 # Read the live producer rather than copying its schema into analysis tests.
 sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "wintap" / "devtools"))
@@ -115,10 +115,10 @@ class DurableTests(unittest.TestCase):
         runs = [older, newer]
         evaluations = {(r["test"], r["runId"]): evaluate_run(self.con, r, False) for r in runs}
         rows = overview(runs, evaluations)
-        self.assertEqual(len(rows), 8)
-        self.assertEqual(sum(r["state"] == "gray" for r in rows), 7)
+        self.assertEqual(len(rows), len(TESTS))
+        self.assertEqual(sum(r["state"] == "gray" for r in rows), len(TESTS) - 1)
         self.assertEqual(next(r["run_id"] for r in rows if r["test_key"] == "file-capture"), "run-a")
-        self.assertEqual(len(overview(runs, evaluations, history=True)), 9)
+        self.assertEqual(len(overview(runs, evaluations, history=True)), len(TESTS) + 1)
         mark_overlaps(runs, evaluations)
         self.assertTrue(any("Overlapping" in r for r in evaluations[("file-capture", "run-a")]["reasons"]))
 
@@ -156,6 +156,14 @@ class DurableTests(unittest.TestCase):
         mark_overlaps(runs, evaluations)
         self.assertTrue(all(e["state"] == "yellow" for e in evaluations.values()))
 
+    def test_network_endpoint_opt_out_stays_unconfirmed(self):
+        available = self.events("SELECT 'vm-a' Hostname, 42 PID, TIMESTAMP '2026-10-23 00:00:01' EventTime, 'TCP' Protocol, 80 RemotePort, 'TcpIpSend' IpEvent")
+        run = dict(self.run, test="network-capture", endpointChecksRequested=False,
+                   selectors=[dict(domain="network", pids=[42], ports=[80])])
+        result = evaluate_run(self.con, run, available)
+        self.assertEqual("yellow", result["state"])
+        self.assertTrue(any("explicitly not run" in reason for reason in result["reasons"]))
+
     def test_invalid_selector_entries_are_excluded_without_losing_valid_runs(self):
         for selector in (None, 43, "process", [], {}, {"domain": None}, {"domain": "unknown"}):
             with self.subTest(selector=selector):
@@ -166,7 +174,7 @@ class DurableTests(unittest.TestCase):
                 self.assertEqual(len(errors), 1)
                 self.assertIn("bad.json: Manifest selector 0", errors[0])
                 evaluation = evaluate_run(self.con, runs[0], False)
-                self.assertEqual(len(overview(runs, {(self.run["test"], self.run["runId"]): evaluation})), 8)
+                self.assertEqual(len(overview(runs, {(self.run["test"], self.run["runId"]): evaluation})), len(TESTS))
         # Empty selector lists are valid early lifecycle snapshots.
         runs, errors = load_manifests("", [("early.json", json.dumps(dict(self.run, selectors=[])))])
         self.assertEqual(len(runs), 1)

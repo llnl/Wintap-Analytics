@@ -43,7 +43,7 @@ python3 devtools/telemetry_smoke_workload.py \
   --smoke-data-root /var/log/lintap/data
 ```
 
-All eight harnesses share `--smoke-data-root PATH` (the directory **containing**
+All harnesses share `--smoke-data-root PATH` (the directory **containing**
 `raw_sensor`). Setting `WINTAP_DATA_ROOT` also enables export automatically;
 `--no-smoke-parquet` disables it. An interactive shell does not inherit the service's
 environment file: set the root explicitly. Ensure the user has write access to the
@@ -114,13 +114,14 @@ ISO times are normalized; FirstSeen fields are preferred to serializer flush tim
 
 - Named cross-domain Python workload (process/file/TCP/UDP cases).
 - Existing process, file and network capture tests.
+- TCP endpoint normalization, including same-host separate-PID and same-PID sockets.
 - Clone actual-object trace, direct pipeline and packaged acceptance.
 - Runtime capability receipts, matched by exact captureRunId.
 
 Actual-object trace's report is its primary result: that runner does not emit
 sensor parquet. Direct/packaged/startup harnesses are operational tests for an idle
 designated host; heed their command warnings. Network-capture uses external public
-endpoints; use the loopback workload when external traffic is inappropriate.
+endpoints; use the standalone TCP endpoint test when external traffic is inappropriate.
 
 The saved **harness result** is distinct from dashboard **observations**. Coverage
 indicators are not a replacement for original parent/hash/loss assertions. Current
@@ -143,3 +144,16 @@ hash validation and overview severity/filter/navigation. Contract tests read
 for these tests (not for running the app). The sibling Wintap manifest/workload regressions run
 with `python3 devtools/test_smoke_manifest.py -v` and
 `python3 devtools/test_telemetry_smoke_workload.py -v` on Linux.
+## TCP endpoint confirmation
+
+The **TCP endpoint normalization** section runs two same-host cases via an assigned
+non-loopback IPv4 interface: separate client/server processes and a single process
+owning both ends. It independently checks directed source/destination ports against
+normalized local/remote IP-and-port pairs and process hashes. The normal network
+command also enables these checks (now the normal-ETL default).
+
+New sensor parquet must contain `SourcePort` and `DestinationPort`; old data or
+direct-parquet output cannot prove this invariant. Missing provenance stays
+unconfirmed; observed reversals are red. Explicit network-test opt-outs stay yellow.
+The one-process case intentionally has the same IP and `pid_hash` at both ends;
+only the directed socket ports distinguish the roles.

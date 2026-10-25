@@ -1,6 +1,7 @@
 """Read-only, portable-manifest smoke queries. No Streamlit dependency."""
 import datetime as dt
 import hashlib
+import ipaddress
 import json
 from pathlib import Path
 
@@ -9,6 +10,7 @@ TESTS = {
     "process-capture": "Process capture",
     "file-capture": "File capture",
     "network-capture": "Network capture",
+    "network-endpoints": "TCP endpoint normalization",
     "clone-trace": "Clone actual-object trace",
     "clone-pipeline": "Clone direct pipeline",
     "clone-package": "Clone packaged acceptance",
@@ -171,6 +173,7 @@ def prepare_data(connection, root, unlabelled_host=""):
             "pid_hash": col("PidHash"), "activity": f"lower({activity})", "process_name": col("ProcessName", "Process_ProcessName"),
             "command_line": col("CommandLine", "Process_CommandLine"), "path": file_path,
             "protocol": inferred_protocol, "local_port": local_port, "remote_port": remote_port,
+            "source_port": col("SourcePort", cast="INTEGER"), "destination_port": col("DestinationPort", cast="INTEGER"),
             "local_address": col("LocalIpAddr", "TcpConnection_SourceAddress", "UdpPacket_SourceAddress"),
             "remote_address": col("RemoteIpAddr", "TcpConnection_DestinationAddress", "UdpPacket_DestinationAddress"),
             "event_count": f"COALESCE({col('EventCount', cast='BIGINT')}, 1)",
@@ -289,7 +292,35 @@ def evaluate_case(connection, run, selector, available, padding=15):
             result["receipts"] = [json.loads(r[0]) for r in receipts]
             result["capability_gaps"] = [f"{name}: {sensor.get('status', 'unknown')}" for receipt in result["receipts"]
                                          for name, sensor in receipt.get("sensors", {}).items()
-                                         if sensor.get("status") != "running"]
+                                          if sensor.get("status") != "running"]
+        if selector["domain"] == "network" and selector.get("endpointExpectations"):
+            identities = {}
+            for end in selector["endpointExpectations"]:
+                for activity in ("tcpipsend", "tcpiprecv"):
+                    inbound = activity == "tcpiprecv"
+                    src = int(end["remotePort"] if inbound else end["localPort"])
+                    dest = int(end["localPort"] if inbound else end["remotePort"])
+                    match = (f"pid={int(end['pid'])} AND lower(replace(activity,'/',''))={quote(activity)} "
+                             f"AND source_port={src} AND destination_port={dest}")
+                    local_ip = str(int(ipaddress.IPv4Address(end["localIp"])))
+                    remote_ip = str(int(ipaddress.IPv4Address(end["remoteIp"])))
+                    correct = (f"local_port={int(end['localPort'])} AND remote_port={int(end['remotePort'])} "
+                               f"AND local_address IN ({quote(local_ip)}, {quote(end['localIp'])}) "
+                               f"AND remote_address IN ({quote(remote_ip)}, {quote(end['remoteIp'])})")
+                    total, wrong = connection.execute(f"SELECT count(*), count(*) FILTER(WHERE NOT COALESCE(({correct}), false)) FROM ({sql}) WHERE {match}").fetchone()
+                    label = f"{end['role']}/{activity}: host-relative endpoint + directed provenance"
+                    result["checks"].append(dict(expectation=label, observed=total > 0))
+                    if wrong:
+                        result["violations"].append(label + ": reversed/incorrect endpoint")
+                    hashes = {row[0] for row in connection.execute(f"SELECT DISTINCT pid_hash FROM ({sql}) WHERE {match}").fetchall()}
+                    if any(not h or h.lower() in ("fixmepid", "unknown", "0") for h in hashes):
+                        result["violations"].append(label + ": missing process identity")
+                    identities.setdefault(int(end["pid"]), set()).update(h for h in hashes if h)
+            if any(len(values) > 1 for values in identities.values()):
+                result["violations"].append("Inconsistent pid_hash within one process")
+            nonempty = [values for values in identities.values() if values]
+            if len(nonempty) == 2 and len(set.union(*nonempty)) < 2:
+                result["violations"].append("Separate socket processes share pid_hash")
         return result
     except Exception as error:
         result["error"] = str(error)
@@ -309,6 +340,8 @@ def evaluate_run(connection, run, available, padding=15):
         reasons.append("Run unfinished or outcome unknown")
     if run.get("durableExportError"):
         reasons.append("Evidence export encountered an error")
+    if run["test"] == "network-capture" and run.get("endpointChecksRequested") is False:
+        reasons.append("Host-relative TCP endpoint confirmation explicitly not run")
     saved = run.get("results") or {}
     skipped = any(s.get("skips") for s in run["selectors"]) or any(
         c.get("status") == "skipped" for c in saved.get("cases", []) if isinstance(c, dict))

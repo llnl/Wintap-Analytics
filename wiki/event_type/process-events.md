@@ -27,6 +27,13 @@ tags: [process-events, telemetry-semantics, wintap-api, etw]
 
 # Process Events
 
+Foundational identity reference: [[wiki/concept/telemetry-identity-and-endpoint-orientation]]
+distinguishes `pid_hash` from reusable OS PID, collector `agent_id`, and network
+`conn_id`. The clarified contract excludes agent UUID from process identity and
+requires one formula definition: [[wiki/decision/process-hash-inputs-and-single-definition]].
+The `pid-v2` source patch implements this; installed packages and historical
+recordings remain unmigrated. Verification: [[wiki/work/host-process-identity-patch/verification]].
+
 ## Linux clone/exec boundary (validated 2026-10-22)
 
 Current Debian/RPM package templates enable Clone by default, retaining explicit
@@ -65,7 +72,7 @@ As of the improve-windows-process-collection feature (wintap `develop-dave`, com
 Real-time lifecycle comes from classic NT Kernel Logger ProcessStart/ProcessStop events on the shared kernel session (`Keywords.Process`), with `WindowsProcessSensor` started first by `WindowsSubscriptionManager` because non-process attribution depends on it.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/infrastructure/WindowsSubscriptionManager.cs §Start -->
 
-The **ETW ProcessStart timestamp is canonical** for live Start create time and therefore for `PidHash` — no per-Start `OpenProcess`/`GetProcessTimes` handle lookup (Architect decision 2026-08-17; ETW has been Wintap's process-start ground truth for over a decade). Stops resolve identity through `ProcessResolver` (the sole hot-path identity store — no sensor-owned PID map); resolver misses are counted and fall back to hash-from-stop-time.
+The **ETW ProcessStart timestamp is canonical** for live Start create time and therefore for `PidHash` — no per-Start `OpenProcess`/`GetProcessTimes` handle lookup (Architect decision 2026-08-17; ETW has been Wintap's process-start ground truth for over a decade). Stops resolve identity through `ProcessResolver` (the sole hot-path identity store — no sensor-owned PID map); resolver misses are counted. The `pid-v2` patch replaces the earlier hash-from-stop-time fallback with the explicit unknown identity: Stop time is not process-start time.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §EmitStart; §EmitStop -->
 
 ### Refresh — live snapshot with dedup

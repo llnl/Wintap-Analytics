@@ -6,6 +6,25 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+**Telemetry-quality retrospective:**
+[[wiki/work/wintap-telemetry-identity-and-data-quality/brief]] — the expanded scope
+beyond .NET10: identity,network semantics,downstream precision/counters and delivery.
+Read [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]] for concise
+proof and limits;[[wiki/work/wintap-telemetry-identity-and-data-quality/dev_handoff]]
+for planned package qualification and multi-day real-host collection. Scoped Linux
+delivery is verified,not production readiness or historical-loss closure. Detailed
+audit payloads are uncommitted;archive provenance is retained,not loaded by default.
+
+Canonical context:
+[[wiki/concept/wintap-ecosystem-glossary]],
+[[wiki/concept/telemetry-identity-and-endpoint-orientation]],
+[[wiki/concept/collector-process-telemetry-and-collection-boundaries]],
+[[wiki/concept/filetime-derived-timestamp-precision]].
+Open data defects:[[wiki/diagnostic/duplicate-agent-id-and-os-family]].
+Historical audit:[[wiki/diagnostic/sample-db-runtime-attribution-audit]].
+Research proposals:[[wiki/work/host-process-identity-patch/investigation_mitigation_plan]],
+[[wiki/work/host-process-identity-patch/grouped-retry-design-notes]].
+
 Clone follow-up: [[wiki/work/improve-lintap-data-quality/clone-validation-plan]];
 [[wiki/work/improve-lintap-data-quality/clone-validation-results]] (Ubuntu arm64
 thread/clone3 fixes, duplicate-Start evidence, resolver-ordering regressions).
@@ -58,6 +77,10 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/decision/registry-provider-strategy]] | high | Accepted (2026-08-25, session-handle sub-decision OPEN): manifest-only Windows registry collection via an undocumented Microsoft-Windows-Kernel-Registry capture mode (4-byte 0xFFFFFFFF EVENT_FILTER_DESCRIPTOR at EnableTraceEx2) — standalone mechanism record with the probe matrix, sticky-global-state finding, KCB-correlation negative result, and framed session-handle options. |
 ## Concept
 
+Process hash contract: [[wiki/decision/process-hash-inputs-and-single-definition]]
+— hostname/PID/canonical-start only, no agent UUID, one formula; `pid-v2` source
+patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verification]].
+
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/concept/windows-attribution-and-file-path-correctness-contracts]] | low | Sanitized historical correctness contracts: attribution metrics, stable identity, Windows routing/maintenance boundaries, timestamp regressions, validation gaps, and approved FILE-path design; current implementation not reverified. |
@@ -67,6 +90,7 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/concept/velocity-metric]] | high | The approved Velocity definition plus the wiki presentation convention: results state estimated multiples of one solo developer's pace, an “about X×–Y× faster” plausible range, and confidence with a direct reason; technical formula, Feature/Portfolio views, guardrails, and parallelism dividend remain unchanged. |
 | [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 | [[wiki/concept/lintap-cpu-unit-conventions]] | high | Defines raw pidstat CPU as core-summed percent, normalized DBT aliases and dashboard labels, host normalization formula, and raw-schema compatibility rule. |
+| [[wiki/concept/telemetry-identity-and-endpoint-orientation]] | high | Foundational agent_id, pid_hash and canonical five-tuple conn_id scopes; identity versus direction, socket roles and connection lifetimes. |
 ## Component
 
 | Page | Confidence | Summary |
@@ -130,10 +154,30 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/diagnostic/windows-sensor-sweep-queue]] | high | Consolidated defect/finding queue the follow-on Windows sensor sweep feature opens from (19 items across shc and wrc; item 6 resolved by wrc-06): WintapLogger sync-context capture and live-log truncation, Env.SetDataRoot fixture guidance, the health check's first live catch, dead Serializer.Listen and WintapETL handlers, WintapAlert self-PID drop, TranslateTransientPath authority bug, QueryDosDevice consolidation, MemoryMap reroute question, registry attribution burstiness + stop_without_start growth, the Read-event data gap, capture-flag unknowns, and preserved registry warts. |
 | [[wiki/diagnostic/windows-attribution-validation-executive-summary]] | low | Sanitized historical summary of 46 developer-archive files: architecture, reported tests and attribution metrics, improved File unresolved rates, unresolved Registry/validator reliability, and evidence limitations; original source references omitted at Architect request ahead of archive deletion. |
 | [[wiki/diagnostic/linux-tcp-investigation-2026-06]] | high | Historical June Linux TCP investigation with October source and Ubuntu 24.04 live validation: attachment/PID/protocol/rundown work is present; TCP AgentId, state template, and watchdog defects are resolved; no resolver negative cache was justified. |
+| [[wiki/diagnostic/duplicate-agent-id-and-os-family]] | medium | Two hosts share a raw UUID also present in initialized local state; Linux metadata mislabeled Windows by DBT/legacy SQL. Evidence and proposed remediation/regression gates. |
 ## Work
+
+Approved DuckDB1.5 maintenance: [[wiki/work/duckdb-1-5-maintenance/implementation_plan]],
+[[wiki/work/duckdb-1-5-maintenance/verification]] — official .NET wrapper1.5.6.1,
+Wintappy/Lintap Python engine1.5.6 complete;250native tests,15pidstat,27UI and
+fullDBT83nodes pass. Existing config failure/venv recreation disclosed; no deployment.
+
+DuckDB 2 upgrade planning: [[wiki/work/duckdb-2-upgrade/brief]],
+[[wiki/work/duckdb-2-upgrade/references]],
+[[wiki/work/duckdb-2-upgrade/implementation_plan]] — sensor, pidstat, canonical DBT
+and current analysis only; **on hold pending official .NET 2.0 support**.
+Latest-1.x maintenance completed separately; no old notebook/SQL repair or
+2.0 implementation authorized.
+
+Identity patch: [[wiki/work/host-process-identity-patch/implementation_plan]],
+[[wiki/work/host-process-identity-patch/verification]] — source implemented and
+isolated restart/endpoint acceptance passed; installed hosts/history unchanged.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/work/net10-dependency-prune/verification]] | medium | .NET 10 Debian arm64 package: 30-minute soak passes 20 runs/5,000 unique file paths with zero restarts or observed serializer drops; Mac reads all 24 runs; named server-network gaps remain yellow. |
+| [[wiki/work/network-endpoint-normalization/implementation_plan]] | high | Shared TCP endpoint/name fix; done checklist and pending package/Windows-live/historical repair gates. |
+| [[wiki/work/network-endpoint-normalization/verification]] | high | Enum-based normalization and compatible DBT/legacy counters; 28 .NET + 74 SQL regressions, same-host separate/same-PID live proof and independent green Mac confirmation. |
 | [[wiki/work/improve-lintap-data-quality/brief]] | high | CLOSED 2026-10-22: adaptive wakeups, dedicated FileSerializer draining, coordinated shutdown, and kernel-time network attribution passed two-hour source and fresh packaged-arm64 gates. |
 | [[wiki/work/improve-lintap-data-quality/diagram-glossary]] | high | Companion glossary for every `[A1–A13]`, `[Q1–Q5]`, and `[S1–S18]` label in the Linux eBPF architecture and shutdown diagrams, with implementation, operations, and evidence references. |
 | [[wiki/work/lintap-process-creation-validation/index]] | medium | Research thread for comparing process creation accuracy across Lintap, Tetragon, Tracee, and Sysdig and building cross-sensor validation workloads. |

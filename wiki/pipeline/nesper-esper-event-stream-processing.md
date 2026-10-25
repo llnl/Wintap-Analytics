@@ -24,6 +24,13 @@ tags: [esper, nesper, event-stream-processing, pipeline]
 Esper is Wintap's runtime event-stream processing layer. `EventChannel` initializes an Esper configuration, registers `WintapMessage` as an event type, creates the default runtime, compiles/deploys EPL, and sends normalized events into Esper as `WintapMessage` beans.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/EventChannel.cs §ESPER INFRASTRUCTURE LIFECYCLE; §Send -->
 
+The 2026-10-24 candidate permits Linux collector self-PID **Process** records into
+normal routing (including startup Refresh), while other self-event types stay
+filtered. Windows/macOS self filters are unchanged. Ordinary collector visibility
+is distinct from recording self-generated I/O or measuring capture bounds:
+[[wiki/concept/collector-process-telemetry-and-collection-boundaries]].
+<!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/CollectorEventPolicy.cs §ShouldSuppress; ../wintap/wintap/core/infrastructure/EventChannel.cs §SendCore -->
+
 The 2026-08-30 subscriber-route and nested-enum changes are owned by sibling
 `../wintap`; their durable commit anchor is pending as
 `c03d731`. The live source paths above remain authoritative

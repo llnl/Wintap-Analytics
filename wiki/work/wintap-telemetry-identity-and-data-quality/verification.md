@@ -1,0 +1,89 @@
+---
+title: "Verification summary: telemetry identity and end-to-end data quality"
+type: diagnostic
+confidence: high
+grounded_by:
+  - wiki/work/wintap-telemetry-identity-and-data-quality/evidence.md
+  - ../wintap/tests/Wintap.Tests/IdentityContractTests.cs
+  - ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs
+  - ../Wintappy/tests/test_filetime_precision_sql.py
+policy: agent-editable
+last_validated: 2026-10-24
+repo_scope: cross-repo
+implementation_area: data-pipeline
+event_domain: cross-domain
+audience: mixed
+status: reviewed
+source_paths: ../wintap/tests; ../Wintappy/tests; wiki/work
+tags: [feature-work, retrospective, verification, proof, limits]
+---
+
+# Outcome
+
+**Scoped identity/data-quality improvements and observed disposable-Linux delivery
+are verified. Release/package qualification and multi-day real-host acceptance are
+not completed.** Later diagnostic packages were private managed derivatives,not
+clean native/eBPF rebuilds or installed release acceptance.
+
+## Meaningful proof
+
+| Area | Result and significance |
+|---|---|
+| Runtime/dependencies | Installed .NET10 Ubuntu arm64 smoke/30-minute baseline passed. DuckDB official .NET wrapper1.5.6.1/native1.5.6 and Python1.5.6 qualified; DBT adapter/core retained. DuckDB2.0 held. |
+| Identity/lifecycle | Independent host,birth,restart,parent and negative controls verify the canonical formula and host-bound AgentIds. Missing evidence remains unknown; Stop/Refresh do not fabricate Start. Collector telemetry is visible without self-I/O feedback. |
+| TCP semantics | Source-linked regressions and live non-loopback bidirectional tests cover separate client/server processes and one process owning both endpoints. Local/remote orientation,identity and directed-port provenance pass. |
+| Historical SQL audit |98-check audit quantified attribution/aggregation failures; corrected projections restored728,701file events and removed757extra summary rows. Audit execution is not a clean historical QA verdict or database repair. |
+| Timestamp precision |209 focused SQL tests;12 fresh full DBT builds restore12/12collector births and verify2,900process lifetimes.216common tables preserve protected keys,counters and multiplicities. |
+| Startup/shutdown | Real production EPL controls prove pre-registration loss and queue-before-final-window stranding. Exact live receipts prove post-completed-drain acceptance. Bounded experimental corrections then pass fresh output joins;267native tests/Linux build qualify the final managed candidate. |
+| Pressure envelope |24 accepted off/on controls across both hosts and32/128/256-child interior/tail workloads conserve13,312paths/93,184events and3,328child lifetimes/TCPendpoint pairs.24fresh full DBT builds pass births/collector/protected counters. |
+| Observer/preservation |12complete pressure traces,zero refusal/error/discard/truncation;exact observed-stage/raw joins pass.28archives hash-verified,262tested sources match;installed DLL/AgentIds/historical DB preserved. Final work-folder suite103passed,bothrepo diff checks pass. |
+
+## Cause proof,not just passing tests
+
+- **Identity:** missing birth previously allowed timestamp-derived hashes. Canonical
+  lifecycle evidence/shared formula and explicit unknowns remove that substitution;
+  complete missing-birth coverage is not guaranteed.
+- **Startup:** inputs before EPL registration are not replayed. Experimental readiness
+  makes collector admission follow successful registration/construction.
+- **Shutdown:** serializers could finish draining before a final window callback
+  accepted more rows. Terminal window execution and callback quiescence precede drains.
+- **Pressure oracle:**44failed endpoint pairs/152apparent missing observations were
+  all present in raw,excluded only by a stimulus+2s receipt-time predicate. Production
+  TCP uses `ReceiveTime`; exact capture/PID/port/identity selection and fresh repeats
+  correct the oracle. Original failure remains preserved.
+
+## Limits and preserved failures
+
+- Sampled retry peak348/1024 and zero pressure-child refusals establish a tested burst
+  envelope,not actual saturation,universal sizing or performance equivalence.
+- Earlier AXON file/TCP deficits and CALDERA capacity-refusal/unknown-identity captures
+  remain unexplained in full. Later passes do not reconstruct their missing fate.
+- Failed trace-budget/shared-root controls,incomplete historical shutdown cutoffs and
+  failed build/deadline attempts remain evidence,not silently converted to passes.
+- Metadata/executable file-ID nondeterminism,Linux `os_family='windows'`,the existing
+  DATASET configuration test failure and broad sensor/byte coverage remain separate.
+- The previously disclosed MacLintap virtual-environment recreation is not claimed
+  preserved;the exact earlier environment cannot be reconstructed.
+- No complete pre-callback kernel,fsync/upload,custom-EPL/service-deadline,Windows live,
+  installed final-package,production rollout or historical migration acceptance.
+
+Final disposable services are inactive/PID0/restarts0;lintap-dev remains active/PID701.
+No tests,captures or builds were launched for this documentation condensation.
+
+## Evidence access
+
+The concise committed record retains conclusions and acceptance limits. Per-row JSON,
+round-by-round audits and original full documents are preserved outside the commit:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/evidence]]. Consult that archive
+only when reproducing a specific claim; do not load the full history for normal work.
+
+Documentation closeout checks:26workstream/umbrella pages pass required-frontmatter,
+source-path and wikilink validation;124local audit JSON files are confirmed Git-ignored.
+`python -m pytest wiki/work/host-process-identity-patch -q`:103passed.
+`git diff --check`:passed. Existing harnesses/tests remain unchanged.
+
+Feature commit preflight:209focused Wintappy SQL tests pass;126Analytics harness/query/
+durable tests pass plus7subtests;Wintap endpoint/event-name suites pass10+7tests.
+All four repo diff checks pass. Dashboard AppTest collection is blocked in the selected
+Wintappy environment by missing `streamlit.testing`;no package/environment change
+was made. Earlier live/native qualifications above were not rerun for the commit.

@@ -1,0 +1,53 @@
+---
+title: "Reconstructed implementation: telemetry identity and data quality"
+type: concept
+confidence: high
+grounded_by:
+  - wiki/work/wintap-telemetry-identity-and-data-quality/verification.md
+  - wiki/work/wintap-telemetry-identity-and-data-quality/evidence.md
+policy: agent-editable
+last_validated: 2026-10-24
+repo_scope: cross-repo
+implementation_area: data-pipeline
+event_domain: cross-domain
+audience: developer
+status: reviewed
+source_paths: ../wintap; ../Wintappy; ../Lintap; wiki/work
+tags: [feature-work, retrospective, implementation, closeout]
+---
+
+# Reconstructed workflow
+
+This summarizes the actual progression; it is not a pre-implementation plan.
+Completed items mean scoped implementation/verification,not release certification.
+
+- [x] Establish the .NET10 package baseline and reproduce real-data QA defects.
+- [x] Centralize process identity and persist host-unique AgentIds.
+- [x] Correct shared TCP endpoint orientation and downstream activity comparisons.
+- [x] Fix lifetime summary grouping/counters; independently audit the supplied data
+  without modifying the historical database.
+- [x] Acquire canonical lifecycle inputs and reject callback/exit-time identities;
+  qualify bounded recovery while preserving missing-birth negative controls.
+- [x] Include collector Process/Refresh telemetry without self-I/O feedback or
+  synthetic lifecycle observations; separate collection edges from lifetime bounds.
+- [x] Upgrade supported DuckDB1.5 dependencies and correct integer timestamp precision;
+  verify fresh canonical DBT output and protected-field conservation.
+- [x] Add bounded provenance through admission,registration,projection and final output.
+- [x] Prove startup subscription loss; qualify experimental readiness ordering.
+- [x] Prove late post-drain acceptance; qualify terminal-window/callback shutdown ordering.
+- [x] Repeat independent interior and shutdown-tail pressure controls through256 children.
+  Preserve and fix the demonstrated pressure-oracle time predicate,not the sensor.
+- [x] Condense results,retain failures/evidence provenance,and hand off the next phase.
+
+## Deferred to the user's next phase
+
+- [ ] Clean native/eBPF and self-contained package qualification on selected hosts.
+- [ ] Multi-day real-host collection with declared resource/deadline and coverage gates.
+- [ ] Review whether experimental controls remain opt-in or become supported behavior.
+- [ ] Windows live regression if cross-platform release acceptance is intended.
+- [x] Scoped diff/commit review on dedicated feature branches; preserve unrelated work
+  and avoid generated audit payloads. Push/PR publication is a separate operation.
+
+Actual saturation,historical failure reconstruction,kernel/durable fate and metadata/
+OS-label defects remain explicit follow-ups,not hidden unchecked delivery milestones.
+No additional execution or rollout is authorized by this retrospective.
