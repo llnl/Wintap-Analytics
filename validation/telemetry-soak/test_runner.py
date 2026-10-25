@@ -72,18 +72,21 @@ else:
         result = self.run_runner()
         self.assertEqual(result.returncode, 0, result.stderr)
         rows = self.statuses()
-        self.assertEqual(len(rows), 3)
+        self.assertEqual(len(rows), 6)
         self.assertIn("\tnamed\t0\trecorded", rows[1])
-        self.assertIn("\tendpoints\t0\trecorded", rows[2])
+        self.assertIn("\tprocess\t0\trecorded", rows[2])
+        self.assertIn("\tfile\t0\trecorded", rows[3])
+        self.assertIn("\tclone\t0\trecorded", rows[4])
+        self.assertIn("\tendpoints\t0\trecorded", rows[5])
         self.assertEqual(next((self.root / "evidence").glob("session.*")).stat().st_mode & 0o777, 0o700)
 
     def test_failure_continues_across_rounds(self):
         result = self.run_runner(["--rounds", "2", "--interval", "1"], FAIL_NAMED="1")
         self.assertEqual(result.returncode, 0, result.stderr)
         rows = self.statuses()
-        self.assertEqual(len(rows), 5)
+        self.assertEqual(len(rows), 11)
         self.assertIn("\tnamed\t1\t", rows[1])
-        self.assertIn("\tendpoints\t0\t", rows[4])
+        self.assertIn("\tendpoints\t0\t", rows[10])
 
     def test_export_error_is_not_recorded_success(self):
         result = self.run_runner(EXPORT_FAIL="1")
@@ -156,7 +159,7 @@ def read_rows(*args):
         manifest = json.loads(output.read_text())
         self.assertTrue(manifest["stimulusOnly"])
         self.assertTrue(manifest["results"]["validationDeferred"])
-        self.assertEqual(manifest["test"], "network-endpoints")
+        self.assertEqual(manifest["test"], "canary-network-endpoints")
         self.assertEqual(len(manifest["selectors"]), 1)
 
 

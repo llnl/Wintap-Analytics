@@ -14,12 +14,12 @@ def main():
     from smoke_manifest import record, smoke_run
     from network_endpoint_smoke_test import generate_cases, host_address
 
-    @smoke_run("network-endpoints")
+    @smoke_run("canary-network-endpoints")
     def stimulus():
         parser = argparse.ArgumentParser(description=__doc__)
         parser.add_argument("--host-ip")
         options = parser.parse_args()
-        record(stimulusOnly=True)
+        record(stimulusOnly=True, suiteKind="canary")
         selectors = generate_cases(host_address(options.host_ip))
         record(selectors=selectors, results={"validationDeferred": True})
         print("Generated separate-process and same-process TCP ends; capture not validated")

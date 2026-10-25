@@ -8,9 +8,9 @@ python3 -m streamlit run streamlit/projects/SmokeTests/main.py
 ```
 
 This standalone app does not require Wintappy, DBT or a writable DuckDB database.
-It reads finalized raw parquet with DuckDB in memory. Each section has a test-run
-selector, run command, saved result, tailored SQL, activity/event-count summary,
-coverage indicators and matching rows. Empty/missing tests and data are normal.
+It reads finalized raw parquet with DuckDB in memory. Streamlit pages separate
+Overview, Canary Tests and Dev-time Tests. Test pages provide run selectors,
+saved evidence and explicit selected-run validation. Empty/missing data is normal.
 It **never executes tests or changes collector configuration**.
 
 ## Collection host and analysis host can differ
@@ -127,8 +127,9 @@ to `dayPK=` prefixes, inclusive 1–31 days. Evidence partitions reflect publica
 time, so include adjacent days for midnight runs. Objects uploaded late may require
 an older partition window; the window is not a transport-completeness watermark.
 Listing refreshes on every rerun/Refresh click. File caps fail closed, never silently
-truncate a passing result. Large windows still require per-file schema reads and
-can be slow; start with one or two days.
+truncate a passing result. Overview reads only evidence, not telemetry schemas/events.
+Explicit validation still requires per-file telemetry schema reads and a selected
+observation scan; large windows can be slow, so start with one or two days.
 
 Both `raw_smoke_test` and telemetry use the **same configured connection/source**;
 manifest hashes, revision conflicts, hostname/run selectors and missing-data triage
@@ -156,10 +157,32 @@ test hostname, UTC window and PID/path/ports. Hostnames are case-normalized.
 Repeated runs are never combined merely because their process names match. If
 same-revision manifest copies disagree, the app warns and excludes that run.
 
-## At-a-glance triage
+## Pages and lazy validation
 
-The host-by-test overview has status counts, host filters, history/attention-only
-filters and links/run-selection buttons to jump to the interesting section:
+- **Overview:** latest manifest per host/test (optional history), saved generator or
+  harness outcome and coverage inventory. Capture is **not evaluated**; saved success
+  never turns the overview green. No telemetry metadata/event scans or all-run
+  evaluation. S3 listings/evidence reads still occur on each rerun.
+- **Canary Tests:** recurring non-interfering stimuli, including legacy stimulus-only
+  named/endpoint evidence. Choose a family/run, inspect selectors/skips, then click
+  **Validate selected run**. New `canary-*` suites appear separately; older two-family
+  runs do not prove the expanded suites ran.
+- **Dev-time Tests:** manually executed capture, tracer, pipeline, package and startup
+  qualification. Some change sensor/service state or use public networks; do not run
+  these as unattended canaries. Commands are never executed by the dashboard.
+
+Only an explicit validation reads telemetry. Host/family/run selection happens first.
+The union of selected-run PID/time/path/port/host matches is read once into a temporary
+in-memory table; existing checks/details then reuse it. Overlapping selectors do not
+duplicate rows. The full accepted working set is checked, not the displayed-row limit.
+Budget is **100,000 matching rows / 256 MB DuckDB memory**, with disk spill disabled;
+exhaustion reports validation unavailable, never accepts a truncated PASS. These are
+memory/result bounds, not remote byte or wall-clock limits. There is no persistent
+cache, cross-rerun result reuse or automatic validation loop: a rerun requires another
+explicit validation. Native timestamp/partition pruning remains a follow-up; the
+normalized predicate remains authoritative and no uncertain candidates are dropped.
+
+Selected-run triage:
 
 - 🔴 Harness/workload failure or observed thread/identity/parent violation.
 - 🟡 Pending/incomplete data, missing coverage, skipped cases, ambiguous overlaps,
@@ -168,12 +191,11 @@ filters and links/run-selection buttons to jump to the interesting section:
   trace green is scoped to its saved trace report, not pipeline collection.
 - ⚪ No run supplied. Entirely missing hosts cannot be inferred from absent evidence.
 
-Harness outcome and observed coverage are separate columns. Missing data stays
+Harness outcome and observed coverage remain separate. Missing data stays
 yellow—normal transfer latency is accepted, and elapsed time is not a delivery
 watermark. Green is not full platform certification. Thread absence needs positive
 companion process capture; overlapping same-host runs sharing PID/time selectors
-are conservatively ambiguous. The overview evaluates aggregate queries once per
-refresh; detail events are fetched with a bounded display limit, not all rows.
+are conservatively ambiguous, including overlaps with hidden/unevaluated runs.
 
 Normal ETL has Hostname. For **unlabelled direct-parquet**, select a root containing
 only that host's unlabelled data and explicitly enter the *test* hostname. Without
@@ -186,6 +208,9 @@ ISO times are normalized; FirstSeen fields are preferred to serializer flush tim
 
 ## Tests covered
 
+- Canary cross-domain, process lifecycle/short-lived Stop, eight-file activity,
+  native clone (optional prebuilt helper) and same-host TCP endpoints. See
+  `validation/telemetry-soak/README.md` for the independent runner and scope limits.
 - Named cross-domain Python workload (process/file/TCP/UDP cases).
 - Existing process, file and network capture tests.
 - TCP endpoint normalization, including same-host separate-PID and same-PID sockets.
@@ -202,7 +227,8 @@ indicators are not a replacement for original parent/hash/loss assertions. Curre
 Linux mmap folds into Read; rename/truncate have no dedicated activity. Normal ETL
 aggregates events: row count differs from EventCount, and Starts differ from distinct
 processes. Missing data is never displayed as PASS. DBT retention/joins, continuous
-health and certification across distros remain out of scope.
+health certification and complete distro qualification remain out of scope. Canary
+observations are not original dev-time harness re-validation or historical-loss closure.
 
 ## Tests
 

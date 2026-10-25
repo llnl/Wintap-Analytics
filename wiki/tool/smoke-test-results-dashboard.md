@@ -9,6 +9,7 @@ grounded_by:
   - ../wintap/devtools/smoke_manifest.py
   - ../wintap/devtools/network_endpoint_smoke_test.py
   - streamlit/projects/SmokeTests/s3_source.py
+  - streamlit/projects/SmokeTests/page_views.py
 policy: agent-editable
 last_validated: 2026-10-25
 repo_scope: cross-repo
@@ -29,13 +30,22 @@ python3 -m pip install -r streamlit/projects/SmokeTests/requirements.txt
 python3 -m streamlit run streamlit/projects/SmokeTests/main.py
 ```
 
-Separate sections cover the named cross-domain workload, process/file/network
-capture validators, Clone trace/direct/package harnesses and runtime-capability
-checks, plus TCP endpoint normalization. Each offers a run command, run selector, saved result, tailored SQL,
-coverage indicators and raw rows. Missing runs/data are expected, never PASS.
+Streamlit pages separate **Overview**, **Canary Tests** and **Dev-time Tests**.
+Overview reads manifests only, without telemetry metadata/scans. Test pages offer
+family/run selection, saved selectors/reports and explicit selected-run validation
+with tailored SQL, coverage and rows. Missing runs/data are expected, never PASS.
 Read-only in-memory DuckDB queries do not start tests, stop collectors, run DBT
 or modify data. Analytics owns the app; Wintap owns scripts/manifest production.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/main.py §main -->
+
+Canaries are bounded stimuli against the already-running collector, not unattended
+dev-time acceptance. Analytics owns the adapters/runner; Wintap owns the reused
+generators and shared manifest publisher. New canary test IDs cover cross-domain,
+process lifecycle/short-lived children, eight-file activity, optional native clone
+and same-host TCP endpoints. Legacy `stimulusOnly` runs route to Canary Tests but
+do not establish new suite coverage. Dev-time capture/tracer/package/startup tests
+stay manual because some manage collectors, alter settings or use public networks.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/page_views.py §is_canary, test_page; validation/telemetry-soak/canary-stimulus.py; validation/telemetry-soak/run-smoke-soak.sh -->
 
 ## Portable test-host evidence
 
@@ -115,9 +125,15 @@ row counts are not EventCount or distinct-process counts. Consult
 [[wiki/schema/runtime-capability-receipt]] for hook/filter context. Legacy run
 inference and DBT outputs are intentionally unsupported.
 
-The top-level host-by-test overview defaults to latest runs with optional history,
-host and attention filters, status counts and section/run navigation. Red means
-harness/workload failure or observed thread/identity/parent violation; yellow means
+The manifest overview defaults to latest runs per host/test with optional history
+and host filters; saved failure is red, otherwise capture remains not-evaluated/yellow.
+It never infers green from a saved generator/harness success. Canary inventory marks
+unrecorded new suites explicitly. **Validate selected run** is the only telemetry
+scan trigger; navigation/selectors do not evaluate history automatically.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/page_views.py §manifest_rows, overview_page, test_page -->
+
+Selected-run red means harness/workload failure or observed thread/identity/parent
+violation; yellow means
 pending/incomplete/limited/ambiguous evidence, skipped tests or stimulus-only success;
 green is a scoped passing harness plus required selected observations (trace report
 only for actual-object trace); gray means no run supplied. Thread absence requires
@@ -125,8 +141,18 @@ positive companion process capture. Elapsed time is not a transfer watermark;
 missing rows remain yellow. Overlapping same-host runs sharing PID/time selectors
 are conservatively ambiguous, but an existing red failure/violation remains red;
 ambiguity never downgrades it to yellow. An entirely missing host cannot be inferred from
-absent manifests. Aggregate checks cover all matching events; detail reads are bounded.
-<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §evaluate_case, evaluate_run, mark_overlaps, overview; streamlit/projects/SmokeTests/main.py §main -->
+absent manifests. Attribution checks include hidden/unevaluated run intervals.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §evaluate_case, evaluate_run, mark_overlaps -->
+
+Validation normalizes the selected source's candidate files, scans the union of
+the selected run's exact selector predicates once into a temporary in-memory table,
+then reuses it for checks/details. Overlapping selectors do not duplicate rows.
+Row budget is 100,000 matching observations; DuckDB memory is 256 MB with disk spill
+disabled. Budget/read failure is unavailable validation, not a truncated PASS.
+These bounds do not cap network bytes or wall-clock duration. No disk or cross-rerun
+result cache is introduced; each validation is explicit and fresh. Native timestamp
+pushdown/partition pruning remains a follow-up: uncertain files are not discarded.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/page_views.py §materialize_run, test_page -->
 
 Workload: [[wiki/tool/named-telemetry-smoke-workload]].
 Verification: [[wiki/work/smoke-test-dashboard/verification]].

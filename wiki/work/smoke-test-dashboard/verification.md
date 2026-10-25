@@ -9,6 +9,9 @@ grounded_by:
   - ../wintap/devtools/test_telemetry_smoke_workload.py
   - streamlit/projects/SmokeTests/test_s3_source.py
   - streamlit/projects/SmokeTests/test_s3_http.py
+  - streamlit/projects/SmokeTests/test_pages.py
+  - validation/telemetry-soak/test_canaries.py
+  - validation/telemetry-soak/test_runner.py
 policy: agent-editable
 last_validated: 2026-10-25
 repo_scope: cross-repo
@@ -21,6 +24,47 @@ tags: [streamlit, smoke-tests, verification, cross-host]
 ---
 
 # Verification: smoke-test results dashboard
+
+## Canary and multipage extension — 2026-10-25
+
+User narrowed recurring tests to non-interfering canaries and authorized the app
+update with Overview, Canary Tests and Dev-time Tests pages. Added real Streamlit
+navigation, manifest-only overview and explicit selected-run validation. Only the
+selected run is evaluated; full-source schemas are read on validation, then exact
+selector matches are materialized once and all checks/details reuse memory. Limits
+are 100,000 matched rows / 256 MB DuckDB memory, spill disabled, fail closed. No
+native timestamp/partition pruning or cross-rerun result cache claimed. Hidden run
+intervals still participate in overlap warnings; saved failures and stimulus-only
+semantics remain conservative. Old stimulus-only manifests route to Canary Tests.
+
+Analytics runner now emits five separately named canary families via safe generator
+adapters. Process lifecycle checks require Stop per selected PID; file stimulus is
+eight paths; native helper is optional/one round with explicit skips. No collector,
+uploader, service/security setting, sibling code or running host workload changed.
+No private S3 config/profile, host identifiers or live data were persisted.
+
+Commands/results in the existing isolated temporary dependency environment:
+
+- `SMOKE_S3_HTTP_TEST=1 python -B -m unittest discover -s
+  streamlit/projects/SmokeTests -p 'test_*.py' -q`: **51 passed** (DuckDB 1.5.6).
+  AppTest switches actual Streamlit file-based pages, proves zero telemetry calls on
+  overview/navigation/selection, selected-run-only evaluation, legacy classification,
+  empty/invalid evidence handling and remote fail-closed/stimulus-only results.
+  Working-set parity/deduplication, row budgets, per-PID Stop and hidden overlaps pass.
+  Synthetic real HTTP/S3 listing/range reads retain query parity after materialization;
+  the post-materialization plan has no READ_PARQUET scan. No live Garage benchmark.
+- `python3 -B -m unittest discover -s validation/telemetry-soak -p 'test_*.py' -q`:
+  **17 passed**, mocked Linux tools/generators, including safe adapter boundaries,
+  five-family orchestration, failure continuation, private paths, skip and controls.
+- `bash -n validation/telemetry-soak/run-smoke-soak.sh`: pass.
+- `git diff --check`: pass; all dashboard/page and canary Python modules parse.
+  Final additional AppTest cases verify that exhausted working-set budgets never
+  call the evaluator, and skipped/no-selector native canaries never read telemetry.
+
+Native expanded canaries, timeout/signal behavior and real Garage page/selected-run
+validation remain operator-assisted gates. Startup receipts are not regenerated or
+passively correlated by the runner; manual dev-time capability tests remain separate.
+Live observations from the earlier read-only investigation were not filed as artifacts.
 
 ## Scope
 

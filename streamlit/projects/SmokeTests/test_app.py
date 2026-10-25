@@ -1,131 +1,157 @@
-"""Streamlit rendering regressions, synthetic parquet only."""
+"""Real Streamlit multipage navigation; synthetic fixtures and no live S3."""
 import json
+import os
 from pathlib import Path
-import sys
 import tempfile
 import unittest
 from unittest.mock import patch
 
 import duckdb
 from streamlit.testing.v1 import AppTest
+
 from test_durable import publish
-from queries import TESTS
 
 
 class DashboardTests(unittest.TestCase):
-    def test_s3_config_discovers_evidence_and_telemetry_with_existing_queries(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            config = root / "fixture.local.json"
-            config.write_text(json.dumps(dict(endpoint="https://garage.example.invalid",
-                                              datasets=["s3://fixture-bucket/run"])))
-            value = dict(smokeManifestVersion=1, test="file-capture", runId="s3-fixture",
-                         host={"hostname": "vm-fixture"}, status="passed", stimulusOnly=True,
-                         startedAtUtc="2026-10-25T12:00:00Z", completedAtUtc="2026-10-25T12:00:02Z",
-                         smokeEvidenceRevision=2, smokeEvidencePhase="finished",
-                         selectors=[dict(domain="file", pids=[42], paths=["/fixture/file"], expectedActivities=["Open"])])
-            evidence = publish(value, root, 2, "finished")
-            telemetry = root / "telemetry.parquet"
-            con = duckdb.connect(":memory:")
-            con.execute(f"COPY (SELECT 'vm-fixture' Hostname, 42 PID, TIMESTAMP '2026-10-25 12:00:01' EventTime, '/fixture/file' File_Path, 'Open' ActivityType) TO '{telemetry}' (FORMAT PARQUET)")
-            con.close()
-            with patch.dict("os.environ", {"WINTAP_SMOKE_CONFIG": str(config)}), \
-                 patch("s3_source.open_source", side_effect=lambda _: (duckdb.connect(":memory:"), object())), \
-                 patch("s3_source.discover_files", return_value=([str(evidence)], [str(telemetry)])):
-                app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
-                self.assertFalse(app.exception)
-                self.assertFalse(app.error)
-                self.assertEqual(app.selectbox(key="file-capture").value, "s3-fixture")
-                self.assertTrue(any("stimulus only" in m.value for m in app.markdown))
-                self.assertTrue(any("S3:" in c.value for c in app.caption))
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name)
+        self.env = patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': '', 'WINTAP_DATA_ROOT': ''})
+        self.env.start()
+        self.addCleanup(self.env.stop)
 
-    def test_s3_listing_failure_does_not_render_partial_green_results(self):
-        with tempfile.TemporaryDirectory() as directory:
-            config = Path(directory) / "fixture.local.json"
-            config.write_text(json.dumps(dict(endpoint="https://garage.example.invalid",
-                                              datasets=["s3://fixture-bucket/run"])))
-            with patch.dict("os.environ", {"WINTAP_SMOKE_CONFIG": str(config)}), \
-                 patch("s3_source.open_source", side_effect=lambda _: (duckdb.connect(":memory:"), object())), \
-                 patch("s3_source.discover_files", side_effect=ValueError("S3 file limit exceeded")):
-                app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
-                self.assertFalse(app.exception)
-                self.assertTrue(app.error)
-                self.assertFalse(app.metric)
+    def run_value(self, test='file-capture', run_id='fixture', stimulus=False, pid=42):
+        return dict(smokeManifestVersion=1, test=test, runId=run_id,
+            host={'hostname': 'vm-fixture'}, status='passed', stimulusOnly=stimulus,
+            startedAtUtc='2026-10-25T12:00:00Z', completedAtUtc='2026-10-25T12:00:02Z',
+            smokeEvidenceRevision=2, smokeEvidencePhase='finished',
+            selectors=[dict(domain='file', case='files', pids=[pid], paths=['/fixture/file'], expectedActivities=['Open'])])
 
-    def test_automatic_parquet_discovery_overview_and_run_navigation(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            for index, status in enumerate(("failed", "passed")):
-                value = dict(smokeManifestVersion=1, test="file-capture", runId=f"run-{index}",
-                             host={"hostname": f"VM-{index}"}, status=status,
-                             startedAtUtc="2026-10-22T12:00:00Z", completedAtUtc="2026-10-22T12:00:02Z",
-                             smokeEvidenceRevision=2, smokeEvidencePhase="finished", selectors=[])
-                publish(value, root, 2, "finished")
-            app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
-            app.sidebar.text_input[0].set_value(str(root)).run()
-            self.assertFalse(app.exception)
-            self.assertFalse(app.error)
-            self.assertEqual(len(app.selectbox(key="file-capture").options), 2)
-            self.assertEqual([m.value for m in app.metric], ["1", "1", "0", str(2 * (len(TESTS) - 1))])
-            self.assertTrue(any("Jump to" in m.value for m in app.markdown))
-            target = app.selectbox(key="overview-target")
-            target.select(1).run()
-            next(b for b in app.button if b.label == "Select this run in its section").click().run()
-            self.assertEqual(app.selectbox(key="file-capture").value, "run-1")
-            app.sidebar.multiselect[0].set_value(["vm-0"]).run()
-            self.assertEqual(len(app.selectbox(key="file-capture").options), 1)
-            self.assertEqual(app.selectbox(key="file-capture").value, "run-0")
+    def telemetry(self):
+        with duckdb.connect() as con:
+            con.execute(f"COPY (SELECT 'vm-fixture' Hostname, 42 PID, TIMESTAMP '2026-10-25 12:00:01' EventTime, '/fixture/file' File_Path, 'Open' ActivityType) TO '{self.root / 'events.parquet'}' (FORMAT PARQUET)")
 
-    def test_empty_app_has_all_sections_and_commands(self):
-        app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
+    def app(self):
+        app = AppTest.from_file(str(Path(__file__).with_name('main.py')), default_timeout=20).run()
+        app.sidebar.text_input[0].set_value(str(self.root)).run()
         self.assertFalse(app.exception)
-        self.assertEqual(len(app.header), len(TESTS))
-        self.assertEqual(len(app.code), len(TESTS))
-        self.assertEqual(sum("No smoke runs" in i.value for i in app.info), len(TESTS))
+        return app
 
-    def test_null_selector_manifest_warns_without_aborting_valid_run_rendering(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            valid = dict(smokeManifestVersion=1, test="process-capture", runId="valid",
-                         host={"hostname": "VM-A"}, status="passed",
-                         startedAtUtc="2026-10-22T12:00:00Z", completedAtUtc="2026-10-22T12:00:02Z",
-                         selectors=[])
-            (root / "valid.json").write_text(json.dumps(valid))
-            (root / "bad.json").write_text(json.dumps(dict(valid, runId="invalid", selectors=[None])))
-            app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
-            app.sidebar.text_input[1].set_value(str(root)).run()
-            self.assertFalse(app.exception)
+    def validate(self, app):
+        next(b for b in app.button if b.label == 'Validate selected run').click().run()
+        self.assertFalse(app.exception)
+        return app
+
+    def test_overview_never_prepares_or_evaluates_telemetry(self):
+        publish(self.run_value(), self.root, 2, 'finished')
+        with patch('page_views.prepare_data', side_effect=AssertionError('No overview scan')), \
+             patch('page_views.evaluate_run', side_effect=AssertionError('No overview evaluation')):
+            app = self.app()
             self.assertFalse(app.error)
-            self.assertTrue(any("Manifest selector 0 must be an object" in w.value for w in app.warning))
-            self.assertEqual(len(app.selectbox(key="process-capture").options), 1)
-            self.assertEqual(app.selectbox(key="process-capture").value, "valid")
-            self.assertEqual(len(app.header), len(TESTS))
-
-    def test_separate_runs_query_only_selected_run(self):
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            manifests = root / "manifests"
-            manifests.mkdir()
-            con = duckdb.connect()
-            con.execute(f"COPY (SELECT 'VM-A' Hostname, 42 PID, 1792670401 EventTime, '/vm/file.bin' File_Path, 'Open' ActivityType) TO '{root / 'events.parquet'}' (FORMAT PARQUET)")
-            con.close()
-            for index, pid in enumerate((42, 43)):
-                manifest = dict(smokeManifestVersion=1, test="file-capture", runId=f"run-{index}",
-                                host={"hostname": "VM-A"}, status="passed",
-                                startedAtUtc="2026-10-22T12:00:00Z", completedAtUtc="2026-10-22T12:00:02Z",
-                                selectors=[dict(domain="file", case="files", pids=[pid], paths=["/vm/file.bin"], expectedActivities=["Open"])])
-                (manifests / f"{index}.json").write_text(json.dumps(manifest))
-            app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
-            app.sidebar.text_input[0].set_value(str(root))
-            app.sidebar.text_input[1].set_value(str(manifests))
-            app.run()
+            self.assertTrue(any('Manifest-only' in i.value for i in app.info))
+            self.assertTrue((app.dataframe[0].value['capture'] == 'not evaluated').all())
+            app.switch_page('views/devtime.py').run()
             self.assertFalse(app.exception)
-            self.assertEqual(len(app.selectbox(key="file-capture").options), 2)
-            self.assertEqual(len(app.dataframe), 4)
-            app.selectbox(key="file-capture").select("run-1").run()
+            self.assertEqual(app.selectbox(key='run-False').value, 'fixture')
+
+    def test_empty_multipage_app(self):
+        app = self.app()
+        for page, header in [('views/canary.py', 'Canary Tests'), ('views/devtime.py', 'Dev-time Tests')]:
+            app.switch_page(page).run()
             self.assertFalse(app.exception)
-            self.assertTrue(any("No matching collected events" in i.value for i in app.info))
+            self.assertEqual(app.header[0].value, header)
+            self.assertTrue(any('No runs supplied' in i.value for i in app.info))
+
+    def test_canary_devtime_partition_and_legacy_stimulus_classification(self):
+        for test, stimulus, run_id in [('canary-file', True, 'new-canary'),
+                                      ('telemetry-workload', True, 'legacy-canary'),
+                                      ('file-capture', False, 'dev')]:
+            publish(self.run_value(test, run_id, stimulus), self.root, 2, 'finished')
+        app = self.app().switch_page('views/canary.py').run()
+        self.assertEqual(len(app.selectbox(key='family-True').options), 2)
+        app.switch_page('views/devtime.py').run()
+        self.assertEqual(app.selectbox(key='run-False').value, 'dev')
+        self.assertEqual(len(app.selectbox(key='family-False').options), 1)
+
+    def test_selected_run_only_and_no_auto_revalidation(self):
+        self.telemetry()
+        for index, pid in enumerate([42, 43]):
+            publish(self.run_value(run_id=f'run-{index}', pid=pid), self.root, 2, 'finished')
+        from page_views import evaluate_run
+        with patch('page_views.evaluate_run', wraps=evaluate_run) as evaluator:
+            app = self.app().switch_page('views/devtime.py').run()
+            self.assertEqual(evaluator.call_count, 0)
+            app.selectbox(key='run-False').select('run-0').run()
+            self.validate(app)
+            self.assertEqual(evaluator.call_count, 1)
+            self.assertEqual(evaluator.call_args.args[1]['runId'], 'run-0')
+            self.assertTrue(any('Green' in m.value for m in app.markdown))
+            app.selectbox(key='run-False').select('run-1').run()
+            self.assertEqual(evaluator.call_count, 1)
+            self.validate(app)
+            self.assertEqual(evaluator.call_count, 2)
+            self.assertTrue(any('no matching events' in c.value for c in app.caption))
+
+    def test_null_selector_warns_without_losing_valid_run(self):
+        valid = self.run_value()
+        (self.root / 'valid.json').write_text(json.dumps(valid))
+        (self.root / 'invalid.json').write_text(json.dumps(dict(valid, runId='bad', selectors=[None])))
+        app = self.app()
+        app.sidebar.text_input[1].set_value(str(self.root)).run()
+        self.assertTrue(any('must be an object' in w.value for w in app.warning))
+        app.switch_page('views/devtime.py').run()
+        self.assertEqual(len(app.selectbox(key='run-False').options), 1)
+
+    def test_s3_canary_stays_stimulus_only_after_validation(self):
+        config = self.root / 'fixture.local.json'
+        config.write_text(json.dumps(dict(endpoint='https://garage.example.invalid', datasets=['s3://fixture-bucket/run'])))
+        evidence = publish(self.run_value('canary-file', stimulus=True), self.root, 2, 'finished')
+        self.telemetry()
+        with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
+             patch('s3_source.open_source', side_effect=lambda _: (duckdb.connect(), object())), \
+             patch('s3_source.discover_files', return_value=([str(evidence)], [str(self.root / 'events.parquet')])):
+            app = AppTest.from_file(str(Path(__file__).with_name('main.py')), default_timeout=20).run()
+            self.assertFalse(app.exception)
+            app.switch_page('views/canary.py').run()
+            self.validate(app)
+            self.assertTrue(any('stimulus only' in m.value for m in app.markdown))
+            self.assertTrue(any('Yellow' in m.value for m in app.markdown))
+
+    def test_s3_listing_failure_has_no_partial_results(self):
+        config = self.root / 'fixture.local.json'
+        config.write_text(json.dumps(dict(endpoint='https://garage.example.invalid', datasets=['s3://fixture-bucket/run'])))
+        with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
+             patch('s3_source.open_source', side_effect=lambda _: (duckdb.connect(), object())), \
+             patch('s3_source.discover_files', side_effect=ValueError('S3 file limit exceeded')):
+            app = AppTest.from_file(str(Path(__file__).with_name('main.py')), default_timeout=20).run()
+            self.assertFalse(app.exception)
+            self.assertTrue(app.error)
+            self.assertFalse(app.metric)
+
+    def test_working_set_failure_does_not_evaluate_truncated_data(self):
+        self.telemetry()
+        publish(self.run_value(), self.root, 2, 'finished')
+        with patch('page_views.materialize_run', side_effect=ValueError('budget exceeded')), \
+             patch('page_views.evaluate_run') as evaluator:
+            app = self.app().switch_page('views/devtime.py').run()
+            self.validate(app)
+            self.assertTrue(app.error)
+            evaluator.assert_not_called()
+            self.assertFalse(any('Green' in m.value for m in app.markdown))
+
+    def test_skipped_canary_without_selectors_never_scans_telemetry(self):
+        run = self.run_value('canary-clone', stimulus=True)
+        run['selectors'] = []
+        run['results'] = {'cases': [dict(case='native-clone', status='skipped', reason='No helper')]}
+        publish(run, self.root, 2, 'finished')
+        with patch('page_views.prepare_data', side_effect=AssertionError('No selectors to scan')):
+            app = self.app().switch_page('views/canary.py').run()
+            self.validate(app)
+            self.assertFalse(app.error)
+            self.assertTrue(any('Skipped stimulus' in w.value for w in app.warning))
+            self.assertTrue(any('Yellow' in m.value for m in app.markdown))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     unittest.main()

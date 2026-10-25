@@ -13,6 +13,7 @@ from unittest.mock import patch
 import duckdb
 
 from queries import evaluate_run, load_manifests, prepare_data, quote
+from page_views import materialize_run
 from s3_source import discover_files, open_source
 from test_durable import publish
 
@@ -105,7 +106,12 @@ class HTTPSourceTest(unittest.TestCase):
                         self.assertEqual(len(runs), 1)
                         _, errors, available = prepare_data(con, "", telemetry_files=telemetry_files)
                         self.assertFalse(errors)
-                        self.assertEqual(evaluate_run(con, runs[0], available)["state"], "green")
+                        before = evaluate_run(con, runs[0], available)
+                        materialize_run(con, runs[0], 15)
+                        self.assertEqual(evaluate_run(con, runs[0], available), before)
+                        self.assertEqual(before["state"], "green")
+                        plan = con.execute('EXPLAIN SELECT * FROM smoke_data').fetchall()[-1][-1]
+                        self.assertNotIn('READ_PARQUET', plan)
                     finally:
                         con.close()
                 self.assertTrue(methods)

@@ -5,6 +5,7 @@ confidence: high
 grounded_by:
   - validation/telemetry-soak/run-smoke-soak.sh
   - validation/telemetry-soak/network-endpoint-stimulus.py
+  - validation/telemetry-soak/canary-stimulus.py
   - validation/telemetry-soak/README.md
   - ../wintap/devtools/smoke_manifest.py
   - ../wintap/devtools/smoke_parquet.py
@@ -33,11 +34,23 @@ with SmokeTests dashboard analysis rather than DBT manifest integration. Shared
 evidence-root publication is the only coupling; stopping either process does not
 control the other.
 
-The runner repeats named process/file/IPv4 loopback TCP/UDP stimuli followed by
-same-host non-loopback TCP endpoint stimuli. It does not run local capture queries:
+The runner repeats five non-interfering **canary** families: named cross-domain
+process/file/IPv4 loopback TCP/UDP, the existing process lifecycle generator with
+six short-lived children and per-PID Stop expectations, eight-file activity,
+one optional prebuilt native clone helper round, and same-host non-loopback TCP
+endpoint stimuli. Each publishes its own `canary-*` manifest, distinct from dev-time
+capture/tracer/package/startup qualification. It does not run local capture queries:
 successful collector upload deletes local parquet, so local-only polling would race
 the intended S3 path. Success is explicitly stimulus-only, not capture acceptance.
 <!-- GROUND_TRUTH: validation/telemetry-soak/run-smoke-soak.sh; validation/telemetry-soak/network-endpoint-stimulus.py; ../wintap/wintap/core/etl/load/CacheManager.cs §upload -->
+
+No collector management, settings changes, tracer attachment, public-network probes
+or pressure tests are added. Python execveat unavailability and native helper/kernel
+skips are explicit, not fabricated coverage; posix_spawn remains libc-selected best
+effort. Passive HOST correlation is a follow-up, not a current recurring test; full
+runtime capability/restart/opt-out tests remain manual. Existing running generators
+must be stopped/relaunched independently for expanded coverage; preserve old evidence.
+<!-- GROUND_TRUTH: validation/telemetry-soak/canary-stimulus.py; validation/telemetry-soak/README.md -->
 
 The shared wrapper exports immutable evidence snapshots under
 `<data-root>/raw_sensor/raw_smoke_test/dayPK=YYYYMMDD/hourPK=HH/`. It understands

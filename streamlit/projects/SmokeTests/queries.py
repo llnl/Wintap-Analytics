@@ -6,6 +6,11 @@ import json
 from pathlib import Path
 
 TESTS = {
+    "canary-cross-domain": "Canary: named process/file/loopback TCP + UDP",
+    "canary-process": "Canary: process lifecycle + short-lived children",
+    "canary-file": "Canary: eight-file activity",
+    "canary-clone": "Canary: native clone lifecycle",
+    "canary-network-endpoints": "Canary: same-host TCP endpoints",
     "telemetry-workload": "Named cross-domain workload",
     "process-capture": "Process capture",
     "file-capture": "File capture",
@@ -277,6 +282,10 @@ def evaluate_case(connection, run, selector, available, padding=15):
             by_pid = {pid: (identities, parents) for pid, identities, parents in starts}
             for pid in selector.get("pids", []):
                 result["checks"].append(dict(expectation=f"PID {pid} Start", observed=int(pid) in by_pid))
+            if selector.get("requireStopPerPid"):
+                stopped = {r[0] for r in connection.execute(f"SELECT DISTINCT pid FROM ({sql}) WHERE activity='stop'").fetchall()}
+                for pid in selector.get("pids", []):
+                    result["checks"].append(dict(expectation=f"PID {pid} Stop", observed=int(pid) in stopped))
             for tid in selector.get("threadIds", []):
                 observed = int(tid) not in by_pid
                 result["checks"].append(dict(expectation=f"Thread {tid}: no process Start", observed=observed))
@@ -402,7 +411,9 @@ def mark_overlaps(runs, evaluations, padding=15):
             if (run["runId"] != other["runId"] and run["host"]["hostname"].lower() == other["host"]["hostname"].lower()
                     and domain == other_domain and pids & other_pids and start <= other_end and other_start <= end):
                 for value in (run, other):
-                    evaluation = evaluations[(value["test"], value["runId"])]
+                    evaluation = evaluations.get((value["test"], value["runId"]))
+                    if evaluation is None:
+                        continue
                     reason = "Overlapping same-host runs share PID/time selectors; attribution may be ambiguous"
                     if reason not in evaluation["reasons"]:
                         evaluation["reasons"].append(reason)

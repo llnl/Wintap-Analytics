@@ -1,4 +1,4 @@
-# Periodic Linux telemetry stimuli
+# Non-interfering Linux telemetry canaries
 
 Run on disposable Linux hosts with an already-configured collector. This runner
 does not start/stop services, configure Garage, handle credentials, fetch packages,
@@ -27,12 +27,34 @@ each bounded by GNU timeout (120 seconds plus 5-second kill grace). A nonblockin
 flock excludes concurrent runners sharing the evidence root. Use one evidence root
 per host; independently launched runners with different roots are not excluded.
 
-Named stimuli cover fork/exec/spawn/thread/file and IPv4 loopback TCP/UDP cases.
+Each round emits five separately named **canary** families:
+
+| Manifest test | Stimulus / expected observations |
+|---|---|
+| `canary-cross-domain` | Named fork/exec/spawn/thread/file and IPv4 loopback TCP/UDP, including mmap/relative-path file operations |
+| `canary-process` | Existing process-suite generator, six short-lived children, parent links, Start and Stop for every selected PID |
+| `canary-file` | Eight distinct private files with Open/Read/Write/Close/Delete and distinct-path expectation |
+| `canary-clone` | One optional prebuilt native helper round: fork/exec, worker-thread fork, pthread, clone/clone3 process and thread; PID/parent/Stop and negative thread checks |
+| `canary-network-endpoints` | Assigned-host separate-process and same-process bidirectional TCP endpoints and process identities |
+
+No local telemetry queries, collector starts/stops, sensor settings, diagnostic
+tracer attachment, public-network contacts, package installs or pressure/loss tests.
+These are small recurring **canaries**, not full dev-time acceptance. The process
+generator's posix_spawn is best effort; unavailable Python execveat is an explicit
+skip, not proof of syscall coverage. Native helper/kernel skips remain visible.
+HOST startup receipts are not induced or renewed: full runtime-capability tests stay
+dev-time/manual. Passive capability correlation is a follow-up, not current canary coverage.
+
 The additional TCP stimuli use an assigned non-loopback host IPv4 address for
 separate-process and same-process socket ends. Set `--host-ip` if automatic route
 selection fails. Never substitute a NAT public address or relax firewall/security
 policy for the runner. Optional `--clone-helper` selects an already-built native
 helper; otherwise native clone-family coverage is explicitly skipped.
+The runner still writes `named/process/file/clone/endpoints` entries in `status.tsv`;
+the manifest identifiers above drive dashboard grouping. Skipped native stimulus is
+reported as `skipped`, not `recorded`. Updating code does not expand a runner already
+in progress: stop only the signal generator and launch a fresh one-round pilot when
+ready; leave Lintap running. Keep prior private evidence.
 
 ## Evidence and interpretation
 
@@ -54,8 +76,9 @@ helper; otherwise native clone-family coverage is explicitly skipped.
 - Raw smoke parquet is compatible with the existing SmokeTests dashboard's evidence
   discovery on mounted/synced datasets or its configured read-only Garage/S3 source.
   **Current Wintappy DBT models do not ingest or validate smoke manifests**;
-  a passing DBT build is independent of this evidence. Actual Garage dashboard
-  validation remains an operator pilot check.
+  a passing DBT build is independent of this evidence. In Streamlit use **Canary
+  Tests**, select a family/run and explicitly validate it. The Overview is manifest-only.
+  Actual expanded-suite native/Garage validation remains an operator pilot check.
 
 Configure Garage and host-isolated collection prefixes separately, using existing
 approved configuration. Check disk/evidence accumulation periodically even on

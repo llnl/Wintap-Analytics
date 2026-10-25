@@ -3605,3 +3605,26 @@ No real identifiers, credentials, endpoint/prefix configuration or host output f
 Final suite including real loopback HTTP transport: 43/43 pass; Python parse/diff
 checks pass and local config ignore is verified. Commit/push remains on the existing
 feature branch; no PR publication.
+
+## [2026-10-25] code | Non-interfering canaries and lazy Streamlit pages
+
+User narrowed recurring scope to canaries that do not interfere with the deployed
+sensor, and requested Overview, Canary Tests and Dev-time Tests pages. Expanded
+Analytics runner to five distinct canary manifest families using generator-only
+adapters: cross-domain, process lifecycle/short-lived, eight-file, optional native
+clone and same-host TCP endpoints. Stop requirements are per PID; unsupported
+Python execveat/native helper/kernel cases are explicit skips, not coverage claims.
+No collector/service/security/tracer/uploader/sibling-code changes or host workloads.
+Real Streamlit navigation separates canaries (including legacy stimulus-only runs)
+from manual dev-time qualification. Overview reads manifests only; explicit selected
+validation materializes one exact-selector working set for reused checks/details,
+with fail-closed 100,000-row/256-MB limits and spill disabled. Hidden overlaps,
+evidence hashes/conflicts and conservative missing/stimulus-only triage retained.
+Native pushdown/partition pruning, passive HOST correlation and cross-rerun caching
+remain follow-ups. Local tests use synthetic fixtures/mocked generators; native
+expanded canary and live Garage page/validation acceptance remain operator gates.
+Private config/profile/credentials/identifiers and live investigation outputs were
+not persisted. Updated canonical pages/index/implementation/verification records.
+Final checks: 51 dashboard tests (including synthetic real HTTP/S3 transport) and
+17 mocked runner/adapter tests pass; shell syntax, Python parse and diff checks pass.
+Same feature branch; no PR or live acceptance claim.

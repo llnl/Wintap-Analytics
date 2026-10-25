@@ -64,3 +64,21 @@ or required for this slice; DBT manifest integration remains deferred.
 - [x] Backend, source-parity, Streamlit and real loopback HTTP transport regressions
 - [x] Document launch/configuration/security and preserve local/mounted behavior
 - [ ] Operator validates dashboard against the actual Garage dataset
+
+## Canary separation and lazy multipage validation (2026-10-25)
+
+User refined scope to non-interfering recurring canaries, not all dev-time tests,
+and requested real Streamlit Overview/Canary/Dev-time pages. Same-branch scope;
+collector/uploader, sibling source, SDK/DuckDB and experimental defaults unchanged.
+
+- [x] Define canary contract and expand independent runner to five manifest families
+- [x] Reuse process/file/named/native/endpoint generators without invoking validators
+- [x] Per-PID Stop checks, bounded eight-file expectations and explicit unsupported skips
+- [x] Streamlit `st.Page`/`st.navigation` pages and legacy stimulus-only classification
+- [x] Manifest-only overview; select host/family/run before explicit telemetry validation
+- [x] Single selected-run in-memory working set, fail-closed row/memory budgets, no spill
+- [x] Preserve conflict/hash, missing/stimulus-only triage and hidden-run overlap warnings
+- [x] Mocked runner/adapter, query parity/budget, real navigation and S3 transport tests
+- [x] Update canonical documentation and record limitations
+- [ ] Expanded one-round Linux canary pilot and Garage page/validation operator check
+- [ ] Optional native timestamp pushdown, safe partition pruning and memory-only result reuse

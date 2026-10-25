@@ -222,3 +222,14 @@ read-only Garage/S3 dashboard source on the same branch; see
 [[wiki/work/smoke-test-dashboard/verification]] for backend/UI and synthetic HTTP
 transport results. Actual Garage dashboard ground-truth checks and long-duration
 acceptance remain pending. DBT manifest integration remains deferred.
+
+### Non-interfering canaries and lazy dashboard pages
+
+User refined recurring scope to non-interfering canaries rather than all dev-time
+tests. Analytics runner now emits five distinct canary families via safe reused
+generators, with no sensor/service/configuration/tracer changes. Dashboard uses
+Overview/Canary Tests/Dev-time Tests pages; overview reads evidence only and selected
+telemetry validation is explicit, with a bounded no-spill in-memory working set.
+See [[wiki/work/smoke-test-dashboard/verification]] for local tests and open native
+pilot/Garage gates. Existing running generators are not changed or restarted by
+this implementation; operator must launch a fresh pilot for expanded evidence.

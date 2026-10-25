@@ -8,7 +8,8 @@ usage() {
 Usage: bash run-smoke-soak.sh --python PATH --devtools PATH --data-root PATH --evidence-root PATH
   [--interval 900] [--timeout 120] [--rounds 0] [--host-ip ADDRESS] [--clone-helper PATH]
 
-Runs named process/file/loopback TCP/UDP stimuli and same-host TCP endpoint stimuli.
+Runs canary cross-domain, process lifecycle, eight-file, native clone (optional),
+and same-host TCP endpoint stimuli. Never restarts/reconfigures the sensor.
 Interval is the delay AFTER each sequential round; rounds=0 runs until stopped.
 Timeout bounds each workload, not the collector. No automatic evidence deletion.
 JSON/logs stay under evidence-root; snapshots go to data-root/raw_sensor/raw_smoke_test.
@@ -68,6 +69,8 @@ import duckdb
 sys.path.insert(0, sys.argv[1])
 import telemetry_smoke_workload
 import network_endpoint_smoke_test
+import process_capture_smoke_test
+import file_capture_smoke_test
 if duckdb.__version__ != '1.5.6':
     raise SystemExit('ERROR: DuckDB 1.5.6 required')
 PY
@@ -102,7 +105,8 @@ try:
     elif not manifest.get('completedAtUtc'):
         print('incomplete')
     elif not manifest.get('selectors'):
-        print('no-selectors')
+        cases = (manifest.get('results') or {}).get('cases', [])
+        print('skipped' if cases and all(c.get('status') == 'skipped' for c in cases) else 'no-selectors')
     else:
         print('recorded')
 except (OSError, ValueError):
@@ -117,10 +121,17 @@ round=0
 while ! $STOP; do
   round=$((round + 1))
   ROUND=$(mktemp -d "$SESSION/round.XXXXXXXX") || exit 1
-  args=("$PYTHON" "$DEVTOOLS/telemetry_smoke_workload.py"
+  args=("$PYTHON" "$SCRIPT_DIR/canary-stimulus.py" --devtools "$DEVTOOLS" --suite cross-domain
     --manifest "$ROUND/named.json" --smoke-data-root "$DATA_ROOT" --output "$ROUND/workload")
-  [[ -z $CLONE_HELPER ]] || args+=(--clone-helper "$CLONE_HELPER")
   run_test named "${args[@]}"
+  $STOP && break
+  for suite in process file clone; do
+    args=("$PYTHON" "$SCRIPT_DIR/canary-stimulus.py" --devtools "$DEVTOOLS" --suite "$suite"
+      --manifest "$ROUND/$suite.json" --smoke-data-root "$DATA_ROOT" --output "$ROUND/$suite-workload")
+    [[ $suite != clone || -z $CLONE_HELPER ]] || args+=(--clone-helper "$CLONE_HELPER")
+    run_test "$suite" "${args[@]}"
+    $STOP && break
+  done
   $STOP && break
   args=("$PYTHON" "$SCRIPT_DIR/network-endpoint-stimulus.py" --devtools "$DEVTOOLS"
     --manifest "$ROUND/endpoints.json" --smoke-data-root "$DATA_ROOT")
