@@ -3558,3 +3558,16 @@ prefetch must match publish properties/multi-RID graph. No TLS/audit relaxation 
 system identifiers/raw output persisted. Runtime/configuration/hook/data/shutdown
 acceptance remains pending. Corrected one remaining obsolete framework-dependent
 warning in the canonical packaging guide; documentation-only follow-up on same branches.
+
+## [2026-10-25] verification | Bounded RHEL 9 capture, shutdown and downstream smoke
+
+Operator reports host-only/normal startup, process with Stop, basic single-path file,
+independent bidirectional same-host TCP identity/endpoints and clean shutdown with no
+active files. Pidstat remained inactive and protected data permissions unchanged.
+Supplied fresh DBT summary passes 40 models/42 tests/one hook: 83 pass, zero warnings,
+errors or skips; engine 1.5.6/adapter 1.9.6/core 1.12.3. Shared official extension
+prefetch must INSTALL both httpfs/parquet and use connection-time config_options,
+not late settings; failed attempts retained locally, TLS/signature checks intact.
+Updated verification, runtime plan and index. No raw output, host identifiers or
+system-specific details persisted; generated evidence remains protected/local-only.
+Full release/provenance/strict-count/multi-day and other platform/mode gates stay open.

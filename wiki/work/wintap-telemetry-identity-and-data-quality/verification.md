@@ -9,6 +9,10 @@ grounded_by:
   - ../Wintappy/tests/test_filetime_precision_sql.py
   - ../Lintap/tests/test_dotnet_packaging.py
   - ../wintap/devtools/test_runtime_alignment.py
+  - ../wintap/devtools/process_capture_smoke_test.py
+  - ../wintap/devtools/file_capture_smoke_test.py
+  - ../wintap/devtools/network_endpoint_smoke_test.py
+  - ../Wintappy/wintap_dbt/profiles.yml
 policy: agent-editable
 last_validated: 2026-10-25
 repo_scope: cross-repo
@@ -23,9 +27,10 @@ tags: [feature-work, retrospective, verification, proof, limits]
 # Outcome
 
 **Scoped identity/data-quality improvements and observed disposable-Linux delivery
-are verified. Release/package qualification and multi-day real-host acceptance are
-not completed.** Later diagnostic packages were private managed derivatives,not
-clean native/eBPF rebuilds or installed release acceptance.
+are verified. A later operator-assisted native RHEL 9 self-contained RPM smoke and
+fresh DBT build pass; broader release/package qualification and multi-day real-host
+acceptance remain incomplete.** Earlier diagnostic packages were private managed
+derivatives, not clean native/eBPF rebuilds or installed release acceptance.
 
 ## Meaningful proof
 
@@ -154,6 +159,40 @@ These are operator-reported package-stage conclusions, not independently reviewe
 raw output or runtime/sensor/capture acceptance. Network-restricted restore required
 an approved network-enabled Linux system to prefetch into shared package/HTTP caches;
 the prefetch must match publish properties and the declared multi-RID graph. SDK
-10.0.402, TLS validation and NuGet auditing remain enforced. Installed configuration
-review, runtime startup, hook/data/shutdown and downstream gates remain pending.
+10.0.402, TLS validation and NuGet auditing remain enforced. At that package stage,
+installed configuration, runtime, data, shutdown and downstream gates were pending;
+the following bounded smoke results advance those gates without full certification.
 No identifying system details or raw operator output are persisted.
+
+### Operator-assisted RHEL 9 capture, shutdown and DBT smoke
+
+- Installed payload/configuration review and bounded host-only startup/shutdown
+  are operator-reported passes. Timeout exit 124 alone was not treated as proof.
+- Normal collector startup is operator-reported healthy; pidstat remained inactive.
+  Protected data permissions were retained; validators used the existing uv Python
+  interpreter under sudo, without creating a root Python environment.
+- Process capture with `--require-stop` passed by operator report. Basic single-path
+  file smoke passed with open/read/write/close/delete coverage and serializer-drop
+  checking requested; this is not exact event-count certification.
+- Independent same-host TCP endpoint validation passed by operator report for both
+  directions, separate-process and same-process socket ends, and process identity.
+  Validator bodies were called without the host-identifying manifest wrapper.
+- Operator reports clean shutdown, no leftover `.active` files and pidstat inactive.
+  These reports do not independently establish exact queue conservation/final-window
+  delivery or hook/object provenance.
+- Fresh DBT output over the stopped capture completed **40 models, 42 data tests and
+  one project hook: PASS=83, WARN=0, ERROR=0, SKIP=0**. The supplied summary reports
+  DuckDB Python **1.5.6**, dbt-duckdb **1.9.6**, and dbt-core **1.12.3**; the core is
+  newer than the earlier local 1.12.2 tuple, not a claim that all environments match.
+- Preserve the failed extension attempts locally: `LOAD parquet` alone did not cache
+  the installable package, and profile `settings` selected the shared extension cache
+  too late for adapter installation. Prefetch both official `httpfs` and `parquet`
+  on the network-enabled Linux system; set `config_options.extension_directory` for
+  connection-time cache selection. TLS and extension-signature checks stay enabled.
+  A temporary profile, database, target and logs kept generated evidence local-only
+  and left source profiles/raw telemetry unchanged.
+
+These are bounded operator-assisted package/capture/downstream smoke results, not
+multi-day, Windows, framework-dependent package, strict count/identity preservation,
+historical-loss closure, or full release acceptance. Detailed evidence stays local;
+only generic conclusions and validation counts are committed.

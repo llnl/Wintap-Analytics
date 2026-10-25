@@ -17,10 +17,12 @@ audit payloads are uncommitted;archive provenance is retained,not loaded by defa
 
 RHEL 9 package preparation: [[wiki/repo/lintap-supporting-repo]] — canonical Lintap
 guide now selects SDK 10.0.402 and provides operator-assisted prerequisite/build
-steps; RHEL 9 live qualification remains pending.
+steps; bounded operator-assisted RHEL 9 package/capture/shutdown and fresh DBT smoke
+pass. Full live and multi-day qualification remain pending.
 Upgrade closure: [[wiki/work/wintap-telemetry-identity-and-data-quality/runtime_alignment_plan]]
 — all 13 C# targets and active package/provision/run defaults align with .NET 10;
-exact SDK 10.0.402 is enforced. Fresh native package/live qualification remains pending.
+exact SDK 10.0.402 is enforced. Native self-contained RPM smoke passes by operator
+report; other package modes/platforms and broader acceptance remain pending.
 
 Canonical context:
 [[wiki/concept/wintap-ecosystem-glossary]],

@@ -53,8 +53,9 @@ workflow. Their stale .NET 8 payload inventories are retained and explicitly mar
 <!-- GROUND_TRUTH: ../wintap/platform/windows/WintapSetup/README.md; ../wintap/.github/workflows/release.yml -->
 
 See [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]] for actual
-checks and preserved failures. Fresh native Debian/RPM build/inspection and RHEL 9
-installation/runtime acceptance remain separate, pending gates.
+checks and preserved failures. Operator-assisted native RHEL 9 self-contained RPM
+build/inspection/install, bounded process/file/TCP/shutdown smoke and fresh DBT build
+now pass. Other package modes/platforms and full live acceptance remain separate gates.
 
 ## Initial source inventory (before these corrections)
 
@@ -126,6 +127,9 @@ runtimeconfig/deps files and actual runtime provenance separately.
   legacy/historical installer snapshots are explicitly excluded from release use.
 - [ ] Fresh tests/builds and package inspections pass, with scoped failures preserved.
 - [ ] RHEL 9 on-host results are supplied and reviewed before acceptance claims.
+  Bounded self-contained RPM smoke is operator-assisted: process/Stop, basic file,
+  bidirectional TCP and shutdown pass by report; supplied fresh DBT summary passes
+  all 83 operations. Full provenance, strict-count and multi-day gates remain open.
 
 Generic RHEL 9 prerequisite checks pass, including exact stable SDK selection and
 compiler/BTF/header checks. The designated test system is disposable by explicit
