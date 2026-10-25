@@ -15,6 +15,13 @@ for planned package qualification and multi-day real-host collection. Scoped Lin
 delivery is verified,not production readiness or historical-loss closure. Detailed
 audit payloads are uncommitted;archive provenance is retained,not loaded by default.
 
+RHEL 9 package preparation: [[wiki/repo/lintap-supporting-repo]] — canonical Lintap
+guide now selects SDK 10.0.402 and provides operator-assisted prerequisite/build
+steps; RHEL 9 live qualification remains pending.
+Upgrade closure: [[wiki/work/wintap-telemetry-identity-and-data-quality/runtime_alignment_plan]]
+— all 13 C# targets and active package/provision/run defaults align with .NET 10;
+exact SDK 10.0.402 is enforced. Fresh native package/live qualification remains pending.
+
 Canonical context:
 [[wiki/concept/wintap-ecosystem-glossary]],
 [[wiki/concept/telemetry-identity-and-endpoint-orientation]],

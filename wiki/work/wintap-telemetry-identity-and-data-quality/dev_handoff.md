@@ -7,7 +7,7 @@ grounded_by:
   - wiki/work/wintap-telemetry-identity-and-data-quality/verification.md
   - wiki/work/wintap-telemetry-identity-and-data-quality/evidence.md
 policy: agent-editable
-last_validated: 2026-10-24
+last_validated: 2026-10-25
 repo_scope: cross-repo
 implementation_area: packaging
 event_domain: cross-domain
@@ -24,8 +24,11 @@ hosts. Hosts,durations,resource/deadline limits and installation/rollback author
 must be established before execution. Do not deploy from this document alone.
 
 Feature commits: Wintap `10a782f`, Wintappy `4236cbb`, Lintap `b793082`;
-Analytics QA/wiki/harnesses are in this handoff's commit. Branches are local;
-push and PR publication have not been performed.
+Analytics QA/wiki/harnesses are in the retrospective commit. Those original commits
+were local at closeout; the user now authorizes .NET 10 corrections and commit/push
+on the same branches for cross-system builds. PR publication remains separate.
+Current correction results and gates:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/runtime_alignment_plan]].
 
 ## Minimal context
 

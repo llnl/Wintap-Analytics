@@ -3502,3 +3502,49 @@ Preflight: 209 focused SQL tests, 126 Analytics tests plus 7 subtests, and 17 Wi
 Python regressions pass; all staged diff checks pass. Dashboard AppTest collection
 is blocked by missing `streamlit.testing` in the selected environment; no environment
 changes or new native/host qualification. No pushes or PR publication performed.
+
+## [2026-10-25] documentation | Pinned .NET 10 packaging and operator-assisted RHEL 9
+
+User authorized updating Lintap's packaging guide and adding RHEL 9 prerequisites;
+user will execute host commands without direct agent access. Updated live
+`../Lintap/packaging/README.md` to select SDK 10.0.402 from Wintap global.json,
+distinguish exact qualification checks from latestPatch, and document RHEL 9
+inventory/repository/native dependency/build/package inspection and gated service
+validation. RHEL 9 remains unqualified. Retained self-contained defaults and flagged
+both builders' stale ASP.NET Core 8 framework-dependent metadata; no scripts changed.
+Source-verified libbpf SONAME fallback, security preservation and pidstat prerequisites.
+Updated supporting-repo page, index and umbrella verification. SDK consistency,
+shell-fence syntax and diff checks pass; no RHEL commands, installs, captures or
+security changes executed. No new commits or pushes for this documentation update.
+
+## [2026-10-25] plan | Close .NET 10 upgrade oversights, not a package-mode workaround
+
+User clarified that framework-dependent .NET 8 metadata is an oversight in the
+original all-.NET-10 upgrade and requested a corrective plan while testing RHEL
+dependencies. Tracked source inventory across four repos confirms SDK 10.0.402 and
+eight main .NET 10 projects, but five diagnostic/sample net8 projects, both package
+builders' runtime-8 dependency declarations, Makefile/provision/run/tooling defaults
+and current docs remain stale. Created runtime_alignment_plan.md with package-first
+correction, complete target/provision/path alignment, regression inventory and fresh
+artifact/live gates; dependency major versions and historical records are distinct.
+Updated umbrella implementation/index. No "10 everywhere" or fresh runtime claim;
+no source implementation, host execution, commits or pushes under this plan request.
+
+## [2026-10-25] code | .NET 10 source/configuration closure and RHEL build handoff
+
+User authorized correction, commit and push on existing feature branches. All 13
+C# projects evaluate to .NET 10 with SDK 10.0.402. Corrected both package runtime
+dependencies, exact-SDK/project-directory preflight before cleanup, main runtimeconfig
+validation, five targets/sample reference, native generated-source exclusions,
+Windows-only sample copy, provisioning and active run/tool/docs defaults. Added five
+sample/diagnostic locks; legacy vdproj snapshots explicitly not release packaging.
+Six Wintap drift and 22 Lintap packaging regressions pass; five fresh locked sample/
+diagnostic builds, both actual linux-x64 managed publish modes and separate MCP
+single-file publish pass. Preserved
+NU1004 committed API RID-lock mismatch: isolated restore keeps all base hashes/
+versions, then locked publishes pass; pristine locked RID release gate remains open.
+Generic RHEL 9 prerequisites pass; test system is disposable by user direction.
+No host identifiers/raw output persisted, no direct host access/security changes.
+Shell/help/link/diff checks pass. Fresh native RPM/Debian inspection and live host
+acceptance remain pending; retry/identity/experimental controls unchanged. Commits
+and pushes are explicitly authorized; PR publication is not part of this operation.

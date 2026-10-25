@@ -7,8 +7,10 @@ grounded_by:
   - ../wintap/tests/Wintap.Tests/IdentityContractTests.cs
   - ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs
   - ../Wintappy/tests/test_filetime_precision_sql.py
+  - ../Lintap/tests/test_dotnet_packaging.py
+  - ../wintap/devtools/test_runtime_alignment.py
 policy: agent-editable
-last_validated: 2026-10-24
+last_validated: 2026-10-25
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -87,3 +89,59 @@ durable tests pass plus7subtests;Wintap endpoint/event-name suites pass10+7tests
 All four repo diff checks pass. Dashboard AppTest collection is blocked in the selected
 Wintappy environment by missing `streamlit.testing`;no package/environment change
 was made. Earlier live/native qualifications above were not rerun for the commit.
+
+2026-10-25 next-phase preparation: Lintap's canonical packaging guide now documents
+SDK 10.0.402 selection and an operator-assisted RHEL 9 prerequisite/build/inspection
+sequence. SDK-source consistency and shell-fence `bash -n` checks pass; no documented
+host commands were executed. RHEL 9 build/install/runtime acceptance remains pending.
+The initially stale ASP.NET Core 8 metadata is corrected by the following work.
+
+## .NET 10 oversight correction (2026-10-25)
+
+User authorized source fixes plus commit/push on the same feature branches. Generic
+operator-assisted RHEL 9 prerequisite checks pass: stable SDK 10.0.402 selection,
+BPF compiler targets, libbpf development headers and BTF parsing. The designated
+system is disposable by user direction; no system-specific details/output are filed.
+
+- SDK **10.0.402**, downloaded from official metadata with SHA-512 verification,
+  evaluates all **13 C# projects** through `dotnet msbuild -getProperty:TargetFramework
+  -p:EnableWindowsTargeting=true`: all net10.0 or Windows-qualified net10.0.
+- `python3 -m unittest devtools/test_runtime_alignment.py -q` in Wintap: **6 pass**.
+- `../Wintappy/.venv/bin/python -m pytest tests/test_dotnet_packaging.py -q` in
+  Lintap: **22 pass** (exact/wrong/missing SDK, unrelated caller directory, pre-cleanup
+  failure, staged runtimeconfig modes/negatives, metadata and provisioning drift).
+  System Python lacks pytest; the existing Wintappy environment was used unchanged.
+- All **five retargeted diagnostics/samples** pass fresh Release builds with
+  `-p:RestoreLockedMode=true` in an isolated tracked-source copy plus scoped edits
+  and new lock files. Existing sample nullable warnings remain.
+- Actual `linux-x64` managed Lintap publishes pass in **both self-contained and
+  framework-dependent modes**, with embedded MCP disabled. Runtimeconfig/deps target
+  .NET 10; self-contained includes .NET/ASP.NET Core **10.0.13** and `libcoreclr.so`,
+  framework-dependent declares **10.0.0** framework minima without `libcoreclr.so`.
+  Shared runtimeconfig validation accepts both actual payloads. This was macOS
+  cross-publish, not Linux native/eBPF/package installation acceptance.
+- Separate MCP helper `linux-x64` self-contained/single-file publish passes using
+  the builders' flags; existing nullable warnings remain. This is not live MCP acceptance.
+- Real shared SDK preflight passes from an unrelated caller directory. Changed shell
+  scripts/helper and builder `--help` pass; three-repo diff checks and changed local
+  Markdown link checks pass.
+
+Preserved failures: redirected builds initially compiled old local `obj` sources;
+conditional native-output exclusions fix this without deleting old output. The
+event sample's existing Windows-only `md/copy` post-build failed on macOS; the target
+is now guarded by Windows/defined-solution conditions. Its managed compilation passes.
+The MCP sample reference was incorrect and is corrected to the sibling sample.
+
+**Committed-lock limitation:** fresh locked RID publish initially fails NU1004 because
+WintapAPI's committed lock lacks `linux-x64`. Ordinary restore in the isolated copy
+re-evaluates that RID graph without changing any base dependency/version/content hash;
+subsequent locked publishes pass for both modes. Source locks were not overwritten.
+Do not claim a pristine committed-lock RID publish passes. Linux builders still use
+their ordinary restore default; clean locked cross-RID release qualification remains
+open. NuGet audit/security settings are unchanged.
+
+Both package scripts now declare ASP.NET Core 10.0 for framework-dependent builds;
+no native Debian/RPM packages were built here. Fresh package metadata/payload
+inspection, RHEL 9 live installation/capture/shutdown and Windows runtime acceptance
+remain pending. Historical `.vdproj` installer snapshots retain old inventories;
+current WiX release packaging is explicitly distinguished from them.

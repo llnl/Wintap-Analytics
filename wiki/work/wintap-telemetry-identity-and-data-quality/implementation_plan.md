@@ -6,7 +6,7 @@ grounded_by:
   - wiki/work/wintap-telemetry-identity-and-data-quality/verification.md
   - wiki/work/wintap-telemetry-identity-and-data-quality/evidence.md
 policy: agent-editable
-last_validated: 2026-10-24
+last_validated: 2026-10-25
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -41,6 +41,15 @@ Completed items mean scoped implementation/verification,not release certificatio
 
 ## Deferred to the user's next phase
 
+Upgrade oversight correction (2026-10-25):
+[[wiki/work/wintap-telemetry-identity-and-data-quality/runtime_alignment_plan]] —
+all 13 C# projects now evaluate to .NET 10; exact-SDK packaging checks, runtime
+metadata, diagnostics/sample targets and active provision/run defaults are corrected.
+Legacy installer snapshots are explicitly not the release path. Artifact and live
+acceptance remain separate gates, not implied by source alignment.
+
+- [x] Correct .NET 10 source/configuration oversights and add SDK/TFM drift tests.
+
 - [ ] Clean native/eBPF and self-contained package qualification on selected hosts.
 - [ ] Multi-day real-host collection with declared resource/deadline and coverage gates.
 - [ ] Review whether experimental controls remain opt-in or become supported behavior.
@@ -50,4 +59,4 @@ Completed items mean scoped implementation/verification,not release certificatio
 
 Actual saturation,historical failure reconstruction,kernel/durable fate and metadata/
 OS-label defects remain explicit follow-ups,not hidden unchecked delivery milestones.
-No additional execution or rollout is authorized by this retrospective.
+This retrospective alone does not authorize additional execution or rollout.
