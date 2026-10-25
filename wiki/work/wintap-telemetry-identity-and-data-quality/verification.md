@@ -145,3 +145,15 @@ no native Debian/RPM packages were built here. Fresh package metadata/payload
 inspection, RHEL 9 live installation/capture/shutdown and Windows runtime acceptance
 remain pending. Historical `.vdproj` installer snapshots retain old inventories;
 current WiX release packaging is explicitly distinguished from them.
+
+### Operator-reported RHEL 9 package progress
+
+The operator reports a successful native self-contained RPM build, satisfactory
+package inspection/transaction preview, installation and both service units inactive.
+These are operator-reported package-stage conclusions, not independently reviewed
+raw output or runtime/sensor/capture acceptance. Network-restricted restore required
+an approved network-enabled Linux system to prefetch into shared package/HTTP caches;
+the prefetch must match publish properties and the declared multi-RID graph. SDK
+10.0.402, TLS validation and NuGet auditing remain enforced. Installed configuration
+review, runtime startup, hook/data/shutdown and downstream gates remain pending.
+No identifying system details or raw operator output are persisted.

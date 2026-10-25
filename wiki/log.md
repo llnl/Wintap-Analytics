@@ -3548,3 +3548,13 @@ No host identifiers/raw output persisted, no direct host access/security changes
 Shell/help/link/diff checks pass. Fresh native RPM/Debian inspection and live host
 acceptance remain pending; retry/identity/experimental controls unchanged. Commits
 and pushes are explicitly authorized; PR publication is not part of this operation.
+
+## [2026-10-25] verification | Operator-reported RHEL 9 package build and installation
+
+Operator reports native self-contained RPM build, satisfactory inspection/transaction
+preview and installation with both units inactive. Shared NuGet package/HTTP caches
+prefetched on a network-enabled Linux system resolved restricted-network restores;
+prefetch must match publish properties/multi-RID graph. No TLS/audit relaxation or
+system identifiers/raw output persisted. Runtime/configuration/hook/data/shutdown
+acceptance remains pending. Corrected one remaining obsolete framework-dependent
+warning in the canonical packaging guide; documentation-only follow-up on same branches.
