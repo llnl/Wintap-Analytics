@@ -3687,3 +3687,31 @@ Idle VM uses isolated DuckDB1.5.6/Streamlit1.66.1/boto3 environment; all 88 dash
 tests pass including real synthetic HTTP/S3, zero skips. Updated canonical tool,
 README/plan/verification. Field-host services, raw datasets and private configuration
 untouched. Sensor-owned fixes/VM qualification follow separately on existing branch.
+
+## [2026-10-25] code | Local network return correction and qualification
+
+User authorized recommended-order Analytics/Wintap fixes and local VM iteration,
+not field rollout. Wintap core Accept now emits at successful return with accepting
+TGID/inbound tuple; UDP uses checked kernel pointer provenance and one successful
+protocol-return owner per operation. Actual arm64 tests also exposed errno sign-
+extension and post-return msg_namelen pitfalls; corrected. Original object fails
+strict15-check matrix, corrected object passes; all12 tracers build, managed build
+zero errors,159 shared network/receipt/identity/resolver/root tests pass. Added
+version-gated operation/sampling/PID-filter receipt facts and distinct UDP client
+mode/socket plus per-path activity expectations. Preserved pins/retry/security/
+default-off experiments and strict count gates. Evidence remains VM-local. Initial
+normal-ETL harness mistakes (receipt phase, evidence ownership) exposed; fresh pilot
+review follows. Canonical network/runtime/named-workload/dashboard pages and umbrella
+handoff/index/plan updated. Wintap instructions/audit stay in its developer_docs.
+
+Final verification:93 dashboard/17 runner/12 Wintap Python/159 shared managed tests
+pass; actual-object repeat15 checks pass. Normal-ETL five-family fresh VM pilot
+delivers manifests and observes Accept/all four independent UDP cases, zero evidence/
+analysis errors; exact UDP and dedicated TCP endpoint checks have no missing/violation
+findings. Local summary integrity/reload/latest passes; raw size/mtime snapshot unchanged.
+All triage remains yellow. New tension: normal ETL lowercases Linux file paths despite
+complete per-file activities; existing non-Windows behavior is explicitly preserved
+by its regression, so no silent case-fold proof or unreviewed compatibility change.
+Process projection also omits source breadcrumbs; no command-line/schema mutation
+to fabricate provenance. Partial TCP EOF/close tuples remain incomplete. Field
+package/install/pilot, file-case and explicit source-column contracts are next gates.

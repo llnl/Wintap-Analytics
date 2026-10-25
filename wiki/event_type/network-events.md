@@ -12,8 +12,10 @@ grounded_by:
   - ../wintap/wintap/core/etl/transform/Transformer.cs
   - ../wintap/wintap/core/etl/model/ProcessConnIncrData.cs
   - ../Wintappy/wintap_dbt/models/silver/process_conn_incr.sql
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/network_ops_tracer.bpf.c
+  - ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs
 policy: agent-editable
-last_validated: 2026-10-23
+last_validated: 2026-10-25
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: network
@@ -46,6 +48,28 @@ The Windows `UdpSensor` consumes UDP send, receive, and fail ETW events from the
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/UdpSensor.cs §Start; §Kernel_UdpIpSendRecv -->
 
 ## ETL Boundary
+
+## Linux CO-RE return contract
+
+Current Wintap Linux core tracer emits IPv4 Accept at successful accept return with
+accepting TGID and remote→local direction. UDP uses explicit kernel sockaddr provenance
+and one successful protocol-function return owner per Send/Receive, including valid
+zero-length datagrams; failed returns do not emit. This corrects old missing Accept /
+kernel-vs-user Receive reads and duplicate partial syscall-entry sends **prospectively**.
+The fallback tier and historical datasets do not inherit this core contract.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/tracers/network_ops_tracer.bpf.c §kretprobe__inet_csk_accept, kretprobe__udp_sendmsg, kretprobe__udp_recvmsg, trace_sendto -->
+
+UDP bytes mean successful protocol-function return, not final syscall copy-out success
+or packet/byte conservation. TCP Send/Recv remain requested-entry and sampled. One-second
+socket sampling remains for TCP Send/Recv, UDP Send and connected-bufferless Receive;
+peer-buffer UDP receives remain unsampled. Local wildcard addresses are best-effort,
+not proof of routable local IP. Consumers must retain per-operation contracts rather
+than equating EventCount with packets/syscalls or treating listener Disconnect as an
+accepted connection's fate. Version-gated startup facts and bounded VM qualification:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs §Start; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/network_ops_tracer.bpf.c §kprobe__tcp_sendmsg, kprobe__tcp_recvmsg, kretprobe__udp_sendmsg, kretprobe__udp_recvmsg -->
+
+### Shared aggregation boundary
 
 TCP and UDP ETL both use the shared `Every10Seconds` Esper context. TCP aggregates by source/destination 5-tuple attributes, `PidHash`, process name, PID, activity type, and `AgentId`, emitting packet-size sums/min/max/squares, sequence information, first/last seen, and event count. UDP aggregates by tuple, `PidHash`, PID, process name, activity type, and `AgentId`, emitting packet-size sum, first/last seen, and event count.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/tcp.epl §query -->

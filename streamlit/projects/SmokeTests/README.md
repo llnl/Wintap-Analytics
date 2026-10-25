@@ -20,6 +20,8 @@ Network expectations are not protocol scan filters: malformed extra socket-bound
 remain visible. Contradictory complete endpoints are red; incomplete or unbound shared-
 PID candidates are yellow. These checks do not recompute canonical hashes or certify
 loss/count equivalence. Evaluator changes invalidate saved-summary fingerprints.
+New named-workload manifests carry per-path activity expectations (rename paths differ)
+and independent IPv4 TCP/UDP socket expectations; older endpoint manifests default TCP.
 
 ## Collection host and analysis host can differ
 

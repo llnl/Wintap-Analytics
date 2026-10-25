@@ -29,6 +29,15 @@ tags: [canary, data-quality, network-events, validation, proposed-fixes]
 
 # Findings and proposed fixes — not implementation authorization
 
+**Historical analysis snapshot:** sections below describe Analytics `3f197e4` /
+Wintap `d7df7a9` before implementation. Their live-path source citations identify
+ownership; use those git revisions to reproduce the old defects, not current code.
+The user subsequently authorized recommended-order local VM iteration. Current
+implementation and bounded qualification are in
+[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
+Original live Garage findings are not overwritten by successful VM tests, and field
+package provenance/deployment acceptance remain open.
+
 User requested another analysis pass after the all-round workflow improvement.
 Analysis revisits the uploaded pilot; **no second collection round was launched**.
 Analytics owns validation/wiki; Wintap owns the sensor and shared stimulus writers;

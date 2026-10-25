@@ -63,7 +63,11 @@ file and TCP endpoint observations; TCP Accept/UDP Receive missing, native clone
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
 — current-source Accept emission and UDP memory-domain defects, live incomplete UDP
 tuples, source-aware repeated-Start accounting and five synthetic validator blind spots.
-Proposed fixes only; deployed-object provenance and broader capture acceptance remain open.
+Authorized follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]]
+— stronger dashboard assertions, source-controlled Accept/UDP return corrections,
+distinct UDP mode/endpoint and per-path manifests, actual-object15-check VM comparison,
+and159 shared managed tests. Deployed-object provenance and broader capture acceptance
+remain open; no field rollout.
 
 Accepted durable evidence plan: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]]
 (pidstat-style parquet transport, partitioning and dashboard severity overview).
@@ -81,6 +85,7 @@ same existing branches, feature-only commit/PR scope).
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]] | medium | Preserves the unresolved boundary between raw ETW/sysdig/eBPF producer details and stable WintapAPI semantics. |
+| [[wiki/tension/linux-file-path-case-projection]] | high | Linux sensor preserves case but normal ETL discards it; exact path/file-key compatibility needs explicit review, not silent case folding. |
 | [[wiki/tension/research-flexibility-vs-production-hardening]] | medium | Explains the research-first posture and flags hardening gaps such as unrestricted proof-of-concept MCP SQL access. |
 | [[wiki/tension/etw-ebpf-and-cross-platform-compatibility]] | medium | Captures tradeoffs between Windows ETW, Linux eBPF/sysdig support paths, raw sensor Parquet, and cross-platform semantics. |
 | [[wiki/tension/dbt-duckdb-output-vs-legacy-stdview-parquet]] | medium | Captures the open mismatch between Wintappy's canonical DuckDB-only DBT output and Wintap-Analytics' documented expectations of published stdview-* parquet datasets. |

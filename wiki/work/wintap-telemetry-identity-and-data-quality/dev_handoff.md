@@ -20,6 +20,12 @@ tags: [feature-work, handoff, qualification, long-duration, safety]
 # Next phase—not execution authorization
 
 Latest analysis: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]].
+Subsequent user-authorized local implementation:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
+The paragraph below preserves the pre-implementation boundary; the user later
+authorized Analytics/Wintap source corrections and disposable-VM qualification,
+**not** collection-host install/restart/tracer attachment or rollout. Next operator
+gate is trusted package review/provenance and an approved non-interfering pilot.
 Prioritize Analytics observation-check regressions; separately authorize Wintap Accept
 emission/UDP memory-domain corrections and trusted build qualification. Current source
 is not proven identical to the deployed tracer. Repeated raw Starts need source-aware
@@ -61,6 +67,15 @@ Current correction results and gates:
   lifecycle observations or interpret missing counters as zero.
 
 ## Qualification sequence
+
+For the corrected core network contract, verify trusted package/object hash plus
+receipt version2 and operation return hooks. Review UDP protocol-return byte meaning,
+sampling and exact independent mode/socket expectations. Use only a reviewed prebuilt
+native helper on field hosts; actual-object observer is dev-time/idle-VM-only.
+Use a helper compiled/reviewed for the target architecture, not the arm64 VM
+artifact on x64 hosts. Normal process source-provenance persistence and Linux
+file-case projection require their own reviewed prospective contracts; current
+dashboard must leave those unknown, not rewrite/merge historical observations.
 
 Clean full native/eBPF/package build → package contents/dependencies/configuration
 review → authorized disposable installation/start/restart/shutdown → independent

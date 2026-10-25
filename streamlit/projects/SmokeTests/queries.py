@@ -245,9 +245,9 @@ def coverage(rows, selector):
         checks.append(dict(expectation=f"Distinct paths: {count}/{selector['expectedPaths']}",
                             observed=count >= int(selector["expectedPaths"])))
     if selector['domain'] == 'file' and selector.get('expectedActivities'):
-        paths = selector.get('paths') or sorted({r['path'] for r in rows if r['path']})
-        required = {a.lower() for a in selector['expectedActivities']}
-        complete = sum(required.issubset({r['activity'] for r in rows if r['path'] == p}) for p in paths)
+        expected = path_expectations(selector, {r['path'] for r in rows if r['path']})
+        paths = list(expected)
+        complete = sum(required.issubset({r['activity'] for r in rows if r['path'] == p}) for p, required in expected.items())
         checks.append(dict(expectation=f"Paths with all required activities: {complete}/{len(paths)}",
                            observed=bool(paths) and complete == len(paths)))
     if selector["domain"] == "process":
@@ -287,13 +287,18 @@ def evaluate_case(connection, run, selector, available, padding=15):
         if selector['domain'] == 'file' and selector.get('expectedActivities'):
             paths = connection.execute(f"SELECT path, list(DISTINCT activity) FROM ({sql}) GROUP BY path").fetchall()
             by_path = {path: set(activities) for path, activities in paths if path}
-            required = {a.lower() for a in selector['expectedActivities']}
             # Linux paths are case-sensitive. Exact expected paths also expose
             # missing paths, even when enough unrelated prefix paths were seen.
-            expected = selector.get('paths') or list(by_path)
-            complete = sum(required.issubset(by_path.get(path, set())) for path in expected)
+            expected = path_expectations(selector, by_path)
+            complete = sum(required.issubset(by_path.get(path, set())) for path, required in expected.items())
             result['checks'].append(dict(expectation=f"Paths with all required activities: {complete}/{len(expected)}",
                 observed=bool(expected) and complete == len(expected)))
+            folded = {}
+            for path in by_path:
+                folded.setdefault(path.lower(), set()).add(path)
+            case_only = sum(path not in by_path and path.lower() in folded for path in expected)
+            if case_only:
+                result['warnings'].append(f'Expected paths matching only after case folding: {case_only}; exact case-sensitive path identity unconfirmed (projection may discard case)')
         if selector["domain"] == "process":
             starts = connection.execute(f"SELECT pid, count(DISTINCT pid_hash), list(DISTINCT parent_pid) FROM ({sql}) WHERE activity='start' GROUP BY pid").fetchall()
             by_pid = {pid: (identities, parents) for pid, identities, parents in starts}
@@ -327,8 +332,9 @@ def evaluate_case(connection, run, selector, available, padding=15):
         if selector["domain"] == "network" and selector.get("endpointExpectations"):
             identities = {}
             for end in selector["endpointExpectations"]:
-                for activity in ("tcpipsend", "tcpiprecv"):
-                    inbound = activity == "tcpiprecv"
+                protocol = end.get('protocol', 'tcp').lower()
+                for activity in (protocol + 'ipsend', protocol + 'iprecv'):
+                    inbound = activity.endswith('iprecv')
                     src = int(end["remotePort"] if inbound else end["localPort"])
                     dest = int(end["localPort"] if inbound else end["remotePort"])
                     match = (f"pid={int(end['pid'])} AND lower(replace(activity,'/',''))={quote(activity)} "
@@ -338,13 +344,14 @@ def evaluate_case(connection, run, selector, available, padding=15):
                     correct = (f"local_port={int(end['localPort'])} AND remote_port={int(end['remotePort'])} "
                                f"AND local_address IN ({quote(local_ip)}, {quote(end['localIp'])}) "
                                f"AND remote_address IN ({quote(remote_ip)}, {quote(end['remoteIp'])})")
-                    total, wrong = connection.execute(f"SELECT count(*), count(*) FILTER(WHERE NOT COALESCE(({correct}), false)) FROM ({sql}) WHERE {match}").fetchone()
+                    complete = 'local_port IS NOT NULL AND remote_port IS NOT NULL AND local_address IS NOT NULL AND remote_address IS NOT NULL'
+                    total, wrong = connection.execute(f"SELECT count(*), count(*) FILTER(WHERE {complete} AND NOT COALESCE(({correct}), false)) FROM ({sql}) WHERE {match}").fetchone()
                     label = f"{end['role']}/{activity}: host-relative endpoint + directed provenance"
                     result["checks"].append(dict(expectation=label, observed=total > 0))
                     if wrong:
                         result["violations"].append(label + ": reversed/incorrect endpoint")
                     hashes = {row[0] for row in connection.execute(f"SELECT DISTINCT pid_hash FROM ({sql}) WHERE {match}").fetchall()}
-                    if any(not h or h.lower() in ("fixmepid", "unknown", "0") for h in hashes):
+                    if any(not valid_identity(h) for h in hashes):
                         result["violations"].append(label + ": missing process identity")
                     identities.setdefault(int(end["pid"]), set()).update(h for h in hashes if h)
             if any(len(values) > 1 for values in identities.values()):
@@ -361,6 +368,13 @@ def evaluate_case(connection, run, selector, available, padding=15):
     except Exception as error:
         result["error"] = str(error)
         return result
+
+
+def path_expectations(selector, observed_paths):
+    if selector.get('pathExpectations'):
+        return {entry['path']: {a.lower() for a in entry['expectedActivities']} for entry in selector['pathExpectations']}
+    paths = selector.get('paths') or sorted(observed_paths)
+    return {path: {a.lower() for a in selector.get('expectedActivities', [])} for path in paths}
 
 
 def valid_identity(value):
@@ -415,13 +429,13 @@ def evaluate_endpoint_candidates(connection, sql, selector, result):
     Other shared-PID/port traffic is uncertain, not automatically a red defect.
     Missing provenance is incomplete; non-null contradictory provenance is red.
     """
-    rows = connection.execute(f"SELECT pid, pid_hash, lower(replace(activity,'/','')), protocol, local_port, remote_port, source_port, destination_port, local_address, remote_address FROM ({sql}) WHERE lower(replace(activity,'/','')) IN ('tcpipsend','tcpiprecv')").fetchall()
+    rows = connection.execute(f"SELECT pid, pid_hash, lower(replace(activity,'/','')), protocol, local_port, remote_port, source_port, destination_port, local_address, remote_address FROM ({sql}) WHERE lower(replace(activity,'/','')) IN ('tcpipsend','tcpiprecv','udpipsend','udpiprecv')").fetchall()
     unknown, missing = 0, 0
     hashes = {}
     wrong_endpoint, wrong_protocol, bad_identity = 0, 0, 0
     for pid, identity, activity, protocol, local, remote, src, dest, lip, rip in rows:
         ends = [e for e in selector['endpointExpectations'] if int(e['pid']) == pid]
-        inbound = activity == 'tcpiprecv'
+        inbound = activity.endswith('iprecv')
         bound = [e for e in ends if (local, remote) == (int(e['localPort']), int(e['remotePort'])) or
             (src, dest) == (int(e['remotePort'] if inbound else e['localPort']), int(e['localPort'] if inbound else e['remotePort']))]
         if not bound:
@@ -431,7 +445,8 @@ def evaluate_endpoint_candidates(connection, sql, selector, result):
             bad_identity += 1
         else:
             hashes.setdefault(pid, set()).add(identity)
-        if protocol not in ('tcp', 'TCP'):
+        if not any((protocol or '').lower() == e.get('protocol', 'tcp').lower() and
+                   activity.startswith(e.get('protocol', 'tcp').lower() + 'ip') for e in bound):
             wrong_protocol += 1
         if any(v is None for v in (local, remote, src, dest, lip, rip)):
             missing += 1
@@ -450,7 +465,7 @@ def evaluate_endpoint_candidates(connection, sql, selector, result):
         if not any('reversed/incorrect endpoint' in v for v in result['violations']):
             result['violations'].append(f'Attributed Send/Recv rows have incorrect endpoint/directed provenance: {wrong_endpoint}')
     if wrong_protocol:
-        result['violations'].append(f'Attributed TCP socket rows have wrong/unknown protocol: {wrong_protocol}')
+        result['violations'].append(f'Attributed socket rows have wrong/unknown protocol: {wrong_protocol}')
     if bad_identity and not any('missing process identity' in v for v in result['violations']):
         result['violations'].append(f'Attributed socket rows have missing process identity: {bad_identity}')
     if any(len(h) > 1 for h in hashes.values()) and 'Inconsistent pid_hash within one process' not in result['violations']:

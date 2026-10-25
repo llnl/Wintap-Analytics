@@ -45,6 +45,31 @@ without weakening the new check. VM HTTP/S3 test uses synthetic credentials/data
 only and normal DuckDB extension validation. No actual Garage writes or field-host
 changes in this slice; unchanged cached summaries become stale via code fingerprint.
 
+Further iteration adds per-path activity maps for rename workflows and protocol-
+specific IPv4 UDP socket checks; missing host-relative values remain incomplete
+rather than contradicting a complete tuple. The eight-file stimulus now includes
+all expected paths and named UDP modes use independent workers/sockets, with exact
+ground-truth endpoint selectors. Tests cover both distinctions; final suite rerun
+and normal-ETL VM qualification recorded below when complete.
+
+Final isolated Ubuntu arm64 VM rerun: **93 dashboard tests pass, zero skips**
+(`SMOKE_S3_HTTP_TEST=1` includes synthetic HTTP/S3), **17 mocked runner tests pass**.
+Wintap manifest/workload/source assertion tests:12 pass; actual-object observer repeat
+on idle VM:15 checks pass. Shared managed network/receipt/identity/resolver/root
+selection:159 pass. No active collector during actual-object observer attachment.
+
+Fresh180-second normal-ETL pilot: trusted loaded tracer hash/version2 receipt,
+five generated and delivered manifest families, zero evidence/analysis errors. TCP
+Accept plus all four independent UDP cases observed; each UDP endpoint/identity check
+and both dedicated TCP endpoint scenarios have zero missing/violation findings.
+All family triage remains yellow: source breadcrumbs do not survive normal process
+projection, exact mixed-case file paths are lowercased despite complete activity
+coverage on all eight files, and TCP EOF candidates have partial tuples. No violation
+finding is replaced with PASS. Last local summary save/reload/latest integrity passes;
+raw file sizes/mtimes unchanged. No S3 writes or field-host changes.
+Details: [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]],
+[[wiki/tension/linux-file-path-case-projection]].
+
 ## All-round validation, runtime comparison and persistence — 2026-10-25
 
 User requested all validations on the uploaded single-round canary, one action for

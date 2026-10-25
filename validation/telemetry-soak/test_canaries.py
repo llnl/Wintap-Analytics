@@ -63,10 +63,12 @@ class CanaryTests(unittest.TestCase):
     def test_eight_file_bound_and_private_prefix(self):
         generator = ModuleType('file_capture_smoke_test')
         generator.generate_file_activity = MagicMock(return_value=SimpleNamespace(pid=42,
-            path_prefix='/fixture/fresh/file-', start_epoch=1))
+            path_prefix='/fixture/fresh/file-', start_epoch=1,
+            paths=tuple(Path(f'/fixture/fresh/file-{i}') for i in range(8))))
         self.invoke('file', {'file_capture_smoke_test': generator})
         generator.generate_file_activity.assert_called_once_with(self.root / 'fresh', unique_file_count=8)
         self.assertEqual(self.values['selectors'][0]['expectedPaths'], 8)
+        self.assertEqual(len(self.values['selectors'][0]['paths']), 8)
         self.assertEqual(self.values['selectors'][0]['expectedActivities'], ['Open', 'Read', 'Write', 'Close', 'Delete'])
 
     def test_missing_clone_helper_is_explicit_skip(self):

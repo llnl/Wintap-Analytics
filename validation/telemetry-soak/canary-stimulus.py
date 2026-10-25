@@ -54,6 +54,7 @@ def main():
             item = generate_file_activity(opts.output, unique_file_count=8)
             record(selectors=[dict(domain='file', case='eight-distinct-files', pids=[item.pid],
                 pathPrefix=item.path_prefix, expectedPaths=8, startedAtUtc=epoch_utc(item.start_epoch),
+                paths=[str(path) for path in getattr(item, 'paths', ())],
                 completedAtUtc=utc_now(), expectedActivities=['Open', 'Read', 'Write', 'Close', 'Delete'])],
                 results={'validationDeferred': True})
         else:

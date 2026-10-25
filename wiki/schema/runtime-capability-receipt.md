@@ -8,8 +8,9 @@ grounded_by:
   - ../wintap/wintap/core/etl/extract/HostSerializer.cs
   - ../wintap/wintap/platform/linux/sensor/shared/BaseEbpfSensor.cs
   - ../wintap/devtools/validate_runtime_capabilities.py
+  - ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs
 policy: agent-editable
-last_validated: 2026-10-23
+last_validated: 2026-10-25
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -98,6 +99,14 @@ This feature does not add startup failure recovery or continuous receipt updates
 <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/PluginManager.cs §constructor; ../wintap/wintap/core/infrastructure/WintapSvcCore.cs §StartupWorkerAsync; ../wintap/wintap/core/etl/extract/HostSerializer.cs §WriteHostRecordAsync; ../wintap/wintap/core/etl/load/RawSensorWriter.cs §WriteParquetWithDuckDB -->
 
 ## Analysis example and boundaries
+
+Current Linux Network adds PID-filter requested/applied booleans and version-gated
+operation facts: `networkContractVersion=2` requires a core object with the new
+UDP context map; older objects remain version0/unknown. Accept/UDP successful-return
+hook attachment, sampling intervals and byte/address contracts are additive features,
+not workload acceptance. PID values are not copied into these feature facts. Object
+hash and trusted package inputs must still be verified separately.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs §Start -->
 
 ```sql
 SELECT Hostname, AgentId, EventTime,

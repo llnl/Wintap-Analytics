@@ -1,8 +1,10 @@
 """Adversarial synthetic quality checks; no private datasets or identities."""
 import unittest
+from pathlib import Path
+import tempfile
 
 import duckdb
-from queries import evaluate_case, evaluate_run, selector_query
+from queries import evaluate_case, evaluate_run, prepare_data, selector_query
 
 
 class QualityTests(unittest.TestCase):
@@ -90,6 +92,36 @@ class QualityTests(unittest.TestCase):
         self.assertTrue(any('Stop identity differs' in v for v in result['violations']))
         self.assertTrue(any(not c['observed'] for c in result['checks']))
 
+    def test_rename_paths_use_only_ground_truth_activities(self):
+        self.insert(domain='file', activity='write', path='/fixture/original')
+        self.insert(domain='file', activity='delete', path='/fixture/renamed')
+        selector = dict(domain='file', pids=[42], pathPrefix='/fixture/', expectedPaths=2,
+            expectedActivities=['Write', 'Delete'], pathExpectations=[
+                dict(path='/fixture/original', expectedActivities=['Write']),
+                dict(path='/fixture/renamed', expectedActivities=['Delete'])])
+        self.assertTrue(all(c['observed'] for c in self.evaluate(selector)['checks']))
+        selector['pathExpectations'][1]['expectedActivities'].append('Read')
+        self.assertTrue(any(not c['observed'] for c in self.evaluate(selector)['checks']))
+
+    def test_case_folding_does_not_prove_distinct_linux_path_identity(self):
+        self.insert(domain='file', activity='open', path='/fixture/a')
+        selector = dict(domain='file', pids=[42], pathPrefix='/fixture/', paths=['/fixture/A', '/fixture/a'],
+            expectedPaths=2, expectedActivities=['Open'])
+        result = self.evaluate(selector)
+        self.assertTrue(result['warnings'])
+        self.assertTrue(any(not c['observed'] for c in result['checks']))
+
+    def test_udp_tuple_checks_not_satisfied_by_tcp_or_extra_wrong_row(self):
+        selector = self.network()
+        selector['expectedProtocols'] = ['udp']
+        selector['expectedActivities'] = ['UdpIpSend', 'UdpIpRecv']
+        selector['endpointExpectations'][0]['protocol'] = 'udp'
+        self.socket_row(activity='udpipsend', protocol='udp')
+        self.socket_row(activity='udpiprecv', protocol='udp', source_port=4321, destination_port=1234)
+        self.assertTrue(all(c['observed'] for c in self.evaluate(selector)['checks']))
+        self.socket_row(activity='udpipsend', protocol='udp', source_port=9999)
+        self.assertTrue(self.evaluate(selector)['violations'])
+
     def test_repeated_starts_without_provenance_are_unconfirmed_not_duplicate_birth(self):
         for activity in ('start', 'start', 'stop'):
             self.insert(domain='process', activity=activity)
@@ -109,6 +141,22 @@ class QualityTests(unittest.TestCase):
         self.assertEqual(result['rows'], 4)
         self.assertEqual(result['lifecycle']['start_rows'], 3)
         self.assertEqual(result['lifecycle']['unclassified_repeat_groups'], 0)
+
+    def test_source_normalization_requires_real_breadcrumb_field(self):
+        with tempfile.TemporaryDirectory() as directory, duckdb.connect() as con:
+            path = Path(directory) / 'process.parquet'
+            con.execute("COPY (SELECT 'fixture' Hostname, 'Process' MessageType, 42 PID, "
+                "'PROC_START_SRC=execve_or_execveat FLAGS=0x0' Process_Arguments) TO ? (FORMAT PARQUET)", [str(path)])
+            _, errors, available = prepare_data(con, directory)
+            self.assertFalse(errors)
+            self.assertTrue(available)
+            self.assertEqual(con.execute('SELECT start_source FROM smoke_data').fetchone()[0], 'execve_or_execveat')
+            con.execute('DROP VIEW smoke_data')
+            path.unlink()
+            con.execute("COPY (SELECT 'fixture' Hostname, 'Process' MessageType, 42 PID, "
+                "'PROC_START_SRC=sched_exec' CommandLine) TO ? (FORMAT PARQUET)", [str(path)])
+            prepare_data(con, directory)
+            self.assertIsNone(con.execute('SELECT start_source FROM smoke_data').fetchone()[0])
 
     def test_wrong_extra_directed_row_not_hidden_by_good_rows(self):
         self.socket_row()
@@ -136,6 +184,12 @@ class QualityTests(unittest.TestCase):
         result = self.evaluate(self.network())
         self.assertFalse(result['violations'])
         self.assertTrue(result['warnings'])
+        self.assertTrue(any(not c['observed'] for c in result['checks']))
+
+    def test_missing_host_relative_address_stays_incomplete_not_contradiction(self):
+        self.socket_row(local_address=None)
+        result = self.evaluate(self.network())
+        self.assertFalse(result['violations'])
         self.assertTrue(any(not c['observed'] for c in result['checks']))
 
     def test_unrelated_shared_pid_port_candidate_is_uncertain_not_red(self):

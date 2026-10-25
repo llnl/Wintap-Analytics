@@ -26,6 +26,20 @@ tags: [feature-work, retrospective, verification, proof, limits]
 
 # Outcome
 
+## Authorized local quality follow-up — 2026-10-25
+
+[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]]
+records source-controlled Accept/UDP return corrections and stronger Analytics
+assertions. Final VM verification:93 dashboard/17 runner/12 Wintap Python tests,
+159 shared managed tests, all12 tracer builds and repeated15-check actual-object
+pass versus original-object failure. Normal-ETL five-family round delivers evidence
+and saves/reloads local summary with zero analysis errors; Accept and independent UDP
+endpoints observed. Exact file-case and process-source projection plus TCP partial
+EOF tuples remain unconfirmed. No field rollout, schema migration, historical loss
+closure or release certification; pins/security/default-off controls unchanged.
+
+### Retrospective boundary
+
 **Scoped identity/data-quality improvements and observed disposable-Linux delivery
 are verified. A later operator-assisted native RHEL 9 self-contained RPM smoke and
 fresh DBT build pass; broader release/package qualification and multi-day real-host

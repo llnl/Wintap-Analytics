@@ -153,6 +153,7 @@ absent manifests. Attribution checks include hidden/unevaluated run intervals.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §evaluate_case, evaluate_run, mark_overlaps -->
 
 **Quality assertions:** file activities are checked per explicitly expected path
+(with its own activities when `pathExpectations` is present, e.g. rename lifecycle)
 (or every observed path for older count-only manifests). Lifecycle rows require
 non-placeholder identities, and required Stops must link to each observed Start
 identity. This is not canonical-hash recomputation or PID-reuse proof. Repeated Starts
@@ -164,7 +165,13 @@ tuples are red, incomplete/unattributed candidates yellow. No reported violation
 still does not certify all selected observations. Original counterexamples are in
 [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]].
 The bounded working set and saved-summary fingerprints cover the stronger checks.
-No strict dev-time gate was weakened.
+No strict dev-time gate was weakened. IPv4 TCP/UDP endpoint assertions use each
+`endpointExpectations` protocol; older TCP-only manifests default to TCP.
+Casefold-only path matches are explicitly unconfirmed, not exact Linux identity;
+normal ETL currently lowercases those paths. Normal process parquet omits producer
+Arguments/source breadcrumbs, so repeated-Start groups remain unclassified there.
+See [[wiki/tension/linux-file-path-case-projection]] and
+[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §selector_query, evaluate_case; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §HandleEvent -->
 
 Validation normalizes the selected source's candidate files, scans the union of

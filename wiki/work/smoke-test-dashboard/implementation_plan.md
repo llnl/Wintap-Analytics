@@ -108,5 +108,6 @@ not explained by disabled Network startup. No sensor-side changes in this slice.
 - [x] Keep incomplete/shared-PID attribution yellow and existing red findings red
 - [x] Include quality warnings/counts in individual UI and persisted all-round summaries
 - [x] VM isolated pinned Python environment and full suite including synthetic HTTP/S3
-- [ ] Sensor corrections and bounded VM actual-object/managed qualification (Wintap-owned)
+- [x] Sensor corrections and bounded VM actual-object/managed qualification (Wintap-owned)
+- [x] Distinct UDP mode/socket and rename-aware per-path contracts; VM pilot delivers five families
 - [ ] Operator package review and collection-host pilot; never unattended field rollout
