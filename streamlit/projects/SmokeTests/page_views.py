@@ -126,6 +126,10 @@ def test_page(ctx, canary):
                 continue
             st.dataframe(case['summary'], width='stretch')
             st.dataframe(case['checks'], width='stretch')
+            for warning in case.get('warnings', []):
+                st.warning(warning)
+            if case.get('lifecycle'):
+                st.write(case['lifecycle'])
             with st.expander('Tailored query (in-memory selected observations)'):
                 st.code(case['sql'], language='sql')
             if case.get('receipts'):

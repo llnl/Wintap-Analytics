@@ -181,6 +181,7 @@ def prepare_data(connection, root, unlabelled_host="", telemetry_files=None):
             "pid": col("PID", cast="BIGINT"), "parent_pid": col("ParentPid", "Process_ParentPID", cast="BIGINT"),
             "pid_hash": col("PidHash"), "activity": f"lower({activity})", "process_name": col("ProcessName", "Process_ProcessName"),
             "command_line": col("CommandLine", "Process_CommandLine"), "path": file_path,
+            "start_source": f"NULLIF(regexp_extract({col('Arguments', 'Process_Arguments')}, 'PROC_START_SRC=([a-z_]+)', 1), '')",
             "protocol": inferred_protocol, "local_port": local_port, "remote_port": remote_port,
             "source_port": col("SourcePort", cast="INTEGER"), "destination_port": col("DestinationPort", cast="INTEGER"),
             "local_address": col("LocalIpAddr", "TcpConnection_SourceAddress", "UdpPacket_SourceAddress"),
@@ -225,9 +226,9 @@ def selector_query(run, selector, padding=15):
                 raise ValueError("File selector requires paths or pathPrefix")
         if domain == "network" and selector.get("ports"):
             ports = ",".join(str(int(p)) for p in selector["ports"])
-            where.append(f"(local_port IN ({ports}) OR remote_port IN ({ports}))")
-        if domain == "network" and selector.get("expectedProtocols"):
-            where.append("protocol IN (" + ",".join(quote(p.lower()) for p in selector["expectedProtocols"]) + ")")
+            where.append(f"(local_port IN ({ports}) OR remote_port IN ({ports}) OR source_port IN ({ports}) OR destination_port IN ({ports}))")
+        # Expectations are checks, not acceptance filters. Keep malformed/wrong-
+        # protocol candidates inside the same bounded working set.
     return "SELECT * FROM smoke_data WHERE " + " AND ".join(where) + " ORDER BY event_time, pid"
 
 
@@ -242,7 +243,13 @@ def coverage(rows, selector):
     if selector.get("expectedPaths"):
         count = len({r["path"] for r in rows if r["path"]})
         checks.append(dict(expectation=f"Distinct paths: {count}/{selector['expectedPaths']}",
-                           observed=count >= int(selector["expectedPaths"])))
+                            observed=count >= int(selector["expectedPaths"])))
+    if selector['domain'] == 'file' and selector.get('expectedActivities'):
+        paths = selector.get('paths') or sorted({r['path'] for r in rows if r['path']})
+        required = {a.lower() for a in selector['expectedActivities']}
+        complete = sum(required.issubset({r['activity'] for r in rows if r['path'] == p}) for p in paths)
+        checks.append(dict(expectation=f"Paths with all required activities: {complete}/{len(paths)}",
+                           observed=bool(paths) and complete == len(paths)))
     if selector["domain"] == "process":
         starts = {r["pid"] for r in rows if r["activity"] == "start"}
         for pid in selector.get("pids", []):
@@ -258,7 +265,7 @@ def coverage(rows, selector):
 
 def evaluate_case(connection, run, selector, available, padding=15):
     """Aggregate complete matching data; never materialize all events for triage."""
-    result = dict(selector=selector, checks=[], summary=[], rows=0, violations=[], error=None)
+    result = dict(selector=selector, checks=[], summary=[], rows=0, violations=[], warnings=[], error=None)
     if not available:
         result["error"] = "No collected telemetry available yet"
         return result
@@ -277,6 +284,16 @@ def evaluate_case(connection, run, selector, available, padding=15):
         if selector.get("expectedPaths"):
             count = connection.execute(f"SELECT count(DISTINCT path) FROM ({sql})").fetchone()[0]
             result["checks"].append(dict(expectation=f"Distinct paths: {count}/{selector['expectedPaths']}", observed=count >= int(selector["expectedPaths"])))
+        if selector['domain'] == 'file' and selector.get('expectedActivities'):
+            paths = connection.execute(f"SELECT path, list(DISTINCT activity) FROM ({sql}) GROUP BY path").fetchall()
+            by_path = {path: set(activities) for path, activities in paths if path}
+            required = {a.lower() for a in selector['expectedActivities']}
+            # Linux paths are case-sensitive. Exact expected paths also expose
+            # missing paths, even when enough unrelated prefix paths were seen.
+            expected = selector.get('paths') or list(by_path)
+            complete = sum(required.issubset(by_path.get(path, set())) for path in expected)
+            result['checks'].append(dict(expectation=f"Paths with all required activities: {complete}/{len(expected)}",
+                observed=bool(expected) and complete == len(expected)))
         if selector["domain"] == "process":
             starts = connection.execute(f"SELECT pid, count(DISTINCT pid_hash), list(DISTINCT parent_pid) FROM ({sql}) WHERE activity='start' GROUP BY pid").fetchall()
             by_pid = {pid: (identities, parents) for pid, identities, parents in starts}
@@ -300,6 +317,7 @@ def evaluate_case(connection, run, selector, available, padding=15):
                 result["checks"].append(dict(expectation=f"{link['case']}: parent PID {link['parentPid']}", observed=matched))
                 if entry and any(p is not None and p != int(link["parentPid"]) for p in entry[1]):
                     result["violations"].append(f"{link['case']}: wrong parent PID")
+            evaluate_lifecycle(connection, sql, selector, result)
         if selector["domain"] == "host":
             receipts = connection.execute(f"SELECT DISTINCT receipt FROM ({sql})").fetchall()
             result["receipts"] = [json.loads(r[0]) for r in receipts]
@@ -334,10 +352,112 @@ def evaluate_case(connection, run, selector, available, padding=15):
             nonempty = [values for values in identities.values() if values]
             if len(nonempty) == 2 and len(set.union(*nonempty)) < 2:
                 result["violations"].append("Separate socket processes share pid_hash")
+            evaluate_endpoint_candidates(connection, sql, selector, result)
+        elif selector['domain'] == 'network' and selector.get('expectedProtocols'):
+            unexpected = protocols - {p.lower() for p in selector['expectedProtocols']}
+            if unexpected:
+                result['warnings'].append('Unexpected/unknown protocol among PID/port candidates; exact socket attribution unconfirmed')
         return result
     except Exception as error:
         result["error"] = str(error)
         return result
+
+
+def valid_identity(value):
+    """Presence gate, not recomputation of the canonical host/birth hash."""
+    return isinstance(value, str) and bool(value.strip()) and value.strip().lower() not in ('fixmepid', 'unknown', '0', 'null', 'none')
+
+
+def evaluate_lifecycle(connection, sql, selector, result):
+    columns = {c[0] for c in connection.execute(f'DESCRIBE SELECT * FROM ({sql})').fetchall()}
+    source = 'start_source' if 'start_source' in columns else 'NULL::VARCHAR'
+    groups = connection.execute(f"SELECT pid, pid_hash, activity, {source}, count(*) FROM ({sql}) WHERE activity IN ('start','stop') GROUP BY 1,2,3,4").fetchall()
+    starts, stops, observations = {}, {}, {}
+    invalid = 0
+    for pid, identity, activity, origin, count in groups:
+        if not valid_identity(identity):
+            invalid += count
+        else:
+            (starts if activity == 'start' else stops).setdefault(pid, set()).add(identity)
+        if activity == 'start':
+            entry = observations.setdefault((pid, identity), dict(count=0, classified=0))
+            entry['count'] += count
+            if origin in ('sched_fork', 'sched_exec', 'execve_or_execveat'):
+                entry['classified'] += count
+    if invalid:
+        result['violations'].append(f'Lifecycle rows with missing/placeholder process identity: {invalid}')
+    if groups or selector.get('pids'):
+        result['checks'].append(dict(expectation='Lifecycle rows have non-placeholder identity (not canonical hash proof)',
+            observed=bool(groups) and not invalid))
+    for pid in selector.get('pids', []):
+        birth = starts.get(int(pid), set())
+        ended = stops.get(int(pid), set())
+        if birth and ended and ended - birth:
+            result['violations'].append(f'PID {pid} Stop identity differs from observed Start identity')
+        if selector.get('requireStopPerPid'):
+            result['checks'].append(dict(expectation=f'PID {pid} Start identities linked to Stop',
+                observed=bool(birth) and birth.issubset(ended)))
+    repeats = [v for v in observations.values() if v['count'] > 1]
+    unclassified = sum(v['count'] != v['classified'] for v in repeats)
+    result['lifecycle'] = dict(start_rows=sum(n for _, _, a, _, n in groups if a == 'start'),
+        stop_rows=sum(n for _, _, a, _, n in groups if a == 'stop'),
+        repeated_start_identity_groups=len(repeats), unclassified_repeat_groups=unclassified)
+    if repeats:
+        result['checks'].append(dict(expectation=f'Repeated Start groups source-classified: {len(repeats) - unclassified}/{len(repeats)}',
+            observed=not unclassified))
+        result['warnings'].append('Repeated raw Starts are lifecycle/image observations, not distinct births or exact-count proof')
+
+
+def evaluate_endpoint_candidates(connection, sql, selector, result):
+    """Check all attributable Send/Recv rows, not just already-correct provenance.
+
+    A complete expected host-relative OR directed port pair binds a socket role.
+    Other shared-PID/port traffic is uncertain, not automatically a red defect.
+    Missing provenance is incomplete; non-null contradictory provenance is red.
+    """
+    rows = connection.execute(f"SELECT pid, pid_hash, lower(replace(activity,'/','')), protocol, local_port, remote_port, source_port, destination_port, local_address, remote_address FROM ({sql}) WHERE lower(replace(activity,'/','')) IN ('tcpipsend','tcpiprecv')").fetchall()
+    unknown, missing = 0, 0
+    hashes = {}
+    wrong_endpoint, wrong_protocol, bad_identity = 0, 0, 0
+    for pid, identity, activity, protocol, local, remote, src, dest, lip, rip in rows:
+        ends = [e for e in selector['endpointExpectations'] if int(e['pid']) == pid]
+        inbound = activity == 'tcpiprecv'
+        bound = [e for e in ends if (local, remote) == (int(e['localPort']), int(e['remotePort'])) or
+            (src, dest) == (int(e['remotePort'] if inbound else e['localPort']), int(e['localPort'] if inbound else e['remotePort']))]
+        if not bound:
+            unknown += 1
+            continue
+        if not valid_identity(identity):
+            bad_identity += 1
+        else:
+            hashes.setdefault(pid, set()).add(identity)
+        if protocol not in ('tcp', 'TCP'):
+            wrong_protocol += 1
+        if any(v is None for v in (local, remote, src, dest, lip, rip)):
+            missing += 1
+            continue
+        def correct(end):
+            local_ips = (end['localIp'], str(int(ipaddress.IPv4Address(end['localIp']))))
+            remote_ips = (end['remoteIp'], str(int(ipaddress.IPv4Address(end['remoteIp']))))
+            return ((local, remote) == (int(end['localPort']), int(end['remotePort'])) and
+                (src, dest) == (int(end['remotePort'] if inbound else end['localPort']), int(end['localPort'] if inbound else end['remotePort'])) and
+                str(lip) in local_ips and str(rip) in remote_ips)
+        if not any(correct(e) for e in bound):
+            wrong_endpoint += 1
+    if wrong_endpoint:
+        # Existing matching-candidate checks already report reversals. Add a
+        # separate finding only for extra malformed provenance that escaped them.
+        if not any('reversed/incorrect endpoint' in v for v in result['violations']):
+            result['violations'].append(f'Attributed Send/Recv rows have incorrect endpoint/directed provenance: {wrong_endpoint}')
+    if wrong_protocol:
+        result['violations'].append(f'Attributed TCP socket rows have wrong/unknown protocol: {wrong_protocol}')
+    if bad_identity and not any('missing process identity' in v for v in result['violations']):
+        result['violations'].append(f'Attributed socket rows have missing process identity: {bad_identity}')
+    if any(len(h) > 1 for h in hashes.values()) and 'Inconsistent pid_hash within one process' not in result['violations']:
+        result['violations'].append('Inconsistent pid_hash within one process')
+    if unknown or missing:
+        result['checks'].append(dict(expectation='All Send/Recv candidates have attributable complete endpoint provenance', observed=False))
+        result['warnings'].append(f'Unattributed Send/Recv candidates: {unknown}; attributed rows with incomplete provenance: {missing}')
 
 
 def evaluate_run(connection, run, available, padding=15):
@@ -383,6 +503,7 @@ def evaluate_run(connection, run, available, padding=15):
                 reasons.append(f"{label}: required observations missing (arrival/completeness unknown)")
             if case.get("capability_gaps"):
                 reasons.append(f"{label}: startup capabilities limited: " + "; ".join(case["capability_gaps"]))
+            reasons.extend(f"{label}: {warning}" for warning in case.get('warnings', []))
         if run.get("stimulusOnly"):
             reasons.append("Stimulus completed only; not a capture-validation PASS")
     # Report-only trace success is green for trace scope, never pipeline scope.

@@ -98,3 +98,15 @@ collector/uploader, sibling source, SDK/DuckDB and experimental defaults unchang
 All-canary observations are not full dev-time harness re-validation or release
 certification. Native clone remains skipped; TCP Accept/UDP Receive remain missing,
 not explained by disabled Network startup. No sensor-side changes in this slice.
+
+## Quality follow-up (authorized 2026-10-25)
+
+- [x] Convert adversarial per-path/lifecycle/endpoint fixtures into committed regressions
+- [x] Per-path activity matrix and required Start/Stop identity linkage/presence
+- [x] Source-aware repeated-Start counts, preserve raw Clone/Exec observations
+- [x] Retain wrong-protocol/directed-port candidates and check attributable extra rows
+- [x] Keep incomplete/shared-PID attribution yellow and existing red findings red
+- [x] Include quality warnings/counts in individual UI and persisted all-round summaries
+- [x] VM isolated pinned Python environment and full suite including synthetic HTTP/S3
+- [ ] Sensor corrections and bounded VM actual-object/managed qualification (Wintap-owned)
+- [ ] Operator package review and collection-host pilot; never unattended field rollout

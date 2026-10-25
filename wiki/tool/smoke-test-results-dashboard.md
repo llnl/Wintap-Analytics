@@ -152,16 +152,19 @@ ambiguity never downgrades it to yellow. An entirely missing host cannot be infe
 absent manifests. Attribution checks include hidden/unevaluated run intervals.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §evaluate_case, evaluate_run, mark_overlaps -->
 
-**Known observation-check limits:** required file activities are checked across the
-case, not per expected path; process checks do not yet require valid identity on
-every lifecycle row or link Stop to the Start identity. Repeated same-identity Starts
-are not source-classified (Clone/Exec can legitimately publish separate observations).
-Endpoint checks can miss additional malformed candidates when valid matching rows
-coexist, and expected protocol is also a selector filter. Thus no reported violations
-does not certify all selected observations. Five synthetic counterexamples and the
-proposed source-aware corrections are recorded in
+**Quality assertions:** file activities are checked per explicitly expected path
+(or every observed path for older count-only manifests). Lifecycle rows require
+non-placeholder identities, and required Stops must link to each observed Start
+identity. This is not canonical-hash recomputation or PID-reuse proof. Repeated Starts
+retain raw Clone/Exec observations and source-classification counts; missing provenance
+is unconfirmed, not an automatic duplicate birth. Network selectors retain expected-
+protocol mismatches and either host-relative or directed matching ports. All bound
+Send/Recv candidates are checked, including malformed extra rows; contradictory complete
+tuples are red, incomplete/unattributed candidates yellow. No reported violations
+still does not certify all selected observations. Original counterexamples are in
 [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]].
-No evaluator behavior or strict dev-time gate changes accompany this documentation.
+The bounded working set and saved-summary fingerprints cover the stronger checks.
+No strict dev-time gate was weakened.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §selector_query, evaluate_case; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §HandleEvent -->
 
 Validation normalizes the selected source's candidate files, scans the union of
@@ -224,9 +227,9 @@ Send/Recv using directed SourcePort/DestinationPort, Local/Remote IP-and-port pa
 and stable/distinct process hashes. Even same-IP/same-PID receive reversals are red;
 missing directed provenance remains unconfirmed. Explicit network opt-outs remain
 yellow. Old/direct parquet cannot certify normalized endpoint correctness.
-Dashboard checks apply to matching directed candidates; additional malformed rows
-can escape them as described above. The standalone dev-time validator is a separate
-contract and must not be weakened to match these dashboard limitations.
+Dashboard checks now include additional candidates bound by the expected host-relative
+or directed port pair. Shared-PID traffic without a complete binding stays ambiguous;
+the standalone dev-time validator remains a separate contract.
 <!-- GROUND_TRUTH: ../wintap/devtools/network_endpoint_smoke_test.py §validate_rows; ../wintap/devtools/network_capture_smoke_test.py §main; streamlit/projects/SmokeTests/queries.py §evaluate_case; §evaluate_run -->
 
 Scoped Ubuntu arm64 live proof: [[wiki/work/network-endpoint-normalization/verification]].

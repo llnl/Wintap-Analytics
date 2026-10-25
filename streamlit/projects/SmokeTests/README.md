@@ -13,6 +13,14 @@ Overview, Canary Tests and Dev-time Tests. Test pages provide run selectors,
 saved evidence and explicit selected-run validation. Empty/missing data is normal.
 It **never executes tests or changes collector configuration**.
 
+Quality checks require file activities per expected/observed path, non-placeholder
+lifecycle identities and required Start→Stop identity linkage. Repeated Starts retain
+Clone/Exec observations and report source-classification counts, not distinct births.
+Network expectations are not protocol scan filters: malformed extra socket-bound rows
+remain visible. Contradictory complete endpoints are red; incomplete or unbound shared-
+PID candidates are yellow. These checks do not recompute canonical hashes or certify
+loss/count equivalence. Evaluator changes invalidate saved-summary fingerprints.
+
 ## Collection host and analysis host can differ
 
 Updated scripts in `../wintap/devtools/` accept `--manifest /path/to/run.json`.

@@ -26,6 +26,25 @@ tags: [streamlit, smoke-tests, verification, cross-host]
 
 # Verification: smoke-test results dashboard
 
+## Quality follow-up — 2026-10-25
+
+User authorized recommended-order implementation and local disposable-VM iteration.
+First strengthened Analytics only: per-path activity completeness, non-placeholder
+lifecycle identities, Start/Stop linkage, source-aware repeated-Start counts, and
+all-attributable endpoint/protocol checks. Thirteen synthetic adversarial tests were
+added; one prior exact-missing-check assertion now includes the new linkage check.
+No canonical-hash recomputation, exact birth counts or loss-equivalence claim.
+
+On the idle Ubuntu arm64 qualification VM, a new isolated environment preserves the
+pre-existing SDK/Python environments. DuckDB 1.5.6, Streamlit 1.66.1 and boto3
+1.43.118 installed; source snapshot excludes local private configuration/evidence.
+`SMOKE_S3_HTTP_TEST=1 <isolated-python> -B -m unittest discover -s
+streamlit/projects/SmokeTests -p 'test*.py'`: **88 tests passed, zero skips/failures**.
+The first Mac run exposed one stale expected-missing-list assertion; corrected
+without weakening the new check. VM HTTP/S3 test uses synthetic credentials/data
+only and normal DuckDB extension validation. No actual Garage writes or field-host
+changes in this slice; unchanged cached summaries become stale via code fingerprint.
+
 ## All-round validation, runtime comparison and persistence — 2026-10-25
 
 User requested all validations on the uploaded single-round canary, one action for

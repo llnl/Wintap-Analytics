@@ -113,7 +113,7 @@ class AnalysisTests(unittest.TestCase):
         self.assertEqual(result['state'], 'yellow')
         self.assertEqual(result['runtime']['status'], 'temporal')
         self.assertIn('inferred', result['runtime']['hostname_correlation'])
-        self.assertEqual(result['cases'][0]['missing'], ['PID 42 Stop'])
+        self.assertEqual(result['cases'][0]['missing'], ['PID 42 Stop', 'PID 42 Start identities linked to Stop'])
         self.assertEqual(len(report['missing_families']), 4)
 
     def test_budget_failure_never_accepts_partial_evaluation(self):

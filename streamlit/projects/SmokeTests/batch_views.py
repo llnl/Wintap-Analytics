@@ -23,6 +23,7 @@ def show_report(report):
         for r in report['results']], width='stretch')
     st.dataframe([dict(test=r['title'], case=c['case'], domain=c['domain'], observation=c['observation'], rows=c['rows'],
         missing='; '.join(c['missing']), violations='; '.join(c['violations']),
+        quality_warnings='; '.join(c.get('warnings', [])),
         collectors=', '.join(n + ': ' + s for n, s in c['runtime']['collectors'].items()),
         explanation=c['runtime']['explanation'], skips='; '.join(c['skips']))
         for r in report['results'] for c in r['cases']], width='stretch')

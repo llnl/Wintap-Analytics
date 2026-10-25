@@ -180,13 +180,14 @@ def summarize(run, evaluation, context):
         if error:
             reasons = [r.replace(error, 'Telemetry query unavailable (details suppressed)') for r in reasons]
         missing = [ch['expectation'] for ch in c['checks'] if not ch['observed']]
-        observation = 'violation' if c['violations'] else 'unavailable' if error else 'gaps' if missing or not c['rows'] else 'observed'
+        observation = 'violation' if c['violations'] else 'unavailable' if error else 'gaps' if missing or not c['rows'] else 'limited' if c.get('warnings') else 'observed'
         # Negative thread evidence requires a positive companion and may have zero rows.
         if not error and not c['violations'] and not missing and c['selector'].get('threadIds') and not c['selector'].get('pids'):
             observation = 'negative observation; companion observed' if companion else 'absence unconfirmed; no companion'
         cases.append(dict(case=c['selector'].get('case', c['selector']['domain']), domain=c['selector']['domain'],
             observation=observation, rows=c['rows'], checks=c['checks'], missing=missing,
             violations=c['violations'], skips=c['selector'].get('skips', []),
+            warnings=c.get('warnings', []), lifecycle=c.get('lifecycle', {}),
             runtime=case_context(c['selector'], context)))
     return dict(test=run['test'], title=TESTS[run['test']], run_id=run['runId'], host=run['host']['hostname'],
         started_at=run['startedAtUtc'], state=evaluation['state'], reasons=reasons, harness=run.get('status', 'unknown'),

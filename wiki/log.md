@@ -3673,3 +3673,17 @@ Capture gaps/native skips and all prior acceptance limits remain open.
 Diff whitespace, modified content-page frontmatter/wikilinks and new live grounding
 paths pass. Synthetic diagnostics are not committed regressions; no source test-suite
 rerun or implementation acceptance claimed. Same feature branch; no PR publication.
+
+## [2026-10-25] code | Strengthened canary quality assertions
+
+User authorized recommended-order fixes and local VM iteration while away. Added
+13 synthetic quality regressions and stronger per-path/lifecycle identity/linkage,
+source-aware repeated-Start and all-bound network candidate checks. Expected protocols
+no longer filter the scan; directed ports also retain malformed host-relative tuples.
+Contradictions remain red; incomplete/unbound traffic remains yellow, with summary/UI
+warnings and counts. Clone/Exec raw observations are preserved, never counted as
+distinct births or deleted. Existing pins/defaults/strict dev-time gates unchanged.
+Idle VM uses isolated DuckDB1.5.6/Streamlit1.66.1/boto3 environment; all 88 dashboard
+tests pass including real synthetic HTTP/S3, zero skips. Updated canonical tool,
+README/plan/verification. Field-host services, raw datasets and private configuration
+untouched. Sensor-owned fixes/VM qualification follow separately on existing branch.
