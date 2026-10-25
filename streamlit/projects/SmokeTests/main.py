@@ -5,6 +5,7 @@ import duckdb
 import streamlit as st
 
 from queries import TESTS, evaluate_run, load_manifests, mark_overlaps, overview, prepare_data
+from s3_source import discover_files, load_config, open_source
 
 ICONS = {"red": "🔴", "yellow": "🟡", "green": "🟢", "gray": "⚪"}
 
@@ -25,7 +26,12 @@ def main():
     st.set_page_config(page_title="Smoke test results", page_icon="🧪", layout="wide")
     st.title("Smoke test results")
     st.caption("Read-only analysis • portable run manifests • raw parquet • no test execution")
+    config = None
+    remote = False
     with st.sidebar:
+        source = st.radio("Dataset source", ["Local / mounted", "Garage / S3"],
+                          index=1 if os.environ.get("WINTAP_SMOKE_CONFIG") else 0)
+        remote = source == "Garage / S3"
         data_root = st.text_input("Parquet root on this analysis machine", os.environ.get("WINTAP_DATA_ROOT", ""))
         manifest_root = st.text_input("Optional JSON manifest directory", "")
         uploads = st.file_uploader("Or upload completed smoke manifests", type="json", accept_multiple_files=True)
@@ -33,18 +39,50 @@ def main():
                                       help="Only set if every unlabelled parquet file under the selected root belongs to this test host. Never the analysis-machine hostname.")
         padding = st.number_input("Time-window tolerance (seconds)", 0, 120, 15)
         row_limit = st.number_input("Displayed rows per case", 10, 10000, 200)
+        if remote:
+            config_path = st.text_input("Local S3 JSON config", os.environ.get("WINTAP_SMOKE_CONFIG", ""))
+            if not config_path:
+                st.info("Select a local JSON config; AWS credentials stay in your environment/profile.")
+                return
+            try:
+                config = load_config(config_path)
+            except ValueError as error:
+                st.error(str(error))
+                return
+            start_day = st.text_input("Start partition day (UTC, YYYYMMDD)", config["start_day"])
+            end_day = st.text_input("End partition day (UTC, YYYYMMDD)", config["end_day"])
+            st.caption("Days filter publication/collection partitions, not run boundaries. Include adjacent days around midnight. AWS env/profile credentials are used; config contains no keys.")
+            if config["endpoint"].startswith("http://"):
+                st.warning("Configured Garage endpoint uses unencrypted HTTP. Use HTTPS unless this is intentionally an isolated test network.")
         st.button("Refresh files / results")
-    runs, errors = load_manifests(manifest_root, [(f.name, f.getvalue()) for f in uploads or []], data_root=data_root)
+    evidence_files = telemetry_files = None
+    try:
+        if remote:
+            con, client = open_source(config)
+            try:
+                evidence_files, telemetry_files = discover_files(client, config, start_day, end_day)
+            except Exception:
+                con.close()
+                raise
+            st.caption(f"S3: {len(evidence_files)} evidence files and {len(telemetry_files)} telemetry files in the selected partitions. Listing refreshed on each rerun; object arrival is not a completeness watermark.")
+        else:
+            con = duckdb.connect(":memory:")
+    except Exception as error:
+        st.error(str(error))
+        return
+    runs, errors = load_manifests(manifest_root, [(f.name, f.getvalue()) for f in uploads or []],
+                                  data_root="" if remote else data_root, connection=con,
+                                  evidence_files=evidence_files)
     for error in errors:
         st.warning(error)
     st.info("Smoke evidence is discovered automatically in raw_sensor/raw_smoke_test alongside telemetry. JSON upload is optional. Normal transfer latency is expected; missing observations stay yellow, not PASS. VM selector paths are event values, not analysis-local files.")
-    con = duckdb.connect(":memory:")
     con.execute("SET TimeZone='UTC'")
     available = False
     data_errors = []
     try:
-        if data_root:
-            count, data_errors, available = prepare_data(con, data_root, unlabelled_host)
+        if data_root or remote:
+            count, data_errors, available = prepare_data(con, "" if remote else data_root, unlabelled_host,
+                                                         telemetry_files=telemetry_files)
             st.caption(f"{count} finalized parquet files discovered; active files are ignored.")
             for error in data_errors[:10]:
                 st.warning(error)
@@ -53,6 +91,14 @@ def main():
                 if unlabelled:
                     st.warning(f"{unlabelled:,} rows have no hostname and cannot be attributed. Scope the source root to one host and set its name in the sidebar if appropriate.")
         evaluations = {(r["test"], r["runId"]): evaluate_run(con, r, available, padding) for r in runs}
+        if remote:
+            # Never surface SDK/HTTP errors containing signed URLs or credential details.
+            for evaluation in evaluations.values():
+                for case in evaluation["cases"]:
+                    if case["error"]:
+                        old = case["error"]
+                        case["error"] = "S3 telemetry query unavailable; check permissions/connectivity or refresh after arrival (details suppressed)"
+                        evaluation["reasons"] = [r.replace(old, case["error"]) for r in evaluation["reasons"]]
         mark_overlaps(runs, evaluations, padding)
         if data_errors or errors:
             for evaluation in evaluations.values():
@@ -151,9 +197,9 @@ def main():
                     if case_result["rows"] > row_limit:
                         st.caption(f"Displaying {row_limit} of {case_result['rows']:,} matching rows.")
                 except Exception as error:
-                    st.warning(f"Cannot query this case: {error}")
+                    st.warning("Cannot query this S3 case; refresh or check read permissions/connectivity (details suppressed)." if remote else f"Cannot query this case: {error}")
     except Exception as error:
-        st.error(f"Cannot read dataset: {error}")
+        st.error("Cannot read S3 dataset; details suppressed to protect credentials." if remote else f"Cannot read dataset: {error}")
     finally:
         con.close()
 

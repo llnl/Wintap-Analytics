@@ -3586,3 +3586,22 @@ Added canonical tool page and updated index/implementation/verification. Eleven
 mocked tests, bash syntax and diff checks pass; native pilot/Garage evidence arrival,
 signal/timeout and long-running behavior remain pending. No host identifiers or
 generated evidence committed; test fixtures are synthetic.
+
+## [2026-10-25] code | Read-only Garage/S3 SmokeTests dashboard source
+
+User selected direct Garage access on the same feature branch and reports one runner
+pilot completed, uploader working and smoke evidence reaching S3. Added private
+JSON config (credentials rejected), AWS env/profile chain, temporary in-memory
+DuckDB secret, path-style listing/reads, connection-time extension cache, inclusive
+UTC day pruning, pagination, fail-closed caps and sidebar refresh/source selection.
+No object mutations, credential persistence, local dataset sync, collector/uploader
+or sibling changes; TLS/signature checks retained. Existing manifest/host/run/triage
+semantics and mounted/local mode preserved. Forty-two backend/query/Streamlit tests
+pass in an isolated temporary environment; one real synthetic loopback HTTP/S3 test
+passes GET/HEAD listing/range-read/ground-truth join after correcting secret syntax.
+Actual Garage dashboard validation and long-duration acceptance remain pending;
+DBT manifest integration deferred. Updated canonical docs/index/plans/verification.
+No real identifiers, credentials, endpoint/prefix configuration or host output filed.
+Final suite including real loopback HTTP transport: 43/43 pass; Python parse/diff
+checks pass and local config ignore is verified. Commit/push remains on the existing
+feature branch; no PR publication.

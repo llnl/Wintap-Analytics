@@ -1,0 +1,6 @@
+{
+  "endpoint": "https://garage.example.invalid",
+  "region": "us-east-1",
+  "datasets": ["s3://example-bucket/example-prefix"],
+  "max_files": 10000
+}

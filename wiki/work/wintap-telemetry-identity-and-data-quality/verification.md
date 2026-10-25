@@ -212,3 +212,13 @@ collector management, S3 credential configuration or automatic evidence deletion
 `git diff --check`: pass. Pilot round, native timeout/signal behavior, Garage evidence
 arrival and long-duration behavior remain pending operator execution. Current DBT
 does not validate manifests; dashboard analysis is the user's selected path.
+
+### Operator-reported soak delivery and read-only dashboard source
+
+Operator reports one pilot runner round completed, uploader working and smoke evidence
+arriving in S3. Per-workload pilot status/ground-truth coverage was not supplied, so
+these reports do not certify every stimulus or sensor capture. User selected a direct
+read-only Garage/S3 dashboard source on the same branch; see
+[[wiki/work/smoke-test-dashboard/verification]] for backend/UI and synthetic HTTP
+transport results. Actual Garage dashboard ground-truth checks and long-duration
+acceptance remain pending. DBT manifest integration remains deferred.

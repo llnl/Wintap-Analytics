@@ -53,6 +53,8 @@ Read-only smoke results / cross-host run manifests:
 [[wiki/tool/smoke-test-results-dashboard]];
 [[wiki/work/smoke-test-dashboard/implementation_plan]];
 [[wiki/work/smoke-test-dashboard/verification]].
+Dashboard supports private configured read-only Garage/S3 access as well as mounted
+datasets; operator reports evidence arrival, live dashboard validation pending.
 
 Accepted durable evidence plan: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]]
 (pidstat-style parquet transport, partitioning and dashboard severity overview).

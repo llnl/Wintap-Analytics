@@ -6,7 +6,7 @@ grounded_by:
   - streamlit/projects/SmokeTests/README.md
   - ../wintap/devtools/smoke_manifest.py
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-25
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -50,3 +50,17 @@ transport redesign, acknowledgements or long-term source spool required.
 - [x] Promote final evidence/usage to canonical wiki
 
 Plan and accepted scope: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]].
+
+## Read-only Garage/S3 source (authorized 2026-10-25)
+
+User selected direct Garage access on the same feature branch and reports smoke
+evidence reaching S3. No collector/uploader or sibling-repo changes are authorized
+or required for this slice; DBT manifest integration remains deferred.
+
+- [x] Private JSON config with credential-free schema and standard AWS env/profile chain
+- [x] Path-style Garage access with temporary DuckDB secret and HTTPS verification
+- [x] Paginated/UTC partition-pruned evidence and telemetry discovery, fail-closed caps
+- [x] Shared remote connection, existing manifest/selector/triage semantics and refresh
+- [x] Backend, source-parity, Streamlit and real loopback HTTP transport regressions
+- [x] Document launch/configuration/security and preserve local/mounted behavior
+- [ ] Operator validates dashboard against the actual Garage dataset

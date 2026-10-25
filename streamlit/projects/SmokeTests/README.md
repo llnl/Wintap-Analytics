@@ -67,9 +67,83 @@ This new evidence type rides the existing mounted-directory/uploader path with
 normal latency; no transport changes, acknowledgements or long-term source retention
 are required. Point the dashboard at the analysis-visible data root or `raw_sensor`
 directory: it discovers runs automatically, without a separate manifest transfer.
-S3 upload needs no new event allowlist, but this app currently reads **local/mounted/
-synced files**, not S3 URLs directly. A stopped/disabled uploader will not transfer
-anything; mounted developer datasets remain directly visible.
+S3 upload needs no new event allowlist. The app reads local/mounted/synced files or
+**Garage/S3 directly** using the configuration below. A stopped/disabled uploader
+will not transfer anything; mounted developer datasets remain directly visible.
+
+## Read directly from Garage / S3
+
+Run on the analysis machine, independently of collectors and signal generators.
+From Wintap-Analytics, copy `garage.example.json` to a private config outside Git
+(for example `~/.config/wintap-smoke/garage.json`) and edit only local values:
+
+```json
+{
+  "endpoint": "https://garage.example.invalid",
+  "region": "us-east-1",
+  "datasets": ["s3://example-bucket/example-prefix"],
+  "max_files": 10000
+}
+```
+
+Each dataset is a root **containing `raw_sensor/`**, or that `raw_sensor/` directory
+itself. Add multiple roots for separate host prefixes, or one shared collection root
+if all hosts write to its common `raw_sensor` tree. Do not enter the bucket root if the
+actual layout is `bucket/<collection-prefix>/raw_sensor/`. Scheme, endpoint, bucket
+and prefix must match the existing uploader configuration; never paste real values
+or credentials into committed documentation. App-local `*.local.json` files are
+also Git-ignored, but an outside-repo config is preferred.
+
+Credentials use the normal AWS environment/profile chain. Select an existing
+**read-only** profile with `AWS_PROFILE`, or provide `AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` privately in the launching
+environment. Do not put key values in JSON, commands saved to shell history or UI.
+The config rejects credential/unknown fields. Required access is ListBucket on the
+selected prefixes plus GetObject on their telemetry/evidence objects; no write or
+delete access is needed. Path-style addressing supports Garage. HTTPS certificate
+verification stays enabled. Explicit `http://` is allowed with a UI warning for an
+intentionally isolated test endpoint; there is no insecure-TLS option.
+
+Launch with a disposable uv dependency environment (does not sync/alter Wintappy):
+
+```bash
+export WINTAP_SMOKE_CONFIG="$HOME/.config/wintap-smoke/garage.json"
+# Optional: export AWS_PROFILE=<your-existing-read-only-profile>
+uv run --no-project \
+  --with-requirements streamlit/projects/SmokeTests/requirements.txt \
+  python -m streamlit run streamlit/projects/SmokeTests/main.py \
+  --server.address 127.0.0.1
+```
+
+Open the local URL Streamlit prints. The config environment variable selects Garage
+mode automatically; alternatively choose **Garage / S3** in the sidebar and supply
+the config path. Local/mounted mode remains unchanged. No settings are persisted by
+the dashboard. Boto3 lists objects and DuckDB reads them directly with a temporary,
+in-memory S3 secret; there is no dataset download/sync or persistent secret file.
+
+Default window is yesterday through today (UTC); optional `start_day` and `end_day`
+config fields and sidebar controls use **YYYYMMDD**. Listing is paginated and pruned
+to `dayPK=` prefixes, inclusive 1–31 days. Evidence partitions reflect publication
+time, so include adjacent days for midnight runs. Objects uploaded late may require
+an older partition window; the window is not a transport-completeness watermark.
+Listing refreshes on every rerun/Refresh click. File caps fail closed, never silently
+truncate a passing result. Large windows still require per-file schema reads and
+can be slow; start with one or two days.
+
+Both `raw_smoke_test` and telemetry use the **same configured connection/source**;
+manifest hashes, revision conflicts, hostname/run selectors and missing-data triage
+remain unchanged. S3 connection/read diagnostics suppress details that might contain
+credentials or signed URLs. An unavailable source is an error, not empty green data.
+
+On a network-restricted analysis host, optionally set `extension_directory` to a
+shared local DuckDB extension-cache directory with official `httpfs` installed for
+**DuckDB 1.5.6 and that OS/architecture**. This setting is applied at connection time.
+Linux and macOS extension binaries are not interchangeable. No auditing/signature
+checks are disabled; prepare the appropriate cache on a compatible connected system.
+
+Collector upload success and smoke-generation success do not prove complete sensor
+capture. The operator reports smoke evidence arriving in S3; actual Garage dashboard
+validation remains a separate pilot check.
 
 JSON is still saved locally for manual troubleshooting. Missing DuckDB, write
 permissions, or oversized (>4 MiB) manifests produce a visible export warning
@@ -144,6 +218,12 @@ hash validation and overview severity/filter/navigation. Contract tests read
 for these tests (not for running the app). The sibling Wintap manifest/workload regressions run
 with `python3 devtools/test_smoke_manifest.py -v` and
 `python3 devtools/test_telemetry_smoke_workload.py -v` on Linux.
+
+S3 tests use synthetic configs/listings/credentials and injected files, including
+Streamlit source selection, read-only connection settings and fail-closed limits.
+The optional real loopback HTTP/S3 test requires cached httpfs and is enabled with
+`SMOKE_S3_HTTP_TEST=1`. It exercises signed boto3 listing plus DuckDB range reads,
+not real Garage/TLS/authorization or multi-host acceptance.
 ## TCP endpoint confirmation
 
 The **TCP endpoint normalization** section runs two same-host cases via an assigned

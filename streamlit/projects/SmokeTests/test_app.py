@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 import duckdb
 from streamlit.testing.v1 import AppTest
@@ -12,6 +13,45 @@ from queries import TESTS
 
 
 class DashboardTests(unittest.TestCase):
+    def test_s3_config_discovers_evidence_and_telemetry_with_existing_queries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            config = root / "fixture.local.json"
+            config.write_text(json.dumps(dict(endpoint="https://garage.example.invalid",
+                                              datasets=["s3://fixture-bucket/run"])))
+            value = dict(smokeManifestVersion=1, test="file-capture", runId="s3-fixture",
+                         host={"hostname": "vm-fixture"}, status="passed", stimulusOnly=True,
+                         startedAtUtc="2026-10-25T12:00:00Z", completedAtUtc="2026-10-25T12:00:02Z",
+                         smokeEvidenceRevision=2, smokeEvidencePhase="finished",
+                         selectors=[dict(domain="file", pids=[42], paths=["/fixture/file"], expectedActivities=["Open"])])
+            evidence = publish(value, root, 2, "finished")
+            telemetry = root / "telemetry.parquet"
+            con = duckdb.connect(":memory:")
+            con.execute(f"COPY (SELECT 'vm-fixture' Hostname, 42 PID, TIMESTAMP '2026-10-25 12:00:01' EventTime, '/fixture/file' File_Path, 'Open' ActivityType) TO '{telemetry}' (FORMAT PARQUET)")
+            con.close()
+            with patch.dict("os.environ", {"WINTAP_SMOKE_CONFIG": str(config)}), \
+                 patch("s3_source.open_source", side_effect=lambda _: (duckdb.connect(":memory:"), object())), \
+                 patch("s3_source.discover_files", return_value=([str(evidence)], [str(telemetry)])):
+                app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
+                self.assertFalse(app.exception)
+                self.assertFalse(app.error)
+                self.assertEqual(app.selectbox(key="file-capture").value, "s3-fixture")
+                self.assertTrue(any("stimulus only" in m.value for m in app.markdown))
+                self.assertTrue(any("S3:" in c.value for c in app.caption))
+
+    def test_s3_listing_failure_does_not_render_partial_green_results(self):
+        with tempfile.TemporaryDirectory() as directory:
+            config = Path(directory) / "fixture.local.json"
+            config.write_text(json.dumps(dict(endpoint="https://garage.example.invalid",
+                                              datasets=["s3://fixture-bucket/run"])))
+            with patch.dict("os.environ", {"WINTAP_SMOKE_CONFIG": str(config)}), \
+                 patch("s3_source.open_source", side_effect=lambda _: (duckdb.connect(":memory:"), object())), \
+                 patch("s3_source.discover_files", side_effect=ValueError("S3 file limit exceeded")):
+                app = AppTest.from_file(str(Path(__file__).with_name("main.py")), default_timeout=20).run()
+                self.assertFalse(app.exception)
+                self.assertTrue(app.error)
+                self.assertFalse(app.metric)
+
     def test_automatic_parquet_discovery_overview_and_run_navigation(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

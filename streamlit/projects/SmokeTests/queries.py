@@ -37,7 +37,7 @@ def validate_manifest(value):
     return value
 
 
-def load_manifests(directory, uploads=(), data_root="", connection=None):
+def load_manifests(directory, uploads=(), data_root="", connection=None, evidence_files=None):
     runs, errors = {}, []
     conflicts = set()
     documents = []
@@ -51,7 +51,7 @@ def load_manifests(directory, uploads=(), data_root="", connection=None):
         else:
             errors.append(f"Manifest directory not found: {root}")
     documents.extend(uploads)
-    if data_root:
+    if data_root or evidence_files is not None:
         root = Path(data_root).expanduser()
         if root.name == "raw_sensor":
             evidence = root / "raw_smoke_test"
@@ -62,7 +62,8 @@ def load_manifests(directory, uploads=(), data_root="", connection=None):
             import duckdb
             connection = duckdb.connect(":memory:")
         try:
-            for path in sorted(evidence.rglob("*.parquet")):
+            paths = evidence_files if evidence_files is not None else sorted(evidence.rglob("*.parquet"))
+            for path in paths:
                 try:
                     records = connection.execute(f"SELECT schema_version, run_id, test_name, revision, phase, hostname, manifest_json, manifest_sha256 FROM read_parquet({quote(path)})").fetchall()
                     for version, run_id, test, revision, phase, host, text, digest in records:
@@ -74,7 +75,8 @@ def load_manifests(directory, uploads=(), data_root="", connection=None):
                             raise ValueError("Typed evidence metadata disagrees with manifest")
                         documents.append((str(path), text))
                 except Exception as error:
-                    errors.append(f"{path}: {error}; refresh if the file is still arriving")
+                    detail = type(error).__name__ if str(path).startswith("s3://") else str(error)
+                    errors.append(f"{path}: {detail}; refresh if the file is still arriving")
         finally:
             if own_connection:
                 connection.close()
@@ -124,7 +126,7 @@ def timestamp(expr):
         ELSE to_timestamp({n}) END"""
 
 
-def prepare_data(connection, root, unlabelled_host=""):
+def prepare_data(connection, root, unlabelled_host="", telemetry_files=None):
     """Normalize file-by-file, avoiding cross-domain schema collisions.
 
     Host setting only applies to files with no hostname field. Never inferred from
@@ -132,7 +134,8 @@ def prepare_data(connection, root, unlabelled_host=""):
     """
     root = Path(root).expanduser()
     connection.execute("SET TimeZone='UTC'")
-    files = sorted(p for p in root.rglob("*.parquet") if "raw_smoke_test" not in p.parts) if root.exists() else []
+    files = (telemetry_files if telemetry_files is not None else
+             sorted(p for p in root.rglob("*.parquet") if "raw_smoke_test" not in p.parts) if root.exists() else [])
     connection.execute("DROP VIEW IF EXISTS smoke_data")
     errors, groups = [], {}
     for path in files:
@@ -143,7 +146,8 @@ def prepare_data(connection, root, unlabelled_host=""):
                 continue
             groups.setdefault(columns, []).append(path)
         except Exception as error:
-            errors.append(f"{path}: {error}")
+            detail = type(error).__name__ if str(path).startswith("s3://") else str(error)
+            errors.append(f"{path}: {detail}")
     projections = []
     for columns, paths in groups.items():
         lower = {c.lower(): c for c in columns}

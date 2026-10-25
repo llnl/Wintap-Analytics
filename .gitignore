@@ -83,3 +83,6 @@ tramp
 
 # Wintap sensor runtime state files (per-machine AgentId; do not commit)
 wintapstate.json
+
+# Machine-local SmokeTests S3 endpoint/dataset configuration (no credentials in JSON).
+streamlit/projects/SmokeTests/*.local.json

@@ -7,8 +7,10 @@ grounded_by:
   - streamlit/projects/SmokeTests/test_app.py
   - ../wintap/devtools/test_smoke_manifest.py
   - ../wintap/devtools/test_telemetry_smoke_workload.py
+  - streamlit/projects/SmokeTests/test_s3_source.py
+  - streamlit/projects/SmokeTests/test_s3_http.py
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-25
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -101,6 +103,38 @@ Only finalized `.parquet` files are read, no writable dataset/DBT state opened.
   `/home/ubuntu/durable-smoke-runtime`. Temporary mount/data retained for viewing.
 
 ## Remaining limits
+
+### Read-only Garage/S3 extension — 2026-10-25
+
+User authorized implementation/commit/push on the same feature branch; operator
+reports smoke evidence arriving in S3. Added private credential-free JSON config,
+standard AWS env/profile credentials, path-style addressing and a temporary in-memory
+DuckDB secret; connection-time extension cache selection retains signature checks.
+HTTPS verification remains enabled; explicit isolated-network HTTP warns. No object
+writes/deletes, persistent credentials, dataset sync or collector/uploader changes.
+Shared remote evidence/telemetry connection retains local query/manifest semantics.
+UTC day-pruned paginated listing and file caps fail closed; refresh relists.
+
+- Fresh isolated temporary uv environment uses DuckDB **1.5.6**, Streamlit **1.66.1**
+  and boto3 **1.43.118**; no global or Wintappy environment/lock changes.
+- `python -m unittest discover -s streamlit/projects/SmokeTests -p 'test_*.py' -v`:
+  **42 passed** before adding the opt-in real HTTP transport test. Backend fixtures
+  cover config rejection, date windows, pagination, exclusions, caps, duplicate roots,
+  read-only secret/session-token settings and credential-safe errors; AppTest covers
+  configured S3 discovery and fail-closed UI behavior. Local regressions still pass.
+- `SMOKE_S3_HTTP_TEST=1 python -m unittest discover -s
+  streamlit/projects/SmokeTests -p 'test_s3_http.py' -v`: **1 passed**. Real boto3
+  signed listing and DuckDB range reads against a synthetic loopback HTTP server
+  discover and join evidence/telemetry through explicit S3 URLs, using GET/HEAD only.
+  The initial transport test caught unsupported `CREATE TEMP SECRET` syntax;
+  corrected to `CREATE TEMPORARY SECRET` and reran successfully.
+- Live Garage credentials/TLS/authorization and actual multi-host data validation
+  remain operator pilot gates. No real host data/configuration/output persisted.
+- Final complete suite with `SMOKE_S3_HTTP_TEST=1`: **43/43 passed**. All dashboard
+  Python modules parse; `git diff --check` passes and app-local `garage.local.json`
+  is confirmed Git-ignored. Streamlit bare-mode warnings are expected in AppTest.
+
+The following general limits continue to apply:
 
 Dashboard observation indicators do not reimplement all original harness checks;
 saved results remain authoritative for those assertions. Event rows have no smoke

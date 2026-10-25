@@ -57,11 +57,14 @@ total storage remain open-ended and require operator review; no automatic prunin
 
 Native clone-family stimulus is optional and explicitly skipped without a supplied
 already-built helper. Runner tests are mocked orchestration, not native host proof.
-Garage delivery, steady-state coverage and long-duration performance remain pending.
+The operator reports a pilot round completed and smoke evidence arriving in S3;
+per-workload status/coverage was not supplied. Steady-state ground-truth coverage
+and long-duration performance remain pending.
 
 **DBT does not currently ingest or validate smoke manifests.** Existing SmokeTests
-dashboard discovery works with mounted/synced raw smoke parquet; direct S3 ground-
-truth joins are a follow-up, not implied by a passing DBT build. See
+dashboard discovery works with mounted/synced raw smoke parquet or the configured
+read-only Garage/S3 source; DBT ground-truth joins remain a follow-up, not implied
+by a passing DBT build. See
 [[wiki/tool/smoke-test-results-dashboard]] and
 [[wiki/tool/named-telemetry-smoke-workload]].
 <!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/dbt_project.yml; streamlit/projects/SmokeTests/queries.py §load_manifests -->

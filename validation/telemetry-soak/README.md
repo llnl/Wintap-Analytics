@@ -52,9 +52,10 @@ helper; otherwise native clone-family coverage is explicitly skipped.
   Smoke manifests carry `stimulusOnly`/deferred-validation semantics. No local
   parquet validator runs, avoiding false negatives from successful upload deletion.
 - Raw smoke parquet is compatible with the existing SmokeTests dashboard's evidence
-  discovery on mounted/synced datasets. **Current Wintappy DBT models do not ingest
-  or validate smoke manifests**; a passing DBT build is independent of this evidence.
-  Ground-truth-versus-S3 joins remain an explicit downstream follow-up.
+  discovery on mounted/synced datasets or its configured read-only Garage/S3 source.
+  **Current Wintappy DBT models do not ingest or validate smoke manifests**;
+  a passing DBT build is independent of this evidence. Actual Garage dashboard
+  validation remains an operator pilot check.
 
 Configure Garage and host-isolated collection prefixes separately, using existing
 approved configuration. Check disk/evidence accumulation periodically even on

@@ -8,8 +8,9 @@ grounded_by:
   - streamlit/projects/SmokeTests/README.md
   - ../wintap/devtools/smoke_manifest.py
   - ../wintap/devtools/network_endpoint_smoke_test.py
+  - streamlit/projects/SmokeTests/s3_source.py
 policy: agent-editable
-last_validated: 2026-10-23
+last_validated: 2026-10-25
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -61,10 +62,31 @@ without changing the workload result. No retry daemon or long-term source spool.
 
 Dashboard automatically discovers run parquet alongside telemetry. Source deletion
 and normal mounted/uploader latency are accepted; no transport hardening or delivery
-acknowledgements required. Sidebar roots are analysis-local/mounted/synced paths,
-not direct S3 URLs. JSON directory/upload is optional. VM selector paths remain
+acknowledgements required. Local mode uses analysis-local/mounted/synced paths;
+read-only Garage/S3 mode uses a private JSON config and AWS environment/profile
+credentials. JSON manifest directory/upload is optional. VM selector paths remain
 telemetry values, not files the Mac must open. DBT integration is deferred.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §load_manifests -->
+
+### Read-only Garage/S3 source
+
+Set `WINTAP_SMOKE_CONFIG` to a local, uncommitted JSON config; example and launch
+commands are in `streamlit/projects/SmokeTests/README.md`. Config fields are endpoint,
+region, dataset roots containing `raw_sensor`, optional UTC day window/file cap and
+extension cache. Credentials are excluded from config/UI and resolved from the AWS
+chain. Boto3 performs paginated ListObjectsV2; DuckDB reads explicit S3 object URLs
+using a temporary in-memory secret, path-style addressing and normal HTTPS checks.
+No object mutation, persistent credential store, collector management or local
+dataset sync is introduced. Explicit isolated-network HTTP warns; no TLS bypass.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §load_config, open_source, discover_files -->
+
+Both evidence and telemetry share the configured connection. Listing narrows to
+inclusive UTC day partitions (default yesterday/today, maximum 31 days); file caps
+abort rather than silently truncate. UI refresh relists; arrival is not a completeness
+watermark. Existing hash/conflict, host/PID/time and pending/stimulus-only semantics
+remain unchanged. Sensitive remote error details are suppressed. The operator
+reports evidence reaching S3; dashboard validation against that real source is pending.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/main.py §main; streamlit/projects/SmokeTests/queries.py §load_manifests, prepare_data -->
 
 Selector entries must be objects with a supported `process`, `file`, `network`
 or `host` domain. Invalid entries (including JSON `null`) warn and exclude that
