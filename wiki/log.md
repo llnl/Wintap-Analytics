@@ -3571,3 +3571,18 @@ not late settings; failed attempts retained locally, TLS/signature checks intact
 Updated verification, runtime plan and index. No raw output, host identifiers or
 system-specific details persisted; generated evidence remains protected/local-only.
 Full release/provenance/strict-count/multi-day and other platform/mode gates stay open.
+
+## [2026-10-25] code | Independent periodic Linux stimulus and ground-truth runner
+
+User approved open-ended disposable-host collection, manual stopping and a separate
+tmux signal generator on each host; SmokeTests dashboard suffices for ground-truth
+analysis. Added Analytics validation/telemetry-soak runner: named process/file/IPv4
+TCP/UDP and same-host TCP selectors, existing raw_smoke_test export and private local
+JSON/logs, sequential rounds/timeouts, same-root flock and failure continuation.
+No collector management, credential/security changes, retention deletion or sibling
+code edits. Clarified WINTAP_DATA_ROOT/explicit smoke-data-root (not DATA_PATH),
+successful-upload local deletion, stimulus-only outcomes and deferred DBT integration.
+Added canonical tool page and updated index/implementation/verification. Eleven
+mocked tests, bash syntax and diff checks pass; native pilot/Garage evidence arrival,
+signal/timeout and long-running behavior remain pending. No host identifiers or
+generated evidence committed; test fixtures are synthetic.

@@ -49,6 +49,9 @@ Legacy installer snapshots are explicitly not the release path. Artifact and liv
 acceptance remain separate gates, not implied by source alignment.
 
 - [x] Correct .NET 10 source/configuration oversights and add SDK/TFM drift tests.
+- [x] Add operator-approved periodic Linux stimulus runner with existing raw smoke
+  evidence export, private local manifests and deferred capture validation.
+- [ ] Pilot periodic runner on a native test host and verify Garage evidence arrival.
 
 - [ ] Clean native/eBPF and self-contained package qualification on selected hosts.
 - [ ] Multi-day real-host collection with declared resource/deadline and coverage gates.

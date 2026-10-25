@@ -46,6 +46,8 @@ RHEL transfer: [[wiki/work/clone-default-true/dev_handoff]].
 
 Field-friendly named process/file/network stimulus:
 [[wiki/tool/named-telemetry-smoke-workload]].
+Open-ended disposable-host stimuli with uploaded ground-truth snapshots:
+[[wiki/tool/periodic-telemetry-soak-runner]] (pilot first; DBT smoke joins deferred).
 
 Read-only smoke results / cross-host run manifests:
 [[wiki/tool/smoke-test-results-dashboard]];

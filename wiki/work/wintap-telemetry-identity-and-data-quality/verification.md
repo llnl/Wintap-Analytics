@@ -196,3 +196,19 @@ These are bounded operator-assisted package/capture/downstream smoke results, no
 multi-day, Windows, framework-dependent package, strict count/identity preservation,
 historical-loss closure, or full release acceptance. Detailed evidence stays local;
 only generic conclusions and validation counts are committed.
+
+### Periodic Linux stimulus runner (local orchestration only)
+
+User approved a separate open-ended signal generator alongside the regular deployed
+collector, with manual stopping and SmokeTests dashboard analysis. Added Analytics
+`validation/telemetry-soak/` runner using existing Wintap named stimuli and same-host
+TCP selector generation, existing raw smoke evidence snapshots and private local
+fallback evidence. No source changes in sibling repos, direct host execution,
+collector management, S3 credential configuration or automatic evidence deletion.
+
+`bash -n validation/telemetry-soak/run-smoke-soak.sh`: pass.
+`python3 -m unittest discover -s validation/telemetry-soak -p 'test_*.py' -v`:
+**11 pass**, mocked Linux orchestration/selector tests, not native live tests.
+`git diff --check`: pass. Pilot round, native timeout/signal behavior, Garage evidence
+arrival and long-duration behavior remain pending operator execution. Current DBT
+does not validate manifests; dashboard analysis is the user's selected path.
