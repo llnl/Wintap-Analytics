@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Emit existing same-host TCP selectors without racing upload with local queries."""
 import argparse
+import os
 import sys
 from pathlib import Path
 
@@ -20,6 +21,8 @@ def main():
         parser.add_argument("--host-ip")
         options = parser.parse_args()
         record(stimulusOnly=True, suiteKind="canary")
+        if os.environ.get('WINTAP_CANARY_ROUND_ID'):
+            record(canaryRoundId=os.environ['WINTAP_CANARY_ROUND_ID'])
         selectors = generate_cases(host_address(options.host_ip))
         record(selectors=selectors, results={"validationDeferred": True})
         print("Generated separate-process and same-process TCP ends; capture not validated")

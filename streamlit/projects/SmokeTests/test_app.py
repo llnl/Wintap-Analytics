@@ -152,6 +152,69 @@ class DashboardTests(unittest.TestCase):
             self.assertTrue(any('Skipped stimulus' in w.value for w in app.warning))
             self.assertTrue(any('Yellow' in m.value for m in app.markdown))
 
+    def test_all_canary_validation_persists_reuses_and_warns_stale(self):
+        self.telemetry()
+        run = self.run_value('canary-file', stimulus=True)
+        run['canaryRoundId'] = 'round-synthetic'
+        publish(run, self.root, 2, 'finished')
+        import batch_views
+        with patch('batch_views.analyze_round', wraps=batch_views.analyze_round) as analyze:
+            app = self.app().switch_page('views/canary.py').run()
+            analyze.assert_not_called()
+            app.button(key='validate-canary-round').click().run()
+            self.assertFalse(app.exception)
+            self.assertFalse(app.error)
+            self.assertEqual(analyze.call_count, 1)
+            self.assertEqual(len(list((self.root / 'analysis').rglob('*.json'))), 2)
+            app.button(key='validate-canary-round').click().run()
+            self.assertEqual(analyze.call_count, 1)
+            app = self.app().switch_page('views/canary.py').run()
+            self.assertEqual(analyze.call_count, 1)
+            self.assertTrue(any('Persisted summary loaded' in c.value for c in app.caption))
+            # A new unrelated parquet object changes the source snapshot, but prior
+            # expensive analysis remains visible only with a prominent stale warning.
+            (self.root / 'new-object.parquet').write_bytes((self.root / 'events.parquet').read_bytes())
+            app.sidebar.button[0].click().run()
+            self.assertTrue(any('STALE snapshot' in w.value for w in app.warning))
+            self.assertEqual(analyze.call_count, 1)
+            app.button(key='validate-canary-round').click().run()
+            self.assertEqual(analyze.call_count, 2)
+            self.assertFalse(any('STALE snapshot' in w.value for w in app.warning))
+
+    def test_all_canary_validation_reports_save_failure_and_retries(self):
+        self.telemetry()
+        publish(self.run_value('canary-file', stimulus=True), self.root, 2, 'finished')
+        import batch_views
+        with patch('batch_views.analyze_round', wraps=batch_views.analyze_round) as analyze, \
+             patch('batch_views.save_result', side_effect=PermissionError('synthetic-private')) as save:
+            app = self.app().switch_page('views/canary.py').run()
+            app.button(key='validate-canary-round').click().run()
+            self.assertEqual(analyze.call_count, 1)
+            self.assertTrue(any('NOT persisted' in w.value for w in app.warning))
+            self.assertFalse(any('synthetic-private' in w.value for w in app.warning))
+            app.button(key='validate-canary-round').click().run()
+            self.assertEqual(analyze.call_count, 1)
+            self.assertEqual(save.call_count, 2)
+
+    def test_all_canary_round_evaluates_every_family_once(self):
+        self.telemetry()
+        for test in ('canary-file', 'canary-process', 'canary-clone', 'canary-cross-domain', 'canary-network-endpoints'):
+            run = self.run_value(test, run_id=test, stimulus=True)
+            run['canaryRoundId'] = 'round-synthetic'
+            publish(run, self.root, 2, 'finished')
+        import analysis
+        with patch('analysis.evaluate_run', wraps=analysis.evaluate_run) as evaluate, \
+             patch('analysis.prepare_data', wraps=analysis.prepare_data) as prepare, \
+             patch('analysis.materialize_runs', wraps=analysis.materialize_runs) as materialize:
+            app = self.app().switch_page('views/canary.py').run()
+            evaluate.assert_not_called(); prepare.assert_not_called()
+            app.button(key='validate-canary-round').click().run()
+            self.assertFalse(app.exception)
+            self.assertEqual(evaluate.call_count, 5)
+            self.assertEqual(prepare.call_count, 1)
+            self.assertEqual(materialize.call_count, 1)
+            self.assertEqual(len(materialize.call_args.args[1]), 5)
+
 
 if __name__ == '__main__':
     unittest.main()

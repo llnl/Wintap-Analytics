@@ -10,6 +10,9 @@ grounded_by:
   - ../wintap/devtools/network_endpoint_smoke_test.py
   - streamlit/projects/SmokeTests/s3_source.py
   - streamlit/projects/SmokeTests/page_views.py
+  - streamlit/projects/SmokeTests/analysis.py
+  - streamlit/projects/SmokeTests/batch_views.py
+  - streamlit/projects/SmokeTests/result_store.py
 policy: agent-editable
 last_validated: 2026-10-25
 repo_scope: cross-repo
@@ -35,7 +38,8 @@ Overview reads manifests only, without telemetry metadata/scans. Test pages offe
 family/run selection, saved selectors/reports and explicit selected-run validation
 with tailored SQL, coverage and rows. Missing runs/data are expected, never PASS.
 Read-only in-memory DuckDB queries do not start tests, stop collectors, run DBT
-or modify data. Analytics owns the app; Wintap owns scripts/manifest production.
+or modify raw data. All-canary analysis writes summary-only results beside the dataset.
+Analytics owns the app; Wintap owns scripts/manifest production.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/main.py §main -->
 
 Canaries are bounded stimuli against the already-running collector, not unattended
@@ -86,8 +90,10 @@ region, dataset roots containing `raw_sensor`, optional UTC day window/file cap 
 extension cache. Credentials are excluded from config/UI and resolved from the AWS
 chain. Boto3 performs paginated ListObjectsV2; DuckDB reads explicit S3 object URLs
 using a temporary in-memory secret, path-style addressing and normal HTTPS checks.
-No object mutation, persistent credential store, collector management or local
+No raw-object mutation, persistent credential store, collector management or local
 dataset sync is introduced. Explicit isolated-network HTTP warns; no TLS bypass.
+Summary persistence separately requires read/write on the sibling analysis prefix;
+missing permissions are reported without changing policies or raw-data permissions.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §load_config, open_source, discover_files -->
 
 Both evidence and telemetry share the configured connection. Listing narrows to
@@ -95,7 +101,8 @@ inclusive UTC day partitions (default yesterday/today, maximum 31 days); file ca
 abort rather than silently truncate. UI refresh relists; arrival is not a completeness
 watermark. Existing hash/conflict, host/PID/time and pending/stimulus-only semantics
 remain unchanged. Sensitive remote error details are suppressed. The operator
-reports evidence reaching S3; dashboard validation against that real source is pending.
+reports evidence reaching S3; agent all-round validation is recorded in
+[[wiki/work/smoke-test-dashboard/verification]]. Operator UI acceptance remains separate.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/main.py §main; streamlit/projects/SmokeTests/queries.py §load_manifests, prepare_data -->
 
 Selector entries must be objects with a supported `process`, `file`, `network`
@@ -128,8 +135,9 @@ inference and DBT outputs are intentionally unsupported.
 The manifest overview defaults to latest runs per host/test with optional history
 and host filters; saved failure is red, otherwise capture remains not-evaluated/yellow.
 It never infers green from a saved generator/harness success. Canary inventory marks
-unrecorded new suites explicitly. **Validate selected run** is the only telemetry
-scan trigger; navigation/selectors do not evaluate history automatically.
+unrecorded new suites explicitly. **Validate selected run** and **Run all validations
+for this canary** are explicit telemetry scan triggers; navigation/selectors do not
+evaluate history automatically. Matching persisted round summaries need no new scan.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/page_views.py §manifest_rows, overview_page, test_page -->
 
 Selected-run red means harness/workload failure or observed thread/identity/parent
@@ -149,10 +157,48 @@ the selected run's exact selector predicates once into a temporary in-memory tab
 then reuses it for checks/details. Overlapping selectors do not duplicate rows.
 Row budget is 100,000 matching observations; DuckDB memory is 256 MB with disk spill
 disabled. Budget/read failure is unavailable validation, not a truncated PASS.
-These bounds do not cap network bytes or wall-clock duration. No disk or cross-rerun
-result cache is introduced; each validation is explicit and fresh. Native timestamp
+These bounds do not cap network bytes or wall-clock duration. Individual details
+remain fresh/explicit; round summary persistence is described below. Native timestamp
 pushdown/partition pruning remains a follow-up: uncertain files are not discarded.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/page_views.py §materialize_run, test_page -->
+
+### All-canary summary and startup context
+
+**Run all validations for this canary** evaluates every recorded family/case in one
+round, including skips/missing families, using one shared bounded observation table.
+Membership uses explicit `canaryRoundId`, or the shared `--manifest` parent `round.*`
+directory for older expanded manifests; otherwise the run stays standalone. No guessed
+time grouping or dev-time harness execution. Original strict loss/count assertions are
+not all reconstructed by these selected-observation checks.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/analysis.py §canary_rounds, analyze_round; validation/telemetry-soak/run-smoke-soak.sh -->
+
+HOST history is listed independently of the canary partition window, with fail-closed
+file/receipt budgets. Validation compares collector enabled/status/tier/hook outcomes,
+numeric/boolean features and effective settings from the latest preceding complete
+startup. Temporal correlation is not continuous health or exact collector ownership;
+conflicts/startup races/restarts yield ambiguous, missing/invalid receipts unknown.
+Disabled/failed/partial collectors explain possible gaps, never PASS or red downgrades.
+Unique short/FQDN relations from manifest/receipt names are optional inferred aliases;
+collisions/different DNS suffixes are rejected. Individual queries remain exact-hostname.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/analysis.py §read_receipts, runtime_context, hostname_aliases, case_context; streamlit/projects/SmokeTests/s3_source.py §discover_host_files -->
+
+Summary JSON and a latest pointer live at the dataset's sibling
+`analysis/smoke-tests/v1/<hashed-round>/`, on S3 (first configured dataset) or local
+files. Writes/read-back verification never touch raw telemetry/manifests. Summary
+contains run references, checks/counts/skips and sanitized startup context, not raw
+rows/credentials/source configuration. Local destinations must remain outside Git
+and cannot escape through symlinks. Saved results are private dataset artifacts.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/result_store.py §location, save_result -->
+
+Fingerprint includes manifests/hidden overlaps, listed object identities, source/window,
+normalization assertion, budgets/padding, evidence errors, evaluator/source/store code
+and DuckDB version. Matching summaries reload without telemetry scans. Changed inputs
+show prior results with **STALE** warning; explicit/forced validation refreshes them.
+Listing/evidence reads still repeat and are not an atomic snapshot or completeness
+watermark. SHA-256 catches accidental corruption, not malicious tampering; incompatible
+results fail closed. Save failures stay visibly memory-only, with save retry without
+rescanning. No disk-spilled telemetry or credentials are introduced.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/analysis.py §input_fingerprint; streamlit/projects/SmokeTests/batch_views.py §canary_batch_page; streamlit/projects/SmokeTests/result_store.py §load_result, save_result -->
 
 Workload: [[wiki/tool/named-telemetry-smoke-workload]].
 Verification: [[wiki/work/smoke-test-dashboard/verification]].

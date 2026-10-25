@@ -121,6 +121,7 @@ round=0
 while ! $STOP; do
   round=$((round + 1))
   ROUND=$(mktemp -d "$SESSION/round.XXXXXXXX") || exit 1
+  export WINTAP_CANARY_ROUND_ID="${SESSION##*/}.${ROUND##*/}"
   args=("$PYTHON" "$SCRIPT_DIR/canary-stimulus.py" --devtools "$DEVTOOLS" --suite cross-domain
     --manifest "$ROUND/named.json" --smoke-data-root "$DATA_ROOT" --output "$ROUND/workload")
   run_test named "${args[@]}"

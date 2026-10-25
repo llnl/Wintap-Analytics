@@ -89,6 +89,13 @@ separately (for example in tmux). No service dependency or health-triggered rest
 couples them. The only integration is writing evidence to the same data root for
 the existing uploader and later SmokeTests dashboard discovery.
 
+Each round records shared `canaryRoundId` metadata in all five manifests. On the
+analysis machine, Canary Tests → **Run all validations for this canary** shows all
+families/cases and compares them with passive HOST startup context. Summary results
+are saved beside the local/S3 dataset, never under raw telemetry. Older expanded
+manifests group using their shared `--manifest` round directory. See
+`streamlit/projects/SmokeTests/README.md` for cache/stale-result and permission rules.
+
 ## Local orchestration checks
 
 ```bash

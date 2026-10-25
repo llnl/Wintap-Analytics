@@ -53,10 +53,12 @@ Read-only smoke results / cross-host run manifests:
 [[wiki/tool/smoke-test-results-dashboard]];
 [[wiki/work/smoke-test-dashboard/implementation_plan]];
 [[wiki/work/smoke-test-dashboard/verification]].
-Dashboard supports private configured read-only Garage/S3 access as well as mounted
-datasets; operator reports evidence arrival, live dashboard validation pending.
+Dashboard supports private configured Garage/S3 reads as well as mounted datasets;
+all-round summaries persist separately beside data, not under raw telemetry.
 Overview now reads manifests only; Canary Tests and Dev-time Tests pages use explicit
-selected-run validation. Runner expands safe canary families; native pilot pending.
+validation. One-click canary-round observations and passive HOST startup comparison
+expose coverage gaps without certifying capture. Agent Garage validation finds process,
+file and TCP endpoint observations; TCP Accept/UDP Receive missing, native clone skipped.
 
 Accepted durable evidence plan: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]]
 (pidstat-style parquet transport, partitioning and dashboard severity overview).

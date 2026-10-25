@@ -44,7 +44,7 @@ if sys.argv[1] == '-':
 else:
     args = sys.argv
     path = Path(args[args.index('--manifest') + 1])
-    path.write_text(json.dumps(dict(completedAtUtc='fixture', selectors=[{}],
+    path.write_text(json.dumps(dict(completedAtUtc='fixture', selectors=[{}], canaryRoundId=os.environ.get('WINTAP_CANARY_ROUND_ID'),
         durableExportError='fixture' if os.environ.get('EXPORT_FAIL') else None)))
     if path.stem == 'named' and os.environ.get('FAIL_NAMED'):
         raise SystemExit(1)
@@ -79,6 +79,11 @@ else:
         self.assertIn("\tclone\t0\trecorded", rows[4])
         self.assertIn("\tendpoints\t0\trecorded", rows[5])
         self.assertEqual(next((self.root / "evidence").glob("session.*")).stat().st_mode & 0o777, 0o700)
+        manifests = list((self.root / 'evidence').glob('session.*/round.*/*.json'))
+        round_ids = {json.loads(p.read_text())['canaryRoundId'] for p in manifests}
+        self.assertEqual(len(manifests), 5)
+        self.assertEqual(len(round_ids), 1)
+        self.assertNotIn(None, round_ids)
 
     def test_failure_continues_across_rounds(self):
         result = self.run_runner(["--rounds", "2", "--interval", "1"], FAIL_NAMED="1")
@@ -87,6 +92,8 @@ else:
         self.assertEqual(len(rows), 11)
         self.assertIn("\tnamed\t1\t", rows[1])
         self.assertIn("\tendpoints\t0\t", rows[10])
+        self.assertEqual(len({json.loads(p.read_text())['canaryRoundId'] for p in
+            (self.root / 'evidence').glob('session.*/round.*/*.json')}), 2)
 
     def test_export_error_is_not_recorded_success(self):
         result = self.run_runner(EXPORT_FAIL="1")
@@ -154,12 +161,13 @@ def read_rows(*args):
         result = subprocess.run([
             sys.executable, str(HERE / "network-endpoint-stimulus.py"),
             "--devtools", str(self.devtools), "--host-ip", "192.0.2.10",
-        ], env=dict(self.env, FIXTURE_RESULT=str(output)), capture_output=True, text=True)
+        ], env=dict(self.env, FIXTURE_RESULT=str(output), WINTAP_CANARY_ROUND_ID='synthetic-round'), capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
         manifest = json.loads(output.read_text())
         self.assertTrue(manifest["stimulusOnly"])
         self.assertTrue(manifest["results"]["validationDeferred"])
         self.assertEqual(manifest["test"], "canary-network-endpoints")
+        self.assertEqual(manifest['canaryRoundId'], 'synthetic-round')
         self.assertEqual(len(manifest["selectors"]), 1)
 
 

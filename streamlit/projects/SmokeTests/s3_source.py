@@ -114,7 +114,7 @@ def open_source(config):
         raise RuntimeError("S3 connection setup failed. Check AWS credentials/profile, endpoint, TLS trust and cached httpfs extension locally; details suppressed to protect credentials.") from None
 
 
-def discover_files(client, config, start, end):
+def discover_files(client, config, start, end, snapshot=None):
     """Paginated, partition-pruned listing; caps fail closed, never silently truncate."""
     days = day_range(start, end)
     files = set()
@@ -140,6 +140,8 @@ def discover_files(client, config, start, end):
                             if any(c in key for c in "*?[]\\"):
                                 raise ValueError("S3 keys contain unsupported wildcard characters")
                             files.add("s3://" + bucket + "/" + key)
+                            if snapshot is not None:
+                                snapshot["s3://" + bucket + "/" + key] = object_identity(item)
                             if len(files) > config["max_files"]:
                                 raise ValueError("S3 file limit exceeded; narrow the partition window or increase max_files")
     except ValueError:
@@ -149,3 +151,34 @@ def discover_files(client, config, start, end):
     evidence = sorted(p for p in files if "/raw_smoke_test/" in p)
     telemetry = sorted(files - set(evidence))
     return evidence, telemetry
+
+
+def object_identity(item):
+    return [item.get('ETag'), item.get('Size'), str(item.get('LastModified', ''))]
+
+
+def discover_host_files(client, config, snapshot=None):
+    """HOST startup can predate the selected canary day; list receipt history only."""
+    files = set()
+    try:
+        paginator = client.get_paginator('list_objects_v2')
+        for uri in config['datasets']:
+            bucket, root = dataset_parts(uri)
+            for page in paginator.paginate(Bucket=bucket, Prefix=root + 'raw_host/'):
+                for item in page.get('Contents', []):
+                    key = item['Key']
+                    if not key.startswith(root + 'raw_host/') or not key.endswith('.parquet'):
+                        continue
+                    if any(c in key for c in '*?[]\\'):
+                        raise ValueError('Unsupported HOST object key')
+                    path = 's3://' + bucket + '/' + key
+                    files.add(path)
+                    if snapshot is not None:
+                        snapshot[path] = object_identity(item)
+                    if len(files) > config['max_files']:
+                        raise ValueError('HOST history file limit exceeded')
+    except ValueError:
+        raise
+    except Exception:
+        raise RuntimeError('HOST history listing unavailable; details suppressed') from None
+    return sorted(files)

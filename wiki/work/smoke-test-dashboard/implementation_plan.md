@@ -82,3 +82,19 @@ collector/uploader, sibling source, SDK/DuckDB and experimental defaults unchang
 - [x] Update canonical documentation and record limitations
 - [ ] Expanded one-round Linux canary pilot and Garage page/validation operator check
 - [ ] Optional native timestamp pushdown, safe partition pruning and memory-only result reuse
+
+## All-round validation, HOST context and saved results (2026-10-25)
+
+- [x] Validate all recorded canary families/cases through one explicit round action
+- [x] Explicit/new and shared-directory/older round membership, missing-family inventory
+- [x] One bounded shared observation scan and preserved red/skip/overlap semantics
+- [x] Passive complete HOST startup context, temporal/race/conflict/unknown handling
+- [x] Optional unique inferred short/FQDN correlation, collision rejection
+- [x] Summary-only S3/local persistence, verified writes, fingerprints and stale warnings
+- [x] Local/query/store/Streamlit tests, no eager telemetry or raw-data mutations
+- [x] Agent live Garage all-round observation validation; sanitized results recorded
+- [ ] Operator verifies new one-click UI and repeated-run experience
+
+All-canary observations are not full dev-time harness re-validation or release
+certification. Native clone remains skipped; TCP Accept/UDP Receive remain missing,
+not explained by disabled Network startup. No sensor-side changes in this slice.

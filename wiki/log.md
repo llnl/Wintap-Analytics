@@ -3628,3 +3628,26 @@ not persisted. Updated canonical pages/index/implementation/verification records
 Final checks: 51 dashboard tests (including synthetic real HTTP/S3 transport) and
 17 mocked runner/adapter tests pass; shell syntax, Python parse and diff checks pass.
 Same feature branch; no PR or live acceptance claim.
+
+## [2026-10-25] code | All-canary validation, passive runtime context and saved summaries
+
+User requested all validations on uploaded canary evidence, one round action, HOST
+runtime comparison and result persistence beside data. Added Analytics round metadata,
+one bounded shared selector scan, all-family/case/skip/missing/violation summary,
+temporal complete-startup context and optional unique inferred short/FQDN correlation.
+Exact hostname mismatch initially excluded observations; inferred correlation finds
+process lifecycle/Stop, eight-file and both TCP endpoint expectations with no reported
+violations. Cross-domain server TCP Accept and UDP Receive remain missing; Network
+reports running, so disabled startup does not explain them. Native clone skipped;
+all stimulus-only family triage remains yellow. No strict-count/full-capture waiver.
+Summary and latest pointer saved/read-verified in Garage's sibling analysis prefix,
+not raw telemetry. Fingerprinted reuse, explicit stale warnings, integrity checks,
+verified atomic/private local writes, Git/symlink rejection and visible save failures
+added; no source configuration/credentials/raw rows in summaries, no private local
+investigation artifacts or identifiers committed. Listings/evidence reads still repeat;
+no atomic storage snapshot or delivery watermark claimed. 75 dashboard tests including
+real synthetic S3 transport and 17 mocked runner/adapter tests pass; Bash/AST/wiki-link/
+frontmatter/diff checks pass. Updated canonical tools/index/plans/verification.
+No sibling source, service/sensor/tracer/security/SDK/DuckDB/default controls changed;
+no running workload restarted or PR published. Operator new UI/multi-host/long-duration
+acceptance and native/network coverage remain open. Same feature branch commit/push.

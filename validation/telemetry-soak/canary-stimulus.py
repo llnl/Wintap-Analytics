@@ -20,6 +20,8 @@ def main():
     @smoke_run('canary-' + args.suite)
     def stimulus():
         record(stimulusOnly=True, suiteKind='canary')
+        if os.environ.get('WINTAP_CANARY_ROUND_ID'):
+            record(canaryRoundId=os.environ['WINTAP_CANARY_ROUND_ID'])
         if args.suite == 'cross-domain':
             from telemetry_smoke_workload import main as named
             # Reuse the generator, not its outer dev-time manifest wrapper.

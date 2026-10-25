@@ -47,7 +47,7 @@ the intended S3 path. Success is explicitly stimulus-only, not capture acceptanc
 No collector management, settings changes, tracer attachment, public-network probes
 or pressure tests are added. Python execveat unavailability and native helper/kernel
 skips are explicit, not fabricated coverage; posix_spawn remains libc-selected best
-effort. Passive HOST correlation is a follow-up, not a current recurring test; full
+effort. Passive HOST correlation now lives in the dashboard, not a recurring test; full
 runtime capability/restart/opt-out tests remain manual. Existing running generators
 must be stopped/relaunched independently for expanded coverage; preserve old evidence.
 <!-- GROUND_TRUTH: validation/telemetry-soak/canary-stimulus.py; validation/telemetry-soak/README.md -->
@@ -60,6 +60,11 @@ JSON/logs/workload files remain protected outside Git in unique session/round ro
 real selectors are local evidence, never committed documentation.
 <!-- GROUND_TRUTH: ../wintap/devtools/smoke_manifest.py §smoke_run; ../wintap/devtools/smoke_parquet.py §publish; validation/telemetry-soak/run-smoke-soak.sh -->
 
+Runner exports a shared `WINTAP_CANARY_ROUND_ID` for the five adapters, recorded as
+`canaryRoundId` in each manifest. This is grouping metadata, not an event identity or
+sensor setting. Older expanded runs can group by their shared manifest round directory.
+<!-- GROUND_TRUTH: validation/telemetry-soak/run-smoke-soak.sh; validation/telemetry-soak/canary-stimulus.py; validation/telemetry-soak/network-endpoint-stimulus.py; streamlit/projects/SmokeTests/analysis.py §round_key -->
+
 Defaults: 900-second delay after a sequential round, 120-second timeout per workload
 plus 5-second kill grace, unlimited rounds. `--rounds 1` runs a pilot. Failures and
 incomplete/export-error manifests remain visible while later rounds continue. One
@@ -71,8 +76,10 @@ total storage remain open-ended and require operator review; no automatic prunin
 Native clone-family stimulus is optional and explicitly skipped without a supplied
 already-built helper. Runner tests are mocked orchestration, not native host proof.
 The operator reports a pilot round completed and smoke evidence arriving in S3;
-per-workload status/coverage was not supplied. Steady-state ground-truth coverage
-and long-duration performance remain pending.
+agent Garage all-round validation now records process/file/TCP endpoint observations,
+TCP Accept/UDP Receive gaps and explicit native-clone skips in
+[[wiki/work/smoke-test-dashboard/verification]]. Steady-state ground-truth coverage
+and long-duration performance remain pending; no full acceptance inferred.
 
 **DBT does not currently ingest or validate smoke manifests.** Existing SmokeTests
 dashboard discovery works with mounted/synced raw smoke parquet or the configured

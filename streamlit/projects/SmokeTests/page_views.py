@@ -60,6 +60,8 @@ def test_page(ctx, canary):
     st.header('Canary Tests' if canary else 'Dev-time Tests')
     if canary:
         st.info('Bounded recurring stimuli against the already-running sensor. No restarts, configuration changes, tracer attachment or public network probes. Generation success is stimulus-only, not capture certification.')
+        from batch_views import canary_batch_page
+        canary_batch_page(ctx)
     else:
         st.warning('Manual qualification, not unattended canaries. Some harnesses start/stop collectors, change Clone settings or attach tracers; use a designated idle host and review the original devtools instructions.')
     with st.expander('How to generate evidence'):

@@ -12,6 +12,7 @@ grounded_by:
   - streamlit/projects/SmokeTests/test_pages.py
   - validation/telemetry-soak/test_canaries.py
   - validation/telemetry-soak/test_runner.py
+  - streamlit/projects/SmokeTests/test_analysis.py
 policy: agent-editable
 last_validated: 2026-10-25
 repo_scope: cross-repo
@@ -24,6 +25,62 @@ tags: [streamlit, smoke-tests, verification, cross-host]
 ---
 
 # Verification: smoke-test results dashboard
+
+## All-round validation, runtime comparison and persistence — 2026-10-25
+
+User requested all validations on the uploaded single-round canary, one action for
+all permutations, HOST configuration comparison and persisted results beside data.
+Analytics alone changes: shared round grouping metadata (no stimulus changes), one
+bounded shared observation table, conservative runtime context and summary-only
+S3/local storage with verified writes/checksum/fingerprints/stale warnings.
+
+**Live Garage findings (sanitized; no private input/output artifacts in this repo):**
+
+- The newest uploaded round contains all five families, with generation status passed.
+  Initial exact-hostname validation saw no rows: manifest FQDN versus telemetry/HOST
+  short name. Optional unique short/FQDN correlation restores observations but is
+  explicitly inferred, not exact identity proof; collisions are rejected.
+- Process lifecycle/short-lived case: 43 selected rows, all recorded observations
+  (including per-PID Start/Stop) present, no reported violations.
+- Eight-file case: 40 selected rows, all recorded activities/path expectations present.
+- Same-host separate-process and same-process TCP endpoints: 8 selected rows each;
+  Send/Recv, endpoint orientation/provenance and identity checks observed, no violations.
+- Cross-domain cases capture named process/file/client-network observations and
+  positive companion process evidence; thread-only selection has no process row.
+  **Server TCP Accept and UDP Receive are missing**, with no other missing recorded
+  expectations/observed violations. Native-clone families are explicitly skipped.
+- Preceding complete HOST receipt reports Execve, Clone, Exit, FileOps, Network and
+  ProcessRundown running; SELinux partial. Network startup does not explain the two
+  missing network activities. This is a startup snapshot, not continuous health or
+  proof of which collector produced an event. Producer maps those activities and
+  EPL preserves activity grouping, so no source-grounded "disabled by design" waiver
+  is justified. Root cause/loss stage remains unlocalized.
+  <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs §HandleEvent; ../wintap/wintap/core/etl/esper/tcp.epl; ../wintap/wintap/core/etl/esper/udp.epl -->
+- Final five-family analysis took approximately 57 seconds on the selected source. All
+  family triage remains yellow (stimulus-only/inferred attribution/skips/gaps), not
+  capture certification. Summary and latest pointer saved/read-verified in the same
+  Garage dataset's sibling analysis prefix. No raw telemetry/manifests modified.
+  Source/configuration/credentials/host identifiers/raw output were not saved locally
+  or committed; S3 summary is a private dataset artifact by explicit user request.
+
+**Regression commands/results:**
+
+- Qualified isolated interpreter: DuckDB 1.5.6, Streamlit 1.66.1, boto3 1.43.118.
+  `SMOKE_S3_HTTP_TEST=1 python -B -m unittest discover -s
+  streamlit/projects/SmokeTests -p 'test_*.py' -q`: **75 passed**. Includes real
+  synthetic HTTP/S3 listing/range reads, round/parity/Stop/budget/alias/collision,
+  temporal/race/restart/disabled/unknown, red preservation, hidden overlap, credential-safe
+  errors, local/S3 summary writes/read-back/checksum/caps, Git/symlink rejection and
+  actual Streamlit all-family one-scan, relaunch reuse, stale and save-retry tests.
+- `python3 -B -m unittest discover -s validation/telemetry-soak -p 'test_*.py' -q`:
+  **17 passed**, mocked orchestration/adapters (expected rejected unsafe-argument output).
+- `bash -n validation/telemetry-soak/run-smoke-soak.sh`, Python AST parse and
+  `git diff --check`: pass.
+
+No sibling source, SDK/DuckDB pins, sensor/service settings, tracer attachment or
+running generator restart changes. No PR publication. Operator new UI/multi-host/
+long-duration acceptance, native clone and unresolved network coverage remain open.
+Dashboard does not reconstruct every dev-time strict loss/count/identity assertion.
 
 ## Canary and multipage extension — 2026-10-25
 

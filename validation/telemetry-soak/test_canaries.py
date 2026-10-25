@@ -1,5 +1,6 @@
 """Canary adapters with mocked generators: no sensor, host stimuli or S3 access."""
 import importlib.util
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -69,7 +70,9 @@ class CanaryTests(unittest.TestCase):
         self.assertEqual(self.values['selectors'][0]['expectedActivities'], ['Open', 'Read', 'Write', 'Close', 'Delete'])
 
     def test_missing_clone_helper_is_explicit_skip(self):
-        self.invoke('clone')
+        with patch.dict(os.environ, {'WINTAP_CANARY_ROUND_ID': 'synthetic-round'}):
+            self.invoke('clone')
+        self.assertEqual(self.values['canaryRoundId'], 'synthetic-round')
         self.assertEqual(self.values['results']['cases'][0]['status'], 'skipped')
         self.assertNotIn('selectors', self.values)
 

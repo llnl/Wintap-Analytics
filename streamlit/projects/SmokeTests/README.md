@@ -95,12 +95,16 @@ or credentials into committed documentation. App-local `*.local.json` files are
 also Git-ignored, but an outside-repo config is preferred.
 
 Credentials use the normal AWS environment/profile chain. Select an existing
-**read-only** profile with `AWS_PROFILE`, or provide `AWS_ACCESS_KEY_ID`,
+profile with `AWS_PROFILE`, or provide `AWS_ACCESS_KEY_ID`,
 `AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` privately in the launching
 environment. Do not put key values in JSON, commands saved to shell history or UI.
 The config rejects credential/unknown fields. Required access is ListBucket on the
-selected prefixes plus GetObject on their telemetry/evidence objects; no write or
-delete access is needed. Path-style addressing supports Garage. HTTPS certificate
+selected prefixes plus GetObject on their telemetry/evidence objects. Canary summary
+persistence additionally needs GetObject/PutObject on the sibling
+`analysis/smoke-tests/v1/` prefix in the **first configured dataset root**. Read-only
+credentials still support validation, but saving fails visibly; no raw-data write or
+delete permission is needed. Do not broaden policies or rotate credentials merely
+to run the dashboard. Path-style addressing supports Garage. HTTPS certificate
 verification stays enabled. Explicit `http://` is allowed with a UI warning for an
 intentionally isolated test endpoint; there is no insecure-TLS option.
 
@@ -108,7 +112,7 @@ Launch with a disposable uv dependency environment (does not sync/alter Wintappy
 
 ```bash
 export WINTAP_SMOKE_CONFIG="$HOME/.config/wintap-smoke/garage.json"
-# Optional: export AWS_PROFILE=<your-existing-read-only-profile>
+# Optional: export AWS_PROFILE=<your-existing-profile>
 uv run --no-project \
   --with-requirements streamlit/projects/SmokeTests/requirements.txt \
   python -m streamlit run streamlit/projects/SmokeTests/main.py \
@@ -143,8 +147,8 @@ Linux and macOS extension binaries are not interchangeable. No auditing/signatur
 checks are disabled; prepare the appropriate cache on a compatible connected system.
 
 Collector upload success and smoke-generation success do not prove complete sensor
-capture. The operator reports smoke evidence arriving in S3; actual Garage dashboard
-validation remains a separate pilot check.
+capture. Agent Garage all-round observations are recorded in the wiki verification;
+operator one-click UI acceptance remains a separate pilot check.
 
 JSON is still saved locally for manual troubleshooting. Missing DuckDB, write
 permissions, or oversized (>4 MiB) manifests produce a visible export warning
@@ -163,10 +167,12 @@ same-revision manifest copies disagree, the app warns and excludes that run.
   harness outcome and coverage inventory. Capture is **not evaluated**; saved success
   never turns the overview green. No telemetry metadata/event scans or all-run
   evaluation. S3 listings/evidence reads still occur on each rerun.
-- **Canary Tests:** recurring non-interfering stimuli, including legacy stimulus-only
-  named/endpoint evidence. Choose a family/run, inspect selectors/skips, then click
-  **Validate selected run**. New `canary-*` suites appear separately; older two-family
-  runs do not prove the expanded suites ran.
+- **Canary Tests:** choose a round and click **Run all validations for this canary**.
+  All recorded families/cases, skips, missing expectations, violations and HOST startup
+  context appear together. Results are saved beside data and reloaded without event
+  scans. Individual family/run inspection and **Validate selected run** remain available
+  for detailed exact-hostname queries and legacy stimulus-only evidence; older
+  two-family runs do not prove expanded-suite coverage.
 - **Dev-time Tests:** manually executed capture, tracer, pipeline, package and startup
   qualification. Some change sensor/service state or use public networks; do not run
   these as unattended canaries. Commands are never executed by the dashboard.
@@ -177,10 +183,61 @@ in-memory table; existing checks/details then reuse it. Overlapping selectors do
 duplicate rows. The full accepted working set is checked, not the displayed-row limit.
 Budget is **100,000 matching rows / 256 MB DuckDB memory**, with disk spill disabled;
 exhaustion reports validation unavailable, never accepts a truncated PASS. These are
-memory/result bounds, not remote byte or wall-clock limits. There is no persistent
-cache, cross-rerun result reuse or automatic validation loop: a rerun requires another
-explicit validation. Native timestamp/partition pruning remains a follow-up; the
+memory/result bounds, not remote byte or wall-clock limits. Individual-run details
+remain fresh/explicit; all-canary summary persistence is described below. There is
+no automatic validation loop. Native timestamp/partition pruning remains a follow-up; the
 normalized predicate remains authoritative and no uncertain candidates are dropped.
+
+### One-click round summaries, runtime context and persistence
+
+Round membership uses `canaryRoundId` from the runner; older expanded manifests use
+their shared `--manifest` parent `round.*` directory. Ungroupable runs stay standalone,
+never guessed by time proximity. All five expected families are inventoried, with absent
+families explicit. One union-of-selectors scan supplies all existing observation checks;
+this does **not** run the dev-time harnesses, prove strict event-count equivalence or
+certify full capture. Generation PASS and observation coverage stay separate.
+
+HOST startup may precede the selected day window, so Canary Tests additionally lists
+`raw_host/` history (under the same file cap). Reading receipts happens only on explicit
+validation. The latest preceding complete receipt is **temporal context**, not continuous
+health or exact event-to-collector ownership. Conflicting receipts, startup races,
+restart during the interval, absent/null/invalid receipts mean ambiguous/unknown.
+Collector enabled/status/tier/hook outcomes and numeric/boolean features/effective
+settings are displayed; full receipt/config paths/OS details are not copied into results.
+Disabled/failed/partial collectors can explain gaps, but never turn them into PASS or
+downgrade red violations. Running collectors do not explain missing Accept/Receive events.
+
+The round validator defaults to unique short-host/FQDN correlation supported by HOST
+history. It rejects collisions across manifest/receipt names and different DNS suffixes;
+this is explicitly **inferred**, never exact identity proof, and can be unchecked.
+Individual detailed validation still requires exact hostname matching. Case-insensitive
+matching is always retained; no global hostname suffix stripping occurs.
+
+Summary-only JSON is written to:
+
+```text
+<dataset root>/analysis/smoke-tests/v1/<hashed-round>/<input-fingerprint>.json
+<dataset root>/analysis/smoke-tests/v1/<hashed-round>/latest.json
+```
+
+Local roots ending `raw_sensor` use its parent; results must remain outside Git and
+cannot escape via symlinks. S3 uses the first configured root/endpoint and standard
+credential chain. Nothing writes/deletes raw telemetry, stimulus manifests or sensor
+configuration. Results contain run/host references, checks/counts/skips and sanitized
+startup context, **not raw event rows, credentials, endpoints or source configuration**.
+They are private dataset artifacts, not intended for committing.
+
+Fingerprints cover all manifests (including hidden attribution overlaps), listed file
+identities (S3 ETag/size/LastModified; local size/mtime), source, day window, normalization
+assertion, padding/budgets, evidence errors, evaluator/source/store code and DuckDB version.
+Matching summaries are reused across reruns/relaunches with no telemetry scan. Changed
+inputs display the last saved snapshot with a prominent **STALE** warning; the button
+recomputes it. The force-revalidate checkbox also rescans unchanged inputs. Listings and
+evidence reads still repeat; a listing is not an atomic storage snapshot or delivery
+watermark. Local writes are atomic/private; all writes are read-back verified and
+summaries carry a SHA-256 integrity check (not a signature). Corrupt/incompatible results
+fail closed. Save failures remain visible with a memory-only result and retry saving
+without another scan. No security/policy changes or permission bypasses are performed.
 
 Selected-run triage:
 

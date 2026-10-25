@@ -11,7 +11,7 @@ from s3_source import discover_files, load_config, open_source
 def main():
     st.set_page_config(page_title='Smoke test results', page_icon='🧪', layout='wide')
     st.title('Smoke test results')
-    st.caption('Read-only analysis • portable run manifests • no test execution')
+    st.caption('Telemetry read-only • saved analysis summaries • no test execution')
     with st.sidebar:
         source = st.radio('Dataset source', ['Local / mounted', 'Garage / S3'],
             index=1 if os.environ.get('WINTAP_SMOKE_CONFIG') else 0)
@@ -41,10 +41,11 @@ def main():
         st.button('Refresh files / results')
     con = client = None
     try:
+        snapshot = {}
         evidence_files = telemetry_files = None
         if remote:
             con, client = open_source(config)
-            evidence_files, telemetry_files = discover_files(client, config, start, end)
+            evidence_files, telemetry_files = discover_files(client, config, start, end, snapshot=snapshot)
             st.caption(f'S3: {len(evidence_files)} evidence files and {len(telemetry_files)} telemetry files listed. Telemetry is read only on explicit validation.')
         else:
             con = duckdb.connect(':memory:')
@@ -55,6 +56,9 @@ def main():
         hosts = sorted({r['host']['hostname'].lower() for r in runs})
         selected_hosts = st.sidebar.multiselect('Test hosts', hosts, default=hosts)
         ctx = dict(con=con, remote=remote, runs=runs, errors=errors,
+            client=client, config=config if remote else None, snapshot=snapshot,
+            source_id=config['endpoint'] if remote else data_root,
+            window=[start, end] if remote else None,
             visible_runs=[r for r in runs if r['host']['hostname'].lower() in selected_hosts],
             data_root='' if remote else data_root, telemetry_files=telemetry_files,
             unlabelled_host=unlabelled_host, padding=padding, row_limit=row_limit)
