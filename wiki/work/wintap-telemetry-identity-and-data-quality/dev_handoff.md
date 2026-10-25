@@ -19,6 +19,13 @@ tags: [feature-work, handoff, qualification, long-duration, safety]
 
 # Next phase—not execution authorization
 
+Latest analysis: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]].
+Prioritize Analytics observation-check regressions; separately authorize Wintap Accept
+emission/UDP memory-domain corrections and trusted build qualification. Current source
+is not proven identical to the deployed tracer. Repeated raw Starts need source-aware
+accounting, not automatic deletion or duplicate-birth classification. No deployment
+or source changes are authorized by that analysis.
+
 The user plans clean package qualification and days-long collects on several real
 hosts. Hosts,durations,resource/deadline limits and installation/rollback authority
 must be established before execution. Do not deploy from this document alone.

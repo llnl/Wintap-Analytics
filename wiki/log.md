@@ -3651,3 +3651,25 @@ frontmatter/diff checks pass. Updated canonical tools/index/plans/verification.
 No sibling source, service/sensor/tracer/security/SDK/DuckDB/default controls changed;
 no running workload restarted or PR published. Operator new UI/multi-host/long-duration
 acceptance and native/network coverage remain open. Same feature branch commit/push.
+
+## [2026-10-25] analysis | Canary quality gaps and proposed corrections
+
+Reanalyzed the existing five-family pilot read-only (65.78 seconds, no analysis
+errors); no new collection round, raw-data mutation or summary overwrite. Broader
+PID/time queries do not recover server TCP Accept/UDP Receive. Current CO-RE source
+has no Accept emission call and reads UDP kernel peer context with a user-memory
+helper; deployed-object hash differs from local build, so live causal linkage remains
+provisional. Live UDP Send tuples have zero endpoint ports; TCP listener-like close
+rows also have incomplete peer tuples. All eight file paths have required activities;
+selected lifecycle identities have no placeholders/mismatches, but 13 repeated-Start
+groups need Clone/Exec provenance classification, not automatic duplicate-birth flags.
+Five entirely synthetic evaluator counterexamples expose per-path, lifecycle identity/
+repeat/linkage and extra malformed endpoint blind spots. Recorded source-aware fixes,
+operation/provenance contracts and separately authorized sensor/pilot sequence in
+quality_followup_analysis; updated index, canonical dashboard limitations and handoff.
+No private identifiers/configuration/raw rows or investigation payloads filed. No source,
+package, service, tracer attachment, security, runtime pin or default control changes.
+Capture gaps/native skips and all prior acceptance limits remain open.
+Diff whitespace, modified content-page frontmatter/wikilinks and new live grounding
+paths pass. Synthetic diagnostics are not committed regressions; no source test-suite
+rerun or implementation acceptance claimed. Same feature branch; no PR publication.

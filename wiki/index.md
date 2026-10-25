@@ -60,6 +60,11 @@ validation. One-click canary-round observations and passive HOST startup compari
 expose coverage gaps without certifying capture. Agent Garage validation finds process,
 file and TCP endpoint observations; TCP Accept/UDP Receive missing, native clone skipped.
 
+Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
+— current-source Accept emission and UDP memory-domain defects, live incomplete UDP
+tuples, source-aware repeated-Start accounting and five synthetic validator blind spots.
+Proposed fixes only; deployed-object provenance and broader capture acceptance remain open.
+
 Accepted durable evidence plan: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]]
 (pidstat-style parquet transport, partitioning and dashboard severity overview).
 
