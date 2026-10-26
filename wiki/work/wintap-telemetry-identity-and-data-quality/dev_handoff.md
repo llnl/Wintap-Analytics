@@ -19,6 +19,16 @@ tags: [feature-work, handoff, qualification, long-duration, safety]
 
 # Next phase—not execution authorization
 
+**Current direction:** user approved the advisory corrective bundle and Ubuntu VM
+implementation/testing, with RHEL9 deferred to a later RPM deployment. Validator
+fixes, relative-unlink attribution, live case-pair proof and bounded socket-turnover
+qualification are complete. Next is native RHEL package build/review and the prepared
+[[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]] procedure.
+The latest Ubuntu pilot has no file gaps; two partial TCP provenance checks remain.
+See [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]] for scoped
+passes and the broader test-suite limitations. Older authorization paragraphs below
+are historical context, superseded only for this approved bundle.
+
 Latest advisory review (after projection qualification):
 [[wiki/work/wintap-telemetry-identity-and-data-quality/advisor_review]]. Two synthetic
 validator blind spots and relative-unlink attribution are confirmed; proposed small

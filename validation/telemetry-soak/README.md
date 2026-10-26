@@ -1,5 +1,23 @@
 # Non-interfering Linux telemetry canaries
 
+## Explicit post-delivery validation
+
+`validate-round.py --data-root PATH --list` lists recorded round keys. Supply one
+`--round-key`, `--network-sha256` and `--file-sha256` from the reviewed package/build
+to run the dashboard evaluator plus receipt/projection checks. Requires DuckDB1.5.6
+and dashboard dependencies. Summaries persist beside data, outside Git; matching
+fingerprints reuse them. `--force` requests a fresh scan. Exit0 means scoped declared
+observations passed,1 contradiction/failure,2 incomplete evidence; yellow canaries
+never become full-capture certification. Mixed wrong/null endpoint fields remain
+contradictions. Present-but-null explicit provenance stays unknown; legacy fallback
+is only for files without the column and rejects conflicting/malformed tokens.
+
+The [RHEL 9 RPM validation procedure](../../wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation.md)
+covers native build provenance, the read-only Wintap `verify_rpm_payload.py` helper,
+one independent round, normal delivery, receipt/object hashes and remaining gates.
+
+## Generation
+
 Run on disposable Linux hosts with an already-configured collector. This runner
 does not start/stop services, configure Garage, handle credentials, fetch packages,
 change permissions, or prune evidence. It is not a pressure test or capture oracle.

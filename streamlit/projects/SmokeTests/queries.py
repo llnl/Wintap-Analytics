@@ -176,12 +176,26 @@ def prepare_data(connection, root, unlabelled_host="", telemetry_files=None):
             WHEN {remote_port} IS NOT NULL OR lower({kind}) LIKE '%tcp%' OR lower({kind}) LIKE '%udp%' THEN 'network'
             WHEN lower({kind}) = 'process' OR lower(filename) LIKE '%raw_process+%' OR lower(filename) LIKE '%processserializer%' THEN 'process'
             ELSE 'other' END"""
+        sources = "('sched_fork', 'sched_exec', 'execve_or_execveat')"
+        if 'processstartsource' in lower:
+            # A present-but-null explicit projection is authoritative unknown.
+            origin = col('ProcessStartSource')
+            start_source = f"CASE WHEN {origin} IN {sources} THEN {origin} END"
+        else:
+            # Match the producer's complete whitespace-delimited tokens, not a
+            # substring or the first of multiple conflicting breadcrumbs.
+            tokens = (f"list_distinct(list_filter(regexp_split_to_array(COALESCE({col('Arguments', 'Process_Arguments')}, ''), '\\s+'), "
+                      "token -> starts_with(token, 'PROC_START_SRC=')))")
+            origin = f"substring(list_extract({tokens}, 1), 16)"
+            start_source = f"CASE WHEN len({tokens}) = 1 AND {origin} IN {sources} THEN {origin} END"
         fields = {
             "host": f"lower({host})", "domain": domain, "event_time": f"CAST(({timestamp(event_time)}) AS TIMESTAMP)",
             "pid": col("PID", cast="BIGINT"), "parent_pid": col("ParentPid", "Process_ParentPID", cast="BIGINT"),
             "pid_hash": col("PidHash"), "activity": f"lower({activity})", "process_name": col("ProcessName", "Process_ProcessName"),
             "command_line": col("CommandLine", "Process_CommandLine"), "path": file_path,
-            "start_source": f"COALESCE(NULLIF({col('ProcessStartSource')}, ''), NULLIF(regexp_extract({col('Arguments', 'Process_Arguments')}, 'PROC_START_SRC=([a-z_]+)', 1), ''))",
+            "start_source": start_source,
+            "start_source_explicit": 'true' if 'processstartsource' in lower else 'false',
+            "file_hash": col('File_Hash'),
             "protocol": inferred_protocol, "local_port": local_port, "remote_port": remote_port,
             "source_port": col("SourcePort", cast="INTEGER"), "destination_port": col("DestinationPort", cast="INTEGER"),
             "local_address": col("LocalIpAddr", "TcpConnection_SourceAddress", "UdpPacket_SourceAddress"),
@@ -445,19 +459,24 @@ def evaluate_endpoint_candidates(connection, sql, selector, result):
             bad_identity += 1
         else:
             hashes.setdefault(pid, set()).add(identity)
-        if not any((protocol or '').lower() == e.get('protocol', 'tcp').lower() and
-                   activity.startswith(e.get('protocol', 'tcp').lower() + 'ip') for e in bound):
+        compatible = [e for e in bound if (protocol or '').lower() == e.get('protocol', 'tcp').lower() and
+                      activity.startswith(e.get('protocol', 'tcp').lower() + 'ip')]
+        if not compatible:
             wrong_protocol += 1
         if any(v is None for v in (local, remote, src, dest, lip, rip)):
             missing += 1
-            continue
         def correct(end):
             local_ips = (end['localIp'], str(int(ipaddress.IPv4Address(end['localIp']))))
             remote_ips = (end['remoteIp'], str(int(ipaddress.IPv4Address(end['remoteIp']))))
-            return ((local, remote) == (int(end['localPort']), int(end['remotePort'])) and
-                (src, dest) == (int(end['remotePort'] if inbound else end['localPort']), int(end['localPort'] if inbound else end['remotePort'])) and
-                str(lip) in local_ips and str(rip) in remote_ips)
-        if not any(correct(e) for e in bound):
+            # Unknown fields remain incomplete; they must not erase an
+            # independently contradictory field. One role must explain ALL
+            # known fields, rather than combining pieces of different roles.
+            pairs = ((local, int(end['localPort'])), (remote, int(end['remotePort'])),
+                (src, int(end['remotePort'] if inbound else end['localPort'])),
+                (dest, int(end['localPort'] if inbound else end['remotePort'])))
+            return (all(value is None or value == expected for value, expected in pairs) and
+                (lip is None or str(lip) in local_ips) and (rip is None or str(rip) in remote_ips))
+        if not any(correct(e) for e in (compatible or bound)):
             wrong_endpoint += 1
     if wrong_endpoint:
         # Existing matching-candidate checks already report reversals. Add a

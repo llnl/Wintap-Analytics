@@ -75,6 +75,12 @@ and Wintappy's separate case-folded file_id remain open; all canaries stay yello
 Senior review: [[wiki/work/wintap-telemetry-identity-and-data-quality/advisor_review]]
 — confirmed relative-unlink path attribution and two reproduced validator blind spots;
 recommends a bounded corrective bundle before the next package qualification.
+That user-approved bundle is now Ubuntu-qualified:97dashboard/20runner/171targeted
+managed tests,48turnover/15return actual-object checks, exact relative/cwd Deletes
+and live case-only sensor keys pass. Two partial TCP checks remain incomplete;
+broader Windows/logging-test limitations are recorded. Next:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]] — native RPM
+payload verifier, independent round and explicit post-delivery validation command.
 
 Accepted durable evidence plan: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]]
 (pidstat-style parquet transport, partitioning and dashboard severity overview).

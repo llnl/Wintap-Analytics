@@ -3,6 +3,9 @@ title: "Verification summary: telemetry identity and end-to-end data quality"
 type: diagnostic
 confidence: high
 grounded_by:
+  - validation/telemetry-soak/validate-round.py
+  - ../wintap/devtools/verify_rpm_payload.py
+  - ../wintap/tests/Wintap.Tests/DirIdentityIndexTests.cs
   - wiki/work/wintap-telemetry-identity-and-data-quality/evidence.md
   - ../wintap/tests/Wintap.Tests/IdentityContractTests.cs
   - ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs
@@ -25,6 +28,66 @@ tags: [feature-work, retrospective, verification, proof, limits]
 ---
 
 # Outcome
+
+## Advisory corrective bundle — Ubuntu qualification
+
+User approved implementation/testing on the Ubuntu VM; native RHEL9 RPM deployment
+comes later. Strict fallback token parsing and mixed wrong/null endpoint regressions
+are implemented. Present-but-null explicit provenance is authoritative unknown.
+CO-RE relative unlink preserves dirfd/cwd namespace/device/inode; resolution uses
+only learned directory identities. Unlearned/evicted/zero bases remain relative;
+no late /proc fallback. Delete remains entry intent, not syscall-success proof.
+
+Verified on designated Ubuntu arm64 VM, SDK10.0.402/DuckDB1.5.6:
+
+- `make -C wintap/platform/linux/sensor/ebpf/tracers all`: corrected core/fallback
+  file objects compile; all12 objects present from this qualified source snapshot.
+  Actual normal collector loads the corrected CO-RE object; required hooks attach.
+- `DISABLE_MCP=true dotnet build wintap/Lintap.csproj --no-restore`:
+  **0 errors/177 warnings**. Final copied tracer hashes match startup receipt.
+- `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --no-restore
+  -p:EnableWindowsTargeting=true --filter 'FullyQualifiedName~TelemetryProjectionQualityTests|FullyQualifiedName~WindowsFilePathEmissionTests|FullyQualifiedName~NetworkEndpointNormalizationTests|FullyQualifiedName~RuntimeCapabilitiesTests|FullyQualifiedName~ProcessIdentity|FullyQualifiedName~ProcessResolver|FullyQualifiedName~RuntimeRoot|FullyQualifiedName~DirIdentityIndexTests|FullyQualifiedName~FileOpsRingWakeupPolicyTests'`:
+  **171 pass**, no skips. Includes conservative unlink resolver and projection tests.
+- `SMOKE_S3_HTTP_TEST=1 python -B -m unittest discover -s
+  streamlit/projects/SmokeTests`: **97 pass**, including real synthetic HTTP/S3.
+- `python -B -m unittest discover -s validation/telemetry-soak`: **20 pass**.
+- Wintap `python -B -m unittest discover -s devtools -p <pattern>`:
+  `test_network_trace_smoke.py` **6**, `test_telemetry_smoke_workload.py` **2**,
+  `test_verify_rpm_payload.py` **3 pass**. RPM query/platform are mocked in its
+  synthetic tests; real payload tampering is detected. Actual RPM/RHEL not executed.
+- Observer compiles with `cc -O2 -Wall -Wextra -Werror ... -lbpf -lelf -lz`.
+  `network_trace_smoke_test.py` default actual-object matrix **15 pass**;
+  `--turnover` **48 pass** across24 rapid socket lifetimes, with failures before
+  success and connected repeats inside the sampling interval. Context maps empty.
+  No forced kernel pointer reuse/concurrent-caller/loss claim. Existing sampling
+  implementation retained; this VM workload did not reproduce cross-lifetime loss.
+- Fresh180-second normal-ETL five-family pilot: all evidence delivered, **0 analysis
+  errors/0 violations**,29 focused receipt/hash/projection checks pass. Exact
+  relative.bin and cwd.bin Delete paths recovered; both coexisting case-only paths
+  have all declared activities and disjoint non-null sensor file keys. Normal
+  Start/Refresh explicit schema and all three producer values observed.
+- Four families have0missing checks. Cross-domain retains **2 incomplete TCP
+  Send/Recv provenance checks**, one per TCP endpoint; all canaries stay yellow.
+  New CLI correctly exits2 (incomplete), not0. Saved-summary/latest integrity and
+  matching reuse pass with `analyze_round` replaced by a throwing guard, proving
+  no rescan. A different fingerprint misses. Analysis checks unchanged raw
+  sizes/mtimes/listing before saving. Ongoing Garage upload acceptance is deferred.
+- Actual collector process exited **0**, unforced, after SIGINT; total bounded
+  pilot elapsed184seconds. Collector/observer and diagnostic test processes inactive.
+
+### Broader suite limits, retained failures
+
+An initial unfiltered Windows-targeted suite on Ubuntu returned **1160 pass/87 fail**:
+79 are Windows registry/process/path/cmd assumptions and8 hit log-path permission
+initialization errors. Retrying those8 with an isolated data root exceeded120seconds;
+only that diagnostic testhost/runner were stopped. Those8 are **not qualified** by
+the171-test targeted result. No platform tests/strict gates were weakened to hide
+failures. Broader Windows and these ancillary test-runtime issues remain follow-up.
+
+Private logs/data remain VM-local; canonical sanitized results only are committed.
+No field installation, Garage write, security/default-control/pin change, or
+Lintap/Wintappy source change. Next procedure:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]].
 
 ## Authorized local quality follow-up — 2026-10-25
 

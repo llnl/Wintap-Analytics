@@ -54,6 +54,10 @@ Current portable manifests add explicit per-path activity expectations (rename p
 need not each perform every operation) and IPv4 TCP/UDP host-relative socket expectations.
 Eight-file canary separately records all eight expected paths. These are stimulus facts,
 not raw-data mutation or inferred missing endpoint fields.
+The named file worker also creates coexisting `CaseOnly.bin`/`caseonly.bin`, each
+with Open/Write/Read/Close/Delete expectations, and a learned-cwd relative Delete.
+The cwd change is isolated to that worker and restored before exit. These names
+exercise exact production path/key projection, complementing unit-test case pairs.
 <!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py §emit, worker, main; ../wintap/devtools/clone_lifecycle_workload.c §record -->
 
 ## Native helper

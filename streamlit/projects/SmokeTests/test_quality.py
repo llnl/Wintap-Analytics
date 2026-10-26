@@ -176,6 +176,53 @@ class QualityTests(unittest.TestCase):
         self.assertEqual(result['rows'], 3)
         self.assertTrue(any('incorrect endpoint/directed provenance' in v for v in result['violations']))
 
+    def test_known_contradiction_survives_missing_field(self):
+        self.socket_row()
+        self.socket_row('tcpiprecv')
+        self.socket_row(source_port=9999, local_address=None)
+        result = self.evaluate(self.network())
+        self.assertTrue(result['violations'])
+        self.assertTrue(result['warnings'])
+
+    def test_partial_fields_must_match_one_consistent_role(self):
+        selector = self.network()
+        selector['endpointExpectations'].append(dict(selector['endpointExpectations'][0],
+            localIp='192.0.2.3', remoteIp='192.0.2.4'))
+        self.socket_row(local_address='192.0.2.1', remote_address='192.0.2.4', source_port=None)
+        self.assertTrue(self.evaluate(selector)['violations'])
+        self.con.execute('DELETE FROM smoke_data')
+        self.socket_row(local_address='192.0.2.3', remote_address=None, source_port=None)
+        self.assertFalse(self.evaluate(selector)['violations'])
+
+    def test_source_tokens_and_explicit_null_are_conservative(self):
+        cases = [
+            (None, None), ('', None), ('xPROC_START_SRC=sched_exec', None),
+            ('PROC_START_SRC=sched_exec123', None), ('PROC_START_SRC=unknown', None),
+            ('PROC_START_SRC=sched_fork PROC_START_SRC=sched_exec', None),
+            ('PROC_START_SRC=sched_exec PROC_START_SRC=unknown', None),
+            ('PROC_START_SRC=sched_exec PROC_START_SRC=sched_exec', 'sched_exec'),
+            ('\tPROC_START_SRC=execve_or_execveat\nFLAGS=0x0', 'execve_or_execveat'),
+        ]
+        with tempfile.TemporaryDirectory() as directory, duckdb.connect() as con:
+            for arguments, expected in cases:
+                with self.subTest(arguments=arguments):
+                    path = Path(directory) / 'process.parquet'
+                    # Bind data in a table: COPY target placeholders can precede
+                    # SELECT placeholders in DuckDB's parameter ordering.
+                    con.execute('CREATE OR REPLACE TABLE fixture AS SELECT ?::VARCHAR Arguments', [arguments])
+                    con.execute('COPY fixture TO ? (FORMAT PARQUET)', [str(path)])
+                    prepare_data(con, directory)
+                    self.assertEqual(con.execute('SELECT start_source FROM smoke_data').fetchone()[0], expected)
+                    con.execute('DROP VIEW smoke_data')
+                    path.unlink()
+            for source in (None, '', 'unknown'):
+                con.execute("CREATE OR REPLACE TABLE fixture AS SELECT ?::VARCHAR ProcessStartSource, 'PROC_START_SRC=sched_exec' Arguments", [source])
+                con.execute('COPY fixture TO ? (FORMAT PARQUET)', [str(path)])
+                prepare_data(con, directory)
+                self.assertIsNone(con.execute('SELECT start_source FROM smoke_data').fetchone()[0])
+                con.execute('DROP VIEW smoke_data')
+                path.unlink()
+
     def test_wrong_protocol_candidate_remains_in_bounded_selector(self):
         self.socket_row()
         self.socket_row('tcpiprecv')

@@ -29,6 +29,12 @@ tags: [review, telemetry-quality, package-plan, validation]
 
 # Assessment
 
+Follow-up: the user approved implementation/testing on the Ubuntu VM and preparation
+for later RHEL9 RPM deployment. The bounded corrective bundle is implemented; results
+and limitations are in [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]].
+The recommendations below preserve the review-time findings. Deployment procedure:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]].
+
 User requested a fair, critical advisory review before closing the round. Reviewed
 current Wintap c0b6774 (including bba2e7c network changes) and Analytics 00dda2d,
 including generators, validators, receipts, summary persistence and qualification

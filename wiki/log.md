@@ -3751,3 +3751,33 @@ native target-package gate and separate downstream case-ID plan. Prior pass coun
 remain scoped; no new collector run or implementation. No private raw evidence,
 configuration or identifiers committed. Updated index/handoff; recommendations await
 user direction. Temporary synthetic query artifacts removed.
+
+## [2026-10-25] code | Advisory corrective bundle and later RHEL9 validation
+
+User approved Ubuntu source/test implementation and preparation for later RPM
+deployment. Fixed strict legacy source parsing (explicit null authoritative) and
+known endpoint contradictions with null companion fields. Wintap relative unlink
+captures operation-time dirfd/cwd base identity; learned-index-only resolution
+preserves unknowns and entry-intent semantics. Added live case-only/cwd stimuli,
+conservative directory-resolution regressions, monotonic/outer observer deadlines
+and24-lifetime UDP turnover qualification. Network48turnover/15return checks pass;
+no forced pointer reuse claim or network sampling change. Linux build0errors/
+177warnings;171targeted managed,97dashboard,20runner/CLI and11Wintap Python tests
+pass. Broader Ubuntu Windows-targeted suite1160pass/87fail and timed-out isolated
+retry of8logging-dependent tests remain explicitly unqualified in verification.
+
+Fresh normal-ETL five-family pilot has0errors/0violations; exact relative/cwd Deletes
+and case-only activities/distinct sensor keys pass. All29focused receipt/hash/
+projection gates pass; only two partial TCP provenance checks remain incomplete.
+Actual collector exits0 without force. CLI summary integrity/latest/reuse verified
+without analysis rescan; raw size/mtime/listing preserved. Prepared read-only RPM
+payload verifier (synthetic tamper tests) and explicit delivered-round CLI with
+strict0/1/2scoped outcome codes. RHEL9 execution/ongoing Garage and multi-host review
+remain later steps. Updated canonical file/workload/dashboard pages, review/handoff,
+plan/verification/index and new rhel9_validation. Wintap instructions/audit stay in
+its developer_docs. No private raw/host/config/credential evidence, field rollout,
+Garage writes, runtime-pin/security/default-control changes or Lintap/Wintappy edits.
+
+Wintap source bundle committed as03114f6;15changed production/test files across the
+two repos match the qualified VM snapshot byte-for-byte. Same feature branches;
+unrelated state/configuration work preserved. No PR or merge.

@@ -160,8 +160,10 @@ identity. This is not canonical-hash recomputation or PID-reuse proof. Repeated 
 retain raw Clone/Exec observations and source-classification counts; missing provenance
 is unconfirmed, not an automatic duplicate birth. Network selectors retain expected-
 protocol mismatches and either host-relative or directed matching ports. All bound
-Send/Recv candidates are checked, including malformed extra rows; contradictory complete
-tuples are red, incomplete/unattributed candidates yellow. No reported violations
+Send/Recv candidates are checked, including malformed extra rows; independently
+contradictory known fields remain red even when other fields are null. All known
+fields must match one consistent bound endpoint role; missing fields are separately
+incomplete and genuinely unbound candidates remain yellow. No reported violations
 still does not certify all selected observations. Original counterexamples are in
 [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]].
 The bounded working set and saved-summary fingerprints cover the stronger checks.
@@ -170,11 +172,16 @@ No strict dev-time gate was weakened. IPv4 TCP/UDP endpoint assertions use each
 Casefold-only path matches are explicitly unconfirmed, not exact Linux identity;
 older normal-ETL output lost case. The approved sensor projection now preserves
 producer path case and persists nullable `ProcessStartSource`; dashboard normalization
-prefers that explicit field, falling back only to real Arguments breadcrumbs, never
-CommandLine text. Missing source stays unclassified; source-classified repeated Starts
+uses that explicit field whenever its column exists, including authoritative null/
+invalid values as unknown. Only files lacking the column fall back to real Arguments
+breadcrumbs: complete whitespace-delimited tokens, one distinct recognized value,
+no conflicting/unknown values, never CommandLine text. Missing source stays
+unclassified; source-classified repeated Starts
 still are observations, not additional births or a capture-completeness verdict.
 See [[wiki/tension/linux-file-path-case-projection]] and
 [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
+The optional explicit local CLI adds trusted-object/projection gates and the same
+summary persistence; see [[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]].
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §selector_query, evaluate_case; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §HandleEvent -->
 
 Validation normalizes the selected source's candidate files, scans the union of

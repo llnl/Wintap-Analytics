@@ -79,3 +79,22 @@ This retrospective alone does not authorize additional execution or rollout.
 - [ ] Trusted field package review/provenance and operator-approved installation/pilot
 
 Detailed limits: [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
+
+## Approved advisory bundle — Ubuntu; RHEL deployment later
+
+- [x] Reject malformed/conflicting legacy source tokens; explicit-column null remains unknown
+- [x] Detect known endpoint contradictions even with null companion fields; consistent-role matching
+- [x] Carry unlinkat/AT_FDCWD event-time base identity and conservatively resolve learned bases
+- [x] Unit regressions for closed/reused/missing/evicted/namespace-qualified directory identities
+- [x] Normal-ETL case-only pair and relative/cwd Delete proof; distinct sensor keys
+- [x] Bounded24-lifetime UDP turnover48-check qualification and15-check return regression
+- [x] Monotonic observer timing and outer load/attachment/cleanup deadline
+- [x] Ubuntu build/targeted tests and five-family pilot; clean actual collector exit0
+- [x] Prepare read-only RPM payload verifier and explicit post-delivery validation command
+- [x] Verify fingerprinted CLI summary reload without telemetry rescan
+- [ ] Execute native RHEL9 RPM build/deployment/validation under later operator direction
+- [ ] Qualify summary reuse/staleness during ongoing Garage uploads and longer multi-host runs
+
+Two partial TCP provenance checks and broader Windows/logging-test qualification
+remain explicit. Downstream Wintappy IDs remain separately scoped. Procedure:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]].

@@ -30,6 +30,15 @@ tags: [telemetry-quality, linux, network-events, qualification, canary]
 
 # Authorized follow-up, not field rollout
 
+Latest advisory corrective bundle is complete in Ubuntu: strict legacy provenance
+and partial-endpoint checks, event-time relative/cwd unlink attribution and a live
+case-only pair. All29 focused receipt/hash/projection gates pass, with two TCP
+provenance checks still incomplete. Rapid24-lifetime UDP qualification passes48
+checks; pointer reuse remains unforced. Actual collector shutdown exits0. Full
+results and broader test limitations:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/verification]]. Prepared later
+deployment: [[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]].
+
 User authorized recommended-order implementation and iterative local VM work.
 Analytics first added source-aware per-path/lifecycle/socket regressions; Wintap owns
 the corrected CO-RE tracer, managed capability facts and stimulus/actual-object tools.

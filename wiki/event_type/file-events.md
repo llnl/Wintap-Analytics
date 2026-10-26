@@ -9,6 +9,8 @@ grounded_by:
   - ../wintap/wintap/core/etl/extract/FileSerializer.cs
   - ../wintap/wintap/core/etl/transform/IdGenerator.cs
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/DirIdentityIndex.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c
 policy: agent-editable
 last_validated: 2026-10-25
 repo_scope: wintap
@@ -37,6 +39,19 @@ The sensor suppresses `.etl` paths and events from Wintap's own PID to avoid fee
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/FileSensor.cs §sendFileEvent; §Kernel_FileIoWrite; §Kernel_FileIoDelete -->
 
 ## ETL Boundary
+
+Linux CO-RE unlink/unlinkat Delete records represent **syscall-entry intent**. For
+relative paths, the producer captures the base directory's namespace/device/inode
+at entry, preserving unlinkat dirfd and unlink's AT_FDCWD meaning. Managed Delete
+resolution joins only a learned directory identity; it never guesses using a later
+PID/fd/cwd. This supports short-lived workers and closed/reused dirfds. Missing or
+evicted identities, fallback-tier zero identities and parent (`..`) traversal remain
+relative/unresolved. Learned-index directory renames, inode reuse and aliases still
+limit attribution; absolute output is not an inode/canonical-path proof. Consumers
+must keep exact-path gaps visible and must not infer successful deletion from intent.
+The Ubuntu normal-ETL pilot observes exact relative/cwd Deletes and case-only paths
+with distinct sensor keys; Wintappy's separate lowercased file_id remains unchanged.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c §emit_file_event_user, t_unlinkat, t_unlink; ../wintap/wintap/platform/linux/sensor/ebpf/DirIdentityIndex.cs §ResolveUnlinkPath -->
 
 The file ETL query groups file messages in a 10-second time batch by file path, `PidHash`, PID, activity type, and process name. It emits bytes requested, first/last seen times, event count, message type, and `AgentId`.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/file.epl §query -->
