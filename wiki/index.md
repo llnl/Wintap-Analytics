@@ -72,6 +72,9 @@ Approved greenfield projection follow-up adds nullable process source and preser
 Linux path case:180 managed/94 dashboard tests pass; fresh normal-ETL eight-file,
 process/clone and dedicated TCP checks have no gaps. Cross-domain Delete/partial TCP
 and Wintappy's separate case-folded file_id remain open; all canaries stay yellow.
+Senior review: [[wiki/work/wintap-telemetry-identity-and-data-quality/advisor_review]]
+— confirmed relative-unlink path attribution and two reproduced validator blind spots;
+recommends a bounded corrective bundle before the next package qualification.
 
 Accepted durable evidence plan: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]]
 (pidstat-style parquet transport, partitioning and dashboard severity overview).

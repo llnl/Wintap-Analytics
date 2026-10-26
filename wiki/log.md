@@ -3737,3 +3737,17 @@ Wintappy's separate lowercase-derived file_id remains unmodified/uncertified. Up
 canonical process/file/dashboard pages, index, plans, verification and handoff. No
 private evidence/identifiers/configuration filed; no Garage writes, field rollout,
 Lintap/Wintappy edits or PR. Same feature branches; unrelated work preserved.
+
+## [2026-10-25] review | Senior technical assessment before closing quality round
+
+Reviewed current sensor/projection/generator/dashboard/persistence source and prior
+qualification evidence at Wintap c0b6774 / Analytics00dda2d. Synthetic current-code
+probes reproduce permissive legacy source parsing and suppression of a known endpoint
+contradiction when another field is null. Existing VM pilot read-only investigation
+finds the missing relative.bin Delete as a bare relative basename in the same
+host/PID/window; unlinkat loses dirfd and managed relative resolution only covers Open.
+Created advisor_review with bounded corrective bundle, sampling/churn qualification,
+native target-package gate and separate downstream case-ID plan. Prior pass counts
+remain scoped; no new collector run or implementation. No private raw evidence,
+configuration or identifiers committed. Updated index/handoff; recommendations await
+user direction. Temporary synthetic query artifacts removed.

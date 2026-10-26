@@ -19,6 +19,13 @@ tags: [feature-work, handoff, qualification, long-duration, safety]
 
 # Next phase—not execution authorization
 
+Latest advisory review (after projection qualification):
+[[wiki/work/wintap-telemetry-identity-and-data-quality/advisor_review]]. Two synthetic
+validator blind spots and relative-unlink attribution are confirmed; proposed small
+corrective bundle precedes package qualification. This is a review plan, not newly
+authorized implementation. The final pilot's missing Delete exists as a relative
+basename in the same host/PID/window; exact absolute attribution remains incomplete.
+
 Latest analysis: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]].
 Subsequent user-authorized local implementation:
 [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
