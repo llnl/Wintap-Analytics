@@ -1,117 +1,124 @@
 ---
-title: "Next-phase handoff: package qualification and multi-day collection"
+title: "Developer handoff: telemetry identity and data quality"
 type: concept
-confidence: medium
+confidence: high
 grounded_by:
   - wiki/work/wintap-telemetry-identity-and-data-quality/brief.md
   - wiki/work/wintap-telemetry-identity-and-data-quality/verification.md
-  - wiki/work/wintap-telemetry-identity-and-data-quality/evidence.md
+  - wiki/work/wintap-telemetry-identity-and-data-quality/implementation_plan.md
+  - wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation.md
+  - wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification.md
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-26
 repo_scope: cross-repo
-implementation_area: packaging
+implementation_area: data-pipeline
 event_domain: cross-domain
 audience: developer
 status: draft
-source_paths: ../wintap; ../Lintap/packaging; ../Wintappy; wiki/work
-tags: [feature-work, handoff, qualification, long-duration, safety]
+source_paths: ../wintap; ../Lintap/packaging; ../Wintappy; validation/telemetry-soak; streamlit/projects/SmokeTests
+tags: [feature-work, handoff, qualification, telemetry-quality]
 ---
 
-# Next phase—not execution authorization
+# Continuation handoff — not a close-out or rollout approval
 
-**Current direction:** user approved the advisory corrective bundle and Ubuntu VM
-implementation/testing, with RHEL9 deferred to a later RPM deployment. Validator
-fixes, relative-unlink attribution, live case-pair proof and bounded socket-turnover
-qualification are complete. User then explicitly authorized fixing TCP before the
-RPM: complete cached tuples and sampling clocks now survive teardown; both previously
-incomplete checks pass in a fresh Ubuntu round. Next is native RHEL package build/review and the prepared
-[[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]] procedure.
-The latest Ubuntu pilot has no missing checks/violations; all34 focused gates pass.
-CLI remains2 for independent execveat/native-helper skips and lifecycle-count caveats.
-See [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]] for scoped
-passes and the broader test-suite limitations. Older authorization paragraphs below
-are historical context, superseded only for this approved bundle.
+This feature remains open. The work is moving to another computer, so use this
+page as the operational entry point and follow the linked wiki records; do not
+depend on private shell history, local audit archives, or machine-specific files.
 
-Latest advisory review (after projection qualification):
-[[wiki/work/wintap-telemetry-identity-and-data-quality/advisor_review]]. Two synthetic
-validator blind spots and relative-unlink attribution are confirmed; proposed small
-corrective bundle precedes package qualification. This is a review plan, not newly
-authorized implementation. The final pilot's missing Delete exists as a relative
-basename in the same host/PID/window; exact absolute attribution remains incomplete.
+## Current position
 
-Latest analysis: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]].
-Subsequent user-authorized local implementation:
-[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
-The paragraph below preserves the pre-implementation boundary; the user later
-authorized Analytics/Wintap source corrections and disposable-VM qualification,
-**not** collection-host install/restart/tracer attachment or rollout. Next operator
-gate is trusted package review/provenance and an approved non-interfering pilot.
-Prioritize Analytics observation-check regressions; separately authorize Wintap Accept
-emission/UDP memory-domain corrections and trusted build qualification. Current source
-is not proven identical to the deployed tracer. Repeated raw Starts need source-aware
-accounting, not automatic deletion or duplicate-birth classification. No deployment
-or source changes are authorized by that analysis.
+- Wintap's TCP tuple-lifetime correction and Analytics validation changes are
+  committed on the existing feature branches: Wintap `c4f6b1d`, Analytics
+  `a293775`. No PR/merge is implied.
+- The user reports that a new native RHEL 9 x86_64 RPM was built and deployed.
+  Two completed S3-delivered rounds (one with, one without the optional clone
+  helper) have been inspected read-only. Declared network, file, and process
+  observations—including TCP endpoint provenance—were present without reported
+  contradictions. The helper-enabled dedicated clone suite also passed. Omitting
+  the helper correctly leaves that dedicated suite skipped.
+- These rounds are not full acceptance. Process-start provenance did not include
+  `sched_exec`, although the startup capability receipt reports the corresponding
+  hook attached. The three-source projection gate therefore remains incomplete.
+  Keep unknown provenance unknown; do not infer the missing source from hook
+  attachment or relax the gate.
+- The user then started two additional canary runners in parallel for an overnight
+  observation, one with and one without the helper. Their final manifests, uploads,
+  stop status, and validation have not yet been reviewed. Treat them as pending.
+- The remote inspection was read-only and did not save summaries or mutate S3.
+  Operator-reported package build/deployment is not independent RPM-to-installed-
+  payload proof. Check whether the sanitized package-verifier result and trusted
+  package/object hashes are available before claiming artifact provenance.
 
-The user plans clean package qualification and days-long collects on several real
-hosts. Hosts,durations,resource/deadline limits and installation/rollback authority
-must be established before execution. Do not deploy from this document alone.
+No test-host names, addresses, process identifiers, bucket/prefix/configuration,
+raw event details, or private credentials belong in this wiki. Record only
+sanitized conclusions and unresolved questions.
 
-Feature commits: Wintap `10a782f`, Wintappy `4236cbb`, Lintap `b793082`;
-Analytics QA/wiki/harnesses are in the retrospective commit. Those original commits
-were local at closeout; the user now authorizes .NET 10 corrections and commit/push
-on the same branches for cross-system builds. PR publication remains separate.
-Current correction results and gates:
-[[wiki/work/wintap-telemetry-identity-and-data-quality/runtime_alignment_plan]].
+## First actions on the new computer
 
-## Minimal context
+1. Read [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]],
+   [[wiki/work/wintap-telemetry-identity-and-data-quality/implementation_plan]],
+   and [[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]].
+   Read [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]]
+   for producer semantics and known limits.
+2. Ask the user to stop the two overnight generator sessions when ready. Do not
+   stop or restart the collector. Confirm generator exit/status and wait for normal
+   upload/flush before treating S3 listings as settled.
+3. In the approved private SmokeTests configuration, refresh read-only S3
+   discovery and select each exact `canaryRoundId`/round independently. Do not
+   group by time proximity or combine the helper/no-helper rounds. Because both
+   generators ran concurrently and telemetry rows do not carry a round ID, inspect
+   overlap/ambiguity warnings; do not force ambiguous events into either round.
+4. Re-run explicit validation against the final settled snapshot. Confirm the TCP
+   tuple contract and attached-hook facts, TCP/UDP endpoint checks, exact file and
+   process assertions, expected helper skips, and all source-provenance outcomes.
+   Keep incomplete results yellow; do not publish raw rows or remote identifiers.
+5. Investigate why `sched_exec` observations are absent despite the attached-hook
+   receipt. Trace source emission through managed projection and delivered schema;
+   preserve `ProcessStartSource` null/unknown behavior and add an adversarial
+   regression before changing semantics. This is the leading unresolved coding/
+   qualification item.
+6. Verify the newly deployed RPM against an independently trusted RPM digest and
+   installed payload if that proof has not already been performed. Correlate
+   sanitized package proof with receipt object hashes; capability markers alone
+   are not cryptographic provenance.
+7. Refresh this handoff and the verification/plan/index/log with sanitized results.
+   Do not close the feature until the overnight rounds, missing provenance source,
+   package provenance, and explicitly accepted remaining limitations are resolved.
 
-1. Read the umbrella [[wiki/work/wintap-telemetry-identity-and-data-quality/brief]]
-   and [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]].
-2. Read each target repo's AGENTS/build/package guide and inspect its current diff.
-   Feature work is on `feature/telemetry-identity-data-quality` in all four repos.
-   Wintap branches from the tested `chore/net10-dependency-prune` baseline:target that
-   branch for an isolated PR until .NET10 merges. Do not reset or include unrelated work.
-3. Consult [[wiki/work/wintap-telemetry-identity-and-data-quality/evidence]] only for
-   the exact prior control being reproduced. Local JSON is intentionally uncommitted.
+## Boundaries and preserved decisions
 
-## Preserve these contracts
+- Analysis/wiki lives in Wintap-Analytics; Windows/Linux sensor and telemetry
+  projections are owned by Wintap; Lintap owns supporting packaging; Wintappy owns
+  downstream DBT/DuckDB transformations. Wintappy's case-folded derived file ID is
+  a separate unresolved downstream issue; this work did not change it.
+- Use SDK **10.0.402**, DuckDB engine **1.5.6**, and official .NET wrapper
+  **1.5.6.1**. DuckDB 2.0 remains held. Cross-RID lock-file restore/audit-cache
+  limitations are documented in the verification record; preserve NuGet audit and
+  TLS checks.
+- Keep TCP bytes defined as requested-at-entry, sampled observations—not successful
+  transfer or conservation counts. Keep UDP bytes as successful protocol-function
+  return values, not syscall/packet conservation. Do not weaken endpoint or identity
+  assertions to turn an incomplete result green.
+- Keep Linux recovery/readiness/shutdown experiments default-off, retry capacity
+  1024, and existing identity formulas/pins/security settings unchanged unless
+  separately authorized. No automatic migration or historical raw-data rewrite.
+- Canary tools generate stimuli only. They do not attach tracers, change settings,
+  restart collectors, upload/clean up data, or certify capture completeness.
+  `--clone-helper` is an optional target-architecture process/thread workload, not
+  an observer or collector component.
+- Never commit credentials, private configuration, host identifiers, raw telemetry,
+  or detailed host-specific runtime evidence. Do not use force-push, rebase, merge,
+  or publish a PR without separate direction. Preserve unrelated working-tree work.
 
-- .NET SDK10.0.402/self-contained Debian packaging;DuckDB1.5.6 engine,official
-  .NET wrapper1.5.6.1. DuckDB2.0 remains held.
-- Canonical hostname/PID/birth identity and host-bound AgentId persistence;preserve
-  state/data and versioned store boundaries. No historical migration by implication.
-- Recovery/readiness/shutdown barrier are Linux/default-off experiments. Latest
-  delivery tests enabled them explicitly;default behavior has not inherited that proof.
-- Retry capacity1024/ten nominal1s attempts. No resizing or grouped-retry implementation.
-- Correct endpoint roles/directed ports and raw100ns identity inputs;never synthesize
-  lifecycle observations or interpret missing counters as zero.
+## Still outside this handoff's acceptance claim
 
-## Qualification sequence
+Historical loss/saturation closure; exact kernel-to-durable/upload fate; universal
+resource, deadline, and count guarantees; forced socket-pointer reuse; IPv6 and
+non-loopback wildcard endpoint coverage; full Windows live acceptance; multi-host
+long-duration acceptance; and the Wintappy derived-ID issue remain open. A healthy
+service or successful canary round does not close them.
 
-For the corrected core network contract, verify trusted package/object hash plus
-receipt version2 and operation return hooks, plus TCP tuple contract1/lifecycle hooks.
-Review UDP protocol-return byte meaning,
-sampling and exact independent mode/socket expectations. Use only a reviewed prebuilt
-native helper on field hosts; actual-object observer is dev-time/idle-VM-only.
-Use a helper compiled/reviewed for the target architecture, not the arm64 VM
-artifact on x64 hosts. Normal process source-provenance persistence and Linux
-file-case projection were approved by the user for greenfield development on
-2026-10-25. Nullable `ProcessStartSource` uses only recognized producer breadcrumbs;
-FileSerializer preserves producer paths and Windows behavior. No raw-data rewriting
-or process-identity change. Missing source and partial TCP provenance remain unknown.
-Wintappy still folds paths in its separate file_id formula; it is not modified or
-certified by the sensor/dashboard tests. Qualification results:
-[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
-
-Clean full native/eBPF/package build → package contents/dependencies/configuration
-review → authorized disposable installation/start/restart/shutdown → independent
-telemetry and fresh DBT checks → approved real-host multi-day collects.
-
-For long collects,record package/config/capability provenance,host-isolated data roots,
-collector capture intervals and resource/disk health. Agree what constitutes failure
-and what may stop a collector. Preserve10s primary/1,5,20s edge reporting and exact
-identity/count gates. Keep diagnostic evidence complete and bounded.
-
-Treat Windows runtime,performance/deadlines,actual saturation,kernel/durable fate,
-OS/metadata defects and older unexplained losses as named follow-ups. A healthy
-long-duration service alone does not close all those claims.
+Related entry points: [[wiki/work/wintap-telemetry-identity-and-data-quality/brief]],
+[[wiki/work/wintap-telemetry-identity-and-data-quality/verification]],
+[[wiki/tool/smoke-test-results-dashboard]],
+[[wiki/tool/periodic-telemetry-soak-runner]].

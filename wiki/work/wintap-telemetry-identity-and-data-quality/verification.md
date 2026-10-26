@@ -17,7 +17,7 @@ grounded_by:
   - ../wintap/devtools/network_endpoint_smoke_test.py
   - ../Wintappy/wintap_dbt/profiles.yml
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-26
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -28,6 +28,37 @@ tags: [feature-work, retrospective, verification, proof, limits]
 ---
 
 # Outcome
+
+## Operator-reported RHEL deployment and S3 canaries — 2026-10-26
+
+The user reports that a new native RHEL 9 x86_64 RPM was built and deployed.
+Two completed S3-delivered canary rounds, one with and one without the optional
+clone helper, were inspected read-only as separate runs. Declared network endpoint,
+file, and process observations were present without reported contradictions; the
+TCP endpoint checks pass and the startup receipt reports the TCP tuple contract and
+required hooks. The dedicated clone suite passes when supplied the helper and is
+explicitly skipped without it. This is bounded observation, not package release or
+complete capture certification.
+
+The overall source-provenance gate remains incomplete: `sched_exec` was not observed
+in either round although its startup hook is reported attached. Preserve unknown
+source values; do not turn hook attachment into evidence of emitted events. Other
+process lifecycle/source-count warnings and the process-scenario execveat limitation
+remain. The cross-domain suite's legacy clone subcase is still marked skipped; helper
+coverage in the dedicated clone suite does not remove that distinct skip.
+
+Two additional parallel overnight canary runners (with/without helper) are reported
+active and awaiting stop, upload settlement, and review. Since concurrent event rows
+do not carry canary round IDs, inspect each exact manifest round separately and retain
+overlap/ambiguous attribution as uncertainty. The read-only inspection did not write
+analysis summaries. No host identity, S3 location/configuration, process IDs, raw
+events, or detailed runtime telemetry are recorded here.
+
+Package build/deployment is operator-reported; this record does not yet contain
+independent RPM digest-to-installed-payload proof or trusted expected object hashes.
+Use the existing [[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]]
+procedure if those sanitized results are not already available. Continue from
+[[wiki/work/wintap-telemetry-identity-and-data-quality/dev_handoff]].
 
 ## TCP attribution continuation — Ubuntu, before RHEL
 

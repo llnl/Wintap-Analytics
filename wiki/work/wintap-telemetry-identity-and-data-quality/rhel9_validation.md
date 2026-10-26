@@ -9,7 +9,7 @@ grounded_by:
   - validation/telemetry-soak/validate-round.py
   - streamlit/projects/SmokeTests/analysis.py
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-26
 repo_scope: cross-repo
 implementation_area: packaging
 event_domain: cross-domain
@@ -19,10 +19,14 @@ source_paths: ../Lintap/packaging; ../wintap/devtools; validation/telemetry-soak
 tags: [rhel9, rpm, qualification, telemetry-quality]
 ---
 
-# Later RHEL 9 deployment validation
+# RHEL 9 package validation and follow-up
 
-Prepared for the user's later native RHEL 9 x86_64 RPM deployment. Ubuntu arm64
-tests qualify the source slice, not this platform/package. Packaging is owned by
+The user now reports a native RHEL 9 x86_64 package build and deployment. Two
+completed S3-delivered canary rounds have passed their declared endpoint/file/process
+observations, but source-provenance and independent package-proof gates remain open;
+two further parallel rounds await settlement and review. This procedure is retained
+for remaining checks, not a statement that the next action is initial deployment.
+Ubuntu arm64 tests qualify the source slice, not this platform/package. Packaging is owned by
 Lintap, producer/helper code by Wintap, validators/wiki by Analytics. No Wintappy
 change is included. Use the canonical live packaging guide for the native build,
 package review and operator-directed install/start; run the commands below **after**

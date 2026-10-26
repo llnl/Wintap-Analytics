@@ -19,7 +19,7 @@ grounded_by:
   - ../Lintap/tests/test_dotnet_packaging.py
   - ../wintap/devtools/test_runtime_alignment.py
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-26
 repo_scope: cross-repo
 implementation_area: packaging
 event_domain: none
@@ -54,8 +54,11 @@ workflow. Their stale .NET 8 payload inventories are retained and explicitly mar
 
 See [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]] for actual
 checks and preserved failures. Operator-assisted native RHEL 9 self-contained RPM
-build/inspection/install, bounded process/file/TCP/shutdown smoke and fresh DBT build
-now pass. Other package modes/platforms and full live acceptance remain separate gates.
+build/inspection/install and bounded process/file/TCP/shutdown plus fresh DBT smoke
+were previously reported pass. The user now reports a newer native package was
+deployed and two S3 canary rounds reviewed; `sched_exec` provenance and independent
+package-to-installed-payload proof remain open. Other package modes/platforms and
+full live acceptance remain separate gates.
 
 ## Initial source inventory (before these corrections)
 
@@ -126,10 +129,11 @@ runtimeconfig/deps files and actual runtime provenance separately.
 - [x] Active bootstrap, run, diagnostic and current-documentation defaults use 10;
   legacy/historical installer snapshots are explicitly excluded from release use.
 - [ ] Fresh tests/builds and package inspections pass, with scoped failures preserved.
-- [ ] RHEL 9 on-host results are supplied and reviewed before acceptance claims.
-  Bounded self-contained RPM smoke is operator-assisted: process/Stop, basic file,
-  bidirectional TCP and shutdown pass by report; supplied fresh DBT summary passes
-  all 83 operations. Full provenance, strict-count and multi-day gates remain open.
+- [x] Initial RHEL 9 on-host package/capture and two canary-round outcomes supplied;
+  declared endpoint/file/process observations pass by report/read-only review.
+- [ ] Independently verify the newer RPM payload against trusted digest and correlate
+  its loaded object hashes. `sched_exec`, strict-count, parallel-round settlement,
+  and multi-day gates remain open.
 
 Generic RHEL 9 prerequisite checks pass, including exact stable SDK selection and
 compiler/BTF/header checks. The designated test system is disposable by explicit

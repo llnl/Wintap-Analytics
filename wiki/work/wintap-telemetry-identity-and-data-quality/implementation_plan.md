@@ -6,7 +6,7 @@ grounded_by:
   - wiki/work/wintap-telemetry-identity-and-data-quality/verification.md
   - wiki/work/wintap-telemetry-identity-and-data-quality/evidence.md
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-26
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -76,11 +76,12 @@ This retrospective alone does not authorize additional execution or rollout.
 - [x] Normal-ETL five-family VM pilot evaluation and evidence delivery review; uncertainty retained
 - [x] User-approved greenfield Linux file-case and additive process-source projections;
   180 managed/94 dashboard tests and fresh normal-ETL five-family pilot, limits retained
-- [ ] Trusted field package review/provenance and operator-approved installation/pilot
+- [x] Operator-reported native package deployment and first independent canary rounds
+- [ ] Trusted package/payload provenance and remaining on-target qualification
 
 Detailed limits: [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
 
-## Approved advisory bundle — Ubuntu; RHEL deployment later
+## Approved advisory bundle and RHEL follow-up
 
 - [x] Reject malformed/conflicting legacy source tokens; explicit-column null remains unknown
 - [x] Detect known endpoint contradictions even with null companion fields; consistent-role matching
@@ -92,7 +93,11 @@ Detailed limits: [[wiki/work/wintap-telemetry-identity-and-data-quality/network_
 - [x] Ubuntu build/targeted tests and five-family pilot; clean actual collector exit0
 - [x] Prepare read-only RPM payload verifier and explicit post-delivery validation command
 - [x] Verify fingerprinted CLI summary reload without telemetry rescan
-- [ ] Execute native RHEL9 RPM build/deployment/validation under later operator direction
+- [x] Operator reports native RHEL9 RPM build/deployment and two initial S3 canary rounds reviewed
+- [ ] Independently verify trusted RPM digest and installed payload/object provenance
+- [ ] Stop/settle/review the two parallel overnight rounds separately; preserve overlap uncertainty
+- [ ] Resolve absent `sched_exec` observations without weakening source-provenance gates
+- [ ] Complete scoped RHEL validation and record remaining skips/limitations
 - [ ] Qualify summary reuse/staleness during ongoing Garage uploads and longer multi-host runs
 
 The TCP continuation below resolves the two partial provenance checks. Broader
@@ -100,7 +105,7 @@ Windows/logging-test qualification remains open; downstream Wintappy IDs remain
 separately scoped. Procedure:
 [[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]].
 
-## Authorized TCP continuation before RHEL
+## Authorized TCP continuation (completed before RHEL deployment)
 
 - [x] Isolate local-port loss in EOF/close output and reproduce with prior actual object
 - [x] Preserve complete cached tuples and sample clocks across state changes
@@ -109,3 +114,6 @@ separately scoped. Procedure:
 - [x] Add strict10-check actual-object data/half-close/delayed-EOF/close regression
 - [x] Complete fresh normal-ETL five-family qualification with unchanged endpoint assertions
 - [x] Record tests/results, update package validation, and commit/push corrected bundle
+
+Current next-step handoff:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/dev_handoff]].

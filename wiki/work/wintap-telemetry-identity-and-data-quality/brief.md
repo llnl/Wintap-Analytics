@@ -6,7 +6,7 @@ grounded_by:
   - wiki/work/wintap-telemetry-identity-and-data-quality/verification.md
   - wiki/work/wintap-telemetry-identity-and-data-quality/evidence.md
 policy: agent-editable
-last_validated: 2026-10-24
+last_validated: 2026-10-26
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -40,6 +40,20 @@ Existing workstream records remain historical context; this is the compact entry
 - Exact delivery diagnostics and demonstrated startup/shutdown corrections.
 - Independent Linux captures, failed controls, pressure tests and fresh DBT verification.
 
+## Current status — 2026-10-26
+
+The TCP tuple correction is pushed, and the user reports a new native RHEL 9 RPM
+was built and deployed. Two initial S3-delivered canary rounds have been reviewed;
+their declared endpoint/file/process checks pass, with the optional dedicated clone
+suite covered only when its helper is supplied. Overall qualification remains open:
+`sched_exec` provenance is not observed despite its startup hook being reported
+attached, package-to-installed-payload provenance has not been recorded here, and
+the two additional parallel overnight canaries are awaiting stop, upload settlement,
+and per-round review. See the current
+[[wiki/work/wintap-telemetry-identity-and-data-quality/dev_handoff]].
+
+This is not feature close-out, production readiness, or historical-loss closure.
+
 ## Acceptance boundary
 
 **Completed milestone:** scoped identity/data-quality improvements and observed
@@ -51,9 +65,11 @@ non-loopback TCP endpoint checks, complete observed-stage/output joins and downs
 birth/counter preservation. A successful workload, zero sampled drops or an Esper
 handoff alone is not sufficient. Failed or incomplete evidence stays failed.
 
-**Not a production release:** package qualification and multi-day real-host collects
-are the next phase. No historical migration, universal saturation/coverage guarantee,
-Windows live acceptance or complete kernel/fsync/upload proof is claimed.
+**Not a production release:** a later native package deployment and bounded canary
+rounds are now reported/reviewed, but complete package provenance, remaining source
+coverage, parallel-round review, and multi-day acceptance are open. No historical
+migration, universal saturation/coverage guarantee, Windows live acceptance, or
+complete kernel/fsync/upload proof is claimed.
 
 ## Ownership and compatibility
 

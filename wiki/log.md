@@ -3806,3 +3806,17 @@ Native RHEL package validation and prior broader limitations remain open.
 
 Wintap correction committed/pushed as `c4f6b1d`; Analytics validation/wiki companion
 uses the same feature branch. Unrelated working-tree changes remain preserved.
+
+## [2026-10-26] handoff | RHEL canary continuation
+
+Refreshed the telemetry identity/data-quality feature status for computer transition
+and replaced the stale dev handoff with a current continuation guide. The user reports
+a newer native RHEL package deployment; two completed S3 rounds show declared endpoint,
+file and process checks passing, with helper-dependent dedicated clone coverage. The
+three-source provenance gate remains incomplete because `sched_exec` was not observed
+despite the startup hook being reported attached. Two additional parallel overnight
+rounds await stop, upload settlement and separate review; package-to-installed-payload
+proof is not recorded. Updated brief, plan, verification, RHEL/network/runtime notes
+and index. Persistent updates omit host identifiers, private storage configuration,
+raw events and detailed runtime telemetry. No close-out or release claim; no source
+changes or S3 writes.

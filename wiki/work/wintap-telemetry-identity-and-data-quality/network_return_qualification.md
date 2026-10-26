@@ -1,5 +1,5 @@
 ---
-title: "Network return corrections and bounded VM qualification"
+title: "Network return corrections and bounded qualification"
 type: diagnostic
 confidence: medium
 grounded_by:
@@ -18,7 +18,7 @@ grounded_by:
   - ../Wintappy/wintap_dbt/models/silver/process_file.sql
   - streamlit/projects/SmokeTests/test_quality.py
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-26
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: network
@@ -28,7 +28,17 @@ source_paths: ../wintap/devtools; ../wintap/wintap/platform/linux/sensor/ebpf; s
 tags: [telemetry-quality, linux, network-events, qualification, canary]
 ---
 
-# Authorized follow-up, not field rollout
+# Producer corrections and scoped qualification
+
+Operator update (2026-10-26): a new native RHEL 9 package is reported built and
+deployed. Two completed S3 rounds pass their declared network/file/process checks;
+the TCP tuple receipt is present and TCP endpoint checks pass. Dedicated clone
+coverage depends on the optional helper. `sched_exec` provenance remains absent
+despite the reported attached hook, so the three-source gate is incomplete. Two
+additional parallel overnight rounds await stop/upload settlement and separate
+review. Package digest/payload proof is not recorded here. See the current
+[[wiki/work/wintap-telemetry-identity-and-data-quality/dev_handoff]]. No host-specific
+or detailed telemetry is retained.
 
 The subsequent user-authorized TCP continuation resolves both partial provenance
 checks in a fresh Ubuntu normal-ETL round. State callbacks no longer overwrite
@@ -168,7 +178,8 @@ The sensor projection decision is resolved in
 Actual-object checks do not establish managed identity/normal-ETL acceptance. Even a
 successful VM pipeline pilot would not prove the deployed RHEL object shares this
 source: trusted installed-package provenance and operator-approved review/install
-remain separate. Field collectors are left running unchanged. TCP Disconnect listener
+remain separate. The preceding Ubuntu qualification left field collectors untouched;
+later operator-reported RHEL deployment is tracked in the current handoff. TCP Disconnect listener
 tuples, IPv6, non-loopback wildcard IP, pointer-reuse/sampling, final-syscall failures,
 historical-loss closure and exact count/resource/deadline equivalence remain open.
 

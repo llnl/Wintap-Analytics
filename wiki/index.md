@@ -11,14 +11,17 @@ Master catalog of all pages. Updated by the agent on every ingest.
 beyond .NET10: identity,network semantics,downstream precision/counters and delivery.
 Read [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]] for concise
 proof and limits;[[wiki/work/wintap-telemetry-identity-and-data-quality/dev_handoff]]
-for planned package qualification and multi-day real-host collection. Scoped Linux
-delivery is verified,not production readiness or historical-loss closure. Detailed
+for the current cross-computer continuation. RHEL package deployment and two initial
+S3 canary rounds are reported/reviewed; `sched_exec` provenance, independent payload
+proof, and two parallel overnight rounds remain open. This is not production readiness
+or historical-loss closure. Detailed
 audit payloads are uncommitted;archive provenance is retained,not loaded by default.
 
 RHEL 9 package preparation: [[wiki/repo/lintap-supporting-repo]] — canonical Lintap
 guide now selects SDK 10.0.402 and provides operator-assisted prerequisite/build
 steps; bounded operator-assisted RHEL 9 package/capture/shutdown and fresh DBT smoke
-pass. Full live and multi-day qualification remain pending.
+pass. A newer package deployment and initial canary rounds are reported; independent
+payload proof and full live/multi-day qualification remain pending.
 Upgrade closure: [[wiki/work/wintap-telemetry-identity-and-data-quality/runtime_alignment_plan]]
 — all 13 C# targets and active package/provision/run defaults align with .NET 10;
 exact SDK 10.0.402 is enforced. Native self-contained RPM smoke passes by operator
@@ -57,8 +60,9 @@ Dashboard supports private configured Garage/S3 reads as well as mounted dataset
 all-round summaries persist separately beside data, not under raw telemetry.
 Overview now reads manifests only; Canary Tests and Dev-time Tests pages use explicit
 validation. One-click canary-round observations and passive HOST startup comparison
-expose coverage gaps without certifying capture. Agent Garage validation finds process,
-file and TCP endpoint observations; TCP Accept/UDP Receive missing, native clone skipped.
+expose coverage gaps without certifying capture. Initial S3 rounds show TCP Accept,
+UDP and endpoint observations; dedicated native clone passes with the optional helper.
+`sched_exec` source provenance and overall completeness remain unresolved.
 
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
 — current-source Accept emission and UDP memory-domain defects, live incomplete UDP
@@ -68,10 +72,10 @@ Authorized follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/net
 distinct UDP mode/endpoint and per-path manifests, actual-object15-check VM comparison,
 and159 shared managed tests. Deployed-object provenance and broader capture acceptance
 remain open; no field rollout.
-Approved greenfield projection follow-up adds nullable process source and preserves
-Linux path case:180 managed/94 dashboard tests pass; fresh normal-ETL eight-file,
-process/clone and dedicated TCP checks have no gaps. Cross-domain Delete/partial TCP
-and Wintappy's separate case-folded file_id remain open; all canaries stay yellow.
+Approved greenfield projection follow-up added nullable process source and preserved
+Linux path case. Subsequent producer work resolved the relative/cwd Delete and partial
+TCP endpoint observations in scoped qualification; Wintappy's separate case-folded
+file_id remains open.
 Senior review: [[wiki/work/wintap-telemetry-identity-and-data-quality/advisor_review]]
 — confirmed relative-unlink path attribution and two reproduced validator blind spots;
 recommends a bounded corrective bundle before the next package qualification.
@@ -80,10 +84,11 @@ managed tests,48turnover/15return actual-object checks, exact relative/cwd Delet
 and live case-only sensor keys pass. Subsequent authorized TCP repair preserves
 complete cached tuples/sample clocks through teardown: strict10-check actual-object
 regression and fresh normal-ETL TCP provenance checks pass; all34 focused gates pass.
-CLI remains2 for independent coverage skips/count caveats; broader Windows/logging
-limitations are recorded. Next:
-[[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]] — native RPM
-payload verifier, independent round and explicit post-delivery validation command.
+CLI remains incomplete for independent coverage skips/count caveats; broader
+Windows/logging limitations are recorded. Current status and next actions:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/dev_handoff]].
+RHEL payload verifier and post-delivery procedure:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]].
 
 Accepted durable evidence plan: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]]
 (pidstat-style parquet transport, partitioning and dashboard severity overview).
