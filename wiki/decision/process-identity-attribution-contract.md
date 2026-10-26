@@ -111,5 +111,10 @@ The locked Stage 0 contract:
   revision on evidence.
 
 ## Supersedes / Superseded By
-None. This ADR locks the Stage 0 contract; future ADRs may revisit the substrate
+Input/definition clarification: [[wiki/decision/process-hash-inputs-and-single-definition]]
+explicitly defines hostname/PID/canonical-start identity, excludes agent UUID, and
+requires one shared production formula. This does not settle the later sensor/core
+population-ownership differences or change the substrate decisions here.
+
+This ADR locks the Stage 0 contract; future ADRs may revisit the substrate
 (DEC-004) if measurement warrants.

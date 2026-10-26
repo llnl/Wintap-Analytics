@@ -6,7 +6,7 @@ grounded_by:
   - streamlit/projects/SmokeTests/README.md
   - ../wintap/devtools/smoke_manifest.py
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-25
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -50,3 +50,64 @@ transport redesign, acknowledgements or long-term source spool required.
 - [x] Promote final evidence/usage to canonical wiki
 
 Plan and accepted scope: [[wiki/work/smoke-test-dashboard/durable-evidence-plan]].
+
+## Read-only Garage/S3 source (authorized 2026-10-25)
+
+User selected direct Garage access on the same feature branch and reports smoke
+evidence reaching S3. No collector/uploader or sibling-repo changes are authorized
+or required for this slice; DBT manifest integration remains deferred.
+
+- [x] Private JSON config with credential-free schema and standard AWS env/profile chain
+- [x] Path-style Garage access with temporary DuckDB secret and HTTPS verification
+- [x] Paginated/UTC partition-pruned evidence and telemetry discovery, fail-closed caps
+- [x] Shared remote connection, existing manifest/selector/triage semantics and refresh
+- [x] Backend, source-parity, Streamlit and real loopback HTTP transport regressions
+- [x] Document launch/configuration/security and preserve local/mounted behavior
+- [ ] Operator validates dashboard against the actual Garage dataset
+
+## Canary separation and lazy multipage validation (2026-10-25)
+
+User refined scope to non-interfering recurring canaries, not all dev-time tests,
+and requested real Streamlit Overview/Canary/Dev-time pages. Same-branch scope;
+collector/uploader, sibling source, SDK/DuckDB and experimental defaults unchanged.
+
+- [x] Define canary contract and expand independent runner to five manifest families
+- [x] Reuse process/file/named/native/endpoint generators without invoking validators
+- [x] Per-PID Stop checks, bounded eight-file expectations and explicit unsupported skips
+- [x] Streamlit `st.Page`/`st.navigation` pages and legacy stimulus-only classification
+- [x] Manifest-only overview; select host/family/run before explicit telemetry validation
+- [x] Single selected-run in-memory working set, fail-closed row/memory budgets, no spill
+- [x] Preserve conflict/hash, missing/stimulus-only triage and hidden-run overlap warnings
+- [x] Mocked runner/adapter, query parity/budget, real navigation and S3 transport tests
+- [x] Update canonical documentation and record limitations
+- [ ] Expanded one-round Linux canary pilot and Garage page/validation operator check
+- [ ] Optional native timestamp pushdown, safe partition pruning and memory-only result reuse
+
+## All-round validation, HOST context and saved results (2026-10-25)
+
+- [x] Validate all recorded canary families/cases through one explicit round action
+- [x] Explicit/new and shared-directory/older round membership, missing-family inventory
+- [x] One bounded shared observation scan and preserved red/skip/overlap semantics
+- [x] Passive complete HOST startup context, temporal/race/conflict/unknown handling
+- [x] Optional unique inferred short/FQDN correlation, collision rejection
+- [x] Summary-only S3/local persistence, verified writes, fingerprints and stale warnings
+- [x] Local/query/store/Streamlit tests, no eager telemetry or raw-data mutations
+- [x] Agent live Garage all-round observation validation; sanitized results recorded
+- [ ] Operator verifies new one-click UI and repeated-run experience
+
+All-canary observations are not full dev-time harness re-validation or release
+certification. Native clone remains skipped; TCP Accept/UDP Receive remain missing,
+not explained by disabled Network startup. No sensor-side changes in this slice.
+
+## Quality follow-up (authorized 2026-10-25)
+
+- [x] Convert adversarial per-path/lifecycle/endpoint fixtures into committed regressions
+- [x] Per-path activity matrix and required Start/Stop identity linkage/presence
+- [x] Source-aware repeated-Start counts, preserve raw Clone/Exec observations
+- [x] Retain wrong-protocol/directed-port candidates and check attributable extra rows
+- [x] Keep incomplete/shared-PID attribution yellow and existing red findings red
+- [x] Include quality warnings/counts in individual UI and persisted all-round summaries
+- [x] VM isolated pinned Python environment and full suite including synthetic HTTP/S3
+- [x] Sensor corrections and bounded VM actual-object/managed qualification (Wintap-owned)
+- [x] Distinct UDP mode/socket and rename-aware per-path contracts; VM pilot delivers five families
+- [ ] Operator package review and collection-host pilot; never unattended field rollout

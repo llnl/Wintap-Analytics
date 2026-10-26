@@ -9,7 +9,7 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/FileOpsSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-25
 repo_scope: wintap
 implementation_area: analytics
 event_domain: cross-domain
@@ -43,13 +43,21 @@ of their lifecycle; the manifest and evidence remain for analysis.
 | Process | Named `wt_fork`, `wt_forkexec`, `wt_spawn`, `wt_threads` and child/image names | Start/Stop; fork-only requires Clone; threads must not appear as process Starts. posix_spawn implementation is libc-dependent |
 | Native optional | One round of fork/exec, worker-thread fork, pthread, legacy clone process/thread, clone3 process/thread, explicit vfork+exec | Pass compiled clone helper; missing helper is SKIP, unavailable clone3 records errno. vfork child only calls exec/_exit before image replacement |
 | File | `wt_file`: create/open/write/read/file-backed mmap/close/delete; dirfd relative openat/unlinkat; rename/truncate extras | Linux normalized Open/Read/Write/Close/Delete; mmap becomes Read, rename/truncate have no dedicated FileOps activity |
-| Network | Separate `wt_tcp4srv/cli`, `wt_udp4srv/cli`; TCP connect/accept/send/recv/disconnect; connected and unconnected UDP send/recv | Seven current TCP/UDP activities; socket endpoint tuple and manifest PID identify both sides. `--ipv6` is extra stimulus, not certified Linux capture |
+| Network | Separate `wt_tcp4srv/cli`, unconnected `wt_udp4srv/cli`, connected-client `wt_udp4cnsrv/cli`; TCP connect/accept/send/recv/disconnect | Independent UDP mode worker/socket/PID cases prevent one connected Receive satisfying unconnected coverage. Server receives still use peer-buffer recvfrom. `--ipv6` is extra stimulus, not certified Linux capture |
 
 Linux comm is limited to 15 bytes. Names alone are **not** an authoritative key:
 fork birth inherits parent comm; `/proc` resolver can normalize Python aliases;
 exec-entry and image-replacement observations can disagree transiently. Manifest
 PID/TID, UTC interval, case command line, file paths and socket ports are selectors.
 Thread rows explicitly mark `expectedProcessStart: false`.
+Current portable manifests add explicit per-path activity expectations (rename paths
+need not each perform every operation) and IPv4 TCP/UDP host-relative socket expectations.
+Eight-file canary separately records all eight expected paths. These are stimulus facts,
+not raw-data mutation or inferred missing endpoint fields.
+The named file worker also creates coexisting `CaseOnly.bin`/`caseonly.bin`, each
+with Open/Write/Read/Close/Delete expectations, and a learned-cwd relative Delete.
+The cwd change is isolated to that worker and restored before exit. These names
+exercise exact production path/key projection, complementing unit-test case pairs.
 <!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py §emit, worker, main; ../wintap/devtools/clone_lifecycle_workload.c §record -->
 
 ## Native helper

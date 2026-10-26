@@ -5,6 +5,8 @@ confidence: high
 grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/task_start_boottime.h
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/exit_tracer.bpf.c
   - ../wintap/wintap/core/infrastructure/ProcessResolver.cs
   - ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs
   - ../wintap/wintap/platform/windows/sensor/etw/helpers/ProcessTraceDataExtensions.cs
@@ -14,8 +16,11 @@ grounded_by:
   - ../wintap/wintap/core/etl/esper/process.epl
   - ../wintap/wintap/core/etl/esper/process-stop.epl
   - ../wintap/shared/WintapAPI/WintapMessage.cs
+  - ../wintap/wintap/core/etl/extract/ProcessSerializer.cs
+  - ../wintap/wintap/core/etl/model/ProcessObjectModel.cs
+  - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-26
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: process
@@ -26,6 +31,13 @@ tags: [process-events, telemetry-semantics, wintap-api, etw]
 ---
 
 # Process Events
+
+Foundational identity reference: [[wiki/concept/telemetry-identity-and-endpoint-orientation]]
+distinguishes `pid_hash` from reusable OS PID, collector `agent_id`, and network
+`conn_id`. The clarified contract excludes agent UUID from process identity and
+requires one formula definition: [[wiki/decision/process-hash-inputs-and-single-definition]].
+The `pid-v2` source patch implements this; installed packages and historical
+recordings remain unmigrated. Verification: [[wiki/work/host-process-identity-patch/verification]].
 
 ## Linux clone/exec boundary (validated 2026-10-22)
 
@@ -43,13 +55,23 @@ tracepoint-only fallback captures best-effort clone/clone3 flags; absent auxilia
 hooks remain a thread-as-process risk. This does not alter Windows producers.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §BpfObjectFileName; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c §trace_process_fork -->
 
+The Clone and Exit CO-RE objects share a start-boottime reader that probes
+`task_struct.start_boottime`, then the RHEL 8 BTF spelling
+`task_struct.real_start_time`; it returns zero if neither field exists. This
+keeps the optional field check compilable when the build host's generated
+`vmlinux.h` contains only one spelling. On RHEL 8.10 x86_64, both CO-RE objects
+and a self-contained RPM built successfully; this was a compile/package test,
+not a BPF load/attach or live-capture qualification.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/tracers/task_start_boottime.h; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c §trace_process_fork; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/exit_tracer.bpf.c §trace_process_exit -->
+
 Fork and exec are separate Start observations, not necessarily separate identities:
 the Ubuntu arm64 workload produced fork + exec-entry + sched-exec rows sharing
 one PidHash. Clone birth metadata is provisional; `PROC_START_SRC=sched_fork`
 prevents a late clone upsert from overwriting an existing resolver identity or
 reviving its cache after Stop. Raw rows are not suppressed. Count identities rather
-than Start rows for process counts; standard ETL does not persist this Arguments
-breadcrumb. Validation scope and remaining risks:
+than Start rows for process counts. Normal ETL now persists the bounded producer
+breadcrumb as nullable `ProcessStartSource`, rather than copying Arguments or
+decorating CommandLine. Validation scope and remaining risks:
 [[wiki/work/improve-lintap-data-quality/clone-validation-results]].
 <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/ProcessResolver.cs §UpsertProcessStart; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent -->
 
@@ -65,7 +87,7 @@ As of the improve-windows-process-collection feature (wintap `develop-dave`, com
 Real-time lifecycle comes from classic NT Kernel Logger ProcessStart/ProcessStop events on the shared kernel session (`Keywords.Process`), with `WindowsProcessSensor` started first by `WindowsSubscriptionManager` because non-process attribution depends on it.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/infrastructure/WindowsSubscriptionManager.cs §Start -->
 
-The **ETW ProcessStart timestamp is canonical** for live Start create time and therefore for `PidHash` — no per-Start `OpenProcess`/`GetProcessTimes` handle lookup (Architect decision 2026-08-17; ETW has been Wintap's process-start ground truth for over a decade). Stops resolve identity through `ProcessResolver` (the sole hot-path identity store — no sensor-owned PID map); resolver misses are counted and fall back to hash-from-stop-time.
+The **ETW ProcessStart timestamp is canonical** for live Start create time and therefore for `PidHash` — no per-Start `OpenProcess`/`GetProcessTimes` handle lookup (Architect decision 2026-08-17; ETW has been Wintap's process-start ground truth for over a decade). Stops resolve identity through `ProcessResolver` (the sole hot-path identity store — no sensor-owned PID map); resolver misses are counted. The `pid-v2` patch replaces the earlier hash-from-stop-time fallback with the explicit unknown identity: Stop time is not process-start time.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §EmitStart; §EmitStop -->
 
 ### Refresh — live snapshot with dedup
@@ -110,6 +132,16 @@ The sensor logs QA counters at interval and shutdown: `sid_extracted/null/malfor
 Unchanged by the overhaul. The process ETL query selects `Process` messages whose activity is `Start` or `Refresh`; a separate stop query selects stop activity. Stops now carry `PidHash` consistent with Starts (the old Security-log path had stop handling commented out entirely).
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/process.epl §query -->
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/process-stop.epl §query -->
+
+Approved greenfield projection (2026-10-25): Start/Refresh parquet adds nullable
+string `ProcessStartSource`. `ApplyStartProvenance` reads whitespace-delimited
+`PROC_START_SRC=` tokens from producer `Process.Arguments` and accepts only one
+distinct recognized value: `sched_fork`, `sched_exec`, or `execve_or_execveat`.
+Missing, conflicting or unknown values stay null. This is acquisition/image
+provenance, not a distinct-birth or successful-exec guarantee; process hashes,
+timestamps, CommandLine and Stop projection are unchanged. Older parquet without
+the column remains unknown unless an actual Arguments breadcrumb is present.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §ApplyStartProvenance, handleStartEvent; ../wintap/wintap/core/etl/model/ProcessObjectModel.cs §ProcessStartSource; ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs -->
 
 ## Analysis Implications
 

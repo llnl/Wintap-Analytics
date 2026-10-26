@@ -5,6 +5,8 @@ confidence: high
 grounded_by:
   - ../wintap/README.md
   - ../wintap/documentation/wintap-developer-guide.md
+  - ../wintap/BUILD_AND_TEST.md
+  - ../wintap/shared/ai/wintap_mcp_server/wintap_mcp_server.csproj
 policy: agent-editable
 last_validated: 2026-06-29
 repo_scope: wintap
@@ -31,6 +33,17 @@ Wintap is organized around four layers: platform-specific collectors and sensors
 
 Important runtime components called out by the developer guide are `SubscriptionManager`, `EventChannel`, `ProcessResolver`, `WintapSvcCore`, and serializer classes under `core/etl/extract` and `core/etl/load`.
 <!-- GROUND_TRUTH: ../wintap/documentation/wintap-developer-guide.md §Architecture Overview -->
+
+## Standalone MCP restore targets (validated 2026-10-26)
+
+The standalone MCP helper declares a shared lock graph for Windows x64, Linux
+x64/arm64, and the macOS arm64 ReadyToRun cross-build host. Use
+`dotnet restore shared/ai/wintap_mcp_server/wintap_mcp_server.csproj --locked-mode -p:RuntimeIdentifier=<rid>`
+to select a target while preserving the declared RID list. `dotnet restore -r`
+overrides that list and can fail locked restore. This is build configuration,
+not a claim of macOS collector or native package acceptance.
+<!-- GROUND_TRUTH: ../wintap/shared/ai/wintap_mcp_server/wintap_mcp_server.csproj §RuntimeIdentifiers -->
+<!-- GROUND_TRUTH: ../wintap/BUILD_AND_TEST.md §Recommended Commands -->
 
 ## Wiki Role
 

@@ -1,0 +1,5 @@
+# Local audit outputs are preserved in the external closeout archive.
+# Commit meaningful findings and evidence provenance, not per-row receipts.
+*.json
+__pycache__/
+*.pyc

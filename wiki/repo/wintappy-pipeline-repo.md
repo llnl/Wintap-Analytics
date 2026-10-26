@@ -9,6 +9,11 @@ grounded_by:
   - ../Wintappy/wintap_dbt/macros/paths.sql
   - ../Wintappy/wintap_dbt/macros/raw_sources.sql
   - ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
+  - ../Wintappy/wintap_dbt/models/gold/process_file_summary.sql
+  - ../Wintappy/wintap_dbt/models/gold/process_net_summary.sql
+  - ../Wintappy/wintap_dbt/models/gold/process_summary.sql
+  - ../Wintappy/wintap_dbt/models/schema.yml
+  - ../Wintappy/wintap_dbt/macros/time.sql
   - ../Wintappy/review-notes/Architecture.md
   - ../Wintappy/review-notes/DataModel.md
   - ../Wintappy/review-notes/ProjectSummary.md
@@ -16,7 +21,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-10-19
+last_validated: 2026-10-24
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -37,6 +42,17 @@ Its README carries the same LLNL release identifier, `LLNL-CODE-837816`, that ap
 
 ## Canonical Architecture
 
+### DuckDB maintenance baseline (2026-10-24)
+
+The canonical Python dependency is pinned to DuckDB **1.5.6**; the current
+adapter/core tuple remains **dbt-duckdb1.9.6 / dbt-core1.12.2**. The local uv lock
+remains intentionally ignored by repo policy; the tracked manifest carries the
+engine pin. A fresh full DBT build on retained revision7 AXON drain inputs passed
+40 models/42 tests plus its startup hook, retaining collector birth and metadata.
+This is dependency validation, not repair of existing data-quality defects or
+rollout to installed collectors. See [[wiki/work/duckdb-1-5-maintenance/verification]].
+<!-- GROUND_TRUTH: ../Wintappy/pyproject.toml; ../Wintappy/.gitignore; ../Wintappy/uv.lock; wiki/work/duckdb-1-5-maintenance/validation_receipt.json -->
+
 DBT is now the primary canonical ETL path. The intended flow is sensor `raw_sensor` parquet into `Wintap-PyUtil/wintap_dbt`, into a DuckDB analysis database, into notebooks/SQL/future parquet export. `raw_sensor` is the only canonical post-processing input; the older flat `merged` directory stage is deprecated and removed from the normal pipeline.
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/Architecture.md §Current architectural stance -->
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/ProjectSummary.md §Key decisions -->
@@ -45,6 +61,19 @@ Component boundaries are explicit in the repo's own review notes: the `wintap` r
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/Architecture.md §Major component boundaries -->
 
 ## DBT Model Layers
+
+### Integer timestamp precision (2026-10-24 candidate)
+
+FILETIME timestamp/minute macros now use integer epoch subtraction/floor division,
+preserving UTC TIMESTAMPTZ output without floating tick loss. Generic integer text
+parsing rejects malformed/decimal/scientific/out-of-BIGINT text;raw100ns values and
+identity inputs are untouched. Exact raw round-trip requires microsecond-representable
+inputs.12fresh full builds recover all12collector births;2,900process lifetimes pass
+raw-integer checks. Floating convenience fields/older builder paths remain approximate.
+Unordered silver metadata,OS labels and sensor conservation gaps are not fixed here.
+<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/macros/time.sql; ../Wintappy/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintappy/tests/test_filetime_precision_sql.py -->
+Contract:[[wiki/concept/filetime-derived-timestamp-precision]];
+proof:[[wiki/work/host-process-identity-patch/timestamp_and_trace_results]].
 
 DBT bronze models own raw-source schema compatibility: they scan `raw_sensor` parquet partitioned by `dayPK`/`hourPK`(/`protoPK` for network), tolerate optional or missing raw sources, and normalize source drift such as synthesizing missing `ProcessArgs` from `CommandLine`.
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/DataModel.md §DBT bronze models -->
@@ -60,6 +89,22 @@ DBT silver models are the normalized, process-centric detail objects: `host`, `h
 DBT gold models are analyst-facing summaries: `process_registry_summary`, `process_file_summary`, `process_net_summary`, `process_image_load_summary`, `process_summary`, and `process_uber_summary`. Optional enrichment inputs feeding `process_uber_summary` — labels/networkx, LOLBAS, MITRE, and Sigma — are currently typed empty DBT stubs, not real wired inputs.
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/Architecture.md §Gold -->
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/OpenQuestions.md §In progress / high priority -->
+
+### Gold lifetime aggregation correction (2026-10-23 candidate)
+
+Current source groups file/network lifetime summaries only by `pid_hash`, not
+mutable process name or agent UUID. Latest observed name/agent is selected with
+`arg_max` and a lexical tie-break; this is summary display metadata, not a complete
+exec/image timeline. Host display uses `min`; conflicting metadata needs separate QA.
+File counters accept case-normalized spelling and include `Open_Events`.
+`process_summary` computes full elapsed seconds with `epoch(interval)`, and both
+process gold summary models now test lifetime-key uniqueness.
+<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/models/gold/process_file_summary.sql; ../Wintappy/wintap_dbt/models/gold/process_net_summary.sql; ../Wintappy/wintap_dbt/models/gold/process_summary.sql; ../Wintappy/wintap_dbt/models/schema.yml -->
+
+Regression fixtures and read-only real-sample projections validate these SQL changes;
+the original materialized database is unchanged. These corrections neither recover
+historical orphan identities nor repair producer receive-byte measurements or OS labels.
+<!-- GROUND_TRUTH: ../Wintappy/tests/test_process_gold_quality_sql.py; wiki/work/wintap-telemetry-identity-and-data-quality/evidence.md §historical QA/counters archive members -->
 
 ## pidstat Bronze Input (promoted 2026-08-17, patched 2026-08-20)
 

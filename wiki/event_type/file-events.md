@@ -6,8 +6,13 @@ grounded_by:
   - ../wintap/wintap/platform/windows/sensor/etw/FileSensor.cs
   - ../wintap/wintap/core/etl/esper/file.epl
   - ../wintap/shared/WintapAPI/WintapMessage.cs
+  - ../wintap/wintap/core/etl/extract/FileSerializer.cs
+  - ../wintap/wintap/core/etl/transform/IdGenerator.cs
+  - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/DirIdentityIndex.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c
 policy: agent-editable
-last_validated: 2026-06-29
+last_validated: 2026-10-25
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: file
@@ -35,10 +40,33 @@ The sensor suppresses `.etl` paths and events from Wintap's own PID to avoid fee
 
 ## ETL Boundary
 
+Linux CO-RE unlink/unlinkat Delete records represent **syscall-entry intent**. For
+relative paths, the producer captures the base directory's namespace/device/inode
+at entry, preserving unlinkat dirfd and unlink's AT_FDCWD meaning. Managed Delete
+resolution joins only a learned directory identity; it never guesses using a later
+PID/fd/cwd. This supports short-lived workers and closed/reused dirfds. Missing or
+evicted identities, fallback-tier zero identities and parent (`..`) traversal remain
+relative/unresolved. Learned-index directory renames, inode reuse and aliases still
+limit attribution; absolute output is not an inode/canonical-path proof. Consumers
+must keep exact-path gaps visible and must not infer successful deletion from intent.
+The Ubuntu normal-ETL pilot observes exact relative/cwd Deletes and case-only paths
+with distinct sensor keys; Wintappy's separate lowercased file_id remains unchanged.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c §emit_file_event_user, t_unlinkat, t_unlink; ../wintap/wintap/platform/linux/sensor/ebpf/DirIdentityIndex.cs §ResolveUnlinkPath -->
+
 The file ETL query groups file messages in a 10-second time batch by file path, `PidHash`, PID, activity type, and process name. It emits bytes requested, first/last seen times, event count, message type, and `AgentId`.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/file.epl §query -->
 
 ## Analysis Implications
+
+Approved greenfield projection (2026-10-25): FileSerializer preserves producer
+path text rather than lowercasing non-Windows paths. Linux case-only paths remain
+distinct in persisted `File_Path` and sensor file-key inputs; Windows producer
+normalization and serializer pass-through are unchanged. No raw datasets are
+rewritten. Wintappy's separate lowercase-derived `file_id` still can collapse
+case-only Linux names; do not confuse that downstream ID with the sensor key.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/FileSerializer.cs §SelectPath; ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenAttrKeyForFile; ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs; ../Wintappy/wintap_dbt/models/silver/process_file.sql -->
+Decision and remaining downstream boundary:
+[[wiki/tension/linux-file-path-case-projection]].
 
 Downstream file rows are aggregate activity records rather than one row per raw ETW callback. Analysts should treat byte counts and event counts as 10-second grouped observations tied to process attribution added by `EventChannel`.
 <!-- SYNTHESIS: inferred from ../wintap/wintap/platform/windows/sensor/etw/FileSensor.cs and ../wintap/wintap/core/etl/esper/file.epl -->

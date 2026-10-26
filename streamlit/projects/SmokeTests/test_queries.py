@@ -5,7 +5,7 @@ import tempfile
 import unittest
 
 import duckdb
-from queries import coverage, load_manifests, prepare_data, selector_query, timestamp
+from queries import coverage, evaluate_case, load_manifests, prepare_data, selector_query, timestamp
 
 
 class SmokeQueryTests(unittest.TestCase):
@@ -107,6 +107,44 @@ class SmokeQueryTests(unittest.TestCase):
         self.parquet("file.parquet", "SELECT 'VM-A' Hostname, 42 PID, 1792670401 EventTime, '/vm/it''s.bin' File_Path, 'Open' ActivityType")
         prepare_data(self.con, self.root)
         self.assertEqual(len(self.query(dict(domain="file", pids=[42], paths=["/vm/it's.bin"]))), 1)
+
+    def endpoint_fixture(self, reversed_receive=False, provenance=True):
+        # One PID owns both ends on the same non-loopback IP; only directed ports
+        # can expose receive rows swapped between the socket roles.
+        self.parquet("endpoints.parquet", f"""SELECT 'VM-A' Hostname, 'TCP' Protocol,
+          42 PID, 'one-process' PidHash, 134371440010000000 FirstSeenMs,
+          3232300072::bigint LocalIpAddr, 3232300072::bigint RemoteIpAddr,
+          case when activity='TcpIpRecv' and {str(reversed_receive).lower()} then dest else src end LocalPort,
+          case when activity='TcpIpRecv' and {str(reversed_receive).lower()} then src else dest end RemotePort,
+          activity IpEvent,
+          {"case when activity='TcpIpRecv' then dest else src end" if provenance else "NULL::INTEGER"} SourcePort,
+          {"case when activity='TcpIpRecv' then src else dest end" if provenance else "NULL::INTEGER"} DestinationPort
+          FROM (VALUES ('TcpIpSend', 41000, 51000), ('TcpIpRecv', 41000, 51000),
+                       ('TcpIpSend', 51000, 41000), ('TcpIpRecv', 51000, 41000)) t(activity,src,dest)
+        """)
+        prepare_data(self.con, self.root)
+        return dict(domain="network", case="same-process", pids=[42], ports=[41000,51000], endpointExpectations=[
+            dict(role="server", pid=42, localIp="192.168.252.40", remoteIp="192.168.252.40", localPort=41000, remotePort=51000),
+            dict(role="client", pid=42, localIp="192.168.252.40", remoteIp="192.168.252.40", localPort=51000, remotePort=41000)])
+
+    def test_same_pid_both_socket_roles_confirmed(self):
+        selector = self.endpoint_fixture()
+        result = evaluate_case(self.con, self.run, selector, True, padding=0)
+        self.assertFalse(result["error"])
+        self.assertFalse(result["violations"])
+        self.assertTrue(all(check["observed"] for check in result["checks"]))
+
+    def test_same_pid_receive_reversal_is_red_violation(self):
+        selector = self.endpoint_fixture(reversed_receive=True)
+        result = evaluate_case(self.con, self.run, selector, True, padding=0)
+        self.assertFalse(result["error"])
+        self.assertEqual(2, len(result["violations"]))
+
+    def test_missing_port_provenance_cannot_confirm_endpoints(self):
+        selector = self.endpoint_fixture(provenance=False)
+        result = evaluate_case(self.con, self.run, selector, True, padding=0)
+        self.assertFalse(result["error"])
+        self.assertTrue(any(not check["observed"] for check in result["checks"]))
 
 
 if __name__ == "__main__":

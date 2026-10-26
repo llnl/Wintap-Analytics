@@ -6,8 +6,14 @@ grounded_by:
   - ../Lintap/README.md
   - ../Lintap/teletap/README.md
   - ../Lintap/packaging/README.md
+  - ../Lintap/Multipass.md
+  - ../Lintap/multipass-lintap.sh
+  - ../Lintap/multipass-lintap.ps1
+  - ../Lintap/multipass-check-dev.sh
+  - ../wintap/global.json
+  - ../wintap/wintap/platform/linux/sensor/ebpf/helpers/LibBpf.cs
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-26
 repo_scope: Lintap
 implementation_area: packaging
 event_domain: cross-domain
@@ -27,8 +33,12 @@ This wiki treats Lintap as supporting infrastructure, not the main Wintap sensor
 
 ## Two Linux Paths
 
-The current TeleTap-oriented workflow requires Linux root access, eBPF tools, .NET 8, Python, DuckDB, and both Wintap and Lintap repos. Build commands run from the Wintap repo and build/run `Lintap.csproj`.
-<!-- GROUND_TRUTH: ../Lintap/teletap/README.md §Prerequisites; §Build Commands -->
+The TeleTap-oriented workflow uses Linux eBPF tools, Python, DuckDB, and both Wintap
+and Lintap repos; runtime sensor attachment requires appropriate privileges.
+Current package qualification selects .NET 10 SDK **10.0.402** from Wintap's
+`global.json`. TeleTap and both Multipass provisioning implementations now select
+this baseline and .NET 10 paths. Build commands build/run Wintap's `Lintap.csproj`.
+<!-- GROUND_TRUTH: ../Lintap/packaging/README.md §Build prerequisites; ../wintap/global.json; ../Lintap/teletap/README.md §Build Commands -->
 
 TeleTap output is expected to include canonical raw sensor Parquet under `raw_sensor/<event>/dayPK=YYYYMMDD/hourPK=HH/` and raw process connection increments partitioned by protocol. The old merged-to-raw conversion step is explicitly removed, and the canonical full ETL is stated to live in `Wintap-PyUtil/wintap_dbt`, not in the TeleTap directory. `Wintap-PyUtil` is the `../Wintappy` repo; see [[wiki/repo/wintappy-pipeline-repo]] for its bronze/silver/gold DBT pipeline.
 <!-- GROUND_TRUTH: ../Lintap/teletap/README.md §Data output; §Full ETL with DBT -->
@@ -67,6 +77,28 @@ a native `x86_64` host with readable BTF; older successful-cross-build notes are
 historical evidence, not validation of the current script.
 <!-- GROUND_TRUTH: ../Lintap/packaging/lintap-rpm/build-rpm.sh §eBPF build; §expected_bpf_objects -->
 
+The canonical guide now includes **operator-assisted RHEL 9 x86_64 qualification**:
+read-only inventory, approved repository/prerequisite setup, exact SDK selection,
+fresh self-contained `.el9` build, package/native dependency inspection, then
+separately approved installation/capture/downstream checks. RHEL 9 validation is
+pending; a release suffix or Ubuntu pass is not acceptance. Keep security controls,
+existing collectors and historical identity/data intact unless the user explicitly
+designates a disposable test system. Both framework-dependent builders now declare
+ASP.NET Core 10.0; both enforce SDK 10.0.402 from the selected project directory
+before cleanup/compilation and validate the main staged .NET 10 runtimeconfig.
+These correct upgrade oversights; source/regression alignment does not certify a
+fresh installed package:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/runtime_alignment_plan]]
+records diagnostics/sample and provisioning/run corrections plus pending live gates.
+<!-- GROUND_TRUTH: ../Lintap/packaging/README.md §RHEL 9 prerequisites and operator-assisted qualification; ../Lintap/packaging/lintap-rpm/build-rpm.sh §DOTNET_REQUIRES; ../Lintap/packaging/lintap-deb/build-deb.sh §DOTNET_DEPENDS -->
+<!-- GROUND_TRUTH: ../Lintap/packaging/dotnet-common.sh; ../Lintap/tests/test_dotnet_packaging.py -->
+
+The managed libbpf resolver tries `.so.1`, `.so.0`, then `.so`; qualify required APIs
+and actual hook behavior, not package-name or library-load success alone. Do not
+fake compatibility with a SONAME symlink. SDK `latestPatch` is a development
+roll-forward policy; qualification's explicit `10.0.402` check prevents silent drift.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/LibBpf.cs §ResolveLibbpf; ../wintap/global.json; ../Lintap/packaging/README.md §Install/select the pinned SDK -->
+
 The Debian environment follows the field sensor settings while deliberately
 retaining Snappy Parquet compression because current Ubuntu glibc supports the
 bundled compression library. The RHEL 8 RPM environment retains its separate
@@ -87,6 +119,27 @@ and RPM `0.3.5-12.el8` for x86_64. They are independently versioned package
 artifacts and should be identified by their package-manager versions when
 deployed.
 <!-- GROUND_TRUTH: wiki/work/debian-package-refresh/release-README.md -->
+
+## Multipass development dependencies
+
+Lintap owns the Bash/PowerShell Multipass provisioning entry points; the sensor
+build uses the mounted Wintap checkout and Analytics owns the validation harness.
+Both launchers install SDK **10.0.402** in guest-native `/opt/wintap-sdk`, including
+.NET/ASP.NET Core 10, and DuckDB CLI/Python **1.5.6**. Ubuntu supplies Clang/LLVM,
+libbpf/libelf development packages and running-kernel tools. The shared guest
+check requires exact SDK selection, both shared runtimes, actual BPF compilation,
+kernel BTF parsing and matching DuckDB versions. Cloud-init failures are fatal by
+default. Branch checkout remains opt-in; the example target is `develop`.
+<!-- GROUND_TRUTH: ../Lintap/multipass-lintap.sh §runcmd; ../Lintap/multipass-lintap.ps1 §cloudInit; ../Lintap/multipass-check-dev.sh -->
+
+Python environments and managed build outputs/intermediates use guest-native
+storage to avoid reusing host environments or executing on shared mounts.
+`BUILD_WINTAP=true` invokes tracer and managed builds; `RUN_VALIDATION_MOCKS=true`
+uses a separate guest-local validation environment. Commands and output locations
+are documented in `../Lintap/Multipass.md`. Fresh Ubuntu arm64 provisioning,
+12-object tracer rebuild and managed compilation passed on 2026-10-26; details
+are in [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]].
+<!-- GROUND_TRUTH: ../Lintap/Multipass.md §Useful commands inside the VM; ../Lintap/multipass-lintap.sh §BUILD_WINTAP -->
 
 ## Wiki Boundary
 

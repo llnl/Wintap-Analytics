@@ -7,8 +7,14 @@ grounded_by:
   - streamlit/projects/SmokeTests/test_app.py
   - ../wintap/devtools/test_smoke_manifest.py
   - ../wintap/devtools/test_telemetry_smoke_workload.py
+  - streamlit/projects/SmokeTests/test_s3_source.py
+  - streamlit/projects/SmokeTests/test_s3_http.py
+  - streamlit/projects/SmokeTests/test_pages.py
+  - validation/telemetry-soak/test_canaries.py
+  - validation/telemetry-soak/test_runner.py
+  - streamlit/projects/SmokeTests/test_analysis.py
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-25
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -19,6 +25,147 @@ tags: [streamlit, smoke-tests, verification, cross-host]
 ---
 
 # Verification: smoke-test results dashboard
+
+## Quality follow-up — 2026-10-25
+
+User authorized recommended-order implementation and local disposable-VM iteration.
+First strengthened Analytics only: per-path activity completeness, non-placeholder
+lifecycle identities, Start/Stop linkage, source-aware repeated-Start counts, and
+all-attributable endpoint/protocol checks. Thirteen synthetic adversarial tests were
+added; one prior exact-missing-check assertion now includes the new linkage check.
+No canonical-hash recomputation, exact birth counts or loss-equivalence claim.
+
+On the idle Ubuntu arm64 qualification VM, a new isolated environment preserves the
+pre-existing SDK/Python environments. DuckDB 1.5.6, Streamlit 1.66.1 and boto3
+1.43.118 installed; source snapshot excludes local private configuration/evidence.
+`SMOKE_S3_HTTP_TEST=1 <isolated-python> -B -m unittest discover -s
+streamlit/projects/SmokeTests -p 'test*.py'`: **88 tests passed, zero skips/failures**.
+The first Mac run exposed one stale expected-missing-list assertion; corrected
+without weakening the new check. VM HTTP/S3 test uses synthetic credentials/data
+only and normal DuckDB extension validation. No actual Garage writes or field-host
+changes in this slice; unchanged cached summaries become stale via code fingerprint.
+
+Further iteration adds per-path activity maps for rename workflows and protocol-
+specific IPv4 UDP socket checks; missing host-relative values remain incomplete
+rather than contradicting a complete tuple. The eight-file stimulus now includes
+all expected paths and named UDP modes use independent workers/sockets, with exact
+ground-truth endpoint selectors. Tests cover both distinctions; final suite rerun
+and normal-ETL VM qualification recorded below when complete.
+
+Final isolated Ubuntu arm64 VM rerun: **93 dashboard tests pass, zero skips**
+(`SMOKE_S3_HTTP_TEST=1` includes synthetic HTTP/S3), **17 mocked runner tests pass**.
+Wintap manifest/workload/source assertion tests:12 pass; actual-object observer repeat
+on idle VM:15 checks pass. Shared managed network/receipt/identity/resolver/root
+selection:159 pass. No active collector during actual-object observer attachment.
+
+Fresh180-second normal-ETL pilot: trusted loaded tracer hash/version2 receipt,
+five generated and delivered manifest families, zero evidence/analysis errors. TCP
+Accept plus all four independent UDP cases observed; each UDP endpoint/identity check
+and both dedicated TCP endpoint scenarios have zero missing/violation findings.
+All family triage remains yellow: source breadcrumbs do not survive normal process
+projection, exact mixed-case file paths are lowercased despite complete activity
+coverage on all eight files, and TCP EOF candidates have partial tuples. No violation
+finding is replaced with PASS. Last local summary save/reload/latest integrity passes;
+raw file sizes/mtimes unchanged. No S3 writes or field-host changes.
+Details: [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]],
+[[wiki/tension/linux-file-path-case-projection]].
+
+## All-round validation, runtime comparison and persistence — 2026-10-25
+
+User requested all validations on the uploaded single-round canary, one action for
+all permutations, HOST configuration comparison and persisted results beside data.
+Analytics alone changes: shared round grouping metadata (no stimulus changes), one
+bounded shared observation table, conservative runtime context and summary-only
+S3/local storage with verified writes/checksum/fingerprints/stale warnings.
+
+**Live Garage findings (sanitized; no private input/output artifacts in this repo):**
+
+- The newest uploaded round contains all five families, with generation status passed.
+  Initial exact-hostname validation saw no rows: manifest FQDN versus telemetry/HOST
+  short name. Optional unique short/FQDN correlation restores observations but is
+  explicitly inferred, not exact identity proof; collisions are rejected.
+- Process lifecycle/short-lived case: 43 selected rows, all recorded observations
+  (including per-PID Start/Stop) present, no reported violations.
+- Eight-file case: 40 selected rows, all recorded activities/path expectations present.
+- Same-host separate-process and same-process TCP endpoints: 8 selected rows each;
+  Send/Recv, endpoint orientation/provenance and identity checks observed, no violations.
+- Cross-domain cases capture named process/file/client-network observations and
+  positive companion process evidence; thread-only selection has no process row.
+  **Server TCP Accept and UDP Receive are missing**, with no other missing recorded
+  expectations/observed violations. Native-clone families are explicitly skipped.
+- Preceding complete HOST receipt reports Execve, Clone, Exit, FileOps, Network and
+  ProcessRundown running; SELinux partial. Network startup does not explain the two
+  missing network activities. This is a startup snapshot, not continuous health or
+  proof of which collector produced an event. Producer maps those activities and
+  EPL preserves activity grouping, so no source-grounded "disabled by design" waiver
+  is justified. Root cause/loss stage remains unlocalized.
+  <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs §HandleEvent; ../wintap/wintap/core/etl/esper/tcp.epl; ../wintap/wintap/core/etl/esper/udp.epl -->
+- Final five-family analysis took approximately 57 seconds on the selected source. All
+  family triage remains yellow (stimulus-only/inferred attribution/skips/gaps), not
+  capture certification. Summary and latest pointer saved/read-verified in the same
+  Garage dataset's sibling analysis prefix. No raw telemetry/manifests modified.
+  Source/configuration/credentials/host identifiers/raw output were not saved locally
+  or committed; S3 summary is a private dataset artifact by explicit user request.
+
+**Regression commands/results:**
+
+- Qualified isolated interpreter: DuckDB 1.5.6, Streamlit 1.66.1, boto3 1.43.118.
+  `SMOKE_S3_HTTP_TEST=1 python -B -m unittest discover -s
+  streamlit/projects/SmokeTests -p 'test_*.py' -q`: **75 passed**. Includes real
+  synthetic HTTP/S3 listing/range reads, round/parity/Stop/budget/alias/collision,
+  temporal/race/restart/disabled/unknown, red preservation, hidden overlap, credential-safe
+  errors, local/S3 summary writes/read-back/checksum/caps, Git/symlink rejection and
+  actual Streamlit all-family one-scan, relaunch reuse, stale and save-retry tests.
+- `python3 -B -m unittest discover -s validation/telemetry-soak -p 'test_*.py' -q`:
+  **17 passed**, mocked orchestration/adapters (expected rejected unsafe-argument output).
+- `bash -n validation/telemetry-soak/run-smoke-soak.sh`, Python AST parse and
+  `git diff --check`: pass.
+
+No sibling source, SDK/DuckDB pins, sensor/service settings, tracer attachment or
+running generator restart changes. No PR publication. Operator new UI/multi-host/
+long-duration acceptance, native clone and unresolved network coverage remain open.
+Dashboard does not reconstruct every dev-time strict loss/count/identity assertion.
+
+## Canary and multipage extension — 2026-10-25
+
+User narrowed recurring tests to non-interfering canaries and authorized the app
+update with Overview, Canary Tests and Dev-time Tests pages. Added real Streamlit
+navigation, manifest-only overview and explicit selected-run validation. Only the
+selected run is evaluated; full-source schemas are read on validation, then exact
+selector matches are materialized once and all checks/details reuse memory. Limits
+are 100,000 matched rows / 256 MB DuckDB memory, spill disabled, fail closed. No
+native timestamp/partition pruning or cross-rerun result cache claimed. Hidden run
+intervals still participate in overlap warnings; saved failures and stimulus-only
+semantics remain conservative. Old stimulus-only manifests route to Canary Tests.
+
+Analytics runner now emits five separately named canary families via safe generator
+adapters. Process lifecycle checks require Stop per selected PID; file stimulus is
+eight paths; native helper is optional/one round with explicit skips. No collector,
+uploader, service/security setting, sibling code or running host workload changed.
+No private S3 config/profile, host identifiers or live data were persisted.
+
+Commands/results in the existing isolated temporary dependency environment:
+
+- `SMOKE_S3_HTTP_TEST=1 python -B -m unittest discover -s
+  streamlit/projects/SmokeTests -p 'test_*.py' -q`: **51 passed** (DuckDB 1.5.6).
+  AppTest switches actual Streamlit file-based pages, proves zero telemetry calls on
+  overview/navigation/selection, selected-run-only evaluation, legacy classification,
+  empty/invalid evidence handling and remote fail-closed/stimulus-only results.
+  Working-set parity/deduplication, row budgets, per-PID Stop and hidden overlaps pass.
+  Synthetic real HTTP/S3 listing/range reads retain query parity after materialization;
+  the post-materialization plan has no READ_PARQUET scan. No live Garage benchmark.
+- `python3 -B -m unittest discover -s validation/telemetry-soak -p 'test_*.py' -q`:
+  **17 passed**, mocked Linux tools/generators, including safe adapter boundaries,
+  five-family orchestration, failure continuation, private paths, skip and controls.
+- `bash -n validation/telemetry-soak/run-smoke-soak.sh`: pass.
+- `git diff --check`: pass; all dashboard/page and canary Python modules parse.
+  Final additional AppTest cases verify that exhausted working-set budgets never
+  call the evaluator, and skipped/no-selector native canaries never read telemetry.
+
+Native expanded canaries, timeout/signal behavior and real Garage page/selected-run
+validation remain operator-assisted gates. Startup receipts are not regenerated or
+passively correlated by the runner; manual dev-time capability tests remain separate.
+Live observations from the earlier read-only investigation were not filed as artifacts.
 
 ## Scope
 
@@ -101,6 +248,58 @@ Only finalized `.parquet` files are read, no writable dataset/DBT state opened.
   `/home/ubuntu/durable-smoke-runtime`. Temporary mount/data retained for viewing.
 
 ## Remaining limits
+
+### Greenfield projection follow-up — 2026-10-25
+
+User approved both Wintap projections. Analytics normalization now prefers explicit
+`ProcessStartSource`, retaining real Arguments-only fallback and no CommandLine
+inference. VM `SMOKE_S3_HTTP_TEST=1 python -B -m unittest discover -s
+streamlit/projects/SmokeTests -p 'test*.py'`: **94 passed**, zero skips. Wintap
+shared projection/path/network/receipt/identity/resolver/root selection:180passed.
+
+Fresh normal-ETL bounded VM round delivers all five families, zero evidence/analysis
+errors or violations. Eight-file paths/activities match exactly; process/clone and
+dedicated TCP endpoint families have zero missing checks. All repeated-Start groups
+are source-classified (clone3, process13, cross-domain6), never extra-birth proof.
+Cross-domain retains one expected file Delete gap and two incomplete TCP provenance
+checks. All families stay yellow. Network receipt contract2 and copied object hash
+match; summary/latest read-back/integrity/reload pass and raw size/mtime snapshot is
+unchanged. Collector/observer inactive after the bounded run; timeout124 alone is
+not service exit-status proof. Evidence remains private VM-local; no Garage writes,
+field operations or Wintappy modifications. Wintappy's derived file_id still case-folds.
+[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
+
+### Read-only Garage/S3 extension — 2026-10-25
+
+User authorized implementation/commit/push on the same feature branch; operator
+reports smoke evidence arriving in S3. Added private credential-free JSON config,
+standard AWS env/profile credentials, path-style addressing and a temporary in-memory
+DuckDB secret; connection-time extension cache selection retains signature checks.
+HTTPS verification remains enabled; explicit isolated-network HTTP warns. No object
+writes/deletes, persistent credentials, dataset sync or collector/uploader changes.
+Shared remote evidence/telemetry connection retains local query/manifest semantics.
+UTC day-pruned paginated listing and file caps fail closed; refresh relists.
+
+- Fresh isolated temporary uv environment uses DuckDB **1.5.6**, Streamlit **1.66.1**
+  and boto3 **1.43.118**; no global or Wintappy environment/lock changes.
+- `python -m unittest discover -s streamlit/projects/SmokeTests -p 'test_*.py' -v`:
+  **42 passed** before adding the opt-in real HTTP transport test. Backend fixtures
+  cover config rejection, date windows, pagination, exclusions, caps, duplicate roots,
+  read-only secret/session-token settings and credential-safe errors; AppTest covers
+  configured S3 discovery and fail-closed UI behavior. Local regressions still pass.
+- `SMOKE_S3_HTTP_TEST=1 python -m unittest discover -s
+  streamlit/projects/SmokeTests -p 'test_s3_http.py' -v`: **1 passed**. Real boto3
+  signed listing and DuckDB range reads against a synthetic loopback HTTP server
+  discover and join evidence/telemetry through explicit S3 URLs, using GET/HEAD only.
+  The initial transport test caught unsupported `CREATE TEMP SECRET` syntax;
+  corrected to `CREATE TEMPORARY SECRET` and reran successfully.
+- Live Garage credentials/TLS/authorization and actual multi-host data validation
+  remain operator pilot gates. No real host data/configuration/output persisted.
+- Final complete suite with `SMOKE_S3_HTTP_TEST=1`: **43/43 passed**. All dashboard
+  Python modules parse; `git diff --check` passes and app-local `garage.local.json`
+  is confirmed Git-ignored. Streamlit bare-mode warnings are expected in AppTest.
+
+The following general limits continue to apply:
 
 Dashboard observation indicators do not reimplement all original harness checks;
 saved results remain authoritative for those assertions. Event rows have no smoke

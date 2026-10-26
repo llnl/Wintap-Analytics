@@ -4,7 +4,7 @@ set -euo pipefail
 RUN_ID=${RUN_ID:-noisy-state-$(date +%s)}
 DATA_ROOT=${DATA_ROOT:-/tmp/lintap-${RUN_ID}}
 RUN_DIR=${RUN_DIR:-/tmp/validation-runs/${RUN_ID}}
-LINTAP_DLL=${LINTAP_DLL:-/home/ubuntu/git/wintap/wintap/bin/Debug/net8.0/Lintap.dll}
+LINTAP_DLL=${LINTAP_DLL:-/home/ubuntu/git/wintap/wintap/bin/Debug/net10.0/Lintap.dll}
 VALIDATION_DIR=${VALIDATION_DIR:-/home/ubuntu/git/Wintap-Analytics/validation/process-creation}
 UV_PROJECT_ENVIRONMENT=${UV_PROJECT_ENVIRONMENT:-/tmp/wpv-venv}
 

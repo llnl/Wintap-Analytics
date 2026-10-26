@@ -6,6 +6,7 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/shared/BaseEbpfSensor.cs
   - ../wintap/wintap/platform/linux/infrastructure/LinuxSubscriptionManager.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/task_start_boottime.h
   - ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs
@@ -16,7 +17,7 @@ grounded_by:
   - wiki/work/improve-lintap-data-quality/clone-validation-results.md
   - wiki/work/selinux-monitoring/verification.md
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-26
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -34,7 +35,9 @@ of kernel backports, privileges, installed objects, enabled sensors, attached
 hooks, and output mode. A healthy service is not proof of complete coverage.
 
 Scope: live source on the current branches, including the **2026-10-22 clone
-follow-up**, which has not received fresh packaged acceptance. Wintap owns
+follow-up** and the **2026-10-26 CO-RE start-time BTF-name compatibility fix**.
+The latter passed native RHEL 8.10 x86_64 compile/package checks but has not
+received BPF load/attach or live-capture qualification. Wintap owns
 sensors/model/ETL; Lintap owns Linux packaging/dev support; Analytics owns this
 matrix; Wintappy owns downstream DBT/DuckDB models. No defaults changed here.
 
@@ -100,7 +103,7 @@ registration/“attached N” logs alone are not conclusive evidence. See
 
 | Sensor/path or combination | What the producer observes | Resulting-data caveats |
 |---|---|---|
-| Clone CO-RE: `clone_core_tracer.bpf.o` | Raw sched-fork child pid/tgid; suppresses non-leader thread births; parent TGID | Covers fork-only children independently of later exec; `/proc` still supplies much image enrichment and start identity. Ubuntu arm64: 80 real births, zero false thread births |
+| Clone CO-RE: `clone_core_tracer.bpf.o` | Raw sched-fork child pid/tgid; suppresses non-leader thread births; parent TGID; best-effort start-boottime from `start_boottime` or RHEL 8's `real_start_time` BTF field | Covers fork-only children independently of later exec; `/proc` still supplies much image enrichment and remains an identity fallback. Ubuntu arm64: 80 real births, zero false thread births; RHEL 8 compatibility compile/package passed but was not runtime-qualified |
 | Updated Clone fallback: `clone_tracer.bpf.o`, clone + clone3 flags captured | Sched-fork child task ID, parent TGID; userspace filters `CLONE_THREAD` | Same controlled 80-process/60-thread test passes with normal hooks; flags are best-effort rather than authoritative child TGID evidence |
 | Clone fallback without usable flag hooks/reads | Sched-fork fires for processes **and threads**; absent flags become zero | Zero flags are treated as non-thread. All 60 workload threads became false process births with hooks deliberately absent; process counts/trees and resolver state can be contaminated |
 | Original pre-follow-up Clone fallback | No clone3 flag hook; parent tracepoint task ID | Baseline accepted 40 pthread/clone3 threads as processes and used worker TIDs for 20 fork parents. Do not apply new-fix guarantees to older datasets |

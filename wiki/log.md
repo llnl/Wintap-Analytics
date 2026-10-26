@@ -5,6 +5,27 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-26] code | RHEL 8 CO-RE start-time field compatibility
+
+Added shared CO-RE flavor probes for upstream `task_struct.start_boottime` and
+RHEL 8 `task_struct.real_start_time`; Clone and Exit now use the same
+best-effort start-boottime helper. On RHEL 8.10 x86_64, all tracer CO-RE
+objects compiled and a self-contained RPM built in isolated `/tmp/opencode`
+work/output directories (SHA-256
+`5737b7cefbec9d394b7648aa387ab25245b9077b8e3e00a54f778b34ecfc3943`). Also
+compiled both changed objects against a temporary upstream-style BTF header.
+No package installation, BPF load/attach, or live capture was performed.
+Updated process semantics and Linux capability documentation; pre-existing
+untracked work preserved.
+
+## [2026-10-26] docs | RHEL 8 RPM build prerequisites
+
+Added a clean RHEL 8 x86_64 prerequisite workflow: read-only host/repository/BTF
+preflight, approved DNF build dependencies, exact isolated .NET SDK 10.0.402
+selection, and source/worktree checks. Explicitly supersedes stale SDK 8
+handoff notes and clarifies that kernel-devel does not provide BTF. Linked from
+the index; no system packages installed and no source-repo files changed.
+
 ## [2026-10-22] code | Clone default TRUE and Ubuntu package acceptance
 
 User authorized Ubuntu/arm tests and separate RHEL handoff. Debian/RPM Clone
@@ -2721,3 +2742,1130 @@ empty lifecycle selectors remain valid. Added overlap, malformed-input isolation
 and Streamlit rendering regressions. All 23 dashboard/query tests pass in the
 isolated venv. Updated canonical dashboard semantics and umbrella plan/verification.
 Packaging README review is separate; unrelated local files remain untouched.
+
+## [2026-10-23] environment | .NET 10 SDK on lintap-dev
+
+For the Wintap `chore/net10-dependency-prune` upgrade, installed Ubuntu's
+`dotnet-sdk-10.0` on the existing Ubuntu 24.04 arm64 Multipass `lintap-dev`:
+`multipass exec lintap-dev -- sudo apt-get update`, then
+`multipass exec lintap-dev -- sudo apt-get install -y dotnet-sdk-10.0`.
+Verified SDK 10.0.113, runtime/ASP.NET Core 10.0.13, clean `apt-get check`, and
+a temporary Release `net10.0` console build/run (`Hello, World!`). SDK 8.0.132
+and runtimes 8.0.32 remain installed; the shared dotnet host package is now 10.
+No Lintap source/build/packaging changes or branch switches performed yet.
+
+## [2026-10-23] environment | Match pinned SDK and compile Lintap
+
+Reproduced repository build failure: `../wintap/global.json` pins SDK 10.0.402
+with `latestPatch`, rejecting Ubuntu's 10.0.113 feature band. Installed Microsoft's
+10.0.402 linux-arm64 archive (SHA-512 verified against release metadata) into
+`/opt/dotnet-10.0.402` on `lintap-dev`; `/usr/local/bin/dotnet` now points to its
+host, leaving apt-managed installations intact. Fresh shell selects 10.0.402.
+From `/home/ubuntu/git/wintap/wintap`, `dotnet build Lintap.csproj -c Release
+-r linux-arm64` passes: 179 warnings, zero errors, output
+`bin/Release/net10.0/linux-arm64/Lintap.dll`. Restore left shared WintapAPI and
+MCP server package lockfiles modified; no manual source edits or reversions.
+The earlier standalone console smoke did not validate the repository SDK pin.
+
+## [2026-10-23] verification | .NET 10 Debian package on mounted lintap-dev
+
+Installed user-supplied arm64 `lintap_0.1.0-1_arm64.deb` (bundled runtime 10.0.13),
+configured fresh mounted data root `net10-package-20261023T220407Z` under
+`/home/ubuntu/data/lintap` (Mac `/Users/johnson30/data/lintap`), native runtime,
+and 10/15-second serialization/merge. Process Stop/20-child attribution, 100-file
+five-activity/no-drop, and outbound TCP/UDP smokes PASS; named/native stimulus
+completes. Mac discovers four runs via 12 evidence parquet; Streamlit renders
+49 tables without errors, 3 green/1 yellow/4 gray. Named server TCP Accept/UDP
+Receive still absent; partial arm64 FileOps legacy hooks, unavailable SELinux,
+and unresolved disabled SignedS3UrlAdapter documented. Service left running;
+pidstat/DBT/shutdown/long-run gates not tested. Record/index updated; no source
+or packaging edits, deletions, branch switches, commits or pushes.
+
+## [2026-10-23] verification-start | .NET 10 packaged 30-minute soak
+
+User authorized 30 minutes on the existing running lintap-dev package/mounted
+dataset. Started native runner in background, five six-minute-spaced rounds of
+network, process Stop/20 children, 1,000-file/no-serializer-drop, and named/native
+clone smokes, with 30-second service/RSS/CPU sampling and baseline-relative log
+loss checks. Each test publishes dashboard evidence to the same mounted root.
+Service/configuration unchanged; no source edits. Pending completion, not PASS;
+details in wiki/work/net10-dependency-prune/verification.md.
+
+## [2026-10-23] verification | .NET 10 packaged 30-minute soak PASS
+
+Completed exactly 1800 seconds (22:31:44–23:01:44 UTC): all 20 runs exit 0;
+5,000/5,000 unique workload file paths retained across five rounds/all activities.
+PID unchanged, zero restarts/disruptions, all observed serializer drop totals zero,
+no new log errors/loss signals. RSS 507.7→532.7 MiB (range 498.7–569.9), sampled
+core-summed CPU 2.92%; diagnostic only, no long-run leak/baseline claim. Mac reads
+24 runs/72 evidence parquet with zero query errors; 15 soak validators green,
+five named workloads yellow for existing server-network gaps/stimulus-only scope.
+Service left running. Verification/index updated; DBT/pidstat/shutdown/other
+platform gates remain unrun, no source or package changes/commits/pushes.
+
+## [2026-10-23] code | Shared network endpoint normalization and name-contract regressions
+
+User authorized Wintap/Wintappy fixes plus regression guards, then added same-host
+separate-PID and single-process socket ends over a non-loopback interface. Replaced
+stale slash-name inbound matching with typed classification, preserved directed
+ports in parquet, normalized canonical/legacy SQL counters, added DBT vocabulary
+gate and literal audit (broader audit separately flags uppercase STOP comparison).
+Normal ETL network smokes now confirm endpoints by default; standalone endpoint
+manifest and independent dashboard role/provenance/hash checks added. 26 actual
+Windows-targeted .NET tests on Ubuntu, 74 SQL, 8 workload/oracle, 7 audit and 26
+dashboard tests pass. Isolated source capture (Oct 24 UTC/Oct 23 local) passes both
+corner cases and Mac is green; installed PID/restarts unchanged. Existing DB read
+only; original package not replaced, no Windows live/full-network acceptance or
+historical repair claim. New work plan/verification and network/dashboard pages
+updated. No branch switches, commits/pushes; unrelated dirty work preserved.
+
+Final focused counts after numeric/comma-name rejection and explicit-smoke-opt-out
+tests: 28 .NET, 74 SQL, 10 endpoint/workload, 7 audit, 27 dashboard; all pass.
+
+## [2026-10-23] documentation | Foundational identities and cross-host metadata findings
+
+Added high-level agent_id/pid_hash/conn_id versus endpoint-orientation concept,
+prominently linked from index and process/network pages. Full canonical tuple
+identity is directionless and not socket-lifetime identity; directed ports remain
+necessary to validate same-IP/same-PID normalization. Read-only supplied database
+confirms AXON-TARGET/CALDERA-HOST share UUID fc3e4c62-eddf-42d0-9ab4-830773b61f6f,
+also present in local initialized state (committed template empty). Copied-state
+deployment is plausible, not verified; documented persistence/clone boundary and
+future pid_hash impact of rotation. Confirmed Wintappy's four silver/legacy Windows
+labels and sensor registry-only OS-name fallback; recorded platform-derived metadata
+and cross-host regression proposals. Linked previous AgentId verification with an
+explicit scope follow-up. Source, runtime state, services and database untouched.
+
+## [2026-10-23] decision | Process hash excludes AgentId and has one formula definition
+
+User clarified intended pid_hash inputs: hostname, PID and canonical process-start
+time only, excluding agent_id, with a single calculation definition across the
+entire codebase. Recorded accepted ADR and corrected concept/process/diagnostic
+wording to distinguish intended contract from current code. Live source still
+includes AgentId and has a second ProcessHash implementation in the separate Windows
+WintapCoreSvcMgr project; multiple shared-helper callers are not duplication.
+Linked prior process-identity ADR without changing its other decisions. Formula
+consolidation, agent-independent regressions and historical/cache migration remain
+implementation work; no code, state, service or dataset changes made.
+
+## [2026-10-23] patch | Agent-independent process hash and host-bound AgentId
+
+User authorized source patch for both identity defects. Added one ProcessIdentity
+formula (hostname/PID/canonical UTC FILETIME only), source-linked Windows helper,
+regressions, explicit unknown instead of event/Stop-time hash fallbacks, and
+versioned process-store isolation preserving legacy files. AgentIdentity persists
+runtime-root UUID with host binding, reissues legacy/differently bound copied state
+once, locks/atomically writes and fails visibly; common publish uses empty template.
+148 real-project focused tests pass on Ubuntu, Linux/Windows sensor/helper builds
+pass. Two isolated live endpoint captures pass before/after restart, replace seeded
+duplicate UUID once, preserve legacy input and retain the new UUID; Mac independently
+reads two green runs and verifies six raw process vectors/zero unmatched workload
+network hashes. Installed service unchanged (PID 17138/restarts 0); affected hosts,
+original DB and history not migrated. Windows-live/package rollout/soak, fully
+identical-clone diagnostics and OS-family fix remain separate. Plan/verification,
+identity/process/diagnostic pages, accepted ADR and index updated; ADR patch-review
+marker retained for deployment details. No commits/pushes or unrelated reversions.
+
+## [2026-10-23] diagnostic | Supplied database runtime-attribution audit
+
+Read-only attached DB/in-memory snapshots, 98 recorded checks including canonical
+orphan/PK SQL and 38 schema equivalents (all zero schema failures). Found 89,325
+silver file orphan rows/80,683 hashes, 8,068 Stop-only identities, 5,507 missing
+parent entities. Exact historical preimage checks identify 80,409 unknown file
+hashes using FirstSeen and 8,042 Stops using exit EventTime; PID 16464 produces
+11,763 hashes in 0.574s. Unknown-3 confined to six older Oct 19 observations/four
+hashes; historical source ties it to failed username enrichment. Also 757 gold
+extra rows, zero gold file counters, all 7,557 basic network counters NULL, wrong
+duration rows, receive-buffer byte semantics, partial tuples/path/metadata gaps.
+Backlog/short-lived proc race is a theory, not proven loss: no logs/receipts and
+process ReceiveTime=0. Current Linux ExitSensor still has an exit-time fallback;
+added explicit acceptance gap to identity verification/plan without undoing passed
+formula/state work. Diagnostic/script/full JSON/index and related diagnostic updated.
+Database size/mtime unchanged; no source, installed service, state, or history
+modification, commits/pushes, or unrelated-work reversion.
+
+Hard contradiction flagged on the identity concept and new diagnostic: blanket
+unknown-sentinel implementation wording versus residual Linux ExitSensor exit-time
+fallback. Both set human-review-required; further semantic promotion paused pending
+review. Passed core/Windows/state tests are preserved, not treated as all-producer
+runtime acceptance.
+
+## [2026-10-23] plan | Attribution recovery and runtime short-lived classification
+
+Created proposed strategic/tactical plan under host-process-identity-patch: early
+kernel lifecycle evidence, explicit unresolved attribution, reason-split diagnostics,
+producer safeguards/SQL corrections, shadow-mode versioned role/lifetime classification,
+network measurement/path/metadata work, and packaged canary/restart/burst/soak gates.
+Short-lived confirmed at exit from authoritative birth; role provisional at fork/exec,
+missing-birth lifetime unknown. Proposes <=1s experiment with duration bins, not accepted
+semantics; preserves raw capture and bounded post-exit identity retention. Current
+retry queue/exit ABI reviewed; historical Windows name map not treated as a Linux
+runtime classifier. Implementation plan/index linked. Planning only: no code, schema,
+service, state, supplied-DB or deployment changes; existing semantic review flags held.
+
+## [2026-10-23] experiment | Short-lived attribution baseline and candidate recovery
+
+User approved multi-round experiments with real-sample comparison. Added candidate
+Exit kernel boottime/monotonic start evidence, legacy/extended ABI validation and
+explicit unknown instead of exit-time hash; bounded exit-only lifetime/weak-role
+shadow JSONL. Wintappy fixes file spelling/Open counters, file/network lifetime-only
+grouping, full elapsed duration and gold uniqueness tests. 153 focused .NET and 82
+SQL tests pass; Linux/eBPF builds pass. Actual in-memory sample SQL restores all
+728,701 file events, removes 757 extra rows from both gold summaries, fixes 195
+duration errors and 7,557 all-NULL network counters; 89,325 historical file orphans
+remain visible, original DB size/mtime unchanged.
+
+Initial six live rounds reproduce 9,741 file FirstSeen hashes and 32 exit-time hashes
+in old package with disabled births; normal old package splits one Start/Stop too.
+Candidate normal/burst/restart retain every expected path/event and canonical hash;
+210 lifetime classifications match independent proc/kernel duration evidence.
+Three longer-settling/legacy-ABI controls confirm absent kernel start yields unknown
+lifetime/identity, not fabrication; 75s settling still loses events despite zero
+reported ring/sender/serializer drops. Two opt-in post-producer-stop Esper batch-wait
+rounds restore all paths/events; first injected round exceeds harness shutdown
+deadline, retained as failed graceful-stop gate. Final same-binary barrier-off/on
+pair with 120s observation deadline is pending, not retrospectively certified.
+
+Experiment report/JSON/analysis scripts, implementation/verification/plan, diagnostics,
+identity concept, pipeline repo page and index updated. Installed service remains
+PID 17138/restarts 0. No rollout, historical repair, branch switch, commit/push or
+unrelated-work reversal. Execve/Rundown input guards, full birth/role/retention
+recovery, permanent shutdown API, network measurement/OS/path fixes and package
+release gates remain open; identity review markers preserved.
+
+## [2026-10-23] verification | Final attribution shutdown-drain A/B
+
+Completed thirteen total isolated rounds. Final same-DLL/exit-object, births-disabled
+pair uses 30s workload settling and 120s shutdown observation; both exit 0 without
+harness interruption. Barrier off retains 1,975/2,088 paths and 13,369/14,616 payload
+events; post-producer-stop 11s Esper wait retains all paths/events. Both export 42/42
+canonical Stops, exact lifetime bins and only canonical-or-explicit-unknown file
+identities. Barrier-on still has 9,984 unresolved file rows: conservation is corrected,
+missing-birth attribution is not. Earlier forced-deadline round preserved as failed.
+Source evidence supports pending batch loss missed by zero serializer-drop counters;
+experimental flag stays opt-in, permanent drain API/platform/budget acceptance pending.
+Final JSON/report/implementation/verification/index and devtools documentation updated.
+Installed service PID 17138/restarts 0 and supplied DB unchanged; no rollout/commit/
+push or unrelated-work reversal. Final focused regression remains 153 .NET/82 SQL.
+
+## [2026-10-23] experiment | Original-host installed-package acceptance
+
+User approved axon-target/caldera-host candidate installation/service/mount changes.
+Both initially had no package/running service. Fresh native-copy self-contained
+.NET 10.0.402 arm64 package installed on both; lintap-dev service unchanged.
+Initial harness failed: EnvironmentFile precedence ignored isolation assignments,
+adding new raw output to default shared data and using existing mounted runtime;
+SIGINT ended processes without graceful shutdown despite systemd Result=success.
+Evidence retained, database unchanged; runtime logs are not historical provenance.
+Corrected later EnvironmentFile/SIGTERM/effective-process-environment assertion;
+launched default/drain/burst/restart plus TCP endpoint suite in fresh native and
+per-host mounted roots. Independent results pending. Added scripts/results/checkpoint,
+index and plan approval scope. No production rollout/history repair/commits/pushes.
+
+## [2026-10-23] verification | Installed original-host workload gates and shutdown gap
+
+Corrected eight installed-package rounds pass independently on Mac: 20,880 paths,
+146,160 payload events, 840 canonical process/91,487 canonical file observations,
+420 lifetime oracles, 16 separate/same-process TCP endpoint cases; persistent
+distinct AgentIds and eight graceful stops without restarts. Original DB unchanged.
+Whole-capture inspection finds CALDERA shutdown-only cron PIDs with 119 unresolved
+file rows/242 events and two known-hash orphan rows: lifecycle stopped before
+FileOps and retry admission closed early. AXON's 15 unknown-named background rows
+retain linked identities and exec metadata transitions; not attribution failures.
+Added exact anomaly JSON and retained all evidence. Linux-only candidate stops
+dependent producers before lifecycle and flushes retries afterward; other-platform
+timing unchanged. Revision-2 native build/179 focused .NET tests pass. Revision-1
+dual monitored 30-minute package soaks and six isolated revision-2 shutdown A/B
+rounds underway; no mid-soak replacement, service change on lintap-dev, historical
+repair, production rollout, commits or pushes. Plan/verification/results/index updated.
+
+## [2026-10-23] experiment | Shutdown-order A/B exposes canonical Clone birth defect
+
+Six isolated shutdown-window rounds exit cleanly; lintap-dev installed service
+unchanged. Baseline reproduces 1,379/0/1,448 known-hash orphan rows and 755/18/906
+unresolved rows. Ordered candidate has zero orphan/unresolved rows in all three,
+but fails 33 file/six process canonical vectors in round 1: three Clone births
+use fork occurrence 10ms later than independent task birth, and Exit inherits
+that history hash. Revision 2 remains failed rather than weakening the oracle.
+Revision 3 extends Clone CO-RE 48-byte prefix to 56 with task start_boottime,
+checks ABI sizes, prefers kernel birth and uses explicit unknown for legacy
+missing-proc birth instead of fork/callback hash. New regressions and native
+build underway. Original-host revision-1 soaks remain frozen/running; historical
+DB and failed evidence preserved. Results/verification/plan updated; remaining
+Execve/Rundown and platform/drain acceptance still open.
+
+## [2026-10-23] verification | Revision-3 shutdown-order and canonical Clone birth
+
+Fresh native package build/181 focused .NET tests pass. Repeated six-round A/B
+passes all three revision-3 isolated captures: 6,216 file/1,171 process vectors
+independently canonical; zero controlled unresolved or known-hash orphan rows;
+489 controlled PIDs have captured activity after SIGTERM, verified logged stop
+order and all exits graceful. Baseline still fails all three with 16/39/28
+unresolved rows; third baseline reproduces another one-tick Clone birth mismatch.
+Variable cutoff excludes post-collection conservation claims. All failed earlier
+evidence retained and lintap-dev installed service unchanged. Original-host
+revision-1 soaks remain frozen; revision-3 self-contained/SIGTERM missing-birth
+and legacy-no-start negative controls underway. Results/verification/plan/index
+updated; no historical repair, production rollout, commits/pushes. This isolated
+regression pass does not establish general missing-birth or installed release QA.
+
+## [2026-10-23] failure | Revision-3 missing-birth backlog and remote-shell incident
+
+Missing-birth control exceeds 120s shutdown budget, escalates to SIGKILL; legacy
+negative never runs. Independent Mac analysis preserves 774/2,088 paths and
+4,398/14,616 payload events, 3,571 explicitly unresolved file rows, 42 canonical
+Stops, no fabricated timestamp hashes. Truncated sidecar/no summary explicitly
+fails a new completeness gate; raw evidence unchanged. Stop hangs at FileOps
+sender join with measured slow miss-heavy backlog, not a proven deadlock. Failed
+capture archived separately; release/attribution/conservation gates remain open.
+During later log search, Multipass shell quoting reconstructed regex as pipeline
+and accidentally invoked shutdown on lintap-dev. Cancellation failed; non-forced
+VM stop/start restores SSH and original installed service (PID 701/restarts 0).
+Service-unchanged earlier A/B claims are scoped before this incident; failed
+negative predates it. Original AXON/CALDERA soak PIDs remain 6579/12926, zero
+restarts. No files/evidence deleted. Complex remote searches now use scripts or
+local archive reads. Results/verification/plan/index updated, no rollout/history
+repair/commits/pushes. Revision 3 cannot be accepted generally from normal-birth passes.
+
+## [2026-10-23] verification | Dual installed 30-minute soaks pass; revision-3 host follow-up
+
+Independent Mac analysis passes revision-1 original-host soaks: 1,800s/host,
+83,520 paths/584,640 payload events conserved; 369,419 file/3,360 process vectors
+canonical; 1,680 lifetime/start/class checks, 20 bidirectional endpoint cases,
+375 monitor samples/host, stable distinct agents and zero restarts. Whole-capture
+204,094/207,699 file rows contain zero unresolved/known-hash orphan rows; 16/245
+unknown-named but linked rows visible. Graceful stops 30.87s/51.37s; original DB
+unchanged, remote upload and resource budgets not certified. Archives/native QA
+preserved. After completion/archival, experimental revision 3 installed on only
+AXON/CALDERA; fresh four-round default/drain/burst/restart and TCP suites underway,
+actual-service shutdown-window rounds planned afterward. Missing-birth failure
+and release/drain/recovery gates remain open; no production rollout/history repair,
+commits/pushes or evidence deletion. Results/plan/verification/index updated.
+
+## [2026-10-23] failure | Installed revision-3 conservation and endpoint gaps
+
+Eight revision-3 installed rounds complete gracefully/no restarts with 840 canonical
+process/90,568 canonical file vectors, no whole-capture unresolved/known-hash orphan
+file rows, persistent distinct agents. Five pass all gates, three fail conservation:
+AXON default loses 29 paths/444 events; CALDERA default 138/1,110; CALDERA drain-on
+316/2,553. Exact deficient path oracle records all losses in burst cohort. CALDERA
+default separate-process endpoint case entirely absent (not reversed tuples).
+AXON serializer/final-merge complete/zero-drop receipts miss upstream loss;
+CALDERA sampled delivery delay is ~25–26s mean/~45s max. Counter interval versus
+cumulative bases preclude one-snapshot producer loss subtraction. Fixed 11s wait
+is not sufficient drain assurance. Captures/full JSON/loss details retained; actual-
+service three-round shutdown-window identity suites now running on both approved
+hosts, not used to close conservation/missing-birth/release failures. DB unchanged;
+no production rollout/history repair/commits/pushes. Results/plan/verification/index updated.
+
+## [2026-10-23] verification | Installed shutdown tests expose delayed-attribution gap
+
+Six revision-3 actual-service shutdown-window rounds complete: four pass acceptance,
+CALDERA 0/2 retain full payload but have 122/309 unresolved controlled file rows
+(437 events/96 PIDs). All six have canonical process hashes, captured activity after
+SIGTERM, logged data-before-lifecycle stop order, endpoint coverage and graceful
+stops/no restarts; no known-hash orphans or fabricated identities. Affected file
+intervals lie within recorded canonical lifetimes; all 96 exit shadows use history,
+and read-only native resolver snapshots plus matching WAL contain their lifetimes.
+Final-state identity is not earlier availability; ReceiveTime=0 leaves registration/
+retry timing unproven. Copied DB alone looked empty until matching WAL replay;
+original stores unchanged. Separately run legacy-no-start control fails stop budget
+and conservation (1,260 paths/7,702 events, 6,201 unknown file rows); 41 unknown/one
+canonical live Stop, all 42 lifetimes unknown, no timestamp substitutes. Truncated
+sidecar/native/archives retained. Both original-host services left stopped with
+experimental revision 3/overrides; normal conservation and recovery/release gates
+remain open. Results/trace JSON/verification/plan/index updated, no production rollout,
+historical repair, commits/pushes or evidence deletion.
+
+## [2026-10-23] code | Diagnostic retry-counter candidate without policy tuning
+
+After CALDERA shutdown unknowns with containing final resolver lifetimes, added
+bounded per-stream cumulative retry scheduled/refused/exhausted/invoked/error/
+shutdown/pending/high-water snapshots and final logs. No PID/path payloads or
+retry-capacity/timing/identity changes; counters do not prove resolved/delivered
+events. Regressions distinguish forced final flush from normal exhaustion and
+test stream separation/immutable snapshots; initial 183 focused native tests pass,
+expanded final tests/revision-4 native build underway. Seven Python harness guards/
+compile checks pass; analyzer collects new receipts and prints scoped shutdown
+acceptance gates. Stuck pre-retry shutdown still lacks final receipt and remains
+incomplete. Feature results/verification/plan updated; delayed attribution, normal
+conservation, missing-birth/release gates stay open.
+
+## [2026-10-23] experiment | Revision-4 diagnostic build and CALDERA retry receipts
+
+Final 184 focused native tests pass; self-contained revision-4 package build succeeds
+with recorded package/DLL hashes. Installed only on approved stopped CALDERA;
+fresh three-round shutdown-window experiment now running with preserved native
+identity state. AXON remains stopped on revision 3. No retry policy/recovery changes.
+Independent parser three tests pass; preserves cumulative reason counters and flags
+malformed/duplicate/negative fields, absent receipts not treated as zero. Optional
+analysis gates require four default-stream receipts/pending zero/no callback errors,
+not proof of attribution success. Build still warns optional diagnostic-provider
+host dependency unresolved. Release/conservation/delayed-attribution failures remain
+open; prior captures and historical DB preserved. Results/verification updated.
+
+## [2026-10-23] diagnostic | CALDERA unresolved event counts match retry capacity refusal
+
+Revision-4 three installed shutdown rounds analyzed/archived. Two fail attribution:
+218 rows/230 events and 198/218; retry capacity refusals 230/218 with high-water
+1024 and zero normal exhaustion. Third passes with no refusals/high-water877.
+All 99 affected PIDs have containing canonical Start/Stop observations; aggregate
+event counts match refusal counts, not a per-message trace or historical trigger
+proof. All TCP/receipts/pending-zero/error-zero/graceful/no-restart gates pass.
+CALDERA left stopped on revision4; AXON stopped on revision3. Revision5 diagnostic
+Linux-only exact 1024/2048/4096 selector/default unchanged added for six interleaved
+same-binary sensitivity controls; native tests/build pending. No permanent tuning/
+never-observed-birth recovery/release acceptance. Results/trace/plan/verification/
+index updated; captures and historical DB preserved.
+
+## [2026-10-23] experiment | Bounded same-binary retry-capacity controls launched
+
+Revision5 self-contained native build and 196 focused tests pass. Verified package
+hash, installed on only approved inactive CALDERA, and launched six interleaved
+1024/4096 actual-service shutdown captures with same binary/fresh roots/persistent
+native identity. Default remains1024, attempt limit10/interval1s unchanged; Linux-
+only experimental knob, not release tuning. Independent effective startup receipt
+checks added; five parser tests pass including absent/malformed configuration.
+AXON remains stopped on revision3; prior failed evidence preserved. Await controls
+without polling; conservation/recovery/permanent memory/deadline gates remain open.
+Results/plan/verification updated, no production rollout/history repair/commits/pushes.
+
+## [2026-10-23] verification | Same-binary capacity sensitivity supports admission pressure
+
+All six revision5 CALDERA captures analyzed/archived, same DLL/Exit hashes, matching
+effective config, persistent agent, graceful/no-restart stops. Three4096 controls
+pass captured identity/attribution/TCP/shadow gates; one1024 control fails336 rows/
+358 unresolved events matching358 capacity refusals, all67 PIDs have containing
+canonical lifecycle. One4096 control resolves high-water1061 above default; other
+pair pressure differs and round1 lacks retry traffic, so no blanket capacity-fix
+causality/release claim. All exhausted/error/final-pending counts zero; no known-
+hash orphans/fabrication. Default stays1024; missing-birth/conservation/permanent
+drain/resource gates open. CALDERA stopped on revision5 with retained experimental
+4096/batch-wait override, AXON stopped on revision3. Original DB unchanged; prior
+failures/native/archives retained. Results/summary/plan/verification/index/strategy
+updated; next recovery requires early birth/per-event fate/PID-reuse/drain budgets,
+not simple queue enlargement. No production rollout/history repair/commits/pushes.
+
+## [2026-10-23] code | Exit-only recovery candidate and retained test failure
+
+Revision6 opt-in kernel-start exit evidence reuses bounded lifetime-keyed history,
+without synthetic Start/durable row/active entry. Sidecar marks partial coverage;
+default off. Initial compile interface mismatch corrected; next216 tests yield
+215pass/1fail: pending-Stop logging bypasses injected sink before late-birth cache
+invalidation. Corrected logging and canonical pending-Stop identity matching;
+added reused-PID regression. Corrected217 tests and self-contained package build
+pass, package/DLL hashes recorded. Four isolated same-binary controls underway
+(off/on missing birth, on normal, on legacy-no-start), capacity1024/effective-env
+check/30s settle/SIGTERM/120s budget; no installed-service changes. Inline remote
+launcher fails parsing before execution; retry uses mounted script directly.
+Failed evidence retained. Original hosts stopped on revisions3/5; recovery/drain/
+conservation/release gates open. Verification/plan/index updated; no history edits,
+commits/pushes or evidence deletion.
+
+## [2026-10-23] verification | Exit-only controlled recovery; installed CALDERA pairs launched
+
+Four isolated revision6 controls independently analyzed/archived. Missing-birth
+recovery on:8,478/8,478 canonical files,42 canonical Stops/partial receipts,no
+synthetic births,2,088 paths/14,616events conserved,12s graceful stop. Off:12,053
+unknown files/59s stop. Normal passes9,130files/84process vectors; legacy-no-start
+retains zero exit evidence,12,519unknown files,32unknown/10canonical live Stops,
+all42lifetimes unknown. All conserve payload/graceful; single pair does not certify
+resource/drain budgets. Whole missing-birth on-control has200 nonworkload known-
+hash orphans (live harness/daemons), zero unknown files; lifecycle export remains
+incomplete. Default1024 retry refusals off/on11,980/0; schedules50,544/519 are not
+per-event fate. Installed lintap-dev PID701/restarts0 unchanged; remote upload
+unavailable. Source shared semantics concept updated with REVIEW NEEDED, existing
+hard review retained.18 independent/harness/parser tests pass. Revision6 package/
+DLL verified and installed only on inactive CALDERA; three actual-service off/on
+missing-birth pairs/TCP now running, persistent native state/effective-env/120s stop.
+First wrong mount-prefix launcher fails before execution, corrected without mount
+changes. AXON stopped revision3. Results/full+summaryJSON/verification/plan/index/
+strategy updated, supplied DB unchanged; no release/history repair/commits/pushes.
+
+## [2026-10-23] verification | Installed exit-only recovery passes three controlled pairs
+
+Six CALDERA same-binary/default1024 off/on controls independently analyzed/archived.
+All three on pass25,434canonical files/126canonical Stops+partial receipts,zero
+synthetic births,6,264paths/43,848events conserved,six linked TCP cases. Off fails
+37,575unknown workload files plus three sentinel network rows per capture despite
+orientation passes. All six graceful/no restarts/effective-env+config match/same
+DLL+Exit hashes/persistent agent. Whole on-captures retain708nonworkload known-
+hash orphans (live harness/daemons/systemctl exits after lifecycle cutoff),zero
+unknown files; lifecycle export remains incomplete. Retry schedules off/on140,679/
+650 and refusals32,773/0 support controlled recovery,not per-event fate or resource/
+drain budgets. Full+summaryJSON and QA/data archive hashes preserved; historical
+DB unchanged.18 Python regression tests pass; analyzer now checks installed verified
+environment as well as isolated receipts. After analysis AXON upgraded to verified
+revision6 and eight dual-host normal-birth default/drain/burst/restart regressions
+launched,exit recovery on/default1024/explicit birth sensors/native persistent state.
+Results/verification/plan/index/strategy updated; shared semantic review marker
+retained. No production rollout,historical repair,commits/pushes or evidence removal.
+
+## [2026-10-23] verification | Dual-host revision6 normal regressions pass
+
+All eight installed normal-birth default/drain/burst/restart rounds independently
+pass:20,880paths/146,160payload events conserved,840canonical process observations/
+92,571canonical files,420kernel-start/lifetime checks,16linked TCP cases. Whole
+104,518files zero unresolved/unknown-named/known-hash orphans. Effective-env/config
+match,same binaries,persistent distinct agents,zero retry refusals/errors/final
+pending,graceful3.29–16.37s/no restarts. Both default-no-extra-wait rounds pass;
+no claim exit cache alone explains prior revision3 losses or defines permanent
+drain/resource budgets. Full+summaryJSON/preliminary CALDERA results/QA+data archives
+retained with hashes,supplied DB unchanged. After analysis/archival,six actual-service
+shutdown-window rounds launched across both approved hosts,exit recovery on/1024/
+enabled birth sensors/native persistent agents; post-cutoff events not conserved
+by acceptance. Results/verification/plan/index/strategy/shared review status updated.
+No production rollout,historical repair,commits/pushes or failed-evidence removal.
+
+## [2026-10-23] failure | Revision6 saturated shutdown attribution persists
+
+Six shutdown windows independently analyzed/archived:AXON3pass,CALDERA3fail.
+CALDERA720/437/189unknown file rows,797/467/207events exactly matching capacity
+refusals;1,346rows/1,471events total,199distinct PIDs. All have canonical containing
+recorded lifetimes and matching closed final-resolver rows (preserved WAL read-only
+replay;DB+WAL SHA256 unchanged). Affected sidecars report history,zero retained
+exit evidence; raw process ReceiveTime0 cannot show when identity became available.
+No exhaustion/callback errors/final pending;all CALDERA high-water1024. All six
+graceful15.08–25.29s/no restarts,post-SIGTERM captured stimulus nonvacuous,TCP linked,
+correct stop order/complete effective-config receipts,no known-hash orphans. No
+claim full post-cutoff conservation,per-event fate or permanent drain fix.21 Python
+tests pass;trace exact birth/both file bounds and no vacuous affected-lifetime proof.
+Full+trace summaryJSON/native QA/QA+data archives and hashes retained. Both host
+services confirmed stopped on experimental revision6,retained recovery-on/1024/
+birth-on/batch-wait overrides. Results/verification/plan/index/strategy updated;
+next bounded admission/final-fate and birth-registration timing before early-birth/
+staged-drain correction. No queue increase,history writes,production rollout,
+commits/pushes or failure deletion.
+
+## [2026-10-24] documentation | Start ecosystem glossary and grouped-retry proposal
+
+At user request, created source-linked living glossary across ecosystem, collection,
+identity/lifecycle, clocks/evidence, queues/shutdown, networking and DBT/analysis;
+expansion queue retained and existing diagram glossary preserved. Added speculative
+grouped-retry notes: local PID+event-time lookup, lifetime-qualified fanout, no blanket
+miss denial, per-member deadlines, fair bounded events/bytes and separate adjustable
+coalescing wait versus evidence-defined identity validity. Positive caches already
+exist; repeated-miss/coordinated wakeup benefit remains unmeasured. Index/strategy
+linked; no source/service/config changes or new experiment authorization inferred.
+
+## [2026-10-24] clarification | Collection-edge tolerance and sensor-service shutdown
+
+User accepts incomplete start/end collection observations within an explicit
+boundary tolerance. Recorded the principle; numeric edge widths/classification
+remain pending. Separate start-edge/interior/end-edge quality,actual collection
+from query-slice bounds,and event time from processing/cutoff time; do not extend
+identity validity or silently rewrite prior strict failure records. Clarified that
+CALDERA shutdown tests stop lintap.service/collector PID with SIGTERM while test
+activity continues,not the VM/OS or CALDERA application. Glossary/results/strategy/
+plan/index updated; no code/config/service changes or new runtime experiments.
+
+## [2026-10-24] requirement | Collector process visible in normal telemetry
+
+User requires Lintap service process in ordinary telemetry for retrospective normal-
+dataset validation. Current EventChannel and Linux Rundown self-PID exclusions
+verified; not yet changed. Strategy/plan/results/glossary record recommended normal
+process-stream identity/metadata and genuine lifecycle semantics,retained file-I/O
+feedback suppression,explicit capture boundaries,and no invented self-exit record.
+No source/config/service changes; implementation and normal-dataset tests pending.
+
+## [2026-10-24] implementation | Collector visibility candidate and bounded verification
+
+Approved Linux Process-only self-filter exception and collector Rundown inclusion
+implemented; missing-birth inventory no longer hashes observation time. Preserved
+self-I/O/other-platform filtering, genuine Refresh and no invented exit/cutoff.
+New pure-policy/inventory/egress regressions and independent normal-row/restart/DBT
+verification tooling;28Python tests pass. Native attempts preserve compile failure,
+229pass/7runtime-permission fixture failures,and229pass then45s testhost abort with
+dump/sequence. Isolated pure policy avoids test-triggered runtime static dependency;
+fresh test/build pending. Canonical collector/boundary draft/index and verification
+updated. No installed-host mutation,production rollout or prior evidence deletion yet.
+
+## [2026-10-24] verification | Collector focused suite passes; packaging snapshot corrected
+
+236focused C# tests pass and Linux publish succeeds. Preserved235pass/1egress
+failure:fixture isolation flags were set after static routing initialization;
+ordering corrected,not runtime registration semantics. Debian staging fails only
+because native snapshot lacked three existing pidstat packaging helpers; fresh
+complete snapshot/build launched. Strategy/checklist/glossary/pipeline/canonical
+collector semantics updated; ordinary installed/DBT proof remains pending.
+
+## [2026-10-24] experiment | Revision7 collector candidate normal/restart rounds launched
+
+Fresh complete native snapshot:236C#tests pass,self-contained revision7 Debian
+package succeeds;package/DLL SHA256 recorded in verification. Copied candidate to
+approved inactive AXON/CALDERA; guarded installs/4normal default/drain/burst/restart
+rounds launched each with enabled birth inventory,default1024,experimental exit
+recovery and persistent native agents. Fresh capture/QA/install roots preserve prior
+override/evidence. Ordinary-row collector oracle and fresh canonical DBT model
+builds prepared;normal/self-feedback/conservation/endpoint/downstream proof pending.
+No production rollout,historical migration or boundary-policy reclassification.
+
+## [2026-10-24] planning | DuckDB 2 ecosystem upgrade
+
+Started `wiki/work/duckdb-2-upgrade/{brief,references,implementation_plan}.md`
+and linked index. Verified October21 DuckDB2.0LTS release/Python>=3.11/new-file
+storage69; inventoried Wintap embedded1.5.6,Wintappy locked+actual1.5.5/adapter1.9.6/
+core1.12.2,Lintap pidstat/bootstrap/CLI and current Analytics paths. Relation
+fetchone removal reaches DataQA/shared helpers; latest released adapter1.11.0
+predates2.0 and lacks a development-branch result-draining fix. Official .NET
+NuGet latest1.5.6.1 has no2.0; unofficial fork exists but not selected/authorized.
+Plan separates Python/DBT qualification from native package gate,copy-only DB/WAL
+rollback and fresh-output semantic/conservation comparisons. Excludes old notebooks,
+arbitrary SQL,legacy cleanup,historical repair and existing defect fixes. Existing
+collector DBT completion retained as baseline:8builds retain collector,4exact-birth
+failures. No source/dependency/environment/service changes or new runtime experiments.
+
+## [2026-10-24] decision | Hold DuckDB 2 upgrade for official .NET support
+
+User chose to wait on2.0 because official .NET availability is a blocker; brief,
+plan and index marked held. Rechecked registries:latest official .NET wrapper
+1.5.6.1 still bundles native1.5.6;latest Python1.x is1.5.6. Latest-1.x maintenance
+considered separately; no implementation or dependency/environment changes authorized.
+
+## [2026-10-24] maintenance | Latest DuckDB1.5 dependency upgrade verified
+
+User approved the three enumerated components. Wintap official wrapper1.5.6.1 and
+five affected locks refreshed; native engine remains1.5.6. Wintappy/Lintap manifests,
+uv locks and pidstat bootstrap pin1.5.6; selective lock audits show no unrelated
+package-version drift,DBT adapter1.9.6/core1.12.2 retained. NativeSDK10.0.402 tests250
+pass,Linux/Windows-helper builds pass;PythonSQL82,pidstat15,SmokeTests27,collector
+analyzer7 pass. Fresh fullDBT83nodes (40models/42tests/1hook) pass on retained AXON
+drain raw data;collector exact birth/metadata/uniqueness pass,historicalDB size/mtime
+unchanged. BroaderPython107pass/1config failure reproduces under1.5.5. Failed command/
+platform attempts preserved;unintended uv recreation of MacLintapvenv3.14→3.12
+disclosed,prior environment not preserved or falsely claimed. Feature verification/
+plan/index and canonicalWintappy dependency note updated. No installed-service,
+runtimeDB,agent-state,notebook,history changes or commits/pushes. DuckDB2.0 held.
+
+## [2026-10-24] implementation | Collection-edge overlay and revision8 outstanding-item reruns
+
+User approved10-second start/end edges with1/5/20-second sensitivity. Implemented
+integer interval/bracket classification,verified local-clock receipts and endpoint
+stimulus intervals;strict gates/counts preserved,no invented capture bounds or
+identity extension. Historicalrevision7 lacks independent clock receipts and remains
+unclassified. New same-installed-revision7 default+shutdown round per original host
+passes all scoped raw gates:normal2,088paths/14,616events each,all TCPcases pass,
+31,083whole file rows/no unknowns or known-hash orphans.10-second normal stimulus
+interior;shutdown mostly uncertain under broad operational cutoff brackets. CALDERA
+shutdown2,615scheduled/high-water932of1024/no refusals,so prior saturated failure
+not reproduced or explained.64work-folder tests pass (45boundary/harness).8historical
+plus4fresh DBT model runs all pass/retain collector metadata,exact birth fails same
+4historical and3fresh at−1µs. Integer-only diagnostic SQL recovers12/12raw births;
+source float macro unchanged and Linux-as-Windows defect persists. BroadPython
+107pass/1existing config failure repeats. New QA+data archives SHA256 verified,
+binary/AgentId unchanged,both services stopped/PID0/restarts0,historicalDB size/mtime
+unchanged. Results/verification/checklists/canonical collector/glossary/index updated.
+No package/source-sensor/DBTmacro deployment,prior failure deletion,production rollout,
+commits/pushes. Next:qualify integer timestamps,admission/final-fate/registration
+timing and preserved loss/TCP provenance;more precise cutoffs if uncertainty matters.
+
+## [2026-10-24] implementation | Integer timestamp proof and bounded attribution trace
+
+Approved continuation fixes canonicalWintappy FILETIME timestamp/minute macros using
+integer epoch subtraction/floor-toµs,TIMESTAMPTZ output and integer-text parsing;raw
+100ns identity unchanged.209focusedSQLtests pass;234broadpass/1existingDATASETconfig
+failure retained. Fresh fullDBT12/12 (83nodes each) restores all12collector births;
+2,900raw-integer process lifetimes pass.216common tables retain protected keys,
+counters/rows;strict metadata comparison fails and remains archived.12same-old-macro
+controls reproduce unordered names/paths/args/derivedfileID drift;qualified comparisons
+separate those fields/duration without blanket display/file-ID stability acceptance.
+Default-offLinux create-new boundedJSONL admission/lookup/registration/handoff trace
+implemented;240nativeSDK10.0.402tests/Linuxbuild pass,initialAPI-property compile
+failure and subsequent I/O-drop accounting correction preserved. Limits1024queue/
+100kreceipts/32MiB/512characters,explicit refusal/error/truncation,2sclose deadline;
+handoff is not durable fate.68wikifoldertests pass;new precision contract/results,
+glossary/collector/repo/index/plans/verification updated;frontmatter/links/diffchecks
+pass. Native logs/TRX/sourcehashes downloaded to approvedr9-native-evidence root.
+No live tracing/newpackage/service changes:active lintap-dev left alone;AXON/CALDERA
+inactive/PID0/restarts0/Resultsuccess,DLL unchanged,historicalDB size/mtime unchanged.
+Self-contained diagnostic captures/export joins,saturation/loss/TCP provenance,
+cutoffs,OSlabels and rollout gates remain open. No commits/pushes/DuckDB2upgrade.
+
+## [2026-10-24] diagnostics | Private delivery package and failed observer controls
+
+User approved reproduced-loss milestone. Expanded default-off observer through file
+folding/sender/serializer/parquet finalization;244nativeSDK10.0.402tests/Linuxbuild
+and self-contained Debian package pass. Four private AXON/CALDERA controls complete;
+no installation/service edits,original DLL/AgentId unchanged. Both traces refuse
+receipts (15,925/22,339);shared mounted root combines both hosts,strict path-set gates
+fail. Per-host grouping2,088paths/14,616events does not accept contaminated captures.
+First-round runtime-log snapshot omission also preserved;edges unclassified.
+Archives transferred/SHA256verified;78wikifolderpytest pass. Corrected host-specific
+roots/stopped snapshots and explicit bounded delivery trace queue32768 prepared;
+retrycapacity1024unchanged. Revision11 inherited post-publish RID lock causesNU1004;
+failure/locks preserved,live source locks used for locked requalification. Results,
+plans,verification,index/glossary updated. Historical loss/TCP provenance remains open.
+
+## [2026-10-24] proof | Complete scoped delivery traces and reproduced TCP stage gap
+
+Revision11locked-source244tests/Linuxbuild/self-containedpackage pass after preserving
+NU1004/post-publish locks. Fourprivate host-isolated controls conserve8,352paths/
+58,464events,canonicalidentity/collector/workloadTCPpass. Complete scoped traces:
+193,040AXON/190,071CALDERAreceipts,zero refusals/errors/truncation;finalizedfile/TCProw
+multisets match archivedraw,file-stagecounts match. BroaderTCP54prepared/Esper→50serializer
+events per host fails;fourmissingSSHcounts overlap startup. SourceasyncETLStart/fixed
+5sdelay and networkstartup beforeTCPinit support readinessrace;precise registration/
+projection receipts and controlled correction remain required.40,170wholefile rows
+zero unknown/orphans;10sedges/1,5,20ssensitivity preserve gates.80wikifoldertests/diffchecks
+pass;archivesSHAverified/sourcehashes match,originalDLL/AgentIds/historicalDB unchanged,
+servicesinactive/lintap-devactive untouched. Results/verification/plans/index/glossary/
+canonicalboundary updated. Prior AXONloss/workloadTCP/CALDERAsaturation unresolved;
+no sourcecausefix/rollout/commits.
+## [2026-10-24] verification | Exact startup proof and bounded readiness control
+
+Revision12query/listener/callback/projection diagnostics,productionEPL deterministic
+test and247native tests/Linuxbuild pass. Live complete traces prove CALDERA6counts
+andAXON4counts handed off before registration;AXON6additional missing remain separate.
+Revision13default-off Linux readiness admits collectors only after successfulquery/
+completedconstructors,30sbound,existing5sdelay unchanged.254native tests/Linuxbuild;
+four off/on controls conserve8,352paths/58,464events,identity/collector/self-I/O/eight
+TCPcases pass.42,005wholefile rows zero unknown/orphans.192,688/190,332complete receipts
+prove startup ordering;CALDERA54→54→54passes,AXON54→54→48fails. ExactacceptedTCProwIDs
+31378/31380 absent fromdrain/enqueue/finalized;lateprojection/shutdown cause unproved.
+Final→rawjoins pass but not full delivery acceptance.10sprimary/1,5,20s sensitivity
+preserved;revision13workloadintervals uncertain,not softened intointerior.88wiki tests
+andbothdiffchecks pass. InitialENOSPCattempt archived/949filesbyteverified before only
+newdisposable snapshot removal;activePID701 notsignaled,completeI/Oeffect unproved.
+Initial253pass/1closebudget failure archived;boundedwriter tests isolated fromparallel
+EPLcodegen without changingproduction2sbudget. Packages12/13managed-only derivatives
+of11,notclean native rebuilds/installedacceptance. Updatedresults/plans/verification,
+index,glossary/boundary pages;addedexactreadiness/delivery-ID joins and JSONreceipts.
+Finalservices/DLL/AgentIds/historicalDB unchanged,258testedsourcefiles matchlive;
+no runningcaptures/builds. HistoricalAXONloss/defaultTCP,CALDERAsaturation,resource/
+cutoff/draining/rollout gates remainopen. No historicalrepair or DuckDB2change.
+
+## [2026-10-24] milestone | Exact shutdown proof and verified disposable Linux delivery
+
+Revision14exact brackets reproduce twoCALDERATCProws/fourcounts accepted after
+completed shutdown,all undrained. ProductionEPL deterministic control proves
+queue-before-final-window strands counts. Revision16Linux/default-off terminal
+window/callback barrier qualifies267native tests/locked Linuxbuild;revision15
+ambiguous-import compile failure archived and corrected in fresh16snapshot.
+Fourrevision16controls conserve8,352paths/58,464events and54AXON/60CALDERATCPcounts
+through exact accepted/drained/enqueued/finalized row IDs and archivedraw joins.
+Samecandidate17 repeats58/58perhost with all payload/endpoint stimuli interior at
+1/5/10/20s. Independentidentity/collector/self-I/O/eightTCPcases pass;complete traces
+zero refusals/errors/discards/truncation/lateacceptance/cutoffrefusals. Wholefile
+39,893rows zero unknown/orphans;10s39,807interior/25start-edge/61uncertain retained.
+Scoped observed-delivery milestone verified,not historical loss closure,complete
+kernel/durable fate,resource/Windows/customEPL/installed-package/rollout acceptance.
+94wikifoldertests/bothdiffchecks pass;archivesSHAverified/262testedsource matches,
+originalservices/DLL/AgentIds/historicalDB unchanged;lintap-devPID701 untouched.
+Updatedshutdown plan/results,implementation/traceplans/verification,index,canonical
+boundary/glossary and JSONreceipts. Managed-only private derivative16,not clean native
+rebuild;no install/commit/push/DuckDB2upgrade. No captures/builds remain running.
+
+## [2026-10-24] experiment | Attribution pressure baseline and corrected TCP receipt oracle
+
+User approved samecandidate revision16 pressure with1024capacity unchanged. Independent
+32/128/256child file/TCP generator and gated off/on interior/shutdown-tail experiments
+created under wiki;no sensor edits or installed rollout.32tier eightcontrols conserve
+1,024paths/7,168events;eightfresh fullDBTbuilds pass256births/collector/counters.
+Original128revision20 halts escalation on44CALDERAtrace-off endpointpairs/152apparent
+misses. Exact archivedraw proves ALL152present after stimulus+2s but within capture:
+TCP EPL FirstSeen uses ReceiveTime,not kernel EventTime. Originalfailure preserved;
+deterministic test proves falseabsence and bounded capture-scope oracle correction,
+not sensorloss/saturation/time-schema change. Separate20recheck/fourDBTbuilds pass.
+Fresh128revision24interior/25tail pass1,024childlifetimes/4,096paths/28,672events,
+eightDBTbuilds and complete exact delivery traces;no queue refusal/exhaustion/OOMdelta.
+256tier still running;no final envelope claim yet.103wiki tests pass. Plans/results,
+verification/glossary/index updated;failed evidence/history/control preservation remain
+mandatory. No queue resize,production sizing,historical-loss closure or DuckDB2upgrade.
+
+## [2026-10-24] verification | Controlled pressure envelope complete through256 children
+
+Fresh256interior26/shutdown-tail27 pass after gated128repeat24/25. Sixaccepted
+experiments/24off-on hostcontrols conserve3,328childlifetimes/TCPendpointpairs,
+13,312payloadpaths/93,184events.24fresh canonical83nodeDBTbuilds pass exactbirths,
+collectorretention and raw→silver/goldprotectedfilecounters.12complete traces write
+1,013,739receipts with zero refusals/errors/discards/truncation;exactobservedstage/
+finalrawjoins pass.256TCPcounts1,857AXON/1,855CALDERAinterior,1,845eachtail. Highest
+sampledpending348/1024,no pressurechildcapacityrefusal/exhaustion;not actualsaturation
+or productionqueue sizing.10s/1,5,20s stimulusbands preserved,tailuncertainty not
+relabeled. Original20oraclefailure/all152rawobservations/causeproof and separate
+fourDBTrechecks preserved. No sensorfix/capacitychange/historyrepair/installedrollout.
+Finalaudit28archivesSHAverified/262sourcesmatch,installedDLL/AgentIds/historicalDB
+size-mtimeunchanged,AXON/CALDERAinactive/PID0/restarts0,lintap-devactive/PID701/restarts0.
+103wiki tests/bothdiffchecks pass. Plans/results/verification/index/glossary updated.
+No builds/captures running. Resource/nativekernel/durable/Windows/package/rollout
+acceptance and historicalfailures remain open;DuckDB2held. No commits/pushes.
+
+## [2026-10-24] retrospective | Telemetry identity/data-quality workflow and compact audit
+
+User confirmed the broader retrospective scope beyond .NET10,and explicitly asked
+to reduce audit detail in the commit,not merely add an entry point. Created compact
+`wiki/work/wintap-telemetry-identity-and-data-quality/` brief,design,reconstructed
+implementation,verification,next-phase handoff and evidence provenance. Condensed
+old workstream documents from4,442to1,514lines;replaced the repetitive index rollup.
+Original193files/62,580,675bytes byte-verified in an external3,840,232byte archive;
+SHA256/path/retrieval map recorded in evidence.md.124generated JSON audits
+(62,025,196bytes) retained locally but Git-ignored;harnesses/tests/raw/failed evidence
+and source/history untouched. Archive is machine-local temporary storage and must
+be transferred/verified before cleanup;no durable publication claimed. Updated
+canonical evidence citations;sample-db audit remains human-review-required with
+REVIEW NEEDED for provenance-only edits,findings unchanged.26pages pass frontmatter/
+source/wikilink validation,103work-folder tests and diffcheck pass. No commits/pushes,
+new sensor edits,host captures,package installation or long-duration runs. User's
+planned package qualification/multi-day real-host collection remains next phase.
+
+## [2026-10-24] commit | Dedicated telemetry-quality branches across four repos
+
+User authorized feature commits and separate PR branches. Created
+`feature/telemetry-identity-data-quality` in Wintap, Wintappy, Lintap and Analytics.
+Wintap `10a782f` commits identity/network/lifecycle and bounded delivery diagnostics;
+Wintappy `4236cbb` commits SQL precision/count/identity fixes and DuckDB maintenance;
+Lintap `b793082` commits the qualified DuckDB pin. Analytics commits QA, compact
+retrospective, reusable harnesses and wiki semantics in this entry's commit.
+Wintap retains its tested .NET10 ancestry: target `chore/net10-dependency-prune`
+for an isolated PR until that prerequisite merges. Generated receipts, captured
+datasets, initialized AgentId state, local settings and unrelated work stay local.
+Preflight: 209 focused SQL tests, 126 Analytics tests plus 7 subtests, and 17 Wintap
+Python regressions pass; all staged diff checks pass. Dashboard AppTest collection
+is blocked by missing `streamlit.testing` in the selected environment; no environment
+changes or new native/host qualification. No pushes or PR publication performed.
+
+## [2026-10-25] documentation | Pinned .NET 10 packaging and operator-assisted RHEL 9
+
+User authorized updating Lintap's packaging guide and adding RHEL 9 prerequisites;
+user will execute host commands without direct agent access. Updated live
+`../Lintap/packaging/README.md` to select SDK 10.0.402 from Wintap global.json,
+distinguish exact qualification checks from latestPatch, and document RHEL 9
+inventory/repository/native dependency/build/package inspection and gated service
+validation. RHEL 9 remains unqualified. Retained self-contained defaults and flagged
+both builders' stale ASP.NET Core 8 framework-dependent metadata; no scripts changed.
+Source-verified libbpf SONAME fallback, security preservation and pidstat prerequisites.
+Updated supporting-repo page, index and umbrella verification. SDK consistency,
+shell-fence syntax and diff checks pass; no RHEL commands, installs, captures or
+security changes executed. No new commits or pushes for this documentation update.
+
+## [2026-10-25] plan | Close .NET 10 upgrade oversights, not a package-mode workaround
+
+User clarified that framework-dependent .NET 8 metadata is an oversight in the
+original all-.NET-10 upgrade and requested a corrective plan while testing RHEL
+dependencies. Tracked source inventory across four repos confirms SDK 10.0.402 and
+eight main .NET 10 projects, but five diagnostic/sample net8 projects, both package
+builders' runtime-8 dependency declarations, Makefile/provision/run/tooling defaults
+and current docs remain stale. Created runtime_alignment_plan.md with package-first
+correction, complete target/provision/path alignment, regression inventory and fresh
+artifact/live gates; dependency major versions and historical records are distinct.
+Updated umbrella implementation/index. No "10 everywhere" or fresh runtime claim;
+no source implementation, host execution, commits or pushes under this plan request.
+
+## [2026-10-25] code | .NET 10 source/configuration closure and RHEL build handoff
+
+User authorized correction, commit and push on existing feature branches. All 13
+C# projects evaluate to .NET 10 with SDK 10.0.402. Corrected both package runtime
+dependencies, exact-SDK/project-directory preflight before cleanup, main runtimeconfig
+validation, five targets/sample reference, native generated-source exclusions,
+Windows-only sample copy, provisioning and active run/tool/docs defaults. Added five
+sample/diagnostic locks; legacy vdproj snapshots explicitly not release packaging.
+Six Wintap drift and 22 Lintap packaging regressions pass; five fresh locked sample/
+diagnostic builds, both actual linux-x64 managed publish modes and separate MCP
+single-file publish pass. Preserved
+NU1004 committed API RID-lock mismatch: isolated restore keeps all base hashes/
+versions, then locked publishes pass; pristine locked RID release gate remains open.
+Generic RHEL 9 prerequisites pass; test system is disposable by user direction.
+No host identifiers/raw output persisted, no direct host access/security changes.
+Shell/help/link/diff checks pass. Fresh native RPM/Debian inspection and live host
+acceptance remain pending; retry/identity/experimental controls unchanged. Commits
+and pushes are explicitly authorized; PR publication is not part of this operation.
+
+## [2026-10-25] verification | Operator-reported RHEL 9 package build and installation
+
+Operator reports native self-contained RPM build, satisfactory inspection/transaction
+preview and installation with both units inactive. Shared NuGet package/HTTP caches
+prefetched on a network-enabled Linux system resolved restricted-network restores;
+prefetch must match publish properties/multi-RID graph. No TLS/audit relaxation or
+system identifiers/raw output persisted. Runtime/configuration/hook/data/shutdown
+acceptance remains pending. Corrected one remaining obsolete framework-dependent
+warning in the canonical packaging guide; documentation-only follow-up on same branches.
+
+## [2026-10-25] verification | Bounded RHEL 9 capture, shutdown and downstream smoke
+
+Operator reports host-only/normal startup, process with Stop, basic single-path file,
+independent bidirectional same-host TCP identity/endpoints and clean shutdown with no
+active files. Pidstat remained inactive and protected data permissions unchanged.
+Supplied fresh DBT summary passes 40 models/42 tests/one hook: 83 pass, zero warnings,
+errors or skips; engine 1.5.6/adapter 1.9.6/core 1.12.3. Shared official extension
+prefetch must INSTALL both httpfs/parquet and use connection-time config_options,
+not late settings; failed attempts retained locally, TLS/signature checks intact.
+Updated verification, runtime plan and index. No raw output, host identifiers or
+system-specific details persisted; generated evidence remains protected/local-only.
+Full release/provenance/strict-count/multi-day and other platform/mode gates stay open.
+
+## [2026-10-25] code | Independent periodic Linux stimulus and ground-truth runner
+
+User approved open-ended disposable-host collection, manual stopping and a separate
+tmux signal generator on each host; SmokeTests dashboard suffices for ground-truth
+analysis. Added Analytics validation/telemetry-soak runner: named process/file/IPv4
+TCP/UDP and same-host TCP selectors, existing raw_smoke_test export and private local
+JSON/logs, sequential rounds/timeouts, same-root flock and failure continuation.
+No collector management, credential/security changes, retention deletion or sibling
+code edits. Clarified WINTAP_DATA_ROOT/explicit smoke-data-root (not DATA_PATH),
+successful-upload local deletion, stimulus-only outcomes and deferred DBT integration.
+Added canonical tool page and updated index/implementation/verification. Eleven
+mocked tests, bash syntax and diff checks pass; native pilot/Garage evidence arrival,
+signal/timeout and long-running behavior remain pending. No host identifiers or
+generated evidence committed; test fixtures are synthetic.
+
+## [2026-10-25] code | Read-only Garage/S3 SmokeTests dashboard source
+
+User selected direct Garage access on the same feature branch and reports one runner
+pilot completed, uploader working and smoke evidence reaching S3. Added private
+JSON config (credentials rejected), AWS env/profile chain, temporary in-memory
+DuckDB secret, path-style listing/reads, connection-time extension cache, inclusive
+UTC day pruning, pagination, fail-closed caps and sidebar refresh/source selection.
+No object mutations, credential persistence, local dataset sync, collector/uploader
+or sibling changes; TLS/signature checks retained. Existing manifest/host/run/triage
+semantics and mounted/local mode preserved. Forty-two backend/query/Streamlit tests
+pass in an isolated temporary environment; one real synthetic loopback HTTP/S3 test
+passes GET/HEAD listing/range-read/ground-truth join after correcting secret syntax.
+Actual Garage dashboard validation and long-duration acceptance remain pending;
+DBT manifest integration deferred. Updated canonical docs/index/plans/verification.
+No real identifiers, credentials, endpoint/prefix configuration or host output filed.
+Final suite including real loopback HTTP transport: 43/43 pass; Python parse/diff
+checks pass and local config ignore is verified. Commit/push remains on the existing
+feature branch; no PR publication.
+
+## [2026-10-25] code | Non-interfering canaries and lazy Streamlit pages
+
+User narrowed recurring scope to canaries that do not interfere with the deployed
+sensor, and requested Overview, Canary Tests and Dev-time Tests pages. Expanded
+Analytics runner to five distinct canary manifest families using generator-only
+adapters: cross-domain, process lifecycle/short-lived, eight-file, optional native
+clone and same-host TCP endpoints. Stop requirements are per PID; unsupported
+Python execveat/native helper/kernel cases are explicit skips, not coverage claims.
+No collector/service/security/tracer/uploader/sibling-code changes or host workloads.
+Real Streamlit navigation separates canaries (including legacy stimulus-only runs)
+from manual dev-time qualification. Overview reads manifests only; explicit selected
+validation materializes one exact-selector working set for reused checks/details,
+with fail-closed 100,000-row/256-MB limits and spill disabled. Hidden overlaps,
+evidence hashes/conflicts and conservative missing/stimulus-only triage retained.
+Native pushdown/partition pruning, passive HOST correlation and cross-rerun caching
+remain follow-ups. Local tests use synthetic fixtures/mocked generators; native
+expanded canary and live Garage page/validation acceptance remain operator gates.
+Private config/profile/credentials/identifiers and live investigation outputs were
+not persisted. Updated canonical pages/index/implementation/verification records.
+Final checks: 51 dashboard tests (including synthetic real HTTP/S3 transport) and
+17 mocked runner/adapter tests pass; shell syntax, Python parse and diff checks pass.
+Same feature branch; no PR or live acceptance claim.
+
+## [2026-10-25] code | All-canary validation, passive runtime context and saved summaries
+
+User requested all validations on uploaded canary evidence, one round action, HOST
+runtime comparison and result persistence beside data. Added Analytics round metadata,
+one bounded shared selector scan, all-family/case/skip/missing/violation summary,
+temporal complete-startup context and optional unique inferred short/FQDN correlation.
+Exact hostname mismatch initially excluded observations; inferred correlation finds
+process lifecycle/Stop, eight-file and both TCP endpoint expectations with no reported
+violations. Cross-domain server TCP Accept and UDP Receive remain missing; Network
+reports running, so disabled startup does not explain them. Native clone skipped;
+all stimulus-only family triage remains yellow. No strict-count/full-capture waiver.
+Summary and latest pointer saved/read-verified in Garage's sibling analysis prefix,
+not raw telemetry. Fingerprinted reuse, explicit stale warnings, integrity checks,
+verified atomic/private local writes, Git/symlink rejection and visible save failures
+added; no source configuration/credentials/raw rows in summaries, no private local
+investigation artifacts or identifiers committed. Listings/evidence reads still repeat;
+no atomic storage snapshot or delivery watermark claimed. 75 dashboard tests including
+real synthetic S3 transport and 17 mocked runner/adapter tests pass; Bash/AST/wiki-link/
+frontmatter/diff checks pass. Updated canonical tools/index/plans/verification.
+No sibling source, service/sensor/tracer/security/SDK/DuckDB/default controls changed;
+no running workload restarted or PR published. Operator new UI/multi-host/long-duration
+acceptance and native/network coverage remain open. Same feature branch commit/push.
+
+## [2026-10-25] analysis | Canary quality gaps and proposed corrections
+
+Reanalyzed the existing five-family pilot read-only (65.78 seconds, no analysis
+errors); no new collection round, raw-data mutation or summary overwrite. Broader
+PID/time queries do not recover server TCP Accept/UDP Receive. Current CO-RE source
+has no Accept emission call and reads UDP kernel peer context with a user-memory
+helper; deployed-object hash differs from local build, so live causal linkage remains
+provisional. Live UDP Send tuples have zero endpoint ports; TCP listener-like close
+rows also have incomplete peer tuples. All eight file paths have required activities;
+selected lifecycle identities have no placeholders/mismatches, but 13 repeated-Start
+groups need Clone/Exec provenance classification, not automatic duplicate-birth flags.
+Five entirely synthetic evaluator counterexamples expose per-path, lifecycle identity/
+repeat/linkage and extra malformed endpoint blind spots. Recorded source-aware fixes,
+operation/provenance contracts and separately authorized sensor/pilot sequence in
+quality_followup_analysis; updated index, canonical dashboard limitations and handoff.
+No private identifiers/configuration/raw rows or investigation payloads filed. No source,
+package, service, tracer attachment, security, runtime pin or default control changes.
+Capture gaps/native skips and all prior acceptance limits remain open.
+Diff whitespace, modified content-page frontmatter/wikilinks and new live grounding
+paths pass. Synthetic diagnostics are not committed regressions; no source test-suite
+rerun or implementation acceptance claimed. Same feature branch; no PR publication.
+
+## [2026-10-25] code | Strengthened canary quality assertions
+
+User authorized recommended-order fixes and local VM iteration while away. Added
+13 synthetic quality regressions and stronger per-path/lifecycle identity/linkage,
+source-aware repeated-Start and all-bound network candidate checks. Expected protocols
+no longer filter the scan; directed ports also retain malformed host-relative tuples.
+Contradictions remain red; incomplete/unbound traffic remains yellow, with summary/UI
+warnings and counts. Clone/Exec raw observations are preserved, never counted as
+distinct births or deleted. Existing pins/defaults/strict dev-time gates unchanged.
+Idle VM uses isolated DuckDB1.5.6/Streamlit1.66.1/boto3 environment; all 88 dashboard
+tests pass including real synthetic HTTP/S3, zero skips. Updated canonical tool,
+README/plan/verification. Field-host services, raw datasets and private configuration
+untouched. Sensor-owned fixes/VM qualification follow separately on existing branch.
+
+## [2026-10-25] code | Local network return correction and qualification
+
+User authorized recommended-order Analytics/Wintap fixes and local VM iteration,
+not field rollout. Wintap core Accept now emits at successful return with accepting
+TGID/inbound tuple; UDP uses checked kernel pointer provenance and one successful
+protocol-return owner per operation. Actual arm64 tests also exposed errno sign-
+extension and post-return msg_namelen pitfalls; corrected. Original object fails
+strict15-check matrix, corrected object passes; all12 tracers build, managed build
+zero errors,159 shared network/receipt/identity/resolver/root tests pass. Added
+version-gated operation/sampling/PID-filter receipt facts and distinct UDP client
+mode/socket plus per-path activity expectations. Preserved pins/retry/security/
+default-off experiments and strict count gates. Evidence remains VM-local. Initial
+normal-ETL harness mistakes (receipt phase, evidence ownership) exposed; fresh pilot
+review follows. Canonical network/runtime/named-workload/dashboard pages and umbrella
+handoff/index/plan updated. Wintap instructions/audit stay in its developer_docs.
+
+Final verification:93 dashboard/17 runner/12 Wintap Python/159 shared managed tests
+pass; actual-object repeat15 checks pass. Normal-ETL five-family fresh VM pilot
+delivers manifests and observes Accept/all four independent UDP cases, zero evidence/
+analysis errors; exact UDP and dedicated TCP endpoint checks have no missing/violation
+findings. Local summary integrity/reload/latest passes; raw size/mtime snapshot unchanged.
+All triage remains yellow. New tension: normal ETL lowercases Linux file paths despite
+complete per-file activities; existing non-Windows behavior is explicitly preserved
+by its regression, so no silent case-fold proof or unreviewed compatibility change.
+Process projection also omits source breadcrumbs; no command-line/schema mutation
+to fabricate provenance. Partial TCP EOF/close tuples remain incomplete. Field
+package/install/pilot, file-case and explicit source-column contracts are next gates.
+
+## [2026-10-25] code | Approved greenfield process-source and file-case projections
+
+User explicitly approved both prospective changes; greenfield development does not
+require deployment/data migration. Wintap normal Start/Refresh parquet adds nullable
+ProcessStartSource from bounded recognized producer Arguments breadcrumbs, not
+CommandLine inference. FileSerializer preserves producer case and case-distinct
+sensor file-key inputs; Windows behavior/identity formulas/pins/security/retry/default-
+off controls unchanged. Analytics prefers explicit source with real Arguments fallback.
+Linux build0errors/177warnings;180shared managed and94dashboard tests pass, including
+production-schema null/mixed provenance parquet roundtrip and locale/case-key negatives.
+Initial new test incorrectly indexed a deserialized null key; corrected assertion,
+not writer. Fresh180-second normal-ETL VM pilot delivers five families with0evidence/
+analysis errors and0violations. Eight-file/process/clone/dedicated TCP have0missing
+checks; all selected repeats source-classify without extra-birth claims. Cross-domain
+retains one Delete gap and two incomplete TCP provenance checks; all triage yellow.
+Receipt contract2/copied hash, local summary/latest integrity/reload and raw size/mtime
+preservation pass; VM collector/observer inactive. Resolved sensor file-case tension;
+Wintappy's separate lowercase-derived file_id remains unmodified/uncertified. Updated
+canonical process/file/dashboard pages, index, plans, verification and handoff. No
+private evidence/identifiers/configuration filed; no Garage writes, field rollout,
+Lintap/Wintappy edits or PR. Same feature branches; unrelated work preserved.
+
+## [2026-10-25] review | Senior technical assessment before closing quality round
+
+Reviewed current sensor/projection/generator/dashboard/persistence source and prior
+qualification evidence at Wintap c0b6774 / Analytics00dda2d. Synthetic current-code
+probes reproduce permissive legacy source parsing and suppression of a known endpoint
+contradiction when another field is null. Existing VM pilot read-only investigation
+finds the missing relative.bin Delete as a bare relative basename in the same
+host/PID/window; unlinkat loses dirfd and managed relative resolution only covers Open.
+Created advisor_review with bounded corrective bundle, sampling/churn qualification,
+native target-package gate and separate downstream case-ID plan. Prior pass counts
+remain scoped; no new collector run or implementation. No private raw evidence,
+configuration or identifiers committed. Updated index/handoff; recommendations await
+user direction. Temporary synthetic query artifacts removed.
+
+## [2026-10-25] code | Advisory corrective bundle and later RHEL9 validation
+
+User approved Ubuntu source/test implementation and preparation for later RPM
+deployment. Fixed strict legacy source parsing (explicit null authoritative) and
+known endpoint contradictions with null companion fields. Wintap relative unlink
+captures operation-time dirfd/cwd base identity; learned-index-only resolution
+preserves unknowns and entry-intent semantics. Added live case-only/cwd stimuli,
+conservative directory-resolution regressions, monotonic/outer observer deadlines
+and24-lifetime UDP turnover qualification. Network48turnover/15return checks pass;
+no forced pointer reuse claim or network sampling change. Linux build0errors/
+177warnings;171targeted managed,97dashboard,20runner/CLI and11Wintap Python tests
+pass. Broader Ubuntu Windows-targeted suite1160pass/87fail and timed-out isolated
+retry of8logging-dependent tests remain explicitly unqualified in verification.
+
+Fresh normal-ETL five-family pilot has0errors/0violations; exact relative/cwd Deletes
+and case-only activities/distinct sensor keys pass. All29focused receipt/hash/
+projection gates pass; only two partial TCP provenance checks remain incomplete.
+Actual collector exits0 without force. CLI summary integrity/latest/reuse verified
+without analysis rescan; raw size/mtime/listing preserved. Prepared read-only RPM
+payload verifier (synthetic tamper tests) and explicit delivered-round CLI with
+strict0/1/2scoped outcome codes. RHEL9 execution/ongoing Garage and multi-host review
+remain later steps. Updated canonical file/workload/dashboard pages, review/handoff,
+plan/verification/index and new rhel9_validation. Wintap instructions/audit stay in
+its developer_docs. No private raw/host/config/credential evidence, field rollout,
+Garage writes, runtime-pin/security/default-control changes or Lintap/Wintappy edits.
+
+Wintap source bundle committed as03114f6;15changed production/test files across the
+two repos match the qualified VM snapshot byte-for-byte. Same feature branches;
+unrelated state/configuration work preserved. No PR or merge.
+
+## [2026-10-25] code | TCP EOF/close tuple attribution before RHEL
+
+User explicitly requested fixing TCP before RPM deployment. State callbacks had
+replaced complete cached tuples with teardown's zero local port and reset sampling
+clocks. Corrected complete-only existing-entry refresh, connect reset and unconditional
+close cleanup; state callbacks cannot resurrect closed entries. TCP requested-entry
+byte meaning and one-second sampling retained. Strict10-check actual-object regression
+fails prior object/passes correction, including delayed EOF, both connected closes,
+separate peerless listener close and empty socket caches. Final48turnover/15return
+regressions also pass. SDK10.0.402 build0errors/177warnings;171managed,97dashboard,
+21runner/CLI,7network-oracle tests pass. Seven changed production/test sources match VM.
+
+Two fresh normal-ETL pilots, including final rebuilt managed/object pair, have0errors,
+0missing checks/violations across five families and34passing receipt/hash/projection
+gates. Both TCP provenance checks resolved. Final collector exit0 unforced in184seconds;
+collector/observer/testhost inactive. Matching summary reuse/raw-snapshot preservation
+pass. CLI remains2/yellow for independent execveat/native-helper skips and repeated-
+Start count caveats. Added marker-gated TCP tuple contract1/lifecycle-hook receipt
+and required it in later RHEL validation. Canonical network/receipt pages, index,
+handoff/plan/verification/procedure updated; private evidence stays outside commits.
+Native RHEL package validation and prior broader limitations remain open.
+
+Wintap correction committed/pushed as `c4f6b1d`; Analytics validation/wiki companion
+uses the same feature branch. Unrelated working-tree changes remain preserved.
+
+## [2026-10-26] handoff | RHEL canary continuation
+
+Refreshed the telemetry identity/data-quality feature status for computer transition
+and replaced the stale dev handoff with a current continuation guide. The user reports
+a newer native RHEL package deployment; two completed S3 rounds show declared endpoint,
+file and process checks passing, with helper-dependent dedicated clone coverage. The
+three-source provenance gate remains incomplete because `sched_exec` was not observed
+despite the startup hook being reported attached. Two additional parallel overnight
+rounds await stop, upload settlement and separate review; package-to-installed-payload
+proof is not recorded. Updated brief, plan, verification, RHEL/network/runtime notes
+and index. Persistent updates omit host identifiers, private storage configuration,
+raw events and detailed runtime telemetry. No close-out or release claim; no source
+changes or S3 writes.
+
+## [2026-10-26] code | Resolve Wintap develop merge conflicts
+
+User-approved merge of develop `c670c26` into the telemetry feature recorded as
+Wintap `5afd320` (local, not pushed). The squash tree equals feature ancestor
+`c951d21`; retained feature identity, clean state publication and DuckDB1.5.6.1
+while removing a silent duplicate supply-chain/version property group. Declared
+standalone MCP's Windows/Linux/macOS-build-host RID graph and regenerated its
+lock after reproducing NU1004. SDK10.0.402 locked restores and managed builds pass;
+113focused managed and6runtime-alignment tests pass. Native/package/runtime
+qualification remains separate. Updated verification, plan, handoff and canonical
+repo build note. Unrelated local state and untracked work excluded from the merge.
+
+## [2026-10-26] code | Refresh Multipass development provisioning
+
+User authorized Lintap script updates and a fresh development VM. Both launchers
+now use qualified SDK10.0.402/CLI-Python DuckDB1.5.6, strict shared dependency
+checks, running-kernel BPF tools, guest-native Python/build paths and updated
+branch/build examples. Fresh Ubuntu arm64 creation and cloud-init pass; .NET build
+has0errors/178warnings; forced rebuild compiles all12 tracer objects.24 packaging/
+provisioning regressions pass on host and guest;5 validation-harness tests and its
+synthetic mock command pass in the guest. Bash syntax, PowerShell AST and cloud-init
+semantic parity pass. Updated Multipass guide, canonical repo page, feature plan/
+verification and index. Live sensor/package acceptance is separate.
+
+User subsequently reported successful Debian package builds and authorized
+commit/push of the provisioning changes and companion wiki notes. This is
+operator-reported build success; package installation/runtime results were not supplied.
