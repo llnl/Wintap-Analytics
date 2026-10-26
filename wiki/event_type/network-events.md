@@ -69,6 +69,26 @@ accepted connection's fate. Version-gated startup facts and bounded VM qualifica
 [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs §Start; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/network_ops_tracer.bpf.c §kprobe__tcp_sendmsg, kprobe__tcp_recvmsg, kretprobe__udp_sendmsg, kretprobe__udp_recvmsg -->
 
+### TCP tuple lifetime and EOF requests
+
+The corrected Linux CO-RE state callback refreshes only existing cache entries
+from complete live IPv4 tuples. It preserves their per-direction sample clocks
+and never replaces a learned tuple with teardown's zero local port. Connect,
+accept and data paths own cache creation; a state callback after `tcp_close`
+cannot recreate the deleted entry. New connect attempts reset cached tuple state,
+and close clears connection/owner entries even if the closing task is outside the
+optional PID filter. Cache absence/capacity loss still limits recoverability; no
+endpoint is inferred from a different socket or process.
+
+An EOF `recv(1)` may therefore emit a correctly attributed request of **one byte**
+when outside the sampling interval, despite returning **zero bytes**. This change
+repairs tuple lifetime and sample-clock handling; it does not make TCP requested
+bytes successful transfer counts. A listener close legitimately has no peer and
+is distinct from an accepted connection's close. Consumers must keep both roles
+and must not drop partial data rows merely to make validation pass. The new
+`tcpTupleContractVersion=1` receipt marker is independent of UDP contract2.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/tracers/network_ops_tracer.bpf.c §trace_inet_sock_set_state, kprobe__tcp_close, kprobe__tcp_recvmsg; ../wintap/devtools/network_trace_smoke_test.py §tcp_lifecycle_stimulus -->
+
 ### Shared aggregation boundary
 
 TCP and UDP ETL both use the shared `Every10Seconds` Esper context. TCP aggregates by source/destination 5-tuple attributes, `PidHash`, process name, PID, activity type, and `AgentId`, emitting packet-size sums/min/max/squares, sequence information, first/last seen, and event count. UDP aggregates by tuple, `PidHash`, PID, process name, activity type, and `AgentId`, emitting packet-size sum, first/last seen, and event count.

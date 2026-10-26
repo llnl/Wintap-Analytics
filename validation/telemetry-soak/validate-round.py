@@ -42,6 +42,8 @@ def qualification(con, runs, report, receipts, expected):
                 s.get('enabled') is True and s.get('tier') == 'core' and s.get('objectSha256') == digest for s in sensors),
                 any(s.get('objectSha256') and s['objectSha256'] != digest for s in sensors))
         features = context.get('sensors', {}).get('Network', {}).get('features', {})
+        check(result['test'] + ': TCP tuple lifecycle contract', features.get('tcpTupleContractVersion') == 1 and
+              features.get('tcpTupleLifecycleHooksAttached') is True)
         check(result['test'] + ': network return contract', features.get('networkContractVersion') == 2 and all(
             features.get(k) is True for k in ('tcpAcceptReturnAttached', 'udpSendSuccessReturnAttached', 'udpReceiveSuccessReturnAttached')))
         hooks = context.get('sensors', {}).get('FileOps', {}).get('hooks', {})

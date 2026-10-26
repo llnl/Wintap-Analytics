@@ -29,3 +29,15 @@ class AcceptanceStatusTests(unittest.TestCase):
         self.assertEqual(module.exit_status(report), 2)
         report['qualification'][0]['contradiction'] = True
         self.assertEqual(module.exit_status(report), 1)
+
+    def test_older_or_partial_tcp_receipt_cannot_claim_new_tuple_contract(self):
+        run = dict(runId='fixture', host=dict(hostname='fixture'), selectors=[])
+        sensor = dict(enabled=True, tier='core', objectSha256='a' * 64)
+        receipt = dict(captureRunId='startup', sensors=dict(Network=sensor, FileOps=sensor))
+        for version, attached, passed in ((None, True, False), (0, True, False), (1, False, False), (1, True, True)):
+            context = dict(status='temporal', capture_run_id='startup', sensors=dict(Network=dict(features=dict(
+                tcpTupleContractVersion=version, tcpTupleLifecycleHooksAttached=attached))))
+            report = dict(results=[dict(test='canary-cross-domain', run_id='fixture', runtime=context)])
+            checks = module.qualification(None, [run], report, [('fixture', receipt)], dict(Network='a' * 64, FileOps='a' * 64))
+            check = next(c for c in checks if c['check'].endswith('TCP tuple lifecycle contract'))
+            self.assertEqual(check['passed'], passed)

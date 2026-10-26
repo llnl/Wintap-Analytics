@@ -95,6 +95,17 @@ Detailed limits: [[wiki/work/wintap-telemetry-identity-and-data-quality/network_
 - [ ] Execute native RHEL9 RPM build/deployment/validation under later operator direction
 - [ ] Qualify summary reuse/staleness during ongoing Garage uploads and longer multi-host runs
 
-Two partial TCP provenance checks and broader Windows/logging-test qualification
-remain explicit. Downstream Wintappy IDs remain separately scoped. Procedure:
+The TCP continuation below resolves the two partial provenance checks. Broader
+Windows/logging-test qualification remains open; downstream Wintappy IDs remain
+separately scoped. Procedure:
 [[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]].
+
+## Authorized TCP continuation before RHEL
+
+- [x] Isolate local-port loss in EOF/close output and reproduce with prior actual object
+- [x] Preserve complete cached tuples and sample clocks across state changes
+- [x] Prevent state callback cache resurrection after close; clear cache on new connect
+- [x] Gate TCP tuple receipt contract on actual object marker and attached lifecycle hooks
+- [x] Add strict10-check actual-object data/half-close/delayed-EOF/close regression
+- [x] Complete fresh normal-ETL five-family qualification with unchanged endpoint assertions
+- [x] Record tests/results, update package validation, and commit/push corrected bundle

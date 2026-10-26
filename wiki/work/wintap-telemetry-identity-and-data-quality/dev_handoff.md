@@ -22,9 +22,12 @@ tags: [feature-work, handoff, qualification, long-duration, safety]
 **Current direction:** user approved the advisory corrective bundle and Ubuntu VM
 implementation/testing, with RHEL9 deferred to a later RPM deployment. Validator
 fixes, relative-unlink attribution, live case-pair proof and bounded socket-turnover
-qualification are complete. Next is native RHEL package build/review and the prepared
+qualification are complete. User then explicitly authorized fixing TCP before the
+RPM: complete cached tuples and sampling clocks now survive teardown; both previously
+incomplete checks pass in a fresh Ubuntu round. Next is native RHEL package build/review and the prepared
 [[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]] procedure.
-The latest Ubuntu pilot has no file gaps; two partial TCP provenance checks remain.
+The latest Ubuntu pilot has no missing checks/violations; all34 focused gates pass.
+CLI remains2 for independent execveat/native-helper skips and lifecycle-count caveats.
 See [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]] for scoped
 passes and the broader test-suite limitations. Older authorization paragraphs below
 are historical context, superseded only for this approved bundle.
@@ -86,7 +89,8 @@ Current correction results and gates:
 ## Qualification sequence
 
 For the corrected core network contract, verify trusted package/object hash plus
-receipt version2 and operation return hooks. Review UDP protocol-return byte meaning,
+receipt version2 and operation return hooks, plus TCP tuple contract1/lifecycle hooks.
+Review UDP protocol-return byte meaning,
 sampling and exact independent mode/socket expectations. Use only a reviewed prebuilt
 native helper on field hosts; actual-object observer is dev-time/idle-VM-only.
 Use a helper compiled/reviewed for the target architecture, not the arm64 VM

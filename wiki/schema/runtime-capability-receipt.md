@@ -106,6 +106,13 @@ UDP context map; older objects remain version0/unknown. Accept/UDP successful-re
 hook attachment, sampling intervals and byte/address contracts are additive features,
 not workload acceptance. PID values are not copied into these feature facts. Object
 hash and trusted package inputs must still be verified separately.
+The TCP attribution correction adds independent `tcpTupleContractVersion=1`, gated
+by the loaded core object's `tcp_tuple_v1` map marker, and
+`tcpTupleLifecycleHooksAttached` for IPv4 connect entry/return, accept return,
+Send/Recv and close hooks. Older/fallback objects report0/false or absent/unknown.
+Contract1 preserves complete cached tuples/sample clocks through teardown and
+prevents state-callback cache resurrection after close. Neither marker proves a
+trusted build, complete capture, or successful TCP transfer bytes.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs §Start -->
 
 ```sql

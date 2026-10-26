@@ -3781,3 +3781,28 @@ Garage writes, runtime-pin/security/default-control changes or Lintap/Wintappy e
 Wintap source bundle committed as03114f6;15changed production/test files across the
 two repos match the qualified VM snapshot byte-for-byte. Same feature branches;
 unrelated state/configuration work preserved. No PR or merge.
+
+## [2026-10-25] code | TCP EOF/close tuple attribution before RHEL
+
+User explicitly requested fixing TCP before RPM deployment. State callbacks had
+replaced complete cached tuples with teardown's zero local port and reset sampling
+clocks. Corrected complete-only existing-entry refresh, connect reset and unconditional
+close cleanup; state callbacks cannot resurrect closed entries. TCP requested-entry
+byte meaning and one-second sampling retained. Strict10-check actual-object regression
+fails prior object/passes correction, including delayed EOF, both connected closes,
+separate peerless listener close and empty socket caches. Final48turnover/15return
+regressions also pass. SDK10.0.402 build0errors/177warnings;171managed,97dashboard,
+21runner/CLI,7network-oracle tests pass. Seven changed production/test sources match VM.
+
+Two fresh normal-ETL pilots, including final rebuilt managed/object pair, have0errors,
+0missing checks/violations across five families and34passing receipt/hash/projection
+gates. Both TCP provenance checks resolved. Final collector exit0 unforced in184seconds;
+collector/observer/testhost inactive. Matching summary reuse/raw-snapshot preservation
+pass. CLI remains2/yellow for independent execveat/native-helper skips and repeated-
+Start count caveats. Added marker-gated TCP tuple contract1/lifecycle-hook receipt
+and required it in later RHEL validation. Canonical network/receipt pages, index,
+handoff/plan/verification/procedure updated; private evidence stays outside commits.
+Native RHEL package validation and prior broader limitations remain open.
+
+Wintap correction committed/pushed as `c4f6b1d`; Analytics validation/wiki companion
+uses the same feature branch. Unrelated working-tree changes remain preserved.

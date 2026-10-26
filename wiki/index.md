@@ -77,8 +77,11 @@ Senior review: [[wiki/work/wintap-telemetry-identity-and-data-quality/advisor_re
 recommends a bounded corrective bundle before the next package qualification.
 That user-approved bundle is now Ubuntu-qualified:97dashboard/20runner/171targeted
 managed tests,48turnover/15return actual-object checks, exact relative/cwd Deletes
-and live case-only sensor keys pass. Two partial TCP checks remain incomplete;
-broader Windows/logging-test limitations are recorded. Next:
+and live case-only sensor keys pass. Subsequent authorized TCP repair preserves
+complete cached tuples/sample clocks through teardown: strict10-check actual-object
+regression and fresh normal-ETL TCP provenance checks pass; all34 focused gates pass.
+CLI remains2 for independent coverage skips/count caveats; broader Windows/logging
+limitations are recorded. Next:
 [[wiki/work/wintap-telemetry-identity-and-data-quality/rhel9_validation]] — native RPM
 payload verifier, independent round and explicit post-delivery validation command.
 

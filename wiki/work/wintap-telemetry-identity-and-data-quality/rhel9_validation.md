@@ -104,15 +104,23 @@ The CLI requires both independently supplied hashes; passing current disk hashes
 without reviewed package provenance is only local-build qualification. Receipt hashes
 link the loaded object to the artifact, while startup remains temporal context rather
 than continuous health or exact event ownership. Checks include network contract2/
-return hooks, core file open/unlink hooks, case-only sensor keys and explicit normal
-process provenance with the three recognized source values. A FileOps partial status
+return hooks, TCP tuple lifecycle contract1/hooks, core file open/unlink hooks,
+case-only sensor keys and explicit normal process provenance with the three
+recognized source values. A FileOps partial status
 remains visible even if the required subset attaches; assess other failed hooks.
+
+For the TCP correction, require `tcpTupleContractVersion: 1` and
+`tcpTupleLifecycleHooksAttached: true`, alongside the exact rebuilt object hash.
+The marker distinguishes older objects that advertise UDP contract2 but still
+overwrite TCP tuples/reset sampling at teardown. Missing marker/hooks stay incomplete.
 
 Exit codes: **0** all declared scoped checks observed, **1** contradiction/harness
 failure, **2** incomplete/unavailable evidence. No exit code certifies full capture,
 loss/count conservation or historical repair. Skips/warnings/missing tuples remain
-incomplete. The Ubuntu pilot's two partial TCP provenance checks currently yield2;
-do not waive them to obtain0 on RHEL. Review any known limitation explicitly when
+incomplete. The corrected Ubuntu producer passes both previously incomplete TCP
+checks; CLI still exits2 for independent execveat/native-helper skips and repeated-
+Start lifecycle/count caveats. Do not waive those limits or endpoint checks to
+obtain0 on RHEL. Review any known limitation explicitly when
 deciding whether to proceed with a limited pilot.
 <!-- GROUND_TRUTH: validation/telemetry-soak/validate-round.py; streamlit/projects/SmokeTests/queries.py -->
 

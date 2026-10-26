@@ -29,6 +29,50 @@ tags: [feature-work, retrospective, verification, proof, limits]
 
 # Outcome
 
+## TCP attribution continuation — Ubuntu, before RHEL
+
+User explicitly requested resolving the two TCP checks before rebuilding/deploying
+the RPM. The cause was producer-side: `inet_sock_set_state` replaced a complete
+cached tuple with teardown's zero local port and reset both sample clocks. The
+correction refreshes only existing entries from complete live tuples, preserves
+sample clocks, prevents state-callback resurrection after close, clears tuple state
+on new connect attempts, and cleans connection/owner maps even for an unfiltered
+closing task. TCP bytes remain requested-at-entry, with one-second sampling.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/tracers/network_ops_tracer.bpf.c §trace_inet_sock_set_state, kprobe__tcp_close -->
+
+- `network_trace_smoke_test.py --tcp-lifecycle`: prior object **fails**, corrected
+  object **10 checks pass**. Prior trace has four zero-port Receive requests;
+  corrected trace has none. Immediate EOF remains sampled; two delayed `recv(1)`
+  requests are observed with complete endpoint tuples despite returning zero bytes.
+  Exact connected closes and the separate peerless listener close are checked;
+  extra/missing/partial/duplicate observations fail. Both socket caches are empty.
+- Final observer builds with `-Wall -Wextra -Werror`, requires IPv4 connect entry/
+  return plus state/accept/data/close/UDP hooks; final actual-object **10 TCP,
+  48 turnover, 15 return-matrix checks pass**. UDP context maps also empty.
+- Final SDK10.0.402 Linux build **0 errors/177 warnings**; same targeted managed command below:
+  **171 pass**, no failures/skips. Dashboard synthetic HTTP/S3 suite **97 pass**;
+  runner/CLI suite **21 pass**, including old/partial TCP receipt rejection;
+  Wintap network oracle unit suite **7 pass**. Seven changed production/test files
+  match the VM snapshot byte-for-byte.
+- Both fresh180-second normal-ETL pilots, including the final rebuilt managed/object
+  pair: **0 errors, 0 missing families,
+  0 missing checks, 0 violations** across five families. Both formerly incomplete
+  cross-domain TCP checks pass; all **34 receipt/hash/projection checks pass**.
+  Collector exits **0**, unforced. Final elapsed184seconds; collector, observer and
+  testhost processes confirmed inactive. Matching summary reuse passes, and the
+  validation checks raw parquet sizes/mtimes/listing remain unchanged before saving.
+- CLI correctly retains **exit2/yellow**: Python execveat is unavailable, the named
+  cross-domain native-helper group is skipped, and repeated raw Starts retain
+  lifecycle/image-count caveats. The separate native clone family passes. These
+  limitations are distinct from the now-resolved TCP provenance failures.
+
+New receipt fields `tcpTupleContractVersion=1` and
+`tcpTupleLifecycleHooksAttached=true` are required by the prepared RHEL validator,
+alongside trusted rebuilt object hashes and UDP contract2. Marker presence is not
+cryptographic build proof. Native RHEL/package, IPv6, non-loopback wildcard,
+concurrent callers, forced pointer reuse/cache-capacity loss and historical loss
+remain outside this Ubuntu result. Private evidence stays outside committed files.
+
 ## Advisory corrective bundle — Ubuntu qualification
 
 User approved implementation/testing on the Ubuntu VM; native RHEL9 RPM deployment
