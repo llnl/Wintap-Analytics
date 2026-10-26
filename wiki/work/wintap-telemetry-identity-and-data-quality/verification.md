@@ -29,6 +29,56 @@ tags: [feature-work, retrospective, verification, proof, limits]
 
 # Outcome
 
+## Develop merge resolution — 2026-10-26
+
+User authorized merging `origin/develop` (`c670c26`) into the feature branch
+(`c4f6b1d`). Merge commit: **`5afd320`**, local only. Develop's tree exactly equals
+feature ancestor `c951d21`; its squash history caused ten textual conflicts.
+Preserved feature identity helpers/source links, clean state publication, and
+DuckDB wrapper1.5.6.1. Removed a silently duplicated supply-chain/version property
+group in `Directory.Build.props`. Before the MCP adjustment below, the resolved
+index matched the feature tree exactly. Existing local state/untracked work was
+excluded from the commit.
+
+MCP's arm64-only lock failed a Windows locked restore with NU1004. Declared
+`win-x64;linux-x64;linux-arm64;osx-arm64` in the standalone helper and regenerated
+its lock using SDK10.0.402. The macOS RID covers the ReadyToRun SDK-host graph.
+Existing dependency graphs, versions and hashes are unchanged; three RID graphs
+are added. `dotnet restore -r` overrides the plural list; use
+`-p:RuntimeIdentifier=<rid>` for target-specific locked restore. Documented in
+`../wintap/BUILD_AND_TEST.md`.
+
+Verification used an isolated tracked-source archive on macOS arm64, with the
+MCP project adjustment matched to the committed candidate. `dotnet` below is the
+existing SDK10.0.402 installation, explicitly selected through PATH/DOTNET_ROOT:
+
+- `dotnet restore tests/Wintap.Tests/Wintap.Tests.csproj --locked-mode
+  -p:EnableWindowsTargeting=true`: pass; includes Windows sensor/API dependencies.
+- `dotnet test tests/Wintap.Tests/Wintap.Tests.csproj --no-restore
+  -p:EnableWindowsTargeting=true --filter 'FullyQualifiedName~IdentityContractTests|FullyQualifiedName~ProcessIdentity|FullyQualifiedName~LinuxLifecycleEvidenceTests|FullyQualifiedName~NetworkEndpointNormalizationTests|FullyQualifiedName~TelemetryProjectionQualityTests|FullyQualifiedName~RuntimeCapabilitiesTests|FullyQualifiedName~EtlStartupReadinessTests|FullyQualifiedName~EtlShutdownBarrierTests'`:
+  **113 pass**, zero failures/skips; Windows sensor and tests compile.
+- `dotnet restore platform/windows/WintapCoreSvcMgr/WintapCoreSvcMgr.csproj
+  --locked-mode -p:EnableWindowsTargeting=true`, followed by `dotnet build` on
+  that project with `--no-restore -p:EnableWindowsTargeting=true`: pass,
+  **0 errors/6 warnings**.
+- `dotnet restore wintap/Lintap.csproj --locked-mode -p:EnableMcpServer=false`,
+  then `dotnet build wintap/Lintap.csproj --no-restore -p:EnableMcpServer=false`:
+  pass, **0 errors/177 warnings**. Four non-MCP conflicted locks stay byte-identical.
+- `dotnet restore shared/ai/wintap_mcp_server/wintap_mcp_server.csproj
+  --force-evaluate`: generated the final MCP lock. Default locked restore and
+  locked restores with `-p:RuntimeIdentifier=<rid>` pass for `win-x64`, `linux-x64`,
+  `linux-arm64`; `dotnet build` on the helper with `--no-restore -r <rid>` passes
+  for each (**0 errors/22 warnings** each).
+- `python3 -B -m unittest devtools/test_runtime_alignment.py -q`: **6 pass** in
+  the real checkout. The archive attempt initially failed its `git ls-files`
+  precondition; rerun used the actual repository without changing the test.
+- Resolved-index equality before lock changes, generated-lock semantic equality,
+  unchanged existing package graphs, and staged `git diff --check`: pass.
+
+This is managed cross-build/merge verification, not native sensor, package,
+ReadyToRun publish, or full Windows runtime acceptance. The previously documented
+shared-API locked cross-RID publish limitation remains outside this MCP fix.
+
 ## Operator-reported RHEL deployment and S3 canaries — 2026-10-26
 
 The user reports that a new native RHEL 9 x86_64 RPM was built and deployed.

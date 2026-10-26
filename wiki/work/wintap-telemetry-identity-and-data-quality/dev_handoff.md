@@ -27,6 +27,11 @@ depend on private shell history, local audit archives, or machine-specific files
 
 ## Current position
 
+- Local merge maintenance on2026-10-26: Wintap `5afd320` merges `origin/develop`
+  (`c670c26`) into the feature branch, preserving feature identity/build semantics
+  and fixing standalone MCP's multi-RID locked restore graph. No push performed.
+  SDK10.0.402 managed builds,113focused tests and6runtime-alignment checks pass;
+  see [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]].
 - Wintap's TCP tuple-lifetime correction and Analytics validation changes are
   committed on the existing feature branches: Wintap `c4f6b1d`, Analytics
   `a293775`. No PR/merge is implied.

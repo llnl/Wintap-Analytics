@@ -3820,3 +3820,15 @@ proof is not recorded. Updated brief, plan, verification, RHEL/network/runtime n
 and index. Persistent updates omit host identifiers, private storage configuration,
 raw events and detailed runtime telemetry. No close-out or release claim; no source
 changes or S3 writes.
+
+## [2026-10-26] code | Resolve Wintap develop merge conflicts
+
+User-approved merge of develop `c670c26` into the telemetry feature recorded as
+Wintap `5afd320` (local, not pushed). The squash tree equals feature ancestor
+`c951d21`; retained feature identity, clean state publication and DuckDB1.5.6.1
+while removing a silent duplicate supply-chain/version property group. Declared
+standalone MCP's Windows/Linux/macOS-build-host RID graph and regenerated its
+lock after reproducing NU1004. SDK10.0.402 locked restores and managed builds pass;
+113focused managed and6runtime-alignment tests pass. Native/package/runtime
+qualification remains separate. Updated verification, plan, handoff and canonical
+repo build note. Unrelated local state and untracked work excluded from the merge.

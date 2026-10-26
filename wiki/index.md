@@ -6,6 +6,11 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+Develop merge maintenance: Wintap `5afd320` (local) preserves feature semantics
+and fixes standalone MCP's multi-RID lock graph;113focused managed tests and
+6runtime-alignment checks pass. See
+[[wiki/work/wintap-telemetry-identity-and-data-quality/verification]].
+
 **Telemetry-quality retrospective:**
 [[wiki/work/wintap-telemetry-identity-and-data-quality/brief]] — the expanded scope
 beyond .NET10: identity,network semantics,downstream precision/counters and delivery.

@@ -18,6 +18,17 @@ tags: [feature-work, retrospective, implementation, closeout]
 
 # Reconstructed workflow
 
+## Develop merge maintenance — 2026-10-26
+
+- [x] Merge latest develop, preserve feature identity/package semantics, and remove
+  the silent duplicate build-property group (`5afd320`, local only).
+- [x] Regenerate MCP's declared multi-RID lock graph and verify default/targeted
+  locked restores plus Windows/Linux managed builds with SDK10.0.402.
+- [x] Run focused identity/lifecycle/network/ETL checks (113 managed, 6 runtime
+  alignment) and preserve unrelated working-tree changes.
+
+Details: [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]].
+
 This summarizes the actual progression; it is not a pre-implementation plan.
 Completed items mean scoped implementation/verification,not release certification.
 
