@@ -66,6 +66,25 @@ class AnalysisTests(unittest.TestCase):
         self.assertFalse(hostname_aliases([r], [('fixture', receipt()), ('fixture.other.invalid', receipt())]))
         self.assertFalse(hostname_aliases([r], [('fixture.other.invalid', receipt())]))
 
+    def test_short_parquet_hostname_matches_fqdn_manifest_via_receipt_alias(self):
+        r = run(host='fixture.example.invalid')
+        self.con.execute("""CREATE OR REPLACE VIEW smoke_data AS
+            SELECT 'process' AS domain, 'fixture' AS host,
+                TIMESTAMP '2026-10-25 12:00:01' AS event_time, 42 AS pid,
+                1 AS parent_pid, 'identity' AS pid_hash, 'start' AS activity,
+                NULL::VARCHAR AS protocol, 1 AS event_count""")
+        with patch('analysis.prepare_data', return_value=(1, [], True)), \
+             patch('analysis.read_receipts', return_value=([('fixture', receipt())], [])):
+            report = analyze_round(self.con, [r], [r], [], [])
+
+        result = report['results'][0]
+        case = result['cases'][0]
+        self.assertEqual(case['rows'], 1)
+        self.assertIn('PID 42 Start', [check['expectation'] for check in case['checks'] if check['observed']])
+        self.assertEqual(result['runtime']['hostname_correlation'], 'inferred unique short/FQDN alias')
+        self.assertTrue(any('not exact host identity proof' in reason for reason in result['reasons']))
+        self.assertEqual(r['host']['hostname'], 'fixture.example.invalid')
+
     def test_temporal_context_latest_preceding_and_duplicates(self):
         r = run(host='fixture')
         values = [('fixture', receipt()), ('fixture', receipt())]
