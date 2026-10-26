@@ -18,6 +18,16 @@ tags: [feature-work, retrospective, implementation, closeout]
 
 # Reconstructed workflow
 
+## Multipass development environment refresh — 2026-10-26
+
+- [x] Align Bash/PowerShell provisioning with qualified .NET/DuckDB dependencies,
+  strict compiler/BTF/runtime checks and guest-native Python/build paths.
+- [x] Create a fresh user-designated Ubuntu arm64 VM and verify cloud-init,
+  SDK10.0.402, all12 tracer objects and the .NET development build.
+- [x] Verify24 packaging/provisioning regressions on host and guest, plus5
+  validation-harness tests and its synthetic mock command in the guest.
+- [x] Update Multipass usage and canonical wiki build guidance.
+
 ## Develop merge maintenance — 2026-10-26
 
 - [x] Merge latest develop, preserve feature identity/package semantics, and remove

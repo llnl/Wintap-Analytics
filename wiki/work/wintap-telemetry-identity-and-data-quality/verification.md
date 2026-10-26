@@ -29,6 +29,44 @@ tags: [feature-work, retrospective, verification, proof, limits]
 
 # Outcome
 
+## Multipass development environment refresh — 2026-10-26
+
+User authorized Lintap provisioning updates and creation of a fresh development
+VM. Updated both Bash/PowerShell launchers, shared guest checks, configuration
+example and Multipass guide. Provisioning uses SDK10.0.402, CLI/Python DuckDB1.5.6,
+Ubuntu toolchain packages, guest-native Python/build paths, fatal cloud-init
+failures by default, and explicit compiler/BTF/runtime dependency checks.
+
+- Fresh `bash multipass-lintap.sh` with a separate configuration enabling
+  `BUILD_WINTAP=true`, `RUN_POSTCREATE_CHECKS=true`, `CLOUD_INIT_STRICT=true`:
+  completed; cloud-init **done**, dependency marker **LINTAP_DEV_DEPENDENCIES_OK**.
+  Mounted checkout/branch selection was preserved.
+- Guest: Ubuntu24.04 arm64, kernel6.8.0-147-generic, SDK10.0.402,
+  .NET/ASP.NET Core10.0.13, Clang18.1.3, bpftool7.4.0, uv0.13.5,
+  Python3.12.3, CLI/Python DuckDB1.5.6. BPF compilation and kernel BTF parsing pass.
+- Script's `make build_dotnet` with explicit native build/output paths:
+  **0 errors/178 warnings**; expected `Lintap.dll` exists in guest-native storage.
+- `make -B all` in Wintap's tracer directory forces a fresh header and **all12
+  CO-RE/tracepoint objects** to compile successfully, avoiding an incremental-only
+  toolchain check.
+- `python -m pytest tests/test_dotnet_packaging.py tests/test_multipass_provisioning.py -q`
+  in Lintap: **24 pass** on host and fresh guest. New negative cases verify that
+  cloud-init/dependency failures stop before builds or SSH configuration.
+- Guest-local `UV_PROJECT_ENVIRONMENT` with `uv run --extra dev pytest -q` in
+  Analytics `validation/process-creation`: **5 pass**. `uv run wpv-mock-run`
+  exits0 and writes synthetic reports; its intentional duplicate-exec warning
+  remains present.
+- `bash -n`, PowerShell AST parsing, cloud-init YAML semantic parity between
+  launchers and syntax checks on embedded shell commands: pass.
+
+The live creation exercised the Bash launcher on macOS with an Ubuntu arm64
+guest; PowerShell was syntax/parity checked. This verifies development provisioning
+and compilation, not live sensor capture or native package acceptance.
+
+The user subsequently reported successful Debian package builds and authorized
+commit/push. Package versions, architectures and installation/runtime results
+were not supplied; this records operator-reported build success.
+
 ## Develop merge resolution — 2026-10-26
 
 User authorized merging `origin/develop` (`c670c26`) into the feature branch

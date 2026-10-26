@@ -3853,3 +3853,19 @@ lock after reproducing NU1004. SDK10.0.402 locked restores and managed builds pa
 113focused managed and6runtime-alignment tests pass. Native/package/runtime
 qualification remains separate. Updated verification, plan, handoff and canonical
 repo build note. Unrelated local state and untracked work excluded from the merge.
+
+## [2026-10-26] code | Refresh Multipass development provisioning
+
+User authorized Lintap script updates and a fresh development VM. Both launchers
+now use qualified SDK10.0.402/CLI-Python DuckDB1.5.6, strict shared dependency
+checks, running-kernel BPF tools, guest-native Python/build paths and updated
+branch/build examples. Fresh Ubuntu arm64 creation and cloud-init pass; .NET build
+has0errors/178warnings; forced rebuild compiles all12 tracer objects.24 packaging/
+provisioning regressions pass on host and guest;5 validation-harness tests and its
+synthetic mock command pass in the guest. Bash syntax, PowerShell AST and cloud-init
+semantic parity pass. Updated Multipass guide, canonical repo page, feature plan/
+verification and index. Live sensor/package acceptance is separate.
+
+User subsequently reported successful Debian package builds and authorized
+commit/push of the provisioning changes and companion wiki notes. This is
+operator-reported build success; package installation/runtime results were not supplied.

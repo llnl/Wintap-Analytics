@@ -6,6 +6,10 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+Multipass development refresh: [[wiki/repo/lintap-supporting-repo]] — fresh Ubuntu
+arm64 provisioning verifies SDK10.0.402, DuckDB1.5.6, all12 tracers, managed build,
+24 packaging/provisioning regressions and5 validation-harness tests.
+
 Develop merge maintenance: Wintap `5afd320` (local) preserves feature semantics
 and fixes standalone MCP's multi-RID lock graph;113focused managed tests and
 6runtime-alignment checks pass. See

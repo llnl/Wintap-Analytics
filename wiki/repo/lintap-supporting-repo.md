@@ -6,10 +6,14 @@ grounded_by:
   - ../Lintap/README.md
   - ../Lintap/teletap/README.md
   - ../Lintap/packaging/README.md
+  - ../Lintap/Multipass.md
+  - ../Lintap/multipass-lintap.sh
+  - ../Lintap/multipass-lintap.ps1
+  - ../Lintap/multipass-check-dev.sh
   - ../wintap/global.json
   - ../wintap/wintap/platform/linux/sensor/ebpf/helpers/LibBpf.cs
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-26
 repo_scope: Lintap
 implementation_area: packaging
 event_domain: cross-domain
@@ -115,6 +119,27 @@ and RPM `0.3.5-12.el8` for x86_64. They are independently versioned package
 artifacts and should be identified by their package-manager versions when
 deployed.
 <!-- GROUND_TRUTH: wiki/work/debian-package-refresh/release-README.md -->
+
+## Multipass development dependencies
+
+Lintap owns the Bash/PowerShell Multipass provisioning entry points; the sensor
+build uses the mounted Wintap checkout and Analytics owns the validation harness.
+Both launchers install SDK **10.0.402** in guest-native `/opt/wintap-sdk`, including
+.NET/ASP.NET Core 10, and DuckDB CLI/Python **1.5.6**. Ubuntu supplies Clang/LLVM,
+libbpf/libelf development packages and running-kernel tools. The shared guest
+check requires exact SDK selection, both shared runtimes, actual BPF compilation,
+kernel BTF parsing and matching DuckDB versions. Cloud-init failures are fatal by
+default. Branch checkout remains opt-in; the example target is `develop`.
+<!-- GROUND_TRUTH: ../Lintap/multipass-lintap.sh §runcmd; ../Lintap/multipass-lintap.ps1 §cloudInit; ../Lintap/multipass-check-dev.sh -->
+
+Python environments and managed build outputs/intermediates use guest-native
+storage to avoid reusing host environments or executing on shared mounts.
+`BUILD_WINTAP=true` invokes tracer and managed builds; `RUN_VALIDATION_MOCKS=true`
+uses a separate guest-local validation environment. Commands and output locations
+are documented in `../Lintap/Multipass.md`. Fresh Ubuntu arm64 provisioning,
+12-object tracer rebuild and managed compilation passed on 2026-10-26; details
+are in [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]].
+<!-- GROUND_TRUTH: ../Lintap/Multipass.md §Useful commands inside the VM; ../Lintap/multipass-lintap.sh §BUILD_WINTAP -->
 
 ## Wiki Boundary
 
