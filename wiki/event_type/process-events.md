@@ -5,6 +5,8 @@ confidence: high
 grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/task_start_boottime.h
+  - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/exit_tracer.bpf.c
   - ../wintap/wintap/core/infrastructure/ProcessResolver.cs
   - ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs
   - ../wintap/wintap/platform/windows/sensor/etw/helpers/ProcessTraceDataExtensions.cs
@@ -18,7 +20,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/model/ProcessObjectModel.cs
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-26
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: process
@@ -52,6 +54,15 @@ reads child pid/tgid, excludes thread births, and emits parent TGID. Its
 tracepoint-only fallback captures best-effort clone/clone3 flags; absent auxiliary
 hooks remain a thread-as-process risk. This does not alter Windows producers.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §BpfObjectFileName; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c §trace_process_fork -->
+
+The Clone and Exit CO-RE objects share a start-boottime reader that probes
+`task_struct.start_boottime`, then the RHEL 8 BTF spelling
+`task_struct.real_start_time`; it returns zero if neither field exists. This
+keeps the optional field check compilable when the build host's generated
+`vmlinux.h` contains only one spelling. On RHEL 8.10 x86_64, both CO-RE objects
+and a self-contained RPM built successfully; this was a compile/package test,
+not a BPF load/attach or live-capture qualification.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/tracers/task_start_boottime.h; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c §trace_process_fork; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/exit_tracer.bpf.c §trace_process_exit -->
 
 Fork and exec are separate Start observations, not necessarily separate identities:
 the Ubuntu arm64 workload produced fork + exec-entry + sched-exec rows sharing

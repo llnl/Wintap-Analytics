@@ -188,6 +188,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 |------|------------|---------|
 | [[wiki/workflow/future-experiment-analysis-workflows]] | high | Tracks first-class analytics topics including ACME4 Explore, DuckDB view construction, process trees/paths, process-centric SQL, and network joins. |
 | [[wiki/workflow/lintap-dev-field-workflow]] | high | The Lintap dev/field split: field-host clones are read-only by policy (reviews transcribed dev-side), diagnostics bundles must be self-sufficient, deploys pull and rebuild tracers on-host, pushes require the human's credentials, and agent memory must mirror into the wiki. |
+| [[wiki/workflow/rhel8-rpm-build-prerequisites]] | high | Preflight and software prerequisites for a native RHEL 8 x86_64 Lintap RPM build, including exact .NET SDK 10.0.402 and the current BTF/CO-RE limitation. |
 ## Repo
 
 | Page | Confidence | Summary |

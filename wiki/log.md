@@ -5,6 +5,27 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-10-26] code | RHEL 8 CO-RE start-time field compatibility
+
+Added shared CO-RE flavor probes for upstream `task_struct.start_boottime` and
+RHEL 8 `task_struct.real_start_time`; Clone and Exit now use the same
+best-effort start-boottime helper. On RHEL 8.10 x86_64, all tracer CO-RE
+objects compiled and a self-contained RPM built in isolated `/tmp/opencode`
+work/output directories (SHA-256
+`5737b7cefbec9d394b7648aa387ab25245b9077b8e3e00a54f778b34ecfc3943`). Also
+compiled both changed objects against a temporary upstream-style BTF header.
+No package installation, BPF load/attach, or live capture was performed.
+Updated process semantics and Linux capability documentation; pre-existing
+untracked work preserved.
+
+## [2026-10-26] docs | RHEL 8 RPM build prerequisites
+
+Added a clean RHEL 8 x86_64 prerequisite workflow: read-only host/repository/BTF
+preflight, approved DNF build dependencies, exact isolated .NET SDK 10.0.402
+selection, and source/worktree checks. Explicitly supersedes stale SDK 8
+handoff notes and clarifies that kernel-devel does not provide BTF. Linked from
+the index; no system packages installed and no source-repo files changed.
+
 ## [2026-10-22] code | Clone default TRUE and Ubuntu package acceptance
 
 User authorized Ubuntu/arm tests and separate RHEL handoff. Debian/RPM Clone
