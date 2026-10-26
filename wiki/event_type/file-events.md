@@ -6,8 +6,11 @@ grounded_by:
   - ../wintap/wintap/platform/windows/sensor/etw/FileSensor.cs
   - ../wintap/wintap/core/etl/esper/file.epl
   - ../wintap/shared/WintapAPI/WintapMessage.cs
+  - ../wintap/wintap/core/etl/extract/FileSerializer.cs
+  - ../wintap/wintap/core/etl/transform/IdGenerator.cs
+  - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
-last_validated: 2026-06-29
+last_validated: 2026-10-25
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: file
@@ -39,6 +42,16 @@ The file ETL query groups file messages in a 10-second time batch by file path, 
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/file.epl §query -->
 
 ## Analysis Implications
+
+Approved greenfield projection (2026-10-25): FileSerializer preserves producer
+path text rather than lowercasing non-Windows paths. Linux case-only paths remain
+distinct in persisted `File_Path` and sensor file-key inputs; Windows producer
+normalization and serializer pass-through are unchanged. No raw datasets are
+rewritten. Wintappy's separate lowercase-derived `file_id` still can collapse
+case-only Linux names; do not confuse that downstream ID with the sensor key.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/FileSerializer.cs §SelectPath; ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenAttrKeyForFile; ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs; ../Wintappy/wintap_dbt/models/silver/process_file.sql -->
+Decision and remaining downstream boundary:
+[[wiki/tension/linux-file-path-case-projection]].
 
 Downstream file rows are aggregate activity records rather than one row per raw ETW callback. Analysts should treat byte counts and event counts as 10-second grouped observations tied to process attribution added by `EventChannel`.
 <!-- SYNTHESIS: inferred from ../wintap/wintap/platform/windows/sensor/etw/FileSensor.cs and ../wintap/wintap/core/etl/esper/file.epl -->

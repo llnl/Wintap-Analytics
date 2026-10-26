@@ -3715,3 +3715,25 @@ by its regression, so no silent case-fold proof or unreviewed compatibility chan
 Process projection also omits source breadcrumbs; no command-line/schema mutation
 to fabricate provenance. Partial TCP EOF/close tuples remain incomplete. Field
 package/install/pilot, file-case and explicit source-column contracts are next gates.
+
+## [2026-10-25] code | Approved greenfield process-source and file-case projections
+
+User explicitly approved both prospective changes; greenfield development does not
+require deployment/data migration. Wintap normal Start/Refresh parquet adds nullable
+ProcessStartSource from bounded recognized producer Arguments breadcrumbs, not
+CommandLine inference. FileSerializer preserves producer case and case-distinct
+sensor file-key inputs; Windows behavior/identity formulas/pins/security/retry/default-
+off controls unchanged. Analytics prefers explicit source with real Arguments fallback.
+Linux build0errors/177warnings;180shared managed and94dashboard tests pass, including
+production-schema null/mixed provenance parquet roundtrip and locale/case-key negatives.
+Initial new test incorrectly indexed a deserialized null key; corrected assertion,
+not writer. Fresh180-second normal-ETL VM pilot delivers five families with0evidence/
+analysis errors and0violations. Eight-file/process/clone/dedicated TCP have0missing
+checks; all selected repeats source-classify without extra-birth claims. Cross-domain
+retains one Delete gap and two incomplete TCP provenance checks; all triage yellow.
+Receipt contract2/copied hash, local summary/latest integrity/reload and raw size/mtime
+preservation pass; VM collector/observer inactive. Resolved sensor file-case tension;
+Wintappy's separate lowercase-derived file_id remains unmodified/uncertified. Updated
+canonical process/file/dashboard pages, index, plans, verification and handoff. No
+private evidence/identifiers/configuration filed; no Garage writes, field rollout,
+Lintap/Wintappy edits or PR. Same feature branches; unrelated work preserved.

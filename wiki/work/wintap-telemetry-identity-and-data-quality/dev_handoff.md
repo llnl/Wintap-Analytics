@@ -74,8 +74,13 @@ sampling and exact independent mode/socket expectations. Use only a reviewed pre
 native helper on field hosts; actual-object observer is dev-time/idle-VM-only.
 Use a helper compiled/reviewed for the target architecture, not the arm64 VM
 artifact on x64 hosts. Normal process source-provenance persistence and Linux
-file-case projection require their own reviewed prospective contracts; current
-dashboard must leave those unknown, not rewrite/merge historical observations.
+file-case projection were approved by the user for greenfield development on
+2026-10-25. Nullable `ProcessStartSource` uses only recognized producer breadcrumbs;
+FileSerializer preserves producer paths and Windows behavior. No raw-data rewriting
+or process-identity change. Missing source and partial TCP provenance remain unknown.
+Wintappy still folds paths in its separate file_id formula; it is not modified or
+certified by the sensor/dashboard tests. Qualification results:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
 
 Clean full native/eBPF/package build → package contents/dependencies/configuration
 review → authorized disposable installation/start/restart/shutdown → independent

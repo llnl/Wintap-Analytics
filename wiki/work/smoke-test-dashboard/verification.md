@@ -249,6 +249,26 @@ Only finalized `.parquet` files are read, no writable dataset/DBT state opened.
 
 ## Remaining limits
 
+### Greenfield projection follow-up — 2026-10-25
+
+User approved both Wintap projections. Analytics normalization now prefers explicit
+`ProcessStartSource`, retaining real Arguments-only fallback and no CommandLine
+inference. VM `SMOKE_S3_HTTP_TEST=1 python -B -m unittest discover -s
+streamlit/projects/SmokeTests -p 'test*.py'`: **94 passed**, zero skips. Wintap
+shared projection/path/network/receipt/identity/resolver/root selection:180passed.
+
+Fresh normal-ETL bounded VM round delivers all five families, zero evidence/analysis
+errors or violations. Eight-file paths/activities match exactly; process/clone and
+dedicated TCP endpoint families have zero missing checks. All repeated-Start groups
+are source-classified (clone3, process13, cross-domain6), never extra-birth proof.
+Cross-domain retains one expected file Delete gap and two incomplete TCP provenance
+checks. All families stay yellow. Network receipt contract2 and copied object hash
+match; summary/latest read-back/integrity/reload pass and raw size/mtime snapshot is
+unchanged. Collector/observer inactive after the bounded run; timeout124 alone is
+not service exit-status proof. Evidence remains private VM-local; no Garage writes,
+field operations or Wintappy modifications. Wintappy's derived file_id still case-folds.
+[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
+
 ### Read-only Garage/S3 extension — 2026-10-25
 
 User authorized implementation/commit/push on the same feature branch; operator

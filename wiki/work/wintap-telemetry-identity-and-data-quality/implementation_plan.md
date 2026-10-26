@@ -74,7 +74,8 @@ This retrospective alone does not authorize additional execution or rollout.
 - [x] Strict actual-object old/fixed15-check comparison, zero-length/failure/cleanup negatives
 - [x] Expanded shared network/receipt/identity/resolver/root tests:159 passed
 - [x] Normal-ETL five-family VM pilot evaluation and evidence delivery review; uncertainty retained
-- [ ] Reviewed Linux file-case projection and additive process-source persistence contracts
+- [x] User-approved greenfield Linux file-case and additive process-source projections;
+  180 managed/94 dashboard tests and fresh normal-ETL five-family pilot, limits retained
 - [ ] Trusted field package review/provenance and operator-approved installation/pilot
 
 Detailed limits: [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].

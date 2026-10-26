@@ -158,6 +158,16 @@ class QualityTests(unittest.TestCase):
             prepare_data(con, directory)
             self.assertIsNone(con.execute('SELECT start_source FROM smoke_data').fetchone()[0])
 
+    def test_normal_process_projection_source_field_is_used(self):
+        with tempfile.TemporaryDirectory() as directory, duckdb.connect() as con:
+            path = Path(directory) / 'process.parquet'
+            con.execute("COPY (SELECT 'fixture' Hostname, 'Process' MessageType, 42 PID, "
+                "'sched_fork' ProcessStartSource, 'PROC_START_SRC=sched_exec' Process_Arguments) TO ? (FORMAT PARQUET)", [str(path)])
+            _, errors, available = prepare_data(con, directory)
+            self.assertFalse(errors)
+            self.assertTrue(available)
+            self.assertEqual(con.execute('SELECT start_source FROM smoke_data').fetchone()[0], 'sched_fork')
+
     def test_wrong_extra_directed_row_not_hidden_by_good_rows(self):
         self.socket_row()
         self.socket_row('tcpiprecv')

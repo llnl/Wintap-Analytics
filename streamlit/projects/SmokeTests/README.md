@@ -22,6 +22,11 @@ PID candidates are yellow. These checks do not recompute canonical hashes or cer
 loss/count equivalence. Evaluator changes invalidate saved-summary fingerprints.
 New named-workload manifests carry per-path activity expectations (rename paths differ)
 and independent IPv4 TCP/UDP socket expectations; older endpoint manifests default TCP.
+Normal process parquet now includes nullable `ProcessStartSource`; normalization
+prefers it, with real Arguments breadcrumbs as fallback, never CommandLine inference.
+The approved sensor projection preserves Linux path case and case-distinct file keys.
+Casefold-only older path observations remain uncertain; no raw data is rewritten.
+Wintappy's separate lowercase-derived `file_id` is not used or certified by this app.
 
 ## Collection host and analysis host can differ
 

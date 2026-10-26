@@ -35,8 +35,31 @@ assertions. Final VM verification:93 dashboard/17 runner/12 Wintap Python tests,
 pass versus original-object failure. Normal-ETL five-family round delivers evidence
 and saves/reloads local summary with zero analysis errors; Accept and independent UDP
 endpoints observed. Exact file-case and process-source projection plus TCP partial
-EOF tuples remain unconfirmed. No field rollout, schema migration, historical loss
+EOF tuples were unconfirmed in that original pilot. The following approved projection
+slice advances the first two; TCP partial tuples remain open. No field rollout, schema migration, historical loss
 closure or release certification; pins/security/default-off controls unchanged.
+
+### Approved greenfield projections
+
+User approved nullable `ProcessStartSource` and producer-case-preserving FileSerializer
+on 2026-10-25. Linux build:0errors/177warnings. SDK10.0.402 `dotnet test
+tests/Wintap.Tests/Wintap.Tests.csproj -p:EnableWindowsTargeting=true` with shared
+projection/Windows-path/network/receipt/identity/resolver/root filter: **180 pass**.
+`SMOKE_S3_HTTP_TEST=1 python -B -m unittest discover -s
+streamlit/projects/SmokeTests -p 'test*.py'`: **94 pass**. New tests exercise real
+production-schema parquet null/mixed-source roundtrips and case-distinct key/locale
+behavior, without changing identity or CommandLine. Untyped deserialization omits
+null keys; corrected the test's dictionary access, not the writer.
+
+Fresh180-second normal-ETL VM five-family pilot delivers all evidence, zero errors/
+violations. Eight-file exact paths and process/clone/dedicated TCP families have zero
+missing checks; all selected repeat groups source-classify. Cross-domain still lacks
+one expected Delete and two complete TCP endpoint-provenance checks. All triage
+remains yellow. Receipt contract2/copied object hash matches, local saved-summary/
+latest integrity/reload and raw size/mtime preservation pass; VM collector/observer
+inactive. No package install/field rollout/Garage writes or Wintappy edits. Wintappy's
+lowercase-derived file_id remains a separate limit. Detailed scope:
+[[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
 
 ### Retrospective boundary
 

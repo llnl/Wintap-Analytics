@@ -14,8 +14,11 @@ grounded_by:
   - ../wintap/wintap/core/etl/esper/process.epl
   - ../wintap/wintap/core/etl/esper/process-stop.epl
   - ../wintap/shared/WintapAPI/WintapMessage.cs
+  - ../wintap/wintap/core/etl/extract/ProcessSerializer.cs
+  - ../wintap/wintap/core/etl/model/ProcessObjectModel.cs
+  - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
-last_validated: 2026-10-22
+last_validated: 2026-10-25
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: process
@@ -55,8 +58,9 @@ the Ubuntu arm64 workload produced fork + exec-entry + sched-exec rows sharing
 one PidHash. Clone birth metadata is provisional; `PROC_START_SRC=sched_fork`
 prevents a late clone upsert from overwriting an existing resolver identity or
 reviving its cache after Stop. Raw rows are not suppressed. Count identities rather
-than Start rows for process counts; standard ETL does not persist this Arguments
-breadcrumb. Validation scope and remaining risks:
+than Start rows for process counts. Normal ETL now persists the bounded producer
+breadcrumb as nullable `ProcessStartSource`, rather than copying Arguments or
+decorating CommandLine. Validation scope and remaining risks:
 [[wiki/work/improve-lintap-data-quality/clone-validation-results]].
 <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/ProcessResolver.cs §UpsertProcessStart; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent -->
 
@@ -117,6 +121,16 @@ The sensor logs QA counters at interval and shutdown: `sid_extracted/null/malfor
 Unchanged by the overhaul. The process ETL query selects `Process` messages whose activity is `Start` or `Refresh`; a separate stop query selects stop activity. Stops now carry `PidHash` consistent with Starts (the old Security-log path had stop handling commented out entirely).
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/process.epl §query -->
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/process-stop.epl §query -->
+
+Approved greenfield projection (2026-10-25): Start/Refresh parquet adds nullable
+string `ProcessStartSource`. `ApplyStartProvenance` reads whitespace-delimited
+`PROC_START_SRC=` tokens from producer `Process.Arguments` and accepts only one
+distinct recognized value: `sched_fork`, `sched_exec`, or `execve_or_execveat`.
+Missing, conflicting or unknown values stay null. This is acquisition/image
+provenance, not a distinct-birth or successful-exec guarantee; process hashes,
+timestamps, CommandLine and Stop projection are unchanged. Older parquet without
+the column remains unknown unless an actual Arguments breadcrumb is present.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §ApplyStartProvenance, handleStartEvent; ../wintap/wintap/core/etl/model/ProcessObjectModel.cs §ProcessStartSource; ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs -->
 
 ## Analysis Implications
 

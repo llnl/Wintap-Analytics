@@ -181,7 +181,7 @@ def prepare_data(connection, root, unlabelled_host="", telemetry_files=None):
             "pid": col("PID", cast="BIGINT"), "parent_pid": col("ParentPid", "Process_ParentPID", cast="BIGINT"),
             "pid_hash": col("PidHash"), "activity": f"lower({activity})", "process_name": col("ProcessName", "Process_ProcessName"),
             "command_line": col("CommandLine", "Process_CommandLine"), "path": file_path,
-            "start_source": f"NULLIF(regexp_extract({col('Arguments', 'Process_Arguments')}, 'PROC_START_SRC=([a-z_]+)', 1), '')",
+            "start_source": f"COALESCE(NULLIF({col('ProcessStartSource')}, ''), NULLIF(regexp_extract({col('Arguments', 'Process_Arguments')}, 'PROC_START_SRC=([a-z_]+)', 1), ''))",
             "protocol": inferred_protocol, "local_port": local_port, "remote_port": remote_port,
             "source_port": col("SourcePort", cast="INTEGER"), "destination_port": col("DestinationPort", cast="INTEGER"),
             "local_address": col("LocalIpAddr", "TcpConnection_SourceAddress", "UdpPacket_SourceAddress"),

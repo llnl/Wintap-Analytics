@@ -168,8 +168,11 @@ The bounded working set and saved-summary fingerprints cover the stronger checks
 No strict dev-time gate was weakened. IPv4 TCP/UDP endpoint assertions use each
 `endpointExpectations` protocol; older TCP-only manifests default to TCP.
 Casefold-only path matches are explicitly unconfirmed, not exact Linux identity;
-normal ETL currently lowercases those paths. Normal process parquet omits producer
-Arguments/source breadcrumbs, so repeated-Start groups remain unclassified there.
+older normal-ETL output lost case. The approved sensor projection now preserves
+producer path case and persists nullable `ProcessStartSource`; dashboard normalization
+prefers that explicit field, falling back only to real Arguments breadcrumbs, never
+CommandLine text. Missing source stays unclassified; source-classified repeated Starts
+still are observations, not additional births or a capture-completeness verdict.
 See [[wiki/tension/linux-file-path-case-projection]] and
 [[wiki/work/wintap-telemetry-identity-and-data-quality/network_return_qualification]].
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/queries.py §selector_query, evaluate_case; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §HandleEvent -->
