@@ -3869,3 +3869,14 @@ verification and index. Live sensor/package acceptance is separate.
 User subsequently reported successful Debian package builds and authorized
 commit/push of the provisioning changes and companion wiki notes. This is
 operator-reported build success; package installation/runtime results were not supplied.
+
+## [2026-10-27] docs | Cross-platform package release versioning
+
+Created `wiki/workflow/package-release-versioning.md` with a concise 7.0 release
+identity, Debian/RPM/MSI field mapping, shared build-number versus packaging
+revision guidance, architecture/EL suffix handling, and build-to-install checklist.
+Recorded the selected Debian tilde and current RPM underscore beta encodings;
+called out target RPM ordering verification and the still-undefined beta counter
+sequence before automation. Linked SemVer, Debian Policy, live Wintap/Lintap
+release/build docs, and the page from the index. Documentation only; no source or
+release configuration changed.

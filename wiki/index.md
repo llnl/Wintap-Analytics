@@ -6,6 +6,9 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+Package release policy: [[wiki/workflow/package-release-versioning]] — shared 7.0
+release identity, format-specific Debian/RPM/MSI encoding and build-to-install checklist.
+
 Multipass development refresh: [[wiki/repo/lintap-supporting-repo]] — fresh Ubuntu
 arm64 provisioning verifies SDK10.0.402, DuckDB1.5.6, all12 tracers, managed build,
 24 packaging/provisioning regressions and5 validation-harness tests.
