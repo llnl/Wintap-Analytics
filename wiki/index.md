@@ -220,6 +220,14 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/diagnostic/duplicate-agent-id-and-os-family]] | medium | Two hosts share a raw UUID also present in initialized local state; Linux metadata mislabeled Windows by DBT/legacy SQL. Evidence and proposed remediation/regression gates. |
 ## Work
 
+PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
+[[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],
+[[wiki/work/powershell-sensor/findings]] and [[wiki/work/powershell-sensor/verification]].
+Native wrapper/focused 4104 output pass 35 tests; inspected 5.1 data includes interactive
+`write-host hi`, with loss/fragment/test-overlap limits disclosed. Full originals retained;
+collection traffic/loss unchanged. Focused rerun works by operator report; PowerShell 7,
+formal POC acceptance and integrated sensor work remain open.
+
 Approved DuckDB1.5 maintenance: [[wiki/work/duckdb-1-5-maintenance/implementation_plan]],
 [[wiki/work/duckdb-1-5-maintenance/verification]] — official .NET wrapper1.5.6.1,
 Wintappy/Lintap Python engine1.5.6 complete;250native tests,15pidstat,27UI and
