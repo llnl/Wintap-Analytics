@@ -3920,6 +3920,15 @@ Real gate wiring, Lintap/VM authorization and effective permissions still requir
 Timeout remote-work cancellation is explicitly manual; no automatic uncertain retry.
 Existing untracked .claude work preserved; no commit/push.
 
+## [2026-10-30] diagnostic | RHEL 8 Lintap SELinux S3 upload denials
+
+Documented the operator-reported local `lintap-selinux` policy and AVC evidence:
+`init_t` TCP `name_connect` to Garage port 3900 and `var_log_t` directory `rmdir`
+for raw_sensor partition cleanup. Added the bounded auditd/ausearch workflow,
+custom port-type policy build/install steps, scope cautions, and live Wintap/Lintap
+source references. Linked the diagnostic from the index. This host-local policy
+is not confirmed as part of the canonical Lintap RPM; no sibling-repo changes.
+
 ## [2026-10-30] docs | Root-owned smoke workload to S3 operator workflow
 
 Reviewed existing Wintap devtools, Analytics dashboard/soak, packaging/path docs and

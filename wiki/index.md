@@ -217,6 +217,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/diagnostic/linux-capability-data-quality-matrix]] | medium | Linux build/runtime/distro evidence and per-sensor CO-RE/fallback matrix; explains missing/placeholder fields, thread/identity/byte-count caveats, output permutations, and a recommended dataset capability receipt. |
+| [[wiki/diagnostic/lintap-rhel8-selinux-s3-policy]] | medium | Operator-reported RHEL 8 SELinux denials for Garage TCP upload and raw_sensor partition cleanup; custom port labeling, AVC triage, and host-local policy build/deploy notes. |
 | [[wiki/diagnostic/nesper-repro]] | high | Documents the standalone Fedora/shared-mount NEsper repro and the evidence that Bad IL range failures are output-location related. |
 | [[wiki/diagnostic/dependency-inventory-and-update-status]] | medium | Inventories Python, npm, and .NET dependency manifests across the ecosystem and records observed update availability with tooling caveats. |
 | [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]] | medium | RHEL 8 field findings: clone sensor attaches (Fedora failure doesn't generalize), the fork-without-exec warning signature (parent = child−1), and a suspected ~500-700 forks/sec storm with event-processing lag under investigation. |
