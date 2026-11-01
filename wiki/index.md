@@ -63,12 +63,16 @@ Durable startup evidence: [[wiki/schema/runtime-capability-receipt]];
 Clone default-TRUE acceptance: [[wiki/work/clone-default-true/verification]];
 RHEL transfer: [[wiki/work/clone-default-true/dev_handoff]].
 
-Field-friendly named process/file/network stimulus:
-[[wiki/tool/named-telemetry-smoke-workload]].
+Field-friendly named process/file/network stimulus and **root-owned field-host S3
+quick start**: [[wiki/tool/named-telemetry-smoke-workload]] — persistent user-created
+venv, explicit sudo Python/DuckDB, `--smoke-data-root`, automatic `raw_smoke_test` upload and
+dashboard validation.
+Visual workflow: [[wiki/workflow/live-collector-validation]] — editable two-page
+draw.io diagram for **live-collector validation** and recurring telemetry canaries.
 Open-ended disposable-host stimuli with uploaded ground-truth snapshots:
 [[wiki/tool/periodic-telemetry-soak-runner]] (pilot first; DBT smoke joins deferred).
 
-Read-only smoke results / cross-host run manifests:
+Smoke dashboard **first-time configuration and launch**, results / cross-host run manifests:
 [[wiki/tool/smoke-test-results-dashboard]];
 [[wiki/work/smoke-test-dashboard/implementation_plan]];
 [[wiki/work/smoke-test-dashboard/verification]].

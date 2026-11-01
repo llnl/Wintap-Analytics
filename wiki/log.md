@@ -3920,6 +3920,70 @@ Real gate wiring, Lintap/VM authorization and effective permissions still requir
 Timeout remote-work cancellation is explicitly manual; no automatic uncertain retry.
 Existing untracked .claude work preserved; no commit/push.
 
+## [2026-10-30] docs | Root-owned smoke workload to S3 operator workflow
+
+Reviewed existing Wintap devtools, Analytics dashboard/soak, packaging/path docs and
+live publisher/uploader code. Durable export and sudo interpreter handoff already
+existed in separate guides; consolidated the complete one-shot workflow into
+`wiki/tool/named-telemetry-smoke-workload.md`. Added root-path discovery, user-side
+uv/DuckDB interpreter selection, sudo import check, fresh output/portable manifest,
+explicit smoke-data-root, publication/delivery/validation checkpoints and failure
+triage. Linked from dashboard/soak pages and index. Clarified workload-only privileges
+versus protected parquet export and replaced ambiguous temporary-path advice.
+Flagged a soft guidance mismatch: runner README's runtime-root evidence example
+also hosts file stimuli, whereas shared workload guidance excludes runtime paths;
+the wiki now recommends an external QA root. Source-owned README left cited in place.
+Verification: `git diff --check` passes; `bash -n` passes for seven documented shell
+blocks; three page frontmatters, 19 wikilinks and the workflow's live source paths
+check successfully. Root field-host execution and S3 arrival still require an
+operator run; no new capture result claimed.
+
+## [2026-10-30] correction | Persistent smoke Python environment for sudo
+
+Operator attempt exposed a flaw in the preceding documentation: capturing
+sys.executable from `uv run --no-project --with ...` returned a temporary
+`builds-v0/.tmp.../bin/python` that sudo could not execute after uv exited.
+The workload did not launch. Replaced that recipe with user-side `uv venv` in a
+named persistent directory, explicit `uv pip install --python` and direct sudo
+invocation of the venv interpreter. Added reuse/troubleshooting notes and corrected
+dashboard/soak/index pointers. Official uv environment docs and installed CLI help
+confirm the creation/install syntax; root field-host publication/S3 validation
+remains pending an operator rerun. This supersedes the earlier interpreter recipe.
+Checks: named-venv creation followed by a separate direct interpreter invocation
+passes locally after uv exits (temporary wiki-local environment removed); seven
+documented shell blocks pass `bash -n`, local wikilinks and `git diff --check` pass.
+This local check used the available host Python and did not install DuckDB or run sudo.
+
+## [2026-10-30] docs | Live-collector validation diagram
+
+Added `wiki/workflow/live-collector-validation.drawio` with two editable pages:
+data/evidence flow and operator workflow. Proposed “live-collector validation” for
+the in-situ workflow, with repeated bounded stimuli called telemetry canaries.
+The diagram shows persistent user-created venv → sudo workload, independent normal
+sensor capture, local raw_smoke_test publication, shared collector S3 upload and
+explicit dashboard checks. Added a source-anchored companion page and links from
+the named-workload, soak and dashboard pages plus the index. Preserves distinct
+generation/publication/delivery/validation checkpoints and stimulus-only limits.
+Verification: imported both pages into diagrams.net and visually reviewed layout;
+adjusted the expected-activity edge label to clear box borders. XML parsing,
+unique cell IDs, edge endpoints and page bounds pass. Required frontmatter and
+live source paths pass for the four topic pages; 245 wikilinks across those pages
+and the index plus the companion diagram link resolve. `git diff --check` passes.
+
+## [2026-10-30] docs | First-time Streamlit S3 setup
+
+Operator feedback identified the missing analysis-machine setup handoff. Expanded
+the dashboard wiki page with a first-time quick start: copy/edit the private JSON,
+map an uploaded raw_sensor object to its dataset root, select AWS credentials,
+launch Streamlit with uv and open port 8501, then discover and validate the run.
+Linked it directly from the named workload, live-collector workflow and index;
+updated diagram P7 to make configuration/launch explicit. Grounded in the live
+app, S3 config parser, example config, requirements and README.
+Verification: four dashboard shell blocks pass `bash -n`; documented JSON matches
+the shipped example and is accepted by the live config parser; dataset-root
+mapping, wiki/Markdown links and section anchors, updated diagram XML and
+`git diff --check` pass. No authenticated S3 session was exercised for this doc update.
+
 ## [2026-10-30] code | Replace pidstat controller with native OpenCode workflow
 
 At human request, removed the first-pass external runner, configuration template,
