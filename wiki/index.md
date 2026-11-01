@@ -6,6 +6,10 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+DBT source-aware validation: [[wiki/work/dbt-source-validation/verification]] —
+local/split/S3 inputs, no placeholder directory, partition-scoped DuckDB preflight,
+offline dashboard checks; 248 focused regressions pass, one legacy config failure retained.
+
 Package release policy: [[wiki/workflow/package-release-versioning]] — shared 7.0
 release identity, format-specific Debian/RPM/MSI encoding and build-to-install checklist.
 

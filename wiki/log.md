@@ -3880,3 +3880,24 @@ called out target RPM ordering verification and the still-undefined beta counter
 sequence before automation. Linked SemVer, Debian Policy, live Wintap/Lintap
 release/build docs, and the page from the index. Documentation only; no source or
 release configuration changed.
+
+## [2026-10-31] code | Source-aware local/S3 DBT preflight
+
+Human approved scoped implementation in `../Wintap-PyUtil`. Make now validates
+effective raw input instead of requiring output-root/raw_sensor; S3 needs a valid
+URI/explicit dates, not a local placeholder. Local split-input date discovery,
+date/hour/output checks and raw-source printing added. DBT/DuckDB operation lists
+current bronze event/alias partition prefixes and reads one sample schema before
+build; missing optional events allowed, empty supported-input window/access/TLS/
+corrupt sample fail. Dashboard checks remain local-only.39new tests including real
+DBT and loopback S3 protocol fixtures;248focused tests pass. Broader suite272pass/
+1unchanged legacy Dynaconf-default failure, independently reproduced. Initial
+Make/test-setup failures fixed; event wildcard narrowed to avoid broad S3 listings.
+Updated PyUtil README and canonical wiki; created plan/verification and index entry.
+No live S3 requests, operator dataset/env edits, collector changes, commits or pushes.
+
+### DBT source-validation follow-up — operator confirmation and commit authorization
+
+The human reports the new checks work and authorized topic commits on
+`work/pidstat-and-dbt-validation`. Recorded this confirmation in feature verification;
+it does not substitute for an agent-inspected real-host DBT qualification.
