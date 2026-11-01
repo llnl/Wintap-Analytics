@@ -3881,6 +3881,158 @@ sequence before automation. Linked SemVer, Debian Policy, live Wintap/Lintap
 release/build docs, and the page from the index. Documentation only; no source or
 release configuration changed.
 
+## [2026-10-29] feature-plan | fix-pidstat-collector Go rewrite
+
+Human reported RHEL 8 sudo bootstrap failure because root lacks uv and accepted a
+compatibility-preserving Go binary rewrite rather than requiring root uv installation.
+First live validation target explicitly changed to existing Multipass lintap-dev,
+Ubuntu arm64; RHEL 8/amd64 runtime proof remains separate. Created brief, staged
+implementation plan, authorization-gated dev handoff and pending verification record;
+linked from index. Planned pure-Go Parquet/static-build spike, sampler/spool parity,
+Debian/RPM integration and bounded implement/test/review/repair loop for a later
+OpenCode session. Expected local Wintappy source unavailable; consumer proof pending.
+No source/configuration/VM/service changes, tests or automation setup. Existing
+untracked .claude work preserved. No new contradictions; sealed estimates not collected.
+
+### Follow-up — renamed downstream checkout and real Python parity gate
+
+Human identified Wintappy's renamed checkout as `../Wintap-PyUtil`; read live pidstat
+bronze and shared path/raw-source macros and corrected current feature references.
+Strengthened acceptance/plan/handoff/verification to require actual Python-produced
+data, exact replay on identical captured real /proc inputs, paired-live comparison
+with predefined skew tolerances, and review of all columns, row multiplicity and
+unmatched cases. Retain revision-pinned Python reference through acceptance; fixtures
+alone cannot close parity. No code/tests/VM changes or comparison execution yet.
+
+## [2026-10-29] code | Prepare bounded pidstat OpenCode runner
+
+User authorized runner/supporting files in Analytics, not collector implementation.
+Added Bash/Python external controller, fail-closed verification template, dedicated
+fresh implementation/report-only review profiles, private ignored state/logs, finite
+attempts, cumulative deterministic gates and candidate/evidence-bound human fpc-01
+approval. Config/contracts/check entry points and approved source scope are pinned;
+out-of-scope/reviewer mutations stop without reverting work. Explicit one-unit launches,
+no continuation/auto-approval/push/field rollout. Checked local OpenCode v2.0.32 help
+and official V2 docs;15 offline fake-agent tests, Bash syntax, diff check and ignore
+checks pass. Added canonical tool page; updated feature plan/handoff/verification/index.
+No actual model sessions, collector code, VM/package/service changes or parity runs.
+Real gate wiring, Lintap/VM authorization and effective permissions still required.
+Timeout remote-work cancellation is explicitly manual; no automatic uncertain retry.
+Existing untracked .claude work preserved; no commit/push.
+
+## [2026-10-30] code | Replace pidstat controller with native OpenCode workflow
+
+At human request, removed the first-pass external runner, configuration template,
+launcher, fake-agent tests and custom profiles. Supersedes the 2026-10-29 runner
+entry; its results remain history only. Added native `/pidstat-loop`, bounded skill,
+separate-session `/pidstat-review` prompt and deterministic evidence utility for
+actual Python capture, exact Parquet comparison, ELF checks and narrow root startup.
+OpenCode owns iteration; default three candidate revisions/60 minutes, human pause
+after fpc-01, no approval tokens or external state machine. Updated canonical tool
+page, README and feature brief/plan/handoff/verification/index; real-Python parity
+and Ubuntu arm64 first-target requirements retained. 19 offline tests pass, including
+actual Python sampler/writer with controlled inputs, not live Python/Go acceptance.
+Recorded test-command evidence, CLI help, source/link/frontmatter/ignore checks and
+`git diff --check` pass. Collector implementation, VM work and DBT remain unstarted;
+no sibling edits, dependency installs, commit or push. Unrelated work preserved.
+
+## [2026-10-30] code | fpc-01 static Go writer feasibility checkpoint
+
+Human approved scoped Lintap spike and isolated existing Ubuntu arm64 lintap-dev
+experiments, plus private pinned DuckDB reference venv. Added unpackaged writer-only
+Go1.27.3/parquet-go0.32.0 module/tests/Makefile/docs in `../Lintap/pidstat-go` and
+Analytics bounded workload/supplemental actual-Python writer check. Python source
+remains unchanged/hash-pinned. Actual live Python captures266/705/1640 rows compare
+exactly against Go: all26 columns, physical-column/DuckDB schema, nulls, multiplicity,
+partitions/windows, zero unmatched rows/error. Both cgo-disabled Linux ELF builds are
+static and reproduce hashes; native root restricted-PATH arm64 startup and1640-row
+encoding pass. Five Go tests/vet/module verification, five controlled writer rows and
+19 utility regressions pass. Workload observed203.29%CPU, memory/writes and10churnPIDs;
+cached reads and missing live container runtime IDs are explicit coverage gaps.
+Updated verification/checklist/handoff/brief, canonical repo/tool pages, README/index.
+Same-session inspection only; stopped for human review before fpc-02. Sampler,
+recovery/configuration, package/service, paired-live, DBT and native RHEL/amd64 remain
+pending. No production data/service/package changes, consumer edits, commit or push;
+private guest artifacts/evidence retained and unrelated work preserved.
+
+## [2026-10-30] code | fpc-01 approved; fpc-02 sampler/configuration checkpoint
+
+Human approved fpc-01 and requested continuation. Added injected Go proc sampler,
+Linux config resolution, native kernel AT_CLKTCK/page discovery, strict raw replay
+and bounded diagnostics in Lintap. All3real raw captures reproduce Python TSV and
+26-column Parquet exactly (266/705/1640rows), with no unmatched rows/schema errors;
+native arm64 raw replay passes. Actual Python controlled52-row fixtures pass at
+100Hz/4KiB and250Hz/16KiB;17config cases match;14Go tests/vet/modules/static builds,
+5writer rows and19utility regressions pass. Native four-sample run emits411readable
+rows, not paired-live qualification. Retained two failures and repaired numeric/path
+config fidelity and sub-microsecond midnight rounding/source-window provenance.
+Declared malformed-counter per-process skip, bounded cache and monotonic-live-time
+differences; valid math/missing optional defaults unchanged. Candidate3of3, stopped
+at technical completion/review gate before fpc-03. Updated verification/checklist,
+handoff/brief, canonical repo/tool/index and READMEs. Same-session inspection only;
+durable spool/recovery, package/service, DBT, paired-live and native RHEL/amd64 remain
+pending. Frozen Python/consumer sources unchanged; no shared service/data/package
+changes, commits or pushes; private guest evidence and unrelated work retained.
+
+## [2026-10-30] code | fpc-02 approved; fpc-03 durable pidstat checkpoint
+
+Human approved fpc-02 and requested continuation. Added explicit Go collector/recovery/
+durable raw-replay modes with legacy TSV/meta, seal/publication journals, exclusive
+spool lock, unique active ownership, synced no-overwrite publication, retained failed
+inputs, collision/compression handling, scoped caps and signal seal. Exact durable
+replay of266/705/1640real Python rows passes all26columns/schema/multiplicity/windows;
+actual Python-produced legacy current/pending/missing/invalid-meta spools recover
+exactly.26Go tests/vet/modules/static builds and native arm64 fault tests pass;
+native SIGTERM/SIGINT each produce411rows/2files, SIGKILL restart recovers137rows,
+destination obstruction retries20unchanged-input rows and competing spool lock fails.
+Sampler/config/writer/19utility regressions stay green. Retained failures; repaired
+legacy suffix/codec coverage, a case-insensitive fixture-path issue, and shared-output
+active ownership before final pass. Original host pytest command blocked (not installed),
+not counted as PASS. New tension page documents publication/uploader receipt gap:
+at-least-once, not exactly-once delivery; full power-loss/resources remain unqualified.
+Updated feature/canonical pages, README/index and verification; candidate3of3 stopped
+for review before package/service work. Same-session inspection only. Python/consumer
+sources, shared services/data and unrelated work unchanged; no commit/push/deployment.
+
+## [2026-10-30] verification-start | Four-hour Go pidstat and latest Lintap VM soak
+
+Human requested four-hour sensor-on qualification before packaging. Existing Ubuntu
+arm64 lintap-dev had no installed/running sensor. Built current Wintap66d8297 source
+archive natively (12tracers;0managed errors), started normal ETL with isolated retained
+data, then unchanged hash-matched fpc-03 candidate3 at default5s/300s. Run begins
+2026-10-31T05:18:50Z, planned stop09:18:50Z. Existing recurring five-family smoke
+runner reuses persistent DuckDB1.5.6 environment and prebuilt native helper; first
+round5/5exit0/recorded. FileOps partial legacy-hook and absent SELinux limits retained.
+Added scoped supervisor/inspector automation;30s resource/health records, bounded
+SIGTERM seal/drain, pidfd-blocking background retrieval and hash-checked safe extraction.
+Native inspector pilot checks1788actual Go rows against actual Python26-column schema
+and correctly rejects incomplete-run metadata. Scripts compile; diff check passes.
+Startup-log discovery failure retained/repaired before sampling. Preflight make run-env
+implicitly built/restored the shared checkout and rewrote a previously modified
+WintapAPI NuGet lockfile; original diff unavailable, no restoration claimed. Subsequent
+build used isolated archive; no collector/package/source implementation revision.
+Updated feature verification/checklist/handoff/index. RUNNING, not PASS; full review
+awaits completion. No package install, shared service restart, consumer edits or commit/push.
+
+## [2026-10-31] verification | Four-hour Go pidstat VM data collected and reviewed
+
+Completed14400.022s sensor-on default5s/300s run; smoke/Go/Lintap each exit0, no
+forced shutdown. All49pidstat files decode399312rows matching all26Python schema
+columns/physical types;2880sample times with uninterrupted5s gaps, contiguous300s
+windows including midnight,0duplicates/placement errors, clean final6484-row seal.
+16five-family rounds80/80exit0/recorded;436sensor/manifest files readable. Go median
+0.47%of one core and16.97MiB RSS, peak44.86MiB; four-hour memory medians stabilize
+around17MiB, not general leak or Python resource-improvement proof. Sensor partial
+FileOps/absent SELinux/disabled adapter-resolution/parent warnings retained; no full
+capture or upload acceptance claimed. Initial SFTP failed on root-private parent;
+private archive copy fixed transfer without changing original permissions. Hash
+verified archive and safely extracted969files; guest/failed evidence retained.
+Secondary DuckDB CREATE VIEW binding failure retained and read-only query repaired.
+Created feature soak_review and updated verification/checklist/handoff/index. Scoped
+same-session collection check passes; human review/packaging, paired-live Python,
+comparative resources, DBT/original pytest and native RHEL/amd64 remain pending.
+No collector revision, package install, consumer edits, commit/push or deployment.
+
 ## [2026-10-31] code | Source-aware local/S3 DBT preflight
 
 Human approved scoped implementation in `../Wintap-PyUtil`. Make now validates
@@ -3901,3 +4053,15 @@ No live S3 requests, operator dataset/env edits, collector changes, commits or p
 The human reports the new checks work and authorized topic commits on
 `work/pidstat-and-dbt-validation`. Recorded this confirmation in feature verification;
 it does not substitute for an agent-inspected real-host DBT qualification.
+
+## [2026-10-31] review | Pidstat checkpoint prepared for topic commits
+
+Human authorized grouped commits on working branches across the repositories.
+Corrected stale default-cadence/resource and authorization wording; retained
+fpc-03/package/paired-live/native acceptance boundaries and all collector code/pins.
+19utility tests pass with existing PyUtil Python/DuckDB;10harness sources parse.
+Go test rerun is blocked: retained temporary Go1.27.3 cannot locate its standard
+library, so no fresh Go test/vet pass is claimed. Existing evidence remains intact.
+Private datasets, captures, generated artifacts and local settings remain uncommitted;
+the clean nested PyUtil checkout and generated/editor-only Wintap dictionary tree
+are not source changes. No live host, package or S3 operations performed.

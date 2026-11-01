@@ -222,6 +222,27 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/diagnostic/duplicate-agent-id-and-os-family]] | medium | Two hosts share a raw UUID also present in initialized local state; Linux metadata mislabeled Windows by DBT/legacy SQL. Evidence and proposed remediation/regression gates. |
 ## Work
 
+Pidstat Go rewrite, fpc-03 review checkpoint and four-hour VM soak completed
+(2026-10-31 05:18–09:18UTC;49files/399312rows,2880sample times,80canaries;
+human acceptance/packaging pending): [[wiki/work/fix-pidstat-collector/soak_review]], [[wiki/work/fix-pidstat-collector/brief]],
+[[wiki/work/fix-pidstat-collector/implementation_plan]],
+[[wiki/work/fix-pidstat-collector/dev_handoff]],
+[[wiki/work/fix-pidstat-collector/verification]] — remove installed-host uv/Python/
+DuckDB requirements while preserving metrics and Parquet contracts. First live gate:
+existing Multipass `lintap-dev`, Ubuntu arm64; RHEL 8/amd64 runtime proof deferred.
+Native workflow: [[wiki/tool/pidstat-implementation-loop]] — `/pidstat-loop`,
+bounded skill, deterministic Python/Parquet/ELF evidence utility and human fpc-01 pause;
+fresh review via `/pidstat-review` in a new session. fpc-01 human-approved; fpc-02 raw
+sampler/config port passes26-column parity on266/705/1640 real Python rows,
+14Go tests,17config cases, static binaries/native arm64 replay and bounded411-row
+diagnostic. Fpc-02 approved; fpc-03 durable legacy spool/raw replay,26Go/native tests,
+signal seal/SIGKILL recovery/locking/retry pass. Human acceptance pending; original
+host pytest runner was blocked, while the current utility rerun passes 19 tests.
+Fresh Go checks are blocked by the retained temporary toolchain's missing standard
+library. Packaging, comparative resources, DBT and paired-live remain unqualified.
+Delivery limits:
+[[wiki/tension/pidstat-publication-versus-uploader-receipts]].
+
 Approved DuckDB1.5 maintenance: [[wiki/work/duckdb-1-5-maintenance/implementation_plan]],
 [[wiki/work/duckdb-1-5-maintenance/verification]] — official .NET wrapper1.5.6.1,
 Wintappy/Lintap Python engine1.5.6 complete;250native tests,15pidstat,27UI and
