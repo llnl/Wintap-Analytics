@@ -3873,3 +3873,22 @@ operator-reported build success; package installation/runtime results were not s
 ## [2026-10-27] feature | WindowsShell ETW replacement
 
 Replaced the console-history helper/polling path with default-disabled Microsoft.Windows.Console.Host ETW collection after operator-confirmed LocalSystem prototype success. Reduced the modeled payload to CommandText, SessionId and StartTime, retaining canonical process attribution and dynamic Parquet integration; removed obsolete helper/IPC/config/tests. SDK 10 build, 62 focused tests and 380 nearby regressions pass, including production Parquet roundtrip. Live capture exposed timestamp-skew attribution drops; corrected lifetime validation preserves canonical joins and requires fresh OS verification for bounded differences. Feature documentation remains compact and sanitized. Updated self-contained Windows x64 output is published locally; integrated service/session coverage, live joins, performance and shutdown acceptance remain pending in [[wiki/work/windows-shell/verification]].
+
+## [2026-11-03] research | Future scheduler lifecycle vs syscall observations
+
+Created `work/lintap-process-creation-validation/future-scheduler-lifecycle-vs-syscalls.md`
+and `tension/linux-process-lifecycle-vs-exec-attempt-observations.md`. Read current
+Linux Clone/Execve/Exit producers and callbacks on clean Wintap `develop` at
+`c29f973`, plus upstream Linux v6.12 tracepoint definitions and fork/exec/exit paths.
+The Linux sensor already uses all three scheduler hooks alongside exec syscall
+entry; Windows uses ETW. The topic compares successful lifecycle transitions with
+attempt/argument visibility, ordinary vs raw/CO-RE enrichment, duplicate Start work,
+thread-group exit and non-leader exec, with a bounded fidelity/performance spike.
+Kept the inspected develop baseline separate from dated October feature-branch
+evidence, including differing start-time ABIs and unresolved RHEL sched-exec
+provenance. No hard contradiction asserted across those distinct snapshots.
+Updated index, research-thread navigation and process-event cross-reference.
+Performance benefits and schema choices remain hypotheses; no live benchmark run.
+Verification: `git diff --check` passed; targeted documentation validation found
+all required frontmatter on both new pages, 12 existing local source anchors,
+249 resolving wikilinks across checked pages and inbound links to both new pages.

@@ -30,6 +30,7 @@ This thread is intentionally separate from canonical `wiki/event_type/process-ev
 
 ## Pages
 
+- [[wiki/work/lintap-process-creation-validation/future-scheduler-lifecycle-vs-syscalls]] adds the 2026-11-03 source baseline and future cost/fidelity comparison of scheduler-primary lifecycle versus syscall observations, including process/thread exits and exec-image history.
 - [[wiki/work/lintap-process-creation-validation/research-snapshot-2026-07-31]] captures the first cross-tool process creation accuracy snapshot.
 - [[wiki/work/lintap-process-creation-validation/handoff-validation-next-steps]] lays out the next engineering/research steps for known-workload validation across sensors.
 - [[wiki/work/lintap-process-creation-validation/validation-harness-design]] proposes a concrete sensor-neutral manifest, normalized event schema, workload matrix, evaluator metrics, and first implementation slice.
