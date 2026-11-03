@@ -3869,3 +3869,12 @@ verification and index. Live sensor/package acceptance is separate.
 User subsequently reported successful Debian package builds and authorized
 commit/push of the provisioning changes and companion wiki notes. This is
 operator-reported build success; package installation/runtime results were not supplied.
+
+## [2026-11-03] docs | Queue medium-priority ETL DuckDB instance reuse
+
+Added `wiki/work/reuse-etl-duckdb-instance/brief.md` as a deferred future fix and
+linked it from the index. Proposes an ETL-owned long-lived instance, separate from
+the resolver, with serialized access, explicit disposal/recovery, unchanged parquet
+semantics, matched fresh-versus-reused CPU measurements, and bounded memory/resource
+soaks. Benefit and RNG-contention relevance remain unproven; no implementation
+approval, source changes, raw telemetry, host identifiers, or deployment.

@@ -215,6 +215,10 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/diagnostic/duplicate-agent-id-and-os-family]] | medium | Two hosts share a raw UUID also present in initialized local state; Linux metadata mislabeled Windows by DBT/legacy SQL. Evidence and proposed remediation/regression gates. |
 ## Work
 
+Future medium-priority fix: [[wiki/work/reuse-etl-duckdb-instance/brief]] —
+dedicated ETL engine reuse, separate from the resolver; lifecycle/concurrency,
+CPU comparison and memory-growth qualification required before rollout.
+
 Approved DuckDB1.5 maintenance: [[wiki/work/duckdb-1-5-maintenance/implementation_plan]],
 [[wiki/work/duckdb-1-5-maintenance/verification]] — official .NET wrapper1.5.6.1,
 Wintappy/Lintap Python engine1.5.6 complete;250native tests,15pidstat,27UI and
