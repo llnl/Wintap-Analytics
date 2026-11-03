@@ -41,6 +41,11 @@ recordings remain unmigrated. Verification: [[wiki/work/host-process-identity-pa
 
 ## Linux clone/exec boundary (validated 2026-10-22)
 
+Future investigation and separately qualified 2026-11-03 `develop` source baseline:
+[[wiki/work/lintap-process-creation-validation/future-scheduler-lifecycle-vs-syscalls]].
+It compares the existing scheduler/syscall hybrid, exec-attempt versus image
+semantics, group-aware termination and measured acquisition-to-ETL costs.
+
 Current Debian/RPM package templates enable Clone by default, retaining explicit
 `WINTAP_ENABLE_CLONE_SENSOR=false` opt-out. Existing locally opted-out installs
 are not automatically changed. Per-run HOST records identify effective enablement,

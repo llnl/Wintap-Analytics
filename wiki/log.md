@@ -4151,3 +4151,22 @@ the resolver, with serialized access, explicit disposal/recovery, unchanged parq
 semantics, matched fresh-versus-reused CPU measurements, and bounded memory/resource
 soaks. Benefit and RNG-contention relevance remain unproven; no implementation
 approval, source changes, raw telemetry, host identifiers, or deployment.
+
+## [2026-11-03] research | Future scheduler lifecycle vs syscall observations
+
+Created `work/lintap-process-creation-validation/future-scheduler-lifecycle-vs-syscalls.md`
+and `tension/linux-process-lifecycle-vs-exec-attempt-observations.md`. Read current
+Linux Clone/Execve/Exit producers and callbacks on clean Wintap `develop` at
+`c29f973`, plus upstream Linux v6.12 tracepoint definitions and fork/exec/exit paths.
+The Linux sensor already uses all three scheduler hooks alongside exec syscall
+entry; Windows uses ETW. The topic compares successful lifecycle transitions with
+attempt/argument visibility, ordinary vs raw/CO-RE enrichment, duplicate Start work,
+thread-group exit and non-leader exec, with a bounded fidelity/performance spike.
+Kept the inspected develop baseline separate from dated October feature-branch
+evidence, including differing start-time ABIs and unresolved RHEL sched-exec
+provenance. No hard contradiction asserted across those distinct snapshots.
+Updated index, research-thread navigation and process-event cross-reference.
+Performance benefits and schema choices remain hypotheses; no live benchmark run.
+Verification: `git diff --check` passed; targeted documentation validation found
+all required frontmatter on both new pages, 12 existing local source anchors,
+249 resolving wikilinks across checked pages and inbound links to both new pages.

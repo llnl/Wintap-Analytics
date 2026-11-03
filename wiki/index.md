@@ -128,6 +128,7 @@ same existing branches, feature-only commit/PR scope).
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]] | medium | Preserves the unresolved boundary between raw ETW/sysdig/eBPF producer details and stable WintapAPI semantics. |
+| [[wiki/tension/linux-process-lifecycle-vs-exec-attempt-observations]] | medium | Open tradeoff between scheduler-primary process/image lifecycle and syscall attempt/argument evidence; separate semantics and measured costs remain to be decided. |
 | [[wiki/tension/linux-file-path-case-projection]] | high | Resolved sensor projection: approved greenfield producer-case preservation; separate Wintappy lowercase-derived file_id remains a downstream limit. |
 | [[wiki/tension/research-flexibility-vs-production-hardening]] | medium | Explains the research-first posture and flags hardening gaps such as unrestricted proof-of-concept MCP SQL access. |
 | [[wiki/tension/etw-ebpf-and-cross-platform-compatibility]] | medium | Captures tradeoffs between Windows ETW, Linux eBPF/sysdig support paths, raw sensor Parquet, and cross-platform semantics. |
@@ -278,6 +279,7 @@ isolated restart/endpoint acceptance passed; installed hosts/history unchanged.
 | [[wiki/work/improve-lintap-data-quality/brief]] | high | CLOSED 2026-10-22: adaptive wakeups, dedicated FileSerializer draining, coordinated shutdown, and kernel-time network attribution passed two-hour source and fresh packaged-arm64 gates. |
 | [[wiki/work/improve-lintap-data-quality/diagram-glossary]] | high | Companion glossary for every `[A1–A13]`, `[Q1–Q5]`, and `[S1–S18]` label in the Linux eBPF architecture and shutdown diagrams, with implementation, operations, and evidence references. |
 | [[wiki/work/lintap-process-creation-validation/index]] | medium | Research thread for comparing process creation accuracy across Lintap, Tetragon, Tracee, and Sysdig and building cross-sensor validation workloads. |
+| [[wiki/work/lintap-process-creation-validation/future-scheduler-lifecycle-vs-syscalls]] | medium | Future investigation: current Linux sensor already uses fork/exec/exit scheduler hooks plus syscall entry; compare lifecycle fidelity, attempt visibility, group-aware exits and end-to-end costs. |
 | [[wiki/work/lintap-process-creation-validation/research-snapshot-2026-07-31]] | medium | Snapshot of process creation acquisition, known accuracy risks, PID uniqueness strategies, and reference-tool issue findings. |
 | [[wiki/work/lintap-process-creation-validation/handoff-validation-next-steps]] | medium | Handoff plan for sensor-neutral process/file/network workload generation, cross-sensor runs, normalization, and accuracy reporting. |
 | [[wiki/work/lintap-process-creation-validation/validation-harness-design]] | medium | Concrete design for a sensor-neutral validation harness with manifest schema, normalized event tables, workload matrix, and first implementation slice. |
