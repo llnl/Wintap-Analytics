@@ -4198,3 +4198,16 @@ Pages created: `wiki/work/selinux-dbt-pipeline/{brief,references,design,implemen
 Pages updated: `wiki/index.md`
 Contradictions flagged: none.
 Notes: Added a separate DBT-only work definition beginning at the existing SELinux raw-sensor parquet boundary. It covers optional bronze models, family-specific silver models, gold summaries, constrained exact-or-temporal process attribution, and validation of counts, timestamps, contexts, and no-data behavior. Existing producer-side SELinux monitoring work remains separate; no source code or raw documents were changed.
+
+## [2026-11-04] implementation | SELinux DBT pipeline
+
+Implemented the SELinux DBT pipeline in `../Wintap-PyUtil` on
+`feature/selinux-dbt-pipeline`: optional AVC, interaction, and transition bronze
+models; native-grain silver normalization; bounded process attribution; gold
+detail/context/family/process summaries; quality monitoring; source validation;
+and schema/count/timestamp tests. The supplied sample passed `make dbt-build`
+(`PASS=137`, `ERROR=0`) and `make dbt-test` (`PASS=83`, `ERROR=0`); the dataset
+without SELinux directories also passed the full build. Updated the feature
+implementation and verification records with counts, duplicate/EventCount
+deviations, context completeness, and attribution outcomes. No sensor files were
+changed and unrelated Wintap-PyUtil untracked files were preserved.
