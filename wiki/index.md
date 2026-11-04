@@ -228,6 +228,16 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/diagnostic/windows-attribution-validation-executive-summary]] | low | Sanitized historical summary of 46 developer-archive files: architecture, reported tests and attribution metrics, improved File unresolved rates, unresolved Registry/validator reliability, and evidence limitations; original source references omitted at Architect request ahead of archive deletion. |
 | [[wiki/diagnostic/linux-tcp-investigation-2026-06]] | high | Historical June Linux TCP investigation with October source and Ubuntu 24.04 live validation: attachment/PID/protocol/rundown work is present; TCP AgentId, state template, and watchdog defects are resolved; no resolver negative cache was justified. |
 | [[wiki/diagnostic/duplicate-agent-id-and-os-family]] | medium | Two hosts share a raw UUID also present in initialized local state; Linux metadata mislabeled Windows by DBT/legacy SQL. Evidence and proposed remediation/regression gates. |
+
+## To-do
+
+Priority finding intake queue: [[wiki/todo/index]] — tracks emerging bugs,
+data-quality issues, and enhancements before promotion into a full deep-dive
+feature folder. Current P1 items include [[wiki/todo/linux-process-executable-attribution]],
+on nondeterministic Linux process executable attribution in Wintappy's silver model;
+also [[wiki/todo/lintap-linux-process-command-line-quality]], on source capture,
+provenance, and deterministic dbt command-line semantics.
+
 ## Work
 
 Pidstat Go rewrite, fpc-03 review checkpoint and four-hour VM soak completed
@@ -359,6 +369,7 @@ isolated restart/endpoint acceptance passed; installed hosts/history unchanged.
 | [[wiki/work/selinux-monitoring/implementation_plan]] | medium | Five sel-NN slices, evidence-first: sel-01 validation measurements + timeboxed R1 prototype, sel-02 tracer+sensor skeleton, sel-03 resolver/dedup/policy-epoch, sel-04 ETL (frozen message types, group-by rule), sel-05 four-criteria validation; files-to-change map, cross-slice invariants, kill-switch rollback. |
 | [[wiki/work/selinux-monitoring/dev_handoff]] | medium | Handoff authorizing ../wintap changes (tracer/sensor/EPL/serializer, additive-only message types) plus Analytics validation assets: copy/paste prompt with interview-seal warning, spike traps (noaudit hook, inlined avc_audit, BPF LSM silent-inert, RHEL 8.10 noaudit-kprobe EINVAL), field-workflow rules, delegated decisions, next-session priorities after sel-02. |
 | [[wiki/work/selinux-monitoring/verification]] | medium | sel-02 + sel-03 records (2026-09-18, transcribed from sanitized validation summaries): all three streams captured in an RHEL 8.10 validation environment via the wrapper fallback (noaudit kprobe EINVAL-blocked; gate open); sel-03 core mechanics package-validated — decoder 132/2150, R2/R3 resolver (source contexts resolving, targets mostly learned-or-numeric), LRU flush with zero-delta skip (errors=0), policy-epoch polling, unknown-perm-mask telemetry (fd/sem watch item). |
+| [[wiki/work/selinux-dbt-pipeline/brief]] | medium | DBT-only downstream work for native SELinux AVC, interaction, and transition parquet: optional bronze, silver normalization, gold detail/summaries, constrained process attribution, and quality verification. |
 | [[wiki/work/support-docker-contexts-linux/interview]] | medium | Confirmed interview for a research prototype comparing cgroup, namespace, eBPF, shared-resolver, runtime, and systemd approaches to Linux context enrichment and inventory. |
 | [[wiki/work/support-docker-contexts-linux/brief]] | medium | Feature brief for broad Linux cgroup context support across process, file, network, and pidstat telemetry, with schema deferred until prototype evidence is available. |
 | [[wiki/work/support-docker-contexts-linux/references]] | medium | Live source and external reference map for Linux cgroup, namespace, OCI, runtime, systemd, and eBPF context collection. |

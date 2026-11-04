@@ -4170,3 +4170,31 @@ Performance benefits and schema choices remain hypotheses; no live benchmark run
 Verification: `git diff --check` passed; targeted documentation validation found
 all required frontmatter on both new pages, 12 existing local source anchors,
 249 resolving wikilinks across checked pages and inbound links to both new pages.
+
+## [2026-11-04] docs | Priority to-do intake for Linux executable attribution
+
+Added `wiki/todo/` as a reusable intake queue for emerging bug, data-quality, and
+enhancement findings, with a lightweight priority/lifecycle guide and a P1
+finding for nondeterministic silver process executable attribution. Grounded the
+issue in current Wintap exec provenance and Wintappy's independent `any_value`
+selection; linked the existing validation design and process-lifecycle tension.
+The finding remains an intake item: no model choice, feature brief, source-code
+change, or implementation authorization was made.
+
+## [2026-11-04] docs | Add Lintap process command-line quality to-do
+
+Added `wiki/todo/lintap-linux-process-command-line-quality.md` and listed it in
+the priority queue and master index. Preserved the human-reported focused-VM
+counts and marked the database/raw-data analysis as not independently
+recomputed for this intake update; verified the cited artifact paths exist.
+Grounded the sensor and dbt behavior in live source, linked the related
+executable-attribution to-do, and retained the proposed contract, implementation
+approach, verification matrix, acceptance criteria, and unresolved decisions.
+No sensor, schema, dbt, or raw-data changes were made.
+
+## [2026-11-04] feature-work | SELinux DBT pipeline definition
+
+Pages created: `wiki/work/selinux-dbt-pipeline/{brief,references,design,implementation_plan,verification}.md`
+Pages updated: `wiki/index.md`
+Contradictions flagged: none.
+Notes: Added a separate DBT-only work definition beginning at the existing SELinux raw-sensor parquet boundary. It covers optional bronze models, family-specific silver models, gold summaries, constrained exact-or-temporal process attribution, and validation of counts, timestamps, contexts, and no-data behavior. Existing producer-side SELinux monitoring work remains separate; no source code or raw documents were changed.
