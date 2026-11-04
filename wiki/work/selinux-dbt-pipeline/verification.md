@@ -109,3 +109,14 @@ normal build still completed with `PASS=137 WARN=0 ERROR=0`.
 - Attribution is conservative. PID-only ownership was not used, and the absence
   of exact/ambiguous matches in this sample is reported rather than inferred as
   producer-side identity quality.
+
+### QA dashboard first cut
+
+Added an SELinux section to `../Wintap-PyUtil/notebooks/wintap_dbt_overview.py`.
+The page reports dataset scope, family-level row retention and duplicate rates,
+producer `EventCount`, context completeness, attribution outcomes and rates, and
+time bounds. Detail views include hourly volume, top nonblank contexts, AVC/
+interaction/transition summary groups, and process-attribution groups. The page
+gracefully explains when the SELinux relations are absent. With the supplied
+sample, `marimo export html notebooks/wintap_dbt_overview.py` completed
+successfully against the built DuckDB database.

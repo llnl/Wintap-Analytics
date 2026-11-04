@@ -4211,3 +4211,12 @@ without SELinux directories also passed the full build. Updated the feature
 implementation and verification records with counts, duplicate/EventCount
 deviations, context completeness, and attribution outcomes. No sensor files were
 changed and unrelated Wintap-PyUtil untracked files were preserved.
+
+## [2026-11-04] dashboard | SELinux QA views
+
+Added a first-cut SELinux page to the Wintap-PyUtil QA dashboard. It summarizes
+family coverage, duplicate/row-retention quality, producer EventCount, context
+completeness, attribution outcomes, host/time scope, and hourly volume, with
+paginated context, AVC, interaction, transition, and process-attribution detail
+views. The page handles databases without the optional SELinux relations and
+exported successfully against the supplied sample DuckDB build.
