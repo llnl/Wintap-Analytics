@@ -6,6 +6,8 @@ grounded_by:
   - streamlit/projects/SmokeTests/main.py
   - streamlit/projects/SmokeTests/queries.py
   - streamlit/projects/SmokeTests/README.md
+  - streamlit/projects/SmokeTests/garage.example.json
+  - streamlit/projects/SmokeTests/requirements.txt
   - ../wintap/devtools/smoke_manifest.py
   - ../wintap/devtools/network_endpoint_smoke_test.py
   - streamlit/projects/SmokeTests/s3_source.py
@@ -14,7 +16,7 @@ grounded_by:
   - streamlit/projects/SmokeTests/batch_views.py
   - streamlit/projects/SmokeTests/result_store.py
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-30
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -26,12 +28,119 @@ tags: [streamlit, smoke-tests, portable-manifests, cross-host, validation]
 
 # Smoke-test results dashboard
 
-From **Wintap-Analytics**, on the analysis machine:
+End-to-end diagram: [[wiki/workflow/live-collector-validation]] — known activity,
+shared telemetry/evidence delivery, and explicit S3-backed validation.
+
+## Configure and launch against S3
+
+Run these steps on your **analysis machine** (for example your Mac), as your normal
+login user, from the **Wintap-Analytics repository root**. This recipe uses `uv` to
+install the app's Streamlit, DuckDB and boto3 dependencies and keep them available
+while Streamlit runs.
+
+### 1. Create the connection config
+
+For first-time setup, copy the example and edit it (`cp -n` preserves an existing
+config):
 
 ```bash
-python3 -m pip install -r streamlit/projects/SmokeTests/requirements.txt
-python3 -m streamlit run streamlit/projects/SmokeTests/main.py
+mkdir -p "$HOME/.config/wintap-smoke"
+cp -n streamlit/projects/SmokeTests/garage.example.json \
+  "$HOME/.config/wintap-smoke/garage.json"
+nano "$HOME/.config/wintap-smoke/garage.json"
 ```
+
+Set these values to the destination used by your collector uploader:
+
+```json
+{
+  "endpoint": "https://garage.example.invalid",
+  "region": "us-east-1",
+  "datasets": ["s3://example-bucket/example-prefix"],
+  "max_files": 10000
+}
+```
+
+| Field | What to enter |
+|---|---|
+| `endpoint` | S3 API origin, including `http://` or `https://` and a port if needed. The bucket/prefix belongs in `datasets`. |
+| `region` | Region used by the existing S3/Garage deployment. |
+| `datasets` | S3 root containing the uploaded `raw_sensor/` tree; one or more roots are supported. |
+| `max_files` | Listing cap; `10000` is the starting default. |
+
+For example, if an uploaded object is
+`s3://example-bucket/example-prefix/raw_sensor/raw_smoke_test/dayPK=20261030/hourPK=14/example.parquet`,
+use **`s3://example-bucket/example-prefix`** as the dataset. A dataset ending in
+`/raw_sensor` is also accepted. The app's config path is local to the analysis
+machine; its dataset entries are remote S3 URLs.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/garage.example.json; streamlit/projects/SmokeTests/s3_source.py §load_config, dataset_parts -->
+
+### 2. Select credentials in the same terminal
+
+Use an existing AWS profile with access to that S3 dataset; replace the example
+profile name:
+
+```bash
+export AWS_PROFILE="your-existing-profile"
+```
+
+The app uses boto3's standard credential chain. Existing `AWS_ACCESS_KEY_ID`,
+`AWS_SECRET_ACCESS_KEY` and optional `AWS_SESSION_TOKEN` environment variables also
+work; when using those, omit the profile command. Environment credentials take
+precedence over profile credentials. Credentials belong in that chain, not in
+`garage.json` (the config parser rejects credential fields).
+
+If this machine has no profile yet and the AWS CLI is installed, create one
+interactively using the credentials issued for the existing S3/Garage dataset:
+
+```bash
+aws configure --profile wintap-smoke
+export AWS_PROFILE=wintap-smoke
+```
+
+Reading requires bucket listing and object reads. Saving all-canary summaries also
+uses the sibling `analysis/smoke-tests/v1/` prefix described below.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §open_source; streamlit/projects/SmokeTests/README.md §Read directly from Garage / S3; streamlit/projects/SmokeTests/result_store.py §save_result -->
+
+### 3. Launch Streamlit
+
+Still in the **Wintap-Analytics repository root**, in that same terminal:
+
+```bash
+export WINTAP_SMOKE_CONFIG="$HOME/.config/wintap-smoke/garage.json"
+uv run --no-project \
+  --with-requirements streamlit/projects/SmokeTests/requirements.txt \
+  python -m streamlit run streamlit/projects/SmokeTests/main.py \
+  --server.address 127.0.0.1 \
+  --server.port 8501
+```
+
+Open **<http://127.0.0.1:8501>** on that analysis machine. Leave the terminal running;
+**Ctrl-C** stops the app. Later sessions only need the credential selection and
+launch commands. Here `uv run` owns the entire running app process, so its dependency
+environment remains available for the app's lifetime.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/README.md §Read directly from Garage / S3; streamlit/projects/SmokeTests/requirements.txt; streamlit/projects/SmokeTests/main.py §main -->
+
+### 4. Load and validate your run
+
+1. The sidebar should select **Garage / S3** and show your **Local S3 JSON config**
+   path automatically. Leave the local parquet root and optional JSON inputs empty
+   for automatic S3 discovery.
+2. Set **Start partition day** / **End partition day** to include the run's UTC
+   collection/publication days, using `YYYYMMDD`. Default is yesterday through today.
+3. Click **Refresh files / results**. The page reports evidence and telemetry file
+   counts; uploaded `raw_smoke_test` supplies the run manifests automatically.
+4. Select the test host, then **Canary Tests** → `telemetry-workload` → the exact
+   run → **Validate selected run**. For a recurring expanded round, use
+   **Run all validations for this canary**.
+
+If no run appears, check the dataset prefix, UTC window and uploaded
+`raw_smoke_test` objects. If the app reports **Cannot read S3 source**, check the
+launching shell's credentials, endpoint connectivity and DuckDB `httpfs` availability;
+the extension-cache option is documented in the source README's S3 section.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/main.py §main; streamlit/projects/SmokeTests/page_views.py §test_page; streamlit/projects/SmokeTests/batch_views.py §canary_batch_page; streamlit/projects/SmokeTests/README.md §Read directly from Garage / S3 -->
+
+## App behavior
 
 Streamlit pages separate **Overview**, **Canary Tests** and **Dev-time Tests**.
 Overview reads manifests only, without telemetry metadata/scans. Test pages offer
@@ -63,6 +172,14 @@ Internal named-workload workers do not produce separate top-level runs.
 
 ## Automatic durable evidence
 
+**Root-owned field-host quick start:** follow
+[[wiki/tool/named-telemetry-smoke-workload]] for the full user-created persistent
+venv → sudo-Python →
+`--smoke-data-root` → S3 → selected-run validation procedure. It includes separate
+checks for generation, local parquet publication and S3 arrival, plus the exact
+interpreter handoff when root cannot find `uv` or import DuckDB. Use the named
+venv's `bin/python`, not a temporary `uv run --with` interpreter path.
+
 All decorated harnesses accept `--smoke-data-root PATH`, where PATH contains
 `raw_sensor`. `WINTAP_DATA_ROOT` enables it too; `--no-smoke-parquet` opts out.
 Python DuckDB exports typed metadata/full manifest JSON/SHA-256 into
@@ -84,8 +201,8 @@ telemetry values, not files the Mac must open. DBT integration is deferred.
 
 ### Read-only Garage/S3 source
 
-Set `WINTAP_SMOKE_CONFIG` to a local, uncommitted JSON config; example and launch
-commands are in `streamlit/projects/SmokeTests/README.md`. Config fields are endpoint,
+Use the [configuration and launch quick start](#configure-and-launch-against-s3)
+above. `WINTAP_SMOKE_CONFIG` selects a local, uncommitted JSON config. Config fields are endpoint,
 region, dataset roots containing `raw_sensor`, optional UTC day window/file cap and
 extension cache. Credentials are excluded from config/UI and resolved from the AWS
 chain. Boto3 performs paginated ListObjectsV2; DuckDB reads explicit S3 object URLs

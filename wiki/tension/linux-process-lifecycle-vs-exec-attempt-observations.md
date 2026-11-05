@@ -41,3 +41,4 @@ schema contract has been selected; cost and fidelity need live comparison.
 Research baseline and comparison plan:
 [[wiki/work/lintap-process-creation-validation/future-scheduler-lifecycle-vs-syscalls]].
 Related boundary: [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]].
+Concrete downstream modeling finding: [[wiki/todo/linux-process-executable-attribution]].

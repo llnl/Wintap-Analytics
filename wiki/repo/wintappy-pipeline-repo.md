@@ -3,6 +3,10 @@ title: "Wintappy (Wintap-PyUtil) Pipeline Repository"
 type: repo
 confidence: high
 grounded_by:
+  - ../Wintap-PyUtil/Makefile
+  - ../Wintap-PyUtil/scripts/check_dbt_config.py
+  - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
+  - ../Wintap-PyUtil/tests/test_dbt_source_validation.py
   - ../Wintappy/README.md
   - ../Wintappy/pyproject.toml
   - ../Wintappy/wintap_dbt/dbt_project.yml
@@ -118,6 +122,39 @@ The dedicated `PIDSTAT_DATA_PATH` override and `wintap_dbt/macros/pidstat.sql` h
 <!-- GROUND_TRUTH: ../Wintappy/Makefile §dbt vars -->
 <!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/README.md §Configuration -->
 <!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql §typed empty fallback -->
+
+## Source-aware DBT preflight (2026-10-31)
+
+Current checkout path: `../Wintap-PyUtil` (older citations use `../Wintappy`).
+PyUtil owns the implementation; Analytics hosts this wiki and verification record.
+
+`make dbt-check-config` validates the effective raw input root:
+`WINTAP_DBT_RAW_SENSOR_DATASET`, falling back to `WINTAP_DBT_DATASET`.
+Local input requires a readable `<raw-root>/raw_sensor` directory, including
+split local input/output roots. S3 input requires `s3://bucket[/prefix]` and explicit
+inclusive `YYYYMMDD` start/end dates, but **no local raw_sensor placeholder**.
+Other URI schemes are rejected. Local date discovery uses the effective raw root,
+not unrelated output-root partitions. Database output remains local; date/hour
+validity/order and output-directory writability are checked.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/scripts/check_dbt_config.py -->
+
+`make dbt-check-source` uses DBT/DuckDB and the existing S3 credential-chain,
+endpoint/path-style/TLS configuration to list supported bronze events/aliases in
+the requested partitions and read one matching Parquet schema. Event names precede
+wildcards so S3 LIST prefixes include day/hour narrowing; nested `protoPK` is
+supported. Listing stops at a sample. An empty supported-event window fails;
+missing individual optional events remain valid. Engine access/TLS/Parquet errors
+are not suppressed as empty input. This is basic access evidence, not an all-file
+integrity scan or full DBT/Go-pidstat qualification. New bronze event names must also
+be added to the probe's event list.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql; ../Wintap-PyUtil/wintap_dbt/macros/s3.sql; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql -->
+
+`make dbt-build` runs both checks. `make print-dbt-config` stays offline and now
+prints the raw root/type and hour window without credentials. `qa-dashboard` and
+`qa-pidstat` check only the existing local database, not raw-source availability
+or dates; querying S3-backed bronze views still needs S3 access. Regression scope
+and limits: [[wiki/work/dbt-source-validation/verification]].
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintap_dbt/README.md -->
 
 ## Legacy Python ETL
 
