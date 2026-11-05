@@ -5,7 +5,7 @@ confidence: medium
 grounded_by:
   - wiki/concept/feature-work-template.md
 policy: agent-editable
-last_validated: 2026-11-04
+last_validated: 2026-11-05
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -48,6 +48,8 @@ recorded.
 | --- | --- | --- | --- |
 | P1 — High | [[wiki/todo/linux-process-executable-attribution]] | Open | Silver process aggregation may select an unconfirmed exec target and independently combine name/path from different observations. |
 | P1 — High | [[wiki/todo/lintap-linux-process-command-line-quality]] | Open | Focused VM run reports a high raw command-line blank rate and multiple distinct values behind many nonblank process summaries. |
+| P2 — Medium | [[wiki/todo/canonical-process-owned-network-grains]] | Open | Reconcile documented process/network increment and connection grains; preserve metadata conflicts and process-observation semantics for reusable analytics. |
+| Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Open | Investigate process-attributed listening-socket lifecycle capture and a downstream model distinct from peer-oriented connections; priority and platform scope remain open. |
 
 ## Related
 

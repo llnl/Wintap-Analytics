@@ -4220,3 +4220,22 @@ completeness, attribution outcomes, host/time scope, and hourly volume, with
 paginated context, AVC, interaction, transition, and process-attribution detail
 views. The page handles databases without the optional SELinux relations and
 exported successfully against the supplied sample DuckDB build.
+
+## [2026-11-05] docs | Listening-socket capture and modeling to-do
+
+Added `wiki/todo/listening-socket-capture-and-modeling.md` and linked it from the
+to-do queue and master index. Grounded the intake in the Linux socket-state
+tracepoint, shared Wintap activity contract, and current Wintappy network models;
+preserved the distinction between listener close and accepted-connection close.
+Priority, platform scope, event semantics, and model shape remain undecided. No
+sensor, schema, or DBT implementation changes were made.
+
+## [2026-11-05] docs | Canonical process-owned network-grain to-do
+
+Added `wiki/todo/canonical-process-owned-network-grains.md` and linked it from
+the to-do queue and master index. The intake records the documented increment
+key versus current silver grouping, proposes explicit connection/activity
+grains and a separate network-observed process identity relation, and requires
+conflict visibility plus counter/bounds regression checks. No schema or DBT
+implementation changes were made; existing uncommitted wiki edits were
+preserved.

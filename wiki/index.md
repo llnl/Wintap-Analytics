@@ -236,7 +236,12 @@ data-quality issues, and enhancements before promotion into a full deep-dive
 feature folder. Current P1 items include [[wiki/todo/linux-process-executable-attribution]],
 on nondeterministic Linux process executable attribution in Wintappy's silver model;
 also [[wiki/todo/lintap-linux-process-command-line-quality]], on source capture,
-provenance, and deterministic dbt command-line semantics.
+provenance, and deterministic dbt command-line semantics. An untriaged enhancement,
+[[wiki/todo/listening-socket-capture-and-modeling]], tracks process-attributed
+listening-socket lifecycle capture and downstream modeling; priority and platform
+scope remain open. [[wiki/todo/canonical-process-owned-network-grains]] tracks
+canonical process-owned increment/connection grains, conflict visibility, and
+network-observed process identity semantics for reusable analytics.
 
 ## Work
 
