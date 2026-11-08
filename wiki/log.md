@@ -4239,3 +4239,12 @@ grains and a separate network-observed process identity relation, and requires
 conflict visibility plus counter/bounds regression checks. No schema or DBT
 implementation changes were made; existing uncommitted wiki edits were
 preserved.
+
+## [2026-11-08] docs | Transformer five-tuple connection-key to-do
+
+Added `wiki/todo/transformer-five-tuple-connection-port-key.md` and linked it
+from the to-do queue and master index. The intake records the apparent
+`HiIPPortInt`-for-both-ports argument at `Transformer.cs:37`, grounded against
+the separate low/high tuple properties and key-generator inputs. Collision
+impact, intended compatibility, and persisted-ID implications remain
+unverified. No Wintap source, schema, or raw documents were changed.

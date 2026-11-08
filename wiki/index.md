@@ -242,6 +242,9 @@ listening-socket lifecycle capture and downstream modeling; priority and platfor
 scope remain open. [[wiki/todo/canonical-process-owned-network-grains]] tracks
 canonical process-owned increment/connection grains, conflict visibility, and
 network-observed process identity semantics for reusable analytics.
+[[wiki/todo/transformer-five-tuple-connection-port-key]] tracks the suspected
+high-endpoint-port argument duplication in Wintap's five-tuple connection key;
+the collision impact and compatibility implications remain unverified.
 
 ## Work
 
