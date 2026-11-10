@@ -7,7 +7,7 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/check_dbt_config.py
   - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
 policy: agent-editable
-last_validated: 2026-10-31
+last_validated: 2026-11-09
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -32,19 +32,32 @@ Implementation: [[wiki/work/dbt-source-validation/implementation_plan]].
 Commands ran in `../Wintap-PyUtil`, using existing uv environment, DuckDB1.5.6,
 dbt1.12.2 and dbt-duckdb1.9.6. No live/operator S3 credentials or datasets used.
 
+## Named-profile live source preflight (2026-11-09)
+
+Ran `make dbt-check-source` from the current `../Wintap-PyUtil` checkout after
+sourcing the operator's local run-env file. Kept `AWS_PROFILE=lintap-alpha` set,
+used its `region` and `endpoint_url` from `aws configure`, and matched
+`DUCKDB_USE_SSL` to the endpoint scheme. The DBT source check **passed**: S3 listing
+found a requested-window `raw_host` Parquet object and DuckDB read its schema.
+This validates the named-profile flow against the configured endpoint; it is not
+a full `dbt-build`, full-object scan, or model test. No credential values were
+printed or recorded.
+
 ## Final focused regressions
 
 ```sh
 uv run --dev pytest tests/test_dbt_source_validation.py tests/test_network_activity_sql.py tests/test_filetime_precision_sql.py tests/test_process_gold_quality_sql.py -q
 ```
 
-**248 passed**, including 39 new source-validation tests. Actual DBT operations
+**249 passed**, including 40 source-validation tests. Actual DBT operations
 exercise local valid/empty/corrupt/out-of-hour inputs, historical event aliases,
 network protoPK nesting and pidstat-only input (other optional events absent).
 Actual DuckDB httpfs exercises a loopback S3 protocol fixture: path-style Garage
 endpoint, credential-chain test environment, successful listing/schema reads,
 day/hour LIST-prefix narrowing, empty windows, denied listing, denied reads and
-TLS mismatch. SQL errors remain errors, not silent empty input. Offline Make
+TLS mismatch. A named-profile case confirms the request uses the selected profile
+credentials from a temporary AWS config/credentials fixture. SQL errors remain
+errors, not silent empty input. Offline Make
 checks cover local date discovery, explicit S3 dates, no-placeholder S3 printing,
 source-before-build ordering and raw-independent dashboard prerequisites.
 
@@ -70,8 +83,10 @@ and `uv run --dev isort scripts/check_dbt_config.py tests/test_dbt_source_valida
 
 ## Limits
 
-- Loopback S3 evidence is not live AWS/Garage service, profile/role authentication
-  or native RHEL qualification; no operator bucket was accessed.
+- Loopback S3 profile coverage uses fixture credentials. The separate live source
+  preflight used the operator's configured profile and endpoint, but is not full
+  AWS/Garage deployment or profile/role qualification. Native RHEL qualification
+  was not performed.
 - Preflight reads one schema, not all Parquet files/data pages or DBT model semantics.
 - Probe supports current bronze inputs/aliases; its explicit list needs maintenance
   when new events are added. Large windows can still require many LIST requests.

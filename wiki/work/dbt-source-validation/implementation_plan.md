@@ -7,7 +7,7 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/check_dbt_config.py
   - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
 policy: agent-editable
-last_validated: 2026-10-31
+last_validated: 2026-11-09
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -27,6 +27,7 @@ then confirmed the checks work and authorized topic commits on
 - [x] Reject unsupported/malformed URIs; validate day/hour dates/order.
 - [x] Discover dates only from effective local input; require explicit S3 dates.
 - [x] Add engine-native partition-scoped listing and one-Parquet-schema preflight.
+- [x] Pass an explicitly selected `AWS_PROFILE` through to DuckDB's S3 credential chain.
 - [x] Preserve optional-event behavior and original engine failure diagnostics.
 - [x] Run preflight before build; keep configuration printing offline.
 - [x] Keep dashboard prerequisites independent of raw-source reachability/dates.

@@ -25,7 +25,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-10-24
+last_validated: 2026-11-09
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -140,7 +140,12 @@ validity/order and output-directory writability are checked.
 
 `make dbt-check-source` uses DBT/DuckDB and the existing S3 credential-chain,
 endpoint/path-style/TLS configuration to list supported bronze events/aliases in
-the requested partitions and read one matching Parquet schema. Event names precede
+the requested partitions and read one matching Parquet schema. When `AWS_PROFILE`
+is set, the macro explicitly selects that named profile via DuckDB's `config` chain;
+otherwise the default credential chain is used. The macro gets region from
+`AWS_DEFAULT_REGION` / `AWS_REGION` and endpoint only from `AWS_ENDPOINT_URL`; it
+does not import a profile's custom `endpoint_url` setting, which must be exported
+for Garage/path-style stores. Event names precede
 wildcards so S3 LIST prefixes include day/hour narrowing; nested `protoPK` is
 supported. Listing stops at a sample. An empty supported-event window fails;
 missing individual optional events remain valid. Engine access/TLS/Parquet errors

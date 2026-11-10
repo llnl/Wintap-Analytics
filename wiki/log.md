@@ -4248,3 +4248,13 @@ from the to-do queue and master index. The intake records the apparent
 the separate low/high tuple properties and key-generator inputs. Collision
 impact, intended compatibility, and persisted-ID implications remain
 unverified. No Wintap source, schema, or raw documents were changed.
+
+## [2026-11-09] code | DBT named AWS profile selection
+
+Updated Wintap-PyUtil's S3 secret macro to pass `AWS_PROFILE` explicitly as a
+DuckDB `credential_chain` profile and added loopback-S3 coverage proving the
+selected profile signs requests. Direct `make dbt-check-source` then passed with
+the named profile after exporting that profile's configured endpoint URL and
+matching TLS; the probe listed one requested-window Parquet file and read its
+schema. Updated the pipeline README and wiki guidance. The focused DBT/SQL
+regression set passes 249 tests; no full DBT build was run.
