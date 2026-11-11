@@ -7,6 +7,7 @@ grounded_by:
   - streamlit/projects/HostActivity/main.py
   - streamlit/projects/HostActivity/queries.py
   - streamlit/projects/HostActivity/s3_source.py
+  - streamlit/projects/HostActivity/file_metadata.py
   - streamlit/projects/HostActivity/test_host_activity.py
   - ../Wintap-PyUtil/wintap_dbt/macros/s3.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/time.sql
@@ -15,8 +16,9 @@ grounded_by:
   - ../wintap/wintap/core/etl/extract/TcpConnectionSerializer.cs
   - ../wintap/wintap/core/etl/extract/UdpPacketSerializer.cs
   - ../wintap/wintap/core/etl/extract/SELinuxSerializer.cs
+  - ../wintap/wintap/core/etl/load/RawSensorWriter.cs
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-11
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -28,10 +30,11 @@ tags: [host-activity, streamlit, duckdb, s3, raw_sensor, read-only]
 
 # Recent Host Activity Dashboard
 
-Standalone, manually refreshed Streamlit application for viewing the last 12
-hours of bronze `raw_sensor` Parquet rows by event family and row hostname. It
-uses DuckDB directly; it does **not** invoke DBT, require a DBT materialization,
-or write to S3.
+Standalone, manually refreshed Streamlit application for a quick view of the
+last 12 hours of Wintap `raw_sensor` file activity. The default metadata mode
+reports S3 object counts and sizes by host over filename collect time without
+opening Parquet contents. An optional raw-row mode uses DuckDB. It does **not**
+invoke DBT, require a DBT materialization, or write to S3.
 
 ## Launch and source configuration
 
@@ -46,9 +49,10 @@ and launch the app as described in
   `AWS_DEFAULT_REGION` (fallback `AWS_REGION`), and `DUCKDB_USE_SSL`.
 - `AWS_ENDPOINT_URL` follows Wintappy's contract: either a bare host/authority
   or an HTTP(S) origin; TLS is configured separately through `DUCKDB_USE_SSL`.
-- Credentials remain in the standard AWS credential chain/profile. An
-  in-memory DuckDB connection loads `httpfs` and creates an ephemeral
-  credential-chain secret; the connection closes after refresh.
+- Credentials remain in the standard AWS credential chain/profile. Metadata
+  mode uses boto3 S3 `ListObjectsV2`; optional row mode creates an ephemeral
+  credential-chain secret in an in-memory DuckDB connection. Clients close after
+  refresh.
 
 The app currently accepts one dataset root. It snapshots source-configuration
 identity in Streamlit session state, but does not store credential material.
@@ -59,17 +63,24 @@ The source setup follows Wintappy's DBT S3 contract.
 ## Query and display semantics
 
 - Each explicit refresh captures the exact rolling 12-hour UTC interval. S3
-  discovery uses supported event names followed by intersecting
-  `dayPK=YYYYMMDD/hourPK=HH` partitions, then recursive Parquet globs so nested
-  network `protoPK` files are retained. Row timestamps apply the exact interval
-  after partition pruning. Partial boundary hours can result in 13 hourly
-  partitions touched for an exact 12-hour window. Returned object keys are
-  checked against the requested event/day/hour set before any schema or row scan.
-- Each manual refresh scans only the event family selected in the sidebar and
-  counts raw Parquet rows by timestamp bucket and hostname. The initial selection
-  is Process. Changing family selection does not access S3; click Refresh to
-  query the newly selected family. Counts are physical source-row counts, not
-  deduplicated counts or comparable universal logical-event totals.
+  discovery is restricted to intersecting `dayPK=YYYYMMDD/hourPK=HH` partitions;
+  partial boundary hours can result in 13 partitions. Metadata mode uses
+  ListObjectsV2 keys and object sizes only and retains nested network `protoPK`
+  keys. It lists all supported families by default, with a one-family filter.
+  It does not GET/read Parquet content.
+- Metadata filenames use `hostname+event_type+FILETIME.parquet`. The Win32
+  FILETIME in the name is the capture/collect timestamp used for the time series;
+  S3 `LastModified` is intentionally ignored. Producer materialization also
+  derives `dayPK`/`hourPK` from that capture time. The exact `[start,end)` window
+  is applied to filename timestamps. Malformed or mismatched filenames are
+  counted and excluded from host/time summaries.
+- The default view shows separate file-count and S3 object-size charts, grouped
+  by host and adaptive collect-time bucket. A per-host summary includes file
+  count, total size, and latest collect time. Changing query/family selection
+  does not access S3 until Refresh.
+- **Raw Parquet rows** is an optional secondary mode. It selects one family,
+  inspects supported row-level host/time columns, and counts physical source
+  rows—not deduplicated logical events or a universal cross-family total.
 - Host columns are selected case-insensitively from `Hostname`, `ComputerName`,
   `Computer` (confirmed hostname alias), `HostHame`, and `host_name`. When
   schema drift yields more than one available alias, nonblank values are
@@ -86,20 +97,19 @@ The source setup follows Wintappy's DBT S3 contract.
   chart labels. Unknown numeric encodings are not guessed. The UI displays the
   timestamp fields/encoding priority used by the snapshot.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/FileSerializer.cs §HandleSensorEvent; ../wintap/wintap/core/etl/extract/Serializer.cs §GetUnixNowTime; ../wintap/wintap/core/etl/esper/file.epl §query; ../wintap/wintap/core/etl/extract/HostSerializer.cs §GetSendableHost/WriteHostRecordAsync; ../wintap/wintap/core/etl/extract/TcpConnectionSerializer.cs §HandleSensorEvent; ../wintap/wintap/core/etl/extract/UdpPacketSerializer.cs §HandleSensorEvent; ../wintap/wintap/core/etl/extract/SELinuxSerializer.cs §HandleSensorEvent; ../Wintap-PyUtil/wintap_dbt/models/silver/process_file.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql -->
-- Families with no usable host/time mapping or unreadable schemas are skipped
-  with a reason. Rows with null/blank hostnames are counted and reported, not
-  charted. Missing timestamps/partitions are not filled in as zero activity.
-- During explicit refresh, a status panel identifies object listing, schema
-  inspection, and timestamp aggregation stages. Elapsed time is shown when the
-  refresh completes and with its snapshot. Family-level schema/budget failures
-  do not produce partial charts and are not misreported as zero activity.
+- In row mode, families with no usable host/time mapping or unreadable schemas
+  are skipped with a reason. Rows with null/blank hostnames are counted and
+  reported, not charted. Missing timestamps/partitions are not filled in as zero.
+- Metadata-mode status identifies object listing and filename/size aggregation;
+  row mode reports listing, schema inspection, and timestamp aggregation. Both
+  show elapsed time and fail closed without partial charts.
 - Buckets start at five minutes, are anchored to the refresh window, and widen
-  to fit a 1,000-point per-family chart budget. Absolute rows support linear or
-  logarithmic scaling. Optional normalized mode divides each host by its own
-  peak and is a shape comparison, not a volume comparison.
+  to fit a 1,000-point view budget. Absolute row counts support linear or
+  logarithmic scaling. Optional row-mode normalization divides each host by its
+  own peak and is a shape comparison, not a volume comparison.
 
 Fail-closed limits include 10,000 discovered objects and 1,000 chart points per
-family. Standard families also have a 2,000,000 timestamped in-window raw-row
+view. Standard row-mode families also have a 2,000,000 timestamped in-window raw-row
 budget. `raw_process_file` is the exception: it aggregates all matching rows
 directly in DuckDB, without sampling or materializing raw rows in Python, under a
 120-second query timeout, 1 GB DuckDB memory limit, 1 GB temporary-storage limit,
@@ -109,6 +119,8 @@ no partial chart when a limit is exceeded.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §MAX_ROWS_PER_FAMILY/choose_bucket_minutes/aggregate_family -->
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §MAX_AGGREGATE_GROUPS/PROCESS_FILE_QUERY_TIMEOUT_SECONDS/PROCESS_FILE_MEMORY_LIMIT/PROCESS_FILE_TEMP_LIMIT/_aggregate_process_file -->
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/main.py §main/_refresh -->
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/file_metadata.py §parse_file_metadata/aggregate_file_metadata -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/RawSensorWriter.cs §MaterializeFromParquetGlob/ParseMergedFileName -->
 <!-- SYNTHESIS: raw Parquet row counts preserve source row grain but do not establish logical-event equivalence across event families -->
 
 For standard families, bounded raw-row selection, budget statistics, and bucket
@@ -123,12 +135,14 @@ eliminates S3 latency.
 
 ## Verification status
 
-On 2026-11-10, 23 focused tests passed in the app-scoped UV environment
-(DuckDB 1.5.6, Streamlit 1.67.0, Altair 6.3.0, Pandas 2.3.3). Streamlit
-`AppTest` rendered the initial state without exceptions and confirmed that no
-source query runs before manual refresh. Mocked and AppTest refresh checks verify
-selected-family-only discovery, timestamp-source display, and the progress/
-elapsed status path. Tests use synthetic Parquet and mocked discovery, including
+On 2026-11-11, 27 focused tests passed in the app-scoped UV environment
+(DuckDB 1.5.6, Streamlit 1.67.0, Altair 6.3.0, Pandas 2.3.3, boto3 1.44.0).
+Streamlit `AppTest` rendered both initial metadata state and a mocked metadata
+refresh. It verified the default all-family mode and that metadata refresh does
+not open a DuckDB connection or inspect/read Parquet. Synthetic tests cover
+paginated ListObjectsV2, partition scoping, sizes, filename FILETIME parsing,
+exact-window accounting, and count/byte conservation. Row-mode tests still use
+synthetic Parquet and mocked discovery, including
   Unix-second versus FILETIME family contracts and rejection of a returned object
   outside the requested day/hour set, exact high-volume aggregation, timeout
   interruption, and the process-file result-display path. A bounded, read-only probe using the
@@ -159,16 +173,19 @@ The earlier all-family
 dashboard refresh took at least five minutes; its `pidstat` result exceeded the
 2-million-row fail-closed limit. No root,
 endpoint, credential, object key, host value, or raw event row was persisted.
-The UI reports the count of coarse hourly partitions beside the exact event-time
-window, as well as elapsed refresh time. Broader family coverage, latency under
-other windows/source conditions, and operational acceptance remain unverified.
+The raw-row UI reports coarse hourly partitions beside its exact event-time
+window. The metadata mode has only synthetic/mocked S3 evidence so far: live
+listing latency, deployed-endpoint compatibility, and filename alias coverage
+remain unverified. Broader family coverage and operational acceptance also
+remain open.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/test_host_activity.py -->
 
 ## Known limits
 
 This is an availability snapshot, not a completeness, loss, or collector-health
-monitor. Only event families with discovered files appear in the schema
-inventory. Late arrivals, absent partitions, unsupported timestamp encodings,
-and hostless rows can reduce chart coverage. Run tests and launch instructions
-are maintained in the app's README and the feature record:
+monitor. Object presence/size does not validate file contents or prove that
+expected data was collected. Late arrivals, absent partitions, malformed names,
+unsupported timestamp encodings, and hostless rows can reduce chart coverage.
+Run tests and launch instructions are maintained in the app's README and the
+feature record:
 [[wiki/work/recent-host-activity-dashboard/verification]].

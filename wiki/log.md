@@ -4495,3 +4495,25 @@ operational verification. Compactor implementation and runtime tests remain
 pending.
 Documentation revalidation passed for six pages, 49 grounding entries, and 42
 wikilinks; `git diff --check` passed.
+
+## [2026-11-11] implementation | metadata-first recent host activity dashboard
+
+Added a default File metadata query mode for quick herd status. Bounded,
+concurrent boto3 `ListObjectsV2` requests enumerate only the selected 12-hour
+event/day/hour partitions, use S3 object `Size`, and never GET/open Parquet files.
+The dashboard parses `hostname+event_type+FILETIME.parquet`, treats Win32
+FILETIME as collect time (not upload/LastModified time), filters the exact
+window, and charts per-host file count or size with a host summary. Malformed or
+family-mismatched filenames are reported and excluded. The existing DuckDB
+raw-row mode remains optional. Added boto3 to the app lock and tests for
+pagination, partition scoping, size/file budgets, timestamp parsing, exact
+window totals, and a metadata AppTest asserting no Parquet connection/schema/
+row query. All 27 tests pass; compileall, lock check, and diff check pass. No live
+metadata-mode S3 query was performed, so deployment latency/compatibility remain
+open.
+
+## [2026-11-11] implementation | show both metadata time-series charts
+
+Updated the metadata dashboard to display file count and S3 object size as
+separate collect-time charts at once, using the same selected hosts and bucket
+width. Removed the metric switch and updated app/workflow documentation.

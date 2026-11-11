@@ -11,6 +11,7 @@ import unittest
 from unittest.mock import patch
 
 import duckdb
+import file_metadata
 import queries
 import s3_source
 
@@ -22,6 +23,7 @@ from queries import (
 )
 from s3_source import (
     discover_files,
+    discover_object_metadata,
     load_settings,
     partition_globs,
     partition_hours,
@@ -183,6 +185,120 @@ class SourceConfigurationTests(unittest.TestCase):
             event_types=("raw_host",),
         )
         self.assertEqual(found, {"raw_host": (host_path,)})
+
+    def test_object_metadata_listing_is_partition_scoped_paginated_and_size_only(self):
+        settings = load_settings({"WINTAP_DBT_DATASET": "s3://bucket/root"})
+        client = FakeS3MetadataClient({
+            "root/raw_sensor/raw_host/dayPK=20261110/hourPK=00/host+raw_host_sensor+133000000000000000.parquet": 2048,
+            "root/raw_sensor/raw_host/dayPK=20261110/hourPK=00/host2+raw_host_sensor+133000000050000000.parquet": 1024,
+            "root/raw_sensor/raw_host/dayPK=20261110/hourPK=01/protoPK=tcp/host+raw_host_sensor+133000000100000000.parquet": 4096,
+        }, page_size=1)
+        objects = discover_object_metadata(
+            client, settings, START, END, event_types=("raw_host",)
+        )
+        self.assertEqual(len(objects), 3)
+        self.assertEqual({item.size_bytes for item in objects}, {1024, 2048, 4096})
+        self.assertTrue(all(item.event_type == "raw_host" for item in objects))
+        self.assertEqual(len(client.calls), 13)
+        self.assertTrue(all(call["Bucket"] == "bucket" for call in client.calls))
+        self.assertTrue(all("hourPK=12/" not in call["Prefix"] for call in client.calls))
+        self.assertTrue(all(call["MaxKeys"] == 1000 for call in client.calls))
+        self.assertEqual(
+            {call["Prefix"] for call in client.calls},
+            {
+                f"root/raw_sensor/raw_host/dayPK=20261110/hourPK={hour:02d}/"
+                for hour in range(12)
+            },
+        )
+        self.assertTrue(any("ContinuationToken" in call for call in client.calls))
+
+    def test_object_metadata_discovery_fails_closed_on_size_and_object_budgets(self):
+        settings = load_settings({"WINTAP_DBT_DATASET": "s3://bucket/root"})
+        prefix = "root/raw_sensor/raw_host/dayPK=20261110/hourPK=00/"
+        client = FakeS3MetadataClient({prefix + "a.parquet": 4, prefix + "b.parquet": 8})
+        with self.assertRaisesRegex(ValueError, "file limit exceeded"):
+            discover_object_metadata(client, settings, START, END, max_files=1, event_types=("raw_host",))
+        client = FakeS3MetadataClient({prefix + "a.parquet": None})
+        with self.assertRaisesRegex(RuntimeError, "invalid object size"):
+            discover_object_metadata(client, settings, START, END, event_types=("raw_host",))
+
+
+class FakeS3MetadataClient:
+    def __init__(self, sizes, page_size=1000):
+        self.sizes = sizes
+        self.page_size = page_size
+        self.calls = []
+
+    def list_objects_v2(self, **kwargs):
+        self.calls.append(kwargs)
+        prefix = kwargs["Prefix"]
+        contents = [
+            {"Key": key, "Size": size}
+            for key, size in sorted(self.sizes.items())
+            if key.startswith(prefix)
+        ]
+        offset = int(kwargs.get("ContinuationToken", "0"))
+        page = contents[offset:offset + self.page_size]
+        next_offset = offset + self.page_size
+        truncated = next_offset < len(contents)
+        return {
+            "Contents": page,
+            "IsTruncated": truncated,
+            **({"NextContinuationToken": str(next_offset)} if truncated else {}),
+        }
+
+
+class FileMetadataTests(unittest.TestCase):
+    def test_filename_filetime_and_s3_size_aggregation(self):
+        objects = (
+            s3_source.S3ObjectMetadata(
+                f"raw_sensor/raw_host/dayPK=20261110/hourPK=00/alpha+raw_host_sensor+{filetime(START + dt.timedelta(minutes=1))}.parquet",
+                "raw_host",
+                1024,
+            ),
+            s3_source.S3ObjectMetadata(
+                f"raw_sensor/raw_host/dayPK=20261110/hourPK=00/alpha+raw_host_sensor+{filetime(START + dt.timedelta(minutes=6))}.parquet",
+                "raw_host",
+                2048,
+            ),
+            s3_source.S3ObjectMetadata(
+                f"raw_sensor/raw_host/dayPK=20261110/hourPK=00/beta+raw_host_sensor+{filetime(END - dt.timedelta(seconds=1))}.parquet",
+                "raw_host",
+                1024,
+            ),
+            s3_source.S3ObjectMetadata(
+                f"raw_sensor/raw_host/dayPK=20261109/hourPK=23/early+raw_host_sensor+{filetime(START - dt.timedelta(seconds=1))}.parquet",
+                "raw_host",
+                512,
+            ),
+            s3_source.S3ObjectMetadata(
+                f"raw_sensor/raw_host/dayPK=20261110/hourPK=12/end+raw_host_sensor+{filetime(END)}.parquet",
+                "raw_host",
+                10,
+            ),
+            s3_source.S3ObjectMetadata(
+                "raw_sensor/raw_host/dayPK=20261110/hourPK=00/not-a-structured-name.parquet",
+                "raw_host",
+                50,
+            ),
+        )
+        result = file_metadata.aggregate_file_metadata(objects, START, END)
+        self.assertEqual(result.listed_files, 6)
+        self.assertEqual(result.files_in_window, 3)
+        self.assertEqual(result.total_size_bytes, 4096)
+        self.assertEqual(result.unparsed_files, 1)
+        self.assertEqual(result.unparsed_size_bytes, 50)
+        self.assertEqual(result.outside_window_files, 2)
+        self.assertEqual(result.outside_window_size_bytes, 522)
+        self.assertEqual(result.host_count, 2)
+        self.assertEqual(
+            {(point["hostname"], point["file_count"], point["size_bytes"]) for point in result.points},
+            {("alpha", 1, 1024), ("alpha", 1, 2048), ("beta", 1, 1024)},
+        )
+        self.assertEqual(sum(point["file_count"] for point in result.points), result.files_in_window)
+        self.assertEqual(sum(point["size_bytes"] for point in result.points), result.total_size_bytes)
+        self.assertEqual(result.host_summary[0]["hostname"], "alpha")
+        self.assertEqual(result.host_summary[0]["file_count"], 2)
 
 
 class QueryTests(unittest.TestCase):
@@ -514,6 +630,8 @@ class DashboardControlTests(unittest.TestCase):
             def __getattr__(self, name):
                 if name == "button":
                     return lambda *_args, **_kwargs: True
+                if name == "radio":
+                    return lambda _label, options, index=0, **_kwargs: options[1]
                 if name == "selectbox":
                     return lambda _label, options, index=0, **_kwargs: options[index]
                 if name == "status":
@@ -563,6 +681,97 @@ class DashboardControlTests(unittest.TestCase):
         self.assertEqual(fake_streamlit.status_widget.updates[-1]["state"], "complete")
         self.assertIn("Refresh finished in", fake_streamlit.status_widget.updates[-1]["label"])
 
+    def test_metadata_refresh_lists_keys_and_sizes_without_opening_duckdb(self):
+        class Context:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *_args):
+                return False
+
+        class Status:
+            def __init__(self):
+                self.messages = []
+                self.updates = []
+
+            def write(self, message):
+                self.messages.append(message)
+
+            def update(self, **kwargs):
+                self.updates.append(kwargs)
+
+        class Placeholder:
+            def multiselect(self, _label, _options, default=()):
+                return default
+
+        class FakeStreamlit(types.ModuleType):
+            def __init__(self):
+                super().__init__("streamlit")
+                self.session_state = {}
+                self.sidebar = Context()
+                self.status_widget = Status()
+
+            def __getattr__(self, name):
+                if name == "button":
+                    return lambda *_args, **_kwargs: True
+                if name == "radio":
+                    return lambda _label, options, index=0, **_kwargs: options[index]
+                if name == "selectbox":
+                    return lambda _label, options, index=0, **_kwargs: options[index]
+                if name == "status":
+                    return lambda *_args, **_kwargs: self.status_widget
+                if name == "empty":
+                    return lambda: Placeholder()
+                if name == "columns":
+                    return lambda count: [types.SimpleNamespace(metric=lambda *_a, **_k: None) for _ in range(count)]
+                return lambda *_args, **_kwargs: None
+
+        class MetadataClient:
+            closed = False
+
+            def close(self):
+                self.closed = True
+
+        fake_streamlit = FakeStreamlit()
+        fake_altair = types.ModuleType("altair")
+        fake_pandas = types.ModuleType("pandas")
+        client = MetadataClient()
+        metadata_result = types.SimpleNamespace(
+            listed_files=1,
+            files_in_window=0,
+            total_size_bytes=0,
+            unparsed_files=1,
+            unparsed_size_bytes=15,
+            outside_window_files=0,
+            outside_window_size_bytes=0,
+            bucket_minutes=5,
+            host_count=0,
+            host_summary=(),
+            points=(),
+        )
+        with patch.dict(sys.modules, {"streamlit": fake_streamlit, "altair": fake_altair, "pandas": fake_pandas}):
+            main_module = importlib.import_module("main")
+            try:
+                with patch.dict(os.environ, {"WINTAP_DBT_DATASET": "s3://bucket/root"}, clear=True), \
+                        patch.object(main_module, "open_metadata_client", return_value=client), \
+                        patch.object(main_module, "discover_object_metadata", return_value=(object(),)) as discover, \
+                        patch.object(main_module, "aggregate_file_metadata", return_value=metadata_result), \
+                        patch.object(main_module, "open_connection", side_effect=AssertionError("Parquet connection must not open")), \
+                        patch.object(main_module, "inspect_family", side_effect=AssertionError("Parquet schema must not be inspected")), \
+                        patch.object(main_module, "aggregate_family", side_effect=AssertionError("Parquet rows must not be read")):
+                    main_module.main()
+            finally:
+                sys.modules.pop("main", None)
+
+        self.assertTrue(client.closed)
+        self.assertEqual(discover.call_args.kwargs["event_types"], s3_source.RAW_EVENT_TYPES)
+        snapshot = fake_streamlit.session_state["host_activity_snapshot"]
+        self.assertEqual(snapshot["query_mode"], "File metadata")
+        self.assertEqual(snapshot["event_type"], "__all__")
+        self.assertEqual(snapshot["metadata"]["listed_files"], 1)
+        self.assertTrue(any("Parquet contents are not read" in message for message in fake_streamlit.status_widget.messages))
+        self.assertEqual(fake_streamlit.status_widget.updates[-1]["state"], "complete")
+
     def test_dashboard_does_not_query_until_manual_refresh(self):
         class Context:
             def __enter__(self):
@@ -580,6 +789,8 @@ class DashboardControlTests(unittest.TestCase):
             def __getattr__(self, name):
                 if name == "button":
                     return lambda *_args, **_kwargs: False
+                if name == "radio":
+                    return lambda _label, options, index=0, **_kwargs: options[index]
                 if name == "selectbox":
                     return lambda _label, options, index=0, **_kwargs: options[index]
                 if name == "empty":
@@ -615,23 +826,63 @@ class StreamlitRenderTests(unittest.TestCase):
             self.assertEqual([item.value for item in app.title], ["Recent Host Activity"])
             self.assertEqual([item.label for item in app.button], ["Refresh last 12 hours"])
             self.assertEqual([item.label for item in app.selectbox], ["Event family"])
-            self.assertEqual(app.selectbox[0].value, "Process")
-            self.assertTrue(any("query the selected **Process** family" in item.value for item in app.info))
+            self.assertEqual([item.label for item in app.radio], ["Query mode"])
+            self.assertEqual(app.radio[0].value, "File metadata")
+            self.assertEqual(app.selectbox[0].value, "All event families")
+            self.assertTrue(any("all event families" in item.value for item in app.info))
             self.assertNotIn("host_activity_snapshot", app.session_state)
 
             app.selectbox[0].select("Process file").run()
             self.assertEqual(app.selectbox[0].value, "Process file")
             self.assertNotIn("host_activity_snapshot", app.session_state)
-            self.assertTrue(any("query the selected **Process file** family" in item.value for item in app.info))
+            self.assertTrue(any("Process file" in item.value for item in app.info))
+
+            app.selectbox[0].select("All event families").run()
+
+            class MetadataClient:
+                closed = False
+
+                def close(self):
+                    self.closed = True
+
+            metadata_client = MetadataClient()
+
+            def metadata_objects(_client, _settings, start, _end, event_types):
+                self.assertEqual(event_types, s3_source.RAW_EVENT_TYPES)
+                timestamp = filetime(start + dt.timedelta(minutes=1))
+                return (s3_source.S3ObjectMetadata(
+                    f"root/raw_sensor/raw_host/dayPK=20261110/hourPK=00/synthetic-host+raw_host_sensor+{timestamp}.parquet",
+                    "raw_host",
+                    2_097_152,
+                ),)
+
+            with patch.object(s3_source, "open_metadata_client", return_value=metadata_client), \
+                    patch.object(s3_source, "discover_object_metadata", side_effect=metadata_objects), \
+                    patch.object(s3_source, "open_connection", side_effect=AssertionError("Metadata mode must not open DuckDB")):
+                app.button[0].click().run()
+            self.assertEqual(len(app.exception), 0)
+            self.assertTrue(metadata_client.closed)
+            metadata_snapshot = app.session_state["host_activity_snapshot"]["metadata"]
+            self.assertEqual(metadata_snapshot["files_in_window"], 1)
+            self.assertEqual(metadata_snapshot["total_size_bytes"], 2_097_152)
+            self.assertEqual(metadata_snapshot["host_summary"][0]["hostname"], "synthetic-host")
+            self.assertTrue(any("S3 LastModified/upload time is ignored" in item.value for item in app.caption))
+            self.assertEqual(
+                [item.value for item in app.subheader if item.value != "Source"],
+                ["File count by collect time", "S3 object size by collect time (MiB)"],
+            )
 
             # Hot-reloading from the earlier all-family snapshot should request a
             # refresh rather than crashing on its missing selected-family marker.
             app.session_state["host_activity_snapshot"] = {
                 "settings_fingerprint": load_settings(configured_env).fingerprint,
+                "query_mode": "File metadata",
+                "event_type": "__all__",
             }
             app.selectbox[0].select("Process").run()
             self.assertEqual(len(app.exception), 0)
-            self.assertTrue(any("does not match the selected family" in item.value for item in app.info))
+            self.assertTrue(any("does not match the selected query/family" in item.value for item in app.info))
+            app.radio[0].set_value("Raw Parquet rows").run()
             app.selectbox[0].select("Process file").run()
 
             class Connection:
@@ -679,6 +930,7 @@ class StreamlitRenderTests(unittest.TestCase):
             self.assertTrue(connection.closed)
             snapshot = app.session_state["host_activity_snapshot"]
             self.assertEqual(snapshot["event_type"], "raw_process_file")
+            self.assertEqual(snapshot["query_mode"], "Raw Parquet rows")
             self.assertEqual(snapshot["results"]["raw_process_file"]["rows"], 7_923_378)
             self.assertEqual(snapshot["results"]["raw_process_file"]["host_count"], 5)
             self.assertEqual(snapshot["timestamp_sources"][0]["column"], "FirstSeen")

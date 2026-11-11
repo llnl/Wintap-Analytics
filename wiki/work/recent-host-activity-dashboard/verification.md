@@ -7,7 +7,7 @@ grounded_by:
   - streamlit/projects/HostActivity/README.md
   - streamlit/projects/HostActivity/main.py
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-11
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -22,8 +22,9 @@ tags: [host-activity, verification, feature-work]
 ## Test Commands
 
 - `uv run python -m unittest discover -s . -p 'test_*.py' -v` from
-  `streamlit/projects/HostActivity/` — 23 tests passed in the app's locked UV
-  environment (DuckDB 1.5.6, Streamlit 1.67.0, Altair 6.3.0, Pandas 2.3.3).
+  `streamlit/projects/HostActivity/` — 27 tests passed in the app's locked UV
+  environment (DuckDB 1.5.6, Streamlit 1.67.0, Altair 6.3.0, Pandas 2.3.3,
+  boto3 1.44.0).
 - `uv run python -m compileall -q .` from the app directory — passed.
 - `uv lock --check` — passed; the app-scoped `uv.lock` is current.
 - `git diff --check` from the repository root — passed.
@@ -33,12 +34,22 @@ file or DBT runtime is needed.
 
 ## Manual Checks
 
-- Streamlit `AppTest` rendered the app with no exceptions, showed the selected-
-  family control and manual refresh button, and confirmed neither initial
+- Streamlit `AppTest` rendered the app with no exceptions, showed the query-mode
+  and family controls and manual refresh button, and confirmed neither initial
   render nor changing families creates a snapshot/query before the button is
   clicked. A subsequent AppTest refresh with mocked S3/query helpers verified
   selected-family-only discovery, connection closure, timestamp-source display,
   the over-budget no-chart path, and elapsed-time status without contacting S3.
+- The metadata-mode AppTest used mocked S3 listing results and real filename-time
+  aggregation to render the host summary plus separate file-count and object-size
+  charts. It verified the default all-family selection, client closure, filename
+  FILETIME basis, and that no DuckDB connection, Parquet schema inspection, or
+  row aggregation was invoked.
+- Synthetic metadata checks verified paginated `ListObjectsV2` requests scoped
+  to requested event/day/hour partitions, nested `protoPK` keys, S3 `Size`
+  accounting, invalid-size/object-limit failures, filename event aliases,
+  Win32 FILETIME parsing, exact `[start,end)` filtering, and count/byte
+  conservation across host/time groups.
 - A focused mocked refresh test verified listing, schema, and aggregation
   progress messages and the completed status state.
 - Synthetic Parquet verified FILETIME, native timestamp, ISO-offset timestamp,
@@ -99,9 +110,10 @@ file or DBT runtime is needed.
 
 ## Results
 
-Standalone app, DBT-compatible S3 source setup, schema-aware query/aggregation,
-UV project/lock, launch guide, and offline tests were implemented. No source
-schemas, raw files, or S3 objects were changed.
+The default app mode now provides a metadata-only herd overview through S3
+object listings; optional schema-aware raw-row querying remains available. No
+source schemas, raw files, or S3 objects were changed. Metadata mode was tested
+with synthetic/mocked results but has not been run against live S3.
 
 ## Known Gaps
 
@@ -116,6 +128,10 @@ schemas, raw files, or S3 objects were changed.
   about 86 seconds and retains the standard raw-row cap. Per-family query latency,
   upload lag, performance under other source conditions, and acceptable
   operational latency remain open.
+- Metadata mode's live listing latency, compatibility with the configured S3
+  endpoint, and real-world filename alias coverage have not been measured. The
+  mode lists all supported families by default; a bounded live read-only run is
+  required before accepting it operationally.
 
 ## Follow-Ups
 

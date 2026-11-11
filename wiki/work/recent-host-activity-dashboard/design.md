@@ -10,7 +10,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/time.sql
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-11
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -24,10 +24,12 @@ tags: [host-activity, streamlit, duckdb, s3, raw_sensor, feature-work]
 
 ## Summary
 
-Add an independent, read-only Streamlit app that queries S3 `raw_sensor`
-Parquet with DuckDB and plots recent raw-row activity by event family and
-hostname. A 12-hour UTC window, manual refresh, and partition-pruned file
-selection keep the first version bounded.
+Add an independent, read-only Streamlit app whose default view uses S3
+`raw_sensor` object metadata for a quick view of host collection activity. It
+shows per-host file counts and sizes over the filename's Win32 collect-time
+stamp without opening Parquet contents. Raw-row aggregation remains an optional
+secondary mode. A 12-hour UTC window, manual refresh, and partition-pruned
+listing keep the first version bounded.
 
 ## Proposed Approach
 
@@ -39,15 +41,21 @@ selection keep the first version bounded.
    not infer host identity from the root or path.
 2. **Discover only relevant objects.** For the refresh time `end_utc`, derive
    `start_utc = end_utc - 12 hours`, then enumerate event-family objects under
-   overlapping `dayPK`/`hourPK` partitions only. Preserve nested network
-   `protoPK` paths. Deduplicate repeated roots/object keys and enforce explicit
-   file/row/point budgets that fail closed rather than silently truncate.
-3. **Use a family-aware projection.** Inspect column names case-insensitively
+   overlapping `dayPK`/`hourPK` partitions only. Metadata mode uses S3
+   `ListObjectsV2` fields (`Key`, `Size`) and never opens Parquet contents.
+   Preserve nested network `protoPK` paths, deduplicate keys, and enforce an
+   explicit file budget that fails closed rather than silently truncating.
+3. **Parse collection time from metadata.** Parse
+   `hostname+event_type+FILETIME.parquet`, treat FILETIME as collection time,
+   and apply the exact rolling window to that value. Report malformed names
+   rather than silently assigning a time. For optional row mode, inspect column names case-insensitively
    and select row-level hostname and event-time columns supported for that
    family. Convert known FILETIME values with the same integer UTC semantics as
    Wintap-PyUtil; handle timestamp-native values explicitly. If the mapping is
    ambiguous or fields are absent, skip that family and state why.
-4. **Aggregate in DuckDB.** Read only selected Parquet keys with schema union
+4. **Aggregate metadata in memory; keep row aggregation in DuckDB.** Group
+   object count/size by host and collect-time bucket for the primary view. The
+   optional row mode reads selected Parquet keys with schema union
    where safe, filter the precise UTC time interval, then group `count(*)` by
    event family, normalized time bucket, and row hostname. Call the measure
    “raw rows”; never sum family-specific count fields into a universal total.
@@ -59,15 +67,17 @@ selection keep the first version bounded.
    budget; show the actual interval. Preserve empty time buckets as gaps/zeros
    only where source availability is known, and never imply that absent source
    data means zero activity.
-6. **Render a focused view.** Provide an event-family selector before manual
-   refresh; each refresh scans only that family, and changing the selector alone
-   does not query S3. Include a host selector, a line per host, UTC range and
-   refresh time, staged progress and elapsed duration, plus absolute linear/log
+6. **Render a focused view.** Default to all-family metadata, with an optional
+   family filter before manual refresh; changing the selector alone does not
+   query S3. Include a host selector and separate count and size charts with a
+   line per host, UTC range and refresh time, staged progress and elapsed
+   duration, plus absolute linear/log
    scale and a clearly separate normalized-to-own-peak view. The normalized mode
    is for temporal-shape comparison only and labels values as relative.
 7. **Keep access ephemeral/read-only.** Use the AWS environment/profile chain;
-   create any DuckDB S3 secret only in the in-memory connection, never display
-   credentials, close the connection after refresh, and issue no S3 writes.
+   use boto3 ListObjectsV2 for metadata and create any DuckDB S3 secret only in
+   the in-memory optional row-mode connection. Never display credentials; close
+   clients/connections after refresh and issue no S3 writes.
 
 ### Scale/readability recommendation
 
@@ -87,6 +97,7 @@ is not established by those source files.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/README.md §Scope/Configuration -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/paths.sql §raw_sensor_partition_globs -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/time.sql §win32_to_timestamp_expr -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/RawSensorWriter.cs §MaterializeFromParquetGlob/ParseMergedFileName -->
 
 ## Data Model Or Schema Changes
 
@@ -101,11 +112,13 @@ change source files or DBT models.
   remain outside app config and UI.
 - Manual **Refresh** controls the snapshot time and invalidates prior query
   results.
-- Sidebar controls: event family, manual refresh of only that family, host
-  selection, absolute vs. relative mode, linear vs. log scale. Changing event
-  family alone does not access S3. The dataset root is environment-configured.
-- Main panel: last-12-hour UTC line chart, visible bucket width, source refresh
-  time, supported/skipped event-family inventory, and source errors.
+- Sidebar controls: query mode (file metadata by default; raw Parquet rows
+  optional), family or all families in metadata mode, and manual refresh.
+  Changing selections alone does not access S3. The dataset root is
+  environment-configured.
+- Main panel: metadata totals and per-host count/size summary, last-12-hour UTC
+  line chart, visible bucket width, source refresh time, and malformed-name or
+  source errors. Row mode retains its analysis controls.
 
 ## Edge Cases
 
@@ -117,6 +130,8 @@ change source files or DBT models.
   objects.
 - FILETIME, timestamp, nullable, differently-cased, and absent columns; do not
   guess a timestamp scale.
+- Filename event aliases must agree with the canonical event directory; names
+  with malformed host/type/FILETIME components are counted, not charted.
 - Hostname null/blank values and host name case differences; do not merge
   distinct short/FQDN hosts without an explicit rule.
 - Empty event family, missing partitions, late arrivals, inaccessible S3, bad

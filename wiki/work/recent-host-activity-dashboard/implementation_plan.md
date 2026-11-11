@@ -9,7 +9,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/README.md
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-11
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -24,8 +24,9 @@ tags: [host-activity, streamlit, duckdb, s3, feature-work]
 ## Scope
 
 Standalone read-only Analytics app for manually refreshed, rolling 12-hour UTC
-raw-row trends by host and bronze event family. Implementation and tests stay
-in Wintap-Analytics. Wintap-PyUtil sources are read-only references.
+S3 file metadata trends by host, with optional raw-row analysis. Implementation
+and tests stay in Wintap-Analytics. Wintap-PyUtil/Wintap sources are read-only
+references.
 
 ## Steps
 
@@ -61,8 +62,12 @@ in Wintap-Analytics. Wintap-PyUtil sources are read-only references.
 9. [x] Change refresh to query only the explicitly selected family; verify that
    changing families does not access S3 until the user clicks Refresh.
 10. [x] Promote durable launch/source semantics into a canonical tool page,
-   update this checklist and verification record, and append the implementation
-   entry to `wiki/log.md`.
+    update this checklist and verification record, and append the implementation
+    entry to `wiki/log.md`.
+11. [x] Add a default metadata-only mode using S3 object key/size listings and
+    filename Win32 collect timestamps; retain row-level DuckDB analysis as an
+    explicit secondary mode. Verify partition pruning, pagination, budgets,
+    exact filename-time filtering, and the no-Parquet-read UI path.
 
 ## Files Likely To Change
 
@@ -87,6 +92,9 @@ in Wintap-Analytics. Wintap-PyUtil sources are read-only references.
   behavior.
 - Raw Parquet rows grouped by family/host/time, including FILETIME and native
   timestamps, schema drift, unsupported families, empty windows, and null hosts.
+- S3 object-metadata listing by family/day/hour with pagination, size validation,
+  filename FILETIME parsing, exact collect-time filtering, and per-host count/size
+  aggregation; verify no Parquet open occurs in metadata mode.
 - Adaptive bucket point bound, normalized peak behavior, empty-window behavior,
   and no partial output after row/point budget failure. Linear/log selector
   interaction remains part of the real UI smoke.
@@ -122,4 +130,8 @@ required.
 - [x] Operator authorized the exact aggregate-only `raw_process_file` strategy;
   implemented and validated it with timeout, memory/temp, intermediate-group,
   and chart-point safeguards while leaving other families' raw-row cap intact.
+- [x] Metadata-first mode uses bounded concurrent S3 listings (`Key` and `Size`
+  only), parses filename Win32 FILETIME collect stamps, and renders per-host
+  counts/sizes without opening Parquet contents. Synthetic/AppTest verification
+  passed; live S3 metadata-mode validation remains open.
 - [x] Verification, index, canonical usage docs, and operation log are updated.

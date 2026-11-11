@@ -5,6 +5,8 @@ import datetime as dt
 import hashlib
 import os
 import re
+import threading
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
@@ -49,6 +51,13 @@ class S3Settings:
         value = "\0".join((self.dataset_root, self.profile, self.region,
                            self.endpoint_url, str(self.use_ssl)))
         return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+@dataclass(frozen=True)
+class S3ObjectMetadata:
+    key: str
+    event_type: str
+    size_bytes: int
 
 
 def _dataset_root(value: str) -> str:
@@ -165,6 +174,35 @@ def open_connection(settings: S3Settings):
         ) from None
 
 
+def open_metadata_client(settings: S3Settings):
+    """Create a boto3 S3 client using the same AWS profile/environment chain."""
+    try:
+        import boto3
+        from botocore.config import Config
+
+        endpoint = None
+        if settings.endpoint_url:
+            scheme = "https" if settings.use_ssl else "http"
+            endpoint = f"{scheme}://{settings.endpoint_url}"
+        session = boto3.Session(profile_name=settings.profile or None)
+        return session.client(
+            "s3",
+            endpoint_url=endpoint,
+            region_name=settings.region or None,
+            config=Config(
+                s3={"addressing_style": "path"},
+                connect_timeout=10,
+                read_timeout=30,
+                retries={"max_attempts": 2, "mode": "standard"},
+            ),
+        )
+    except Exception:
+        raise RuntimeError(
+            "S3 metadata client setup failed. Check the existing AWS profile/credential chain, "
+            "endpoint, region, TLS setting, and local boto3 installation; details suppressed."
+        ) from None
+
+
 def partition_hours(start: dt.datetime, end: dt.datetime):
     """Return UTC (YYYYMMDD, HH) partitions intersecting [start, end)."""
     if start.tzinfo is None or end.tzinfo is None:
@@ -244,3 +282,86 @@ def discover_files(con, settings: S3Settings, start: dt.datetime, end: dt.dateti
             raise RuntimeError("S3 partition listing returned an object outside the requested event/day/hour partitions")
         by_event[event].append(path)
     return {event: tuple(paths) for event, paths in by_event.items() if paths}
+
+
+def discover_object_metadata(
+    client,
+    settings: S3Settings,
+    start: dt.datetime,
+    end: dt.datetime,
+    max_files: int = MAX_S3_FILES,
+    event_types=RAW_EVENT_TYPES,
+):
+    """List S3 keys and object sizes under relevant partitions; never read objects."""
+    if not isinstance(max_files, int) or isinstance(max_files, bool) or max_files < 1:
+        raise ValueError("S3 file limit must be a positive integer")
+    event_types = tuple(dict.fromkeys(event_types))
+    if any(event not in RAW_EVENT_TYPES for event in event_types):
+        raise ValueError("Unsupported raw_sensor event family")
+    hours = partition_hours(start, end)
+    parsed_root = urlsplit(settings.raw_sensor_root)
+    bucket = parsed_root.netloc
+    root = parsed_root.path.strip("/")
+    if not bucket or not root:
+        raise ValueError("Configured raw_sensor root is invalid")
+
+    objects = {}
+    object_lock = threading.Lock()
+    stop_listing = threading.Event()
+
+    def list_partition(event_type, day, hour):
+        prefix = f"{root}/{event_type}/dayPK={day}/hourPK={hour}/"
+        continuation_token = None
+        while not stop_listing.is_set():
+            request = {"Bucket": bucket, "Prefix": prefix, "MaxKeys": 1000}
+            if continuation_token is not None:
+                request["ContinuationToken"] = continuation_token
+            response = client.list_objects_v2(**request)
+            for item in response.get("Contents", ()):
+                if stop_listing.is_set():
+                    return
+                key = item.get("Key")
+                if not isinstance(key, str) or not key.startswith(prefix):
+                    raise RuntimeError("S3 metadata listing returned an object outside the requested partition")
+                if not key.lower().endswith(".parquet"):
+                    continue
+                if any(char in key for char in "*?[]\\"):
+                    raise RuntimeError("S3 object keys contain unsupported wildcard characters")
+                size = item.get("Size")
+                if not isinstance(size, int) or isinstance(size, bool) or size < 0:
+                    raise RuntimeError("S3 metadata listing returned an invalid object size")
+                with object_lock:
+                    objects.setdefault(key, S3ObjectMetadata(key, event_type, size))
+                    if len(objects) > max_files:
+                        stop_listing.set()
+                        raise ValueError("S3 file limit exceeded; narrow the source or increase MAX_S3_FILES")
+            if not response.get("IsTruncated", False):
+                return
+            continuation_token = response.get("NextContinuationToken")
+            if not continuation_token:
+                raise RuntimeError("S3 metadata listing returned an incomplete pagination response")
+
+    try:
+        with ThreadPoolExecutor(max_workers=8) as executor:
+            futures = [
+                executor.submit(list_partition, event_type, day, hour)
+                for event_type in event_types
+                for day, hour in hours
+            ]
+            try:
+                for future in as_completed(futures):
+                    future.result()
+            except Exception:
+                stop_listing.set()
+                for future in futures:
+                    future.cancel()
+                raise
+    except ValueError:
+        raise
+    except RuntimeError:
+        raise
+    except Exception:
+        raise RuntimeError(
+            "S3 metadata listing failed; check read/list access, connectivity, and endpoint settings; details suppressed."
+        ) from None
+    return tuple(objects[key] for key in sorted(objects))

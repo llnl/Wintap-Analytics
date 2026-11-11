@@ -8,7 +8,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/README.md
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-11
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -39,9 +39,11 @@ Use this prompt to hand remaining verification to another agent:
     streamlit/projects/HostActivity/. Do not invoke DBT: the app reads the
     existing WINTAP_DBT_RAW_SENSOR_DATASET / WINTAP_DBT_DATASET / WINTAP_DATA_ROOT
     and AWS_* environment variables directly. Do not modify sibling repos.
-    Remaining work is a real local Streamlit render with the pinned requirements
-    and, when an operator configures the existing read-only AWS profile/root, a
-    bounded live-S3 pilot. Do not claim either was completed unless exercised.
+    The default File metadata mode uses boto3 ListObjectsV2 (Key/Size only),
+    parses hostname+event_type+Win32 FILETIME from object names, and does not
+    open Parquet contents. Raw-row DuckDB analysis remains an explicit mode.
+    Offline tests/AppTest pass; metadata-mode live S3 behavior and performance
+    remain unverified. Do not claim a live pilot unless exercised.
 
     Update verification/plan only with new evidence. Preserve the existing
     implementation and offline results; canonical tool docs and the initial
@@ -49,12 +51,11 @@ Use this prompt to hand remaining verification to another agent:
 
 ## Handoff Summary
 
-The confirmed v1 counts raw Parquet rows per event family/hostname over a
-rolling 12-hour UTC interval, filters candidate `dayPK`/`hourPK` partitions
-before reading with DuckDB, and displays one selected event family as host time
-series. Manual refresh, adaptive buckets, linear/log absolute scaling, and an
-optional normalized-to-host-peak mode are in scope. Unsupported host/time
-schemas must be listed, not hidden.
+The default query is a read-only file-metadata view over the rolling 12-hour UTC
+interval, using partition-pruned S3 object listings and filename collect time;
+it charts per-host file count and size without reading Parquet bytes. Optional raw
+row analysis retains the selected-family DuckDB flow and its event-time
+semantics/limits. Manual refresh and adaptive buckets apply to both modes.
 
 ## Primary Sources For The Dev Agent
 
@@ -72,10 +73,11 @@ schemas must be listed, not hidden.
 ## Recommended First Implementation Slice
 
 Completed: offline tests cover environment validation, bounded partition
-discovery, synthetic Parquet, FILETIME/native/ISO timestamps, hostname aliases,
-schema drift, raw-row aggregation, normalization, budgets, and no-query-before-
-manual-refresh behavior. Next: real app launch/render with the requirements and
-operator-assisted bounded S3 verification.
+discovery, S3 metadata listing/pagination and sizes, filename FILETIME parsing,
+synthetic Parquet row queries, schema drift, budgets, and no-query-before-manual-
+refresh behavior. Metadata mode has an AppTest path proving no DuckDB connection
+or Parquet schema/row query is used. Next: operator-assisted read-only S3 metadata
+verification and runtime measurement.
 
 ## Non-Goals For This Slice
 
