@@ -7,7 +7,7 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/check_dbt_config.py
   - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
 policy: agent-editable
-last_validated: 2026-11-09
+last_validated: 2026-11-11
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -18,6 +18,20 @@ tags: [dbt, duckdb, s3, validation, regression-tests]
 ---
 
 # Verification
+
+## Combined PR validation (2026-11-11)
+
+The SELinux branch contains commit `8fe85d0` and the later explicit named-profile
+fix. After repairing the synthetic network SQL renderer and adding SELinux
+regressions, `.venv/bin/python -m pytest tests -q` passes **286 tests** in 37.31s.
+The separate config run passes **4 tests**; the historical config failure below
+does not reproduce in this existing environment. Dependencies were unchanged.
+No private configurations/datasets or live S3 were used for this rerun.
+
+The user selected expansion of existing PR #43 to include both branch histories.
+Required review and full representative split-local/authenticated-S3 builds remain
+release gates. See [[wiki/work/selinux-dbt-pipeline/verification]] for combined
+scope, compatibility warnings and remaining work. Earlier evidence below is retained.
 
 ## Operator follow-up
 

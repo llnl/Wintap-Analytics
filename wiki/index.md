@@ -10,8 +10,11 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 DBT source-aware validation: [[wiki/work/dbt-source-validation/verification]] —
 local/split/S3 inputs, explicit named AWS profile selection, no placeholder directory,
-partition-scoped DuckDB preflight, offline dashboard checks; 249 focused regressions
-pass, one legacy config failure retained.
+partition-scoped DuckDB preflight, offline dashboard checks. Combined SELinux/source
+validation now passes 286 regressions; historical config failure does not reproduce.
+Combined release gates: [[wiki/work/selinux-dbt-pipeline/verification]] — required
+PR review, full split-local/authenticated-S3 builds, temporary network-ID consumer
+qualification, and S3 pull-helper hardening.
 
 Package release policy: [[wiki/workflow/package-release-versioning]] — shared 7.0
 release identity, format-specific Debian/RPM/MSI encoding and build-to-install checklist.

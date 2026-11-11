@@ -4517,3 +4517,20 @@ open.
 Updated the metadata dashboard to display file count and S3 object size as
 separate collect-time charts at once, using the same selected hosts and bucket
 width. Removed the metric switch and updated app/workflow documentation.
+
+## [2026-11-11] verification | combined PyUtil PR #43 preparation
+
+Validated the SELinux branch containing all source-validation PR ancestry using
+the existing environment. Fixed the Python SQL renderer's missing network macro
+(baseline 38 failures), added shipping network-ID and nine synthetic SELinux
+regressions, and reached 286 passing tests. Config tests pass separately (4);
+historical failure evidence remains intact. No live operator data/S3 was accessed.
+Documented optional SELinux/count/attribution contracts and temporary five-tuple
+ID compatibility in PyUtil README and the canonical pipeline page. Updated both
+feature verification/plans and index; canonical SELinux promotion is complete.
+The human chose expansion of PR #43 while preserving both branches. Required
+review, full combined split-local/authenticated-S3 builds, network-ID consumer
+qualification and S3 helper hardening remain outstanding release work.
+PyUtil repair/docs commit `21db95e` was pushed to both preserved branches; PR #43
+was expanded and marked ready. Main remains blocked by required approving review;
+no reviewer is assigned. Private run-env files remain untracked and untouched.

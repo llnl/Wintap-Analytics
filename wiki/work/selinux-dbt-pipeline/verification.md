@@ -3,6 +3,8 @@ title: "Verification: SELinux DBT pipeline"
 type: concept
 confidence: high
 grounded_by:
+  - ../Wintap-PyUtil/tests/test_selinux_sql.py
+  - ../Wintap-PyUtil/tests/test_network_activity_sql.py
   - wiki/work/selinux-dbt-pipeline/implementation_plan.md
   - ../Wintap-PyUtil/Makefile
   - ../Wintap-PyUtil/wintap_dbt/macros/time.sql
@@ -10,7 +12,7 @@ grounded_by:
   - ../../../data/lintap-alpha/raw_sensor/raw_selinuxinteraction/
   - ../../../data/lintap-alpha/raw_sensor/raw_selinuxtransition/
 policy: agent-editable
-last_validated: 2026-11-04
+last_validated: 2026-11-11
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -120,3 +122,50 @@ interaction/transition summary groups, and process-attribution groups. The page
 gracefully explains when the SELinux relations are absent. With the supplied
 sample, `marimo export html notebooks/wintap_dbt_overview.py` completed
 successfully against the built DuckDB database.
+
+### Combined-branch regression validation (2026-11-11)
+
+Validated the SELinux branch containing the full ancestry of PR #43's
+`work/pidstat-and-dbt-validation` branch, using the existing `.venv` without
+dependency changes or access to operator datasets/live S3.
+
+- Baseline `.venv/bin/python -m pytest tests -q`: **38 failed, 237 passed**.
+  All failures came from the Python SQL renderer omitting `network_keys.sql`.
+- Loaded that macro and added its shipping SQL contract plus reversed-endpoint
+  actual-model regressions. Added nine synthetic SELinux cases: empty optional
+  gold, all three timestamp/count normalizations and duplicate-count ID stability,
+  exact/unique-temporal/ambiguous/unmatched attribution with host isolation, and
+  family detail count preservation. Fixtures explicitly use UTC.
+- Final `.venv/bin/python -m pytest tests -q`: **286 passed in 37.31s**.
+- `.venv/bin/python -m pytest tests/test_config.py -q`: **4 passed**; the
+  historical failure does not reproduce here, without altering config code.
+- `bash -n scripts/lintap-pull-s3.sh`: passed (syntax only).
+- `git diff --check`: passed.
+
+Earlier full-sample and absent-source builds above remain historical evidence;
+they were not rerun on the final combined network-ID revision.
+
+#### Remaining release work
+
+- Obtain the required approving review for expanded PR #43; do not bypass main
+  protection. Preserve both feature branches.
+- Run full combined-revision DBT builds/tests against representative split-local
+  and authenticated-S3 inputs, including all SELinux families. The November 9
+  named-profile source preflight is not a full S3 build.
+- Approve changed network-ID semantics and qualify consumer joins/rebuilds; track
+  removal of the temporary DBT shim once producer identity is authoritative.
+- Harden/test the S3 pull helper: real calendar/date-order validation, GNU/BSD
+  date iteration, failed discovery, host-filter literalness and defaults. Dry-run
+  still performs discovery requests; no runtime helper qualification is claimed.
+
+Canonical contracts: [[wiki/repo/wintappy-pipeline-repo]].
+
+#### Integration status
+
+Repair/documentation commit `21db95e` was pushed to both
+`feature/selinux-dbt-pipeline` and `work/pidstat-and-dbt-validation` after a
+fast-forward. [PR #43](https://github.com/llnl/Wintap-PyUtil/pull/43) now includes
+the combined history, has an updated release checklist, and is ready for review.
+GitHub reports `BLOCKED` / `REVIEW_REQUIRED`; no reviewer is assigned and no CI
+checks are configured on this PR. Main was not merged or protection bypassed.
+The two private host run-env files remain untracked and untouched.

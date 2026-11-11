@@ -3,6 +3,10 @@ title: "Wintappy (Wintap-PyUtil) Pipeline Repository"
 type: repo
 confidence: high
 grounded_by:
+  - ../Wintap-PyUtil/wintap_dbt/README.md
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/selinux_attribution.sql
+  - ../Wintap-PyUtil/wintap_dbt/macros/network_keys.sql
+  - ../Wintap-PyUtil/tests/test_selinux_sql.py
   - ../Wintap-PyUtil/Makefile
   - ../Wintap-PyUtil/scripts/check_dbt_config.py
   - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
@@ -25,7 +29,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-11-09
+last_validated: 2026-11-11
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -160,6 +164,37 @@ prints the raw root/type and hour window without credentials. `qa-dashboard` and
 or dates; querying S3-backed bronze views still needs S3 access. Regression scope
 and limits: [[wiki/work/dbt-source-validation/verification]].
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintap_dbt/README.md -->
+
+## SELinux pipeline (2026-11-11 candidate)
+
+PyUtil owns optional bronze/silver/gold support for `raw_selinuxavc`,
+`raw_selinuxinteraction`, and `raw_selinuxtransition`; missing families produce
+typed empty relations. Silver retains raw timestamps and normalizes Unix-second
+`EventTime` and FILETIME observation bounds. Bronze removes identical rows with
+`num_dups` retained; gold preserves normalized producer `EventCount`, not raw
+duplicate contributions. Interaction telemetry is folded/permission-expanded,
+not one distinct kernel event per row or count unit.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/README.md §SELinux telemetry; ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_raw_selinuxinteraction.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/selinux_interaction.sql -->
+
+`selinux_attribution` accepts exact identity or one host/PID/lifetime candidate;
+ambiguous and unmatched observations remain unassigned. Shared gold detail,
+context, and process summaries preserve these outcomes. The Marimo overview
+exposes family counts, producer counts, context completeness and attribution QA.
+Sensor collection remains owned outside PyUtil; Analytics hosts the evidence:
+[[wiki/work/selinux-dbt-pipeline/verification]]. Synthetic tests cover all four
+attribution outcomes, including cases absent from the supplied sample.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/selinux_attribution.sql; ../Wintap-PyUtil/tests/test_selinux_sql.py; ../Wintap-PyUtil/notebooks/wintap_dbt_overview.py -->
+
+## Temporary network connection IDs (2026-11-11 candidate)
+
+The current silver `process_conn_incr` replaces raw producer `connid` with an
+uppercase MD5 of canonical JSON containing context `llnl`, normalized protocol,
+and ordered IP/port endpoint pairs. Reversed endpoints share an ID; incomplete
+tuples yield NULL. This is a temporary DBT shim pending authoritative Wintap .NET
+implementation, not a unique connection-instance key. Repeated five-tuples share
+the key; producer-ID joins and existing materialized IDs can change. Rebuild
+dependent models together and qualify downstream consumers before release.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/network_keys.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/wintap_dbt/README.md §Temporary network identity compatibility change -->
 
 ## Legacy Python ETL
 

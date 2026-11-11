@@ -8,7 +8,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/models/schema.yml
   - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
 policy: agent-editable
-last_validated: 2026-11-04
+last_validated: 2026-11-11
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -58,10 +58,15 @@ tags: [feature-work, selinux, dbt, lintap, implementation-plan]
 
 - [x] Document each model's grain, timestamp units, count semantics, and optional-source behavior.
 - [x] Record sample results and deviations in `verification.md`.
-- [ ] Promote durable DBT model semantics into canonical analytics pages after implementation stabilizes.
+- [x] Promote durable DBT model semantics into canonical analytics pages after implementation stabilizes.
 <!-- SYNTHESIS: ordered implementation checklist based on the DBT conventions and native event contract -->
 
 ## Implementation results
+
+Canonical semantics: [[wiki/repo/wintappy-pipeline-repo]]. Combined-branch
+regressions and outstanding release qualification are recorded in
+[[wiki/work/selinux-dbt-pipeline/verification]]. Required PR approval and live-S3
+qualification remain outstanding; promotion does not claim release acceptance.
 
 - The sample schemas contain the shared envelope (`MessageType`, `PID`, `PidHash`,
   `ProcessName`, `AgentId`, `Hostname`, `FirstSeen`, `LastSeen`, `EventTime`,
