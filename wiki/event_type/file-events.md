@@ -7,12 +7,14 @@ grounded_by:
   - ../wintap/wintap/core/etl/esper/file.epl
   - ../wintap/shared/WintapAPI/WintapMessage.cs
   - ../wintap/wintap/core/etl/extract/FileSerializer.cs
+  - ../wintap/wintap/core/etl/extract/Serializer.cs
   - ../wintap/wintap/core/etl/transform/IdGenerator.cs
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_file.sql
   - ../wintap/wintap/platform/linux/sensor/ebpf/DirIdentityIndex.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/file_ops_tracer.bpf.c
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-11-10
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: file
@@ -55,6 +57,17 @@ with distinct sensor keys; Wintappy's separate lowercased file_id remains unchan
 
 The file ETL query groups file messages in a 10-second time batch by file path, `PidHash`, PID, activity type, and process name. It emits bytes requested, first/last seen times, event count, message type, and `AgentId`.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/esper/file.epl §query -->
+
+In bronze `raw_process_file`, `FirstSeen` and `LastSeen` preserve the batch's
+producer event-time bounds as Windows FILETIME values. The serializer's
+`EventTime` is different: it calls `GetUnixNowTime()` while serializing the
+already-aggregated row, so this field is Unix seconds (serialization time), not
+the raw FileIO occurrence time. Wintappy's silver model reflects this split by
+converting `EventTime` with its Unix-or-timestamp macro and converting
+`FirstSeen`/`LastSeen` with the FILETIME macro. A recent-activity chart should
+prefer `FirstSeen`/`LastSeen`; interpreting integer `EventTime` as FILETIME
+places rows near 1601 and incorrectly yields an empty exact-time window.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/FileSerializer.cs §HandleSensorEvent; ../wintap/wintap/core/etl/extract/Serializer.cs §GetUnixNowTime; ../Wintap-PyUtil/wintap_dbt/models/silver/process_file.sql; ../Wintap-PyUtil/wintap_dbt/macros/time.sql §unix_or_timestamp_expr/win32_to_timestamp_expr -->
 
 ## Analysis Implications
 

@@ -46,8 +46,10 @@ recorded.
 
 | Priority | Item | State | Summary |
 | --- | --- | --- | --- |
+| P1 — High (provisional) | [[wiki/todo/linux-process-name-exe-fallback]] | Open | Validate and trace reported `process_name = 'exe'` rows to an unresolved Linux `/proc/<pid>/exe` fallback; fix producer behavior and assess evidence-backed historical repair. |
 | P1 — High | [[wiki/todo/linux-process-executable-attribution]] | Open | Silver process aggregation may select an unconfirmed exec target and independently combine name/path from different observations. |
 | P1 — High | [[wiki/todo/lintap-linux-process-command-line-quality]] | Open | Focused VM run reports a high raw command-line blank rate and multiple distinct values behind many nonblank process summaries. |
+| P2 — Medium (provisional) | [[wiki/todo/linux-nfs-process-network-attribution]] | Open | Qualify why Linux process contexts, including SSH, appear on a shared TCP tuple to the NFS host; distinguish causal I/O attribution from socket ownership. |
 | P2 — Medium | [[wiki/todo/canonical-process-owned-network-grains]] | Open | Reconcile documented process/network increment and connection grains; preserve metadata conflicts and process-observation semantics for reusable analytics. |
 | P2 — Medium (provisional) | [[wiki/todo/transformer-five-tuple-connection-port-key]] | Open | Investigate whether `Transformer.cs:37` passes the high endpoint port for both five-tuple key ports, causing connection-ID collisions. |
 | Untriaged | [[wiki/todo/raw-sensor-upload-time-partition]] | Open | Current .NET code partitions at merge time and retries the same S3 key; the requested UTC actual-upload partition contract needs a separate shared-uploader correction. |

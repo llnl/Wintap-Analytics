@@ -4259,6 +4259,193 @@ matching TLS; the probe listed one requested-window Parquet file and read its
 schema. Updated the pipeline README and wiki guidance. The focused DBT/SQL
 regression set passes 249 tests; no full DBT build was run.
 
+## [2026-11-10] docs | Linux process name `exe` fallback to-do
+
+Added `wiki/todo/linux-process-name-exe-fallback.md` and linked it from the
+priority queue and master index. Preserved the user's report against the reviewed
+DuckDB as unverified data evidence; source review confirms a plausible path where
+an unresolved `/proc/<pid>/exe` path is basename-extracted as `exe`, but does not
+confirm that path produced the reviewed rows. Recorded row-lineage validation,
+producer regression, downstream quality checks, and evidence-backed historical
+repair as follow-up work. No sensor, DBT, schema, or data changes were made.
+
+## [2026-11-10] docs | Linux process attribution on NFS network tuple
+
+Inspected the local example DuckDB read-only. One shared NFS TCP five-tuple has
+129 rows, including one 264-byte send attributed to `ssh`; the same process has
+a separate port-22 SSH connection. The user confirmed that the home directory
+is mounted from the NFS device. The same SSH process has 14 home-path
+`PROCESS_FILE` rows across six paths under `.ssh` in its six-minute run, but a
+nearby Delete row's `min_event` is about five seconds later than `first_seen`,
+so exact timing remains unresolved. A roughly 19-hour endpoint-wide summary has
+1,619 rows, 254 five-tuples, 770 process hashes, 64,773 network events, and
+about 9.6 MB reported; 404 process hashes intersect file activity and 38 have
+home-path activity. Seven SSH hashes have 80 `.ssh` rows and 226 file events.
+The process mix is plausible for mounted-workload and scanner activity, but the
+large generic `exe` bucket and aggregation grain need qualification. Updated
+`wiki/todo/linux-nfs-process-network-attribution.md` with anonymized, cursory
+findings, the timestamp caveat, and a controlled-reproduction plan. Removed
+identifying local database paths and specific user, host, network, PID, and
+connection identifiers from the affected TODOs and this entry. No database,
+sensor, or DBT changes were made.
+
+## [2026-11-10] feature-work | recent-host-activity-dashboard opened
+
+Completed the adaptive interview and created `wiki/work/recent-host-activity-dashboard/`
+artifacts: interview, brief, references, design, spike, implementation plan,
+developer handoff, and verification. Confirmed a standalone read-only
+Streamlit/DuckDB dashboard over S3 bronze raw rows, rolling 12-hour UTC window,
+manual refresh, day/hour partition pruning, event-family selection with host
+series, adaptive buckets, and explicit linear/log plus normalized-to-host-peak
+views. Families without usable row-level hostname/time are to be skipped and
+reported; no universal logical-event count is claimed.
+
+Source review of `../Wintap-PyUtil/wintap_dbt/` confirms the canonical
+`<dataset>/raw_sensor/<event_type>/dayPK=YYYYMMDD/hourPK=HH/` layout, optional
+nested `protoPK`, and S3 partition-pruning conventions. Analytics SmokeTests
+already demonstrates direct read-only DuckDB/S3 access. Neither source identifies
+the user's actual bucket roots or live schemas; an operator-configured bounded
+S3 pilot remains open. No AWS access, code changes, or sibling-repository writes
+were performed. Human estimate values were not supplied.
+
+## [2026-11-10] implementation | recent-host-activity-dashboard
+
+Implemented `streamlit/projects/HostActivity/` as a standalone read-only
+Streamlit/DuckDB app. It reads the existing DBT dataset/AWS environment
+variables but does not invoke DBT; it discovers only supported event/day/hour
+partitions, coalesces compatible host/time aliases across schema drift, applies
+exact 12-hour UTC bounds, and fails closed on object/row/point budgets. The
+chart supports event-family and host selection, adaptive buckets, linear/log
+counts, and per-host-peak normalization. Launch docs, requirements, 15 offline
+tests, verification notes, and [[wiki/tool/recent-host-activity-dashboard]]
+were added/updated. Focused tests and compile checks pass under DuckDB 1.4.4;
+the target DuckDB 1.5.6/Streamlit UI stack and real S3 were unavailable, so live
+roots, schemas, and a real app render remain unverified. No AWS access, DBT run,
+source/schema/raw-file changes, or sibling-repository writes occurred.
+
+## [2026-11-10] verification | recent-host-activity-dashboard UV setup
+
+Replaced the pip requirements file with an app-scoped `pyproject.toml` and
+`uv.lock`, updated launch/test instructions to UV, and synced DuckDB 1.5.6,
+Streamlit 1.67.0, Altair 6.3.0, and Pandas 2.3.3. Altair 6 resolved a Python
+3.14 incompatibility found during `AppTest`; the initial app render passes and
+does not query before manual refresh. All 16 focused tests, compileall, lock
+check, and `git diff --check` pass. Updated verification/handoff/index/tool docs;
+the bounded live S3 pilot remains pending. No S3 access was attempted.
+
+## [2026-11-10] optimization | recent-host-activity-dashboard partition scan
+
+Reconfirmed that refresh discovery uses exact supported-event and intersecting
+`dayPK`/`hourPK` prefixes before recursive Parquet matching, with exact event-time
+bounds applied afterward. Hardened discovery to reject any returned key outside
+the requested event/day/hour set and made that coarse partition scope visible in
+the UI. Combined per-family row/host budgets and bucket aggregation into one
+materialized scan, avoiding a second full Parquet row scan per family. The 16
+focused UV tests pass, including an out-of-window partition rejection case;
+actual S3 listing/read latency remains unmeasured because no live access was
+attempted.
+
+## [2026-11-10] live verification | recent-host-activity-dashboard
+
+Using the operator-provided read-only environment, confirmed a 12-hour refresh
+selects 13 overlapping `dayPK`/`hourPK` partitions and found 3,988 Parquet object
+paths across 8 families; scoped listing took about 26 seconds. `raw_process`
+schema inspection of 1,226 objects took about 19 seconds and exact-window
+aggregation took about 67 seconds (1,305,103 rows, 6 hosts, 598 chart points).
+`raw_process_conn_incr` schema inspection over 990 objects took about 17 seconds
+and aggregation about 7 seconds, with no exact-window rows. The user reported a
+full refresh exceeding five minutes and `pidstat` failing closed above the
+2-million-row budget. This confirms partition-scoped discovery but shows
+all-family latency is still too high. The endpoint parser now accepts DBT's bare
+authority form. No source values, object keys, hostnames, credentials, or raw
+rows were retained; no write operations were issued.
+
+## [2026-11-10] performance | recent-host-activity-dashboard selected-family refresh
+
+After the all-family refresh exceeded five minutes, changed the sidebar so an
+explicit refresh scans only the selected family; changing families alone makes
+no S3 request. The default is Process, selected as a useful live-data family.
+AppTest verifies family switching remains query-free. A bounded `raw_host`
+refresh over 59 objects took about 5 seconds end-to-end but had no exact-window
+rows; a Process refresh remains about 86 seconds for schema plus aggregation on
+the observed source. Existing day/hour pruning and exact timestamp filtering are
+unchanged. Seventeen offline tests pass; full per-family latency and the
+`pidstat` 2-million-row limit remain to be discussed. No source values,
+credentials, object keys, hostnames, or raw rows were recorded.
+
+## [2026-11-10] usability | recent-host-activity-dashboard refresh status
+
+Added an expanded `st.status` panel for partition-scoped listing, schema
+inspection, and exact-timestamp aggregation, then collapse it with total elapsed
+time on completion/failure. The snapshot also records and displays refresh
+duration. Family processing failures use neutral messaging rather than claiming
+the schema is unsupported, and the detail expander reflects the selected-family
+model. A mocked explicit-refresh regression and real Streamlit `AppTest` verify
+that only Process is discovered, each progress stage is written, the DuckDB
+connection is closed, elapsed time is surfaced, and status completes; all 18
+focused tests pass. No live S3 call was needed for this UI verification.
+
+## [2026-11-10] correctness | recent-host-activity-dashboard event-time encodings
+
+The `process_file` empty result was an encoding mismatch: Wintap's `FileSerializer`
+sets raw `EventTime` from Unix seconds at serialization, while its 10-second
+activity batch preserves `FirstSeen`/`LastSeen` as FILETIME. The dashboard had
+interpreted all integer EventTime columns as FILETIME, placing a 2,000,001-row
+sample around 1601. Added family-specific timestamp decoding and made the chosen
+timestamp priority visible; synthetic tests cover `FirstSeen`, fallback fields,
+Unix seconds, and retain FILETIME semantics for `raw_process`. The source-backed
+probe found about 7.9 million `FirstSeen` rows in the reported process-file
+window, so the existing 2-million-row safety cap remains fail-closed and the
+corrected selected-family aggregate takes about 60 seconds to hit it. Corrected
+probes also found 59 `raw_host` rows (6 hosts) and 157,821
+`raw_process_conn_incr` rows (5 hosts, 479 points), confirming the earlier zeroes
+for these Unix-time families were likewise decoding artifacts. No cap increase or
+source write was made; operator direction is needed for process-file's high row
+volume. No raw rows, object keys, root, credentials, or host values were
+retained.
+
+## [2026-11-10] verification | recent-host-activity-dashboard timestamp correction
+
+Final closeout passed all 20 focused app tests, `compileall`, `uv lock --check`,
+and repository `git diff --check`. The suite includes producer-family Unix
+seconds versus FILETIME tests, file and connection timestamp priority, selected-
+family refresh behavior, and the over-budget no-chart UI path. The 2,000,000-row
+cap remains unchanged pending operator direction; wider family coverage and
+operational latency acceptance remain open.
+
+## [2026-11-10] strategy exploration | recent-host-activity-dashboard high-volume aggregation
+
+Without changing the app or its 2,000,000-row cap, ran a read-only feasibility
+query that grouped selected `raw_process_file` rows directly to exact five-minute
+host buckets. On 502 discovered objects it counted 7,923,378 in-window rows and
+produced 479 nonempty host/bucket groups across 5 hosts, with no hostless rows;
+the aggregate query took about 20 seconds and returned only summary aggregates.
+The expected full-window ceiling at five-minute resolution is 720 points for
+these hosts, within the existing 1,000-point cap. This suggests an exact
+aggregate-only path could be usable without retaining millions of raw rows, but
+it still reads all source rows and shifts protection from a raw-row limit to
+runtime, memory/intermediate-group, and output-point budgets. The existing capped
+query ran in 4.9 seconds on the same file list only after the candidate query had
+read the objects, so that warm-cache figure is not a cold comparison. The probe
+did not fetch or validate the chart series and is not an end-to-end guarantee.
+No source writes, code changes, or cap change; operator approval is still needed
+before implementing the alternative.
+
+## [2026-11-10] implementation | recent-host-activity-dashboard exact process-file aggregation
+
+Following operator approval, added a dedicated `raw_process_file` aggregate-only
+path. DuckDB now applies the exact timestamp filter and counts directly into
+five-minute host groups, then coarsens those compact groups if the chart-point
+budget requires it; it does not materialize millions of raw rows in Python.
+The standard families retain the 2,000,000-row cap. The new path fails closed at
+120 seconds, 1 GB DuckDB memory, 1 GB temporary storage, 20,000 intermediate
+groups, or the existing 1,000 chart points. App status/captions explain the exact
+strategy. Synthetic checks cover raw-cap bypass only for this family, exact row
+totals, hostless accounting, bucket coarsening, group-limit failure, and
+interrupt/timeout behavior. The read-only live query returned all 7,923,378
+matching rows as 479 five-minute points across 5 hosts in about 20 seconds over
+513 objects; counts sum to the exact total. No DBT execution or S3 write occurred.
+
 ## [2026-11-10] feature-work | raw_sensor file aggregation opened
 
 Completed the interview and created `wiki/work/raw-sensor-file-aggregation/`

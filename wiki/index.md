@@ -87,6 +87,20 @@ expose coverage gaps without certifying capture. Initial S3 rounds show TCP Acce
 UDP and endpoint observations; dedicated native clone passes with the optional helper.
 `sched_exec` source provenance and overall completeness remain unresolved.
 
+Recent Host Activity dashboard: [[wiki/tool/recent-host-activity-dashboard]] —
+standalone Streamlit/DuckDB direct-S3 view, using DBT's existing dataset and AWS
+environment variables (without invoking DBT). The locked UV environment passes
+offline tests and an initial Streamlit render. A bounded live probe confirmed
+partition-scoped discovery and exposed several minutes of all-family scan time.
+Refresh now queries one explicitly selected family per click; per-family latency
+and full operational verification remain open. A source-family timestamp bug was
+corrected after the probe exposed Unix-seconds `EventTime` fields;
+`raw_process_file` then revealed about 7.9 million exact-window rows. It now uses
+a guarded exact aggregate-only path, while standard families retain the
+2-million-row cap. A read-only live check counted all 7.9 million rows into
+479 five-minute host/bucket groups in about 20 seconds under explicit resource
+guards; broader operational validation remains open.
+
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
 — current-source Accept emission and UDP memory-domain defects, live incomplete UDP
 tuples, source-aware repeated-Start accounting and five synthetic validator blind spots.
@@ -202,6 +216,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/tool/wintap-workbench]] | high | Summarizes the Angular Workbench UI, feature routes, SignalR/EPL query path, and query-state boundary. |
+| [[wiki/tool/recent-host-activity-dashboard]] | high | Standalone manually refreshed 12-hour UTC raw-row dashboard using DuckDB/Streamlit and DBT-compatible S3 environment variables; 23 offline tests pass, and exact guarded `raw_process_file` aggregation returns 7.9 million rows in 479 chart groups in about 20 seconds. |
 ## Workflow
 
 | Page | Confidence | Summary |
@@ -235,10 +250,15 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 
 Priority finding intake queue: [[wiki/todo/index]] — tracks emerging bugs,
 data-quality issues, and enhancements before promotion into a full deep-dive
-feature folder. Current P1 items include [[wiki/todo/linux-process-executable-attribution]],
-on nondeterministic Linux process executable attribution in Wintappy's silver model;
-also [[wiki/todo/lintap-linux-process-command-line-quality]], on source capture,
-provenance, and deterministic dbt command-line semantics. An untriaged enhancement,
+feature folder. Current P1 items include [[wiki/todo/linux-process-name-exe-fallback]],
+on validating and fixing reported Linux process names labeled `exe`;
+[[wiki/todo/linux-process-executable-attribution]], on nondeterministic Linux
+process executable attribution in Wintappy's silver model; and
+[[wiki/todo/lintap-linux-process-command-line-quality]], on source capture,
+provenance, and deterministic dbt command-line semantics. The P2
+[[wiki/todo/linux-nfs-process-network-attribution]] intake tracks the observed
+SSH-on-NFS-tuple example, likely process-context attribution, and the need to
+verify NFS-backed home and deployed tracer semantics. An untriaged enhancement,
 [[wiki/todo/listening-socket-capture-and-modeling]], tracks process-attributed
 listening-socket lifecycle capture and downstream modeling; priority and platform
 scope remain open. [[wiki/todo/canonical-process-owned-network-grains]] tracks
@@ -310,6 +330,7 @@ isolated restart/endpoint acceptance passed; installed hosts/history unchanged.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/work/recent-host-activity-dashboard/brief]] | medium | Implemented read-only Streamlit/DuckDB view of 12-hour S3 bronze raw rows by host/event family, with partition pruning, adaptive bins, scale modes, and schema exclusions; exact guarded `raw_process_file` aggregation returns 7.9 million rows as 479 five-minute host/bucket groups in about 20 seconds. See [[wiki/work/recent-host-activity-dashboard/interview]], [[wiki/work/recent-host-activity-dashboard/design]], [[wiki/work/recent-host-activity-dashboard/implementation_plan]], [[wiki/work/recent-host-activity-dashboard/dev_handoff]], and [[wiki/work/recent-host-activity-dashboard/verification]]. |
 | [[wiki/work/net10-dependency-prune/verification]] | medium | .NET 10 Debian arm64 package: 30-minute soak passes 20 runs/5,000 unique file paths with zero restarts or observed serializer drops; Mac reads all 24 runs; named server-network gaps remain yellow. |
 | [[wiki/work/network-endpoint-normalization/implementation_plan]] | high | Shared TCP endpoint/name fix; done checklist and pending package/Windows-live/historical repair gates. |
 | [[wiki/work/network-endpoint-normalization/verification]] | high | Enum-based normalization and compatible DBT/legacy counters; 28 .NET + 74 SQL regressions, same-host separate/same-PID live proof and independent green Mac confirmation. |
