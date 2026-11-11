@@ -246,8 +246,19 @@ network-observed process identity semantics for reusable analytics.
 [[wiki/todo/transformer-five-tuple-connection-port-key]] tracks the suspected
 high-endpoint-port argument duplication in Wintap's five-tuple connection key;
 the collision impact and compatibility implications remain unverified.
+The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
+.NET gap between current merge-time partitions and the requested actual-upload
+UTC partition contract.
 
 ## Work
+
+Raw sensor S3 compaction proposal:
+[[wiki/work/raw-sensor-file-aggregation/brief]],
+[[wiki/work/raw-sensor-file-aggregation/interview]], and
+[[wiki/work/raw-sensor-file-aggregation/references]] — standalone DuckDB 2.0.0
+utility, manual hourly compaction across hosts into a separate `raw_sensor`
+dataset root; daily rollup and cron are deferred. Its separate upload-time
+partition TODO is [[wiki/todo/raw-sensor-upload-time-partition]].
 
 Pidstat Go rewrite, fpc-03 review checkpoint and four-hour VM soak completed
 (2026-10-31 05:18–09:18UTC;49files/399312rows,2880sample times,80canaries;

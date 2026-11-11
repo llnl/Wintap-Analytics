@@ -50,6 +50,7 @@ recorded.
 | P1 — High | [[wiki/todo/lintap-linux-process-command-line-quality]] | Open | Focused VM run reports a high raw command-line blank rate and multiple distinct values behind many nonblank process summaries. |
 | P2 — Medium | [[wiki/todo/canonical-process-owned-network-grains]] | Open | Reconcile documented process/network increment and connection grains; preserve metadata conflicts and process-observation semantics for reusable analytics. |
 | P2 — Medium (provisional) | [[wiki/todo/transformer-five-tuple-connection-port-key]] | Open | Investigate whether `Transformer.cs:37` passes the high endpoint port for both five-tuple key ports, causing connection-ID collisions. |
+| Untriaged | [[wiki/todo/raw-sensor-upload-time-partition]] | Open | Current .NET code partitions at merge time and retries the same S3 key; the requested UTC actual-upload partition contract needs a separate shared-uploader correction. |
 | Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Open | Investigate process-attributed listening-socket lifecycle capture and a downstream model distinct from peer-oriented connections; priority and platform scope remain open. |
 
 ## Related

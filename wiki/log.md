@@ -4258,3 +4258,20 @@ the named profile after exporting that profile's configured endpoint URL and
 matching TLS; the probe listed one requested-window Parquet file and read its
 schema. Updated the pipeline README and wiki guidance. The focused DBT/SQL
 regression set passes 249 tests; no full DBT build was run.
+
+## [2026-11-10] feature-work | raw_sensor file aggregation opened
+
+Completed the interview and created `wiki/work/raw-sensor-file-aggregation/`
+brief, interview, and references. Scope is a standalone manual DuckDB 2.0.0
+utility in Wintap-Analytics, reading S3 and writing a separate mirrored
+`raw_sensor` dataset root; first milestone is hourly cross-host compaction by
+event type and exact hive leaf, with schema union-by-name, configurable
+target-size shards, and daily rollup/cron deferred. Sources remain unchanged.
+Source review found the current .NET path partitions at UTC merge time and
+preserves that key on delayed upload retry, contrary to the user's desired
+actual-upload-time partition contract. Created the separate
+`wiki/todo/raw-sensor-upload-time-partition.md`, linked it from the upload-pipeline
+page and indexes, and recorded the no-lookback scheduled design dependency.
+The human estimates were supplied as durations only (4 solo days / 2 AI days);
+hours and absolute availability dates were not provided and were not inferred.
+No source code, schema, raw document, or S3 object was changed.
