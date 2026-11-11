@@ -108,6 +108,28 @@ and `COPY` as the merge engine.
   **Outcome:** Decision — benchmark representative S3 data before selecting a
   default.
 
+### Planning clarification — 2026-11-10
+
+**User:** "There is no need to have consistency in the filename: its just the
+dayPK/hourPK partition scheme we need to keep."
+
+**Outcome:** Decision — compacted object filenames may change. Preserve the
+existing `dayPK`/`hourPK` layout and previously confirmed `protoPK` leaves;
+source-object filename equality is not a consumer-acceptance requirement.
+
+### Processing and validation clarification — 2026-11-10
+
+**User:** "Prefer duckdb 2.0.0 for this processing. Parquet in and out, so no
+compatibility issues" and "A simple validation test, for development and
+operational use is to count total rows in a partition from the source files and
+the merged result. They should always be equal. Its a simple union all operation."
+
+**Outcome:** Decision — use DuckDB 2.0.0 for Parquet compaction and validation.
+The required development/operational validation is per-partition source/output
+`COUNT(*)` equality. Use `UNION ALL` semantics, preserving duplicates. This
+supersedes the plan's proposed full-row multiset comparison and separate DuckDB
+1.5.6/DBT compatibility test requirement.
+
 ## Decisions
 
 - Standalone manual CLI in Wintap-Analytics, using its own DuckDB 2.0.0
@@ -119,6 +141,10 @@ and `COPY` as the merge engine.
   contract; the .NET upload-partition correction is a separate TODO.
 - Make output size configurable; choose its default from a representative
   benchmark.
+- Output object filenames are implementation-defined; preserve the partition
+  scheme rather than source-to-output filename consistency.
+- DuckDB 2.0.0 handles Parquet input/output and validation. Each partition's
+  source and merged row totals must match in both development and operation.
 
 ## Constraints
 
@@ -139,7 +165,7 @@ default remain design work rather than delegated decisions.
 - S3 credential, endpoint, and DuckDB 2.0.0 extension/configuration approach.
 - Safe staging, validation, and publication of a complete output partition so
   failed runs do not expose partial files and reruns do not append duplicates.
-- Numeric target file size and shard naming after benchmark.
+- Numeric target file size after benchmark; shard names are implementation-defined.
 - Upstream completion of [[wiki/todo/raw-sensor-upload-time-partition]] before
   relying on the no-late-old-partition assumption for scheduled operation.
 

@@ -36,13 +36,18 @@ original raw objects.
 - Provide a manually run standalone CLI, with cron scheduling deferred until
   manual operation is stable.
 - Use DuckDB 2.0.0 as the core engine for direct S3 Parquet reads and `COPY`
-  output, in an isolated environment.
+  output and validation, in an isolated environment. Parquet is the input/output
+  interchange format; this feature does not require a cross-version DBT test.
 - Compact a selected completed UTC hour across hosts, separately for each event
   type and exact hive leaf partition (including network `protoPK`).
 - Preserve every source row and field. Union missing columns by name as NULL;
   fail a partition when types cannot be safely reconciled.
+- Treat compaction as a name-aligned `UNION ALL`. For development and operational
+  validation, compare total source rows with total merged rows in each partition.
 - Write one or a few target-size shards to a separate dataset root mirroring
   `raw_sensor/<event_type>/dayPK=YYYYMMDD/hourPK=HH[/protoPK=...]/`.
+- Compacted object filenames may change; source-to-output filename consistency
+  is not required. Preserve the existing partition scheme.
 - Retain all source objects. Consumers switch explicitly to the output dataset
   after validation; do not co-locate source and compacted Parquet under one
   scanned `raw_sensor` root.
@@ -69,6 +74,9 @@ original raw objects.
   partition(s); it does not automatically scan a recent lookback window.
 - Each event-type/partition group is written independently, retaining
   `dayPK`, `hourPK`, and optional `protoPK` as directory partitions.
+- Count all rows in that partition's source files and all rows in its output
+  shards. Report both totals and their difference; a mismatch fails the partition.
+  The same check is available as a read-only operational verification command.
 - Output is staged and published only after the entire partition succeeds;
   repeat runs replace/rebuild derived output rather than append duplicate rows.
   The exact safe S3 publication mechanism remains a design question.
@@ -79,8 +87,10 @@ original raw objects.
 
 1. A manual CLI run reads only the requested source hour/event partitions from
    S3 and writes the corresponding separate destination partitions.
-2. For every successful output partition, row counts and a source/output
-   conservation check prove that each source row is present exactly once.
+2. For every successful output partition, `COUNT(*)` across all selected source
+   files equals `COUNT(*)` across all merged output shards. Use this same
+   per-partition check in development and operation; report a nonzero difference
+   as failure. Compaction uses `UNION ALL` semantics, retaining duplicate rows.
 3. All source columns are preserved; missing columns across files are
    name-aligned with NULLs; incompatible types fail clearly without publishing
    a partial partition.
@@ -92,8 +102,11 @@ original raw objects.
 7. Output sharding uses a configurable target-size policy. The initial default
    is selected from a representative S3 benchmark and documented with observed
    event-family sizes and runtime.
-8. A fresh consumer read using the compacted dataset root returns the same
-   values as reading the source dataset for the tested partitions.
+8. A fresh DuckDB 2.0.0 read opens the completed Parquet output through the
+   preserved hive-partition layout, and operational verification reports equal
+   source/output row counts per partition. Object filenames and derived
+   source-object `filename` values may change, per the clarifications in
+   [[wiki/work/raw-sensor-file-aggregation/interview]].
 9. A scheduled run is not considered safe under the no-lookback assumption
    until the upload-time partition contract in
    [[wiki/todo/raw-sensor-upload-time-partition]] is implemented or otherwise
@@ -106,8 +119,8 @@ original raw objects.
 
 - Wintap-Analytics: standalone utility, tests, and feature documentation.
 - S3 source and destination dataset roots; no in-place rewrite.
-- Wintappy only as a read-only consumer-validation target and optional later
-  dataset-root configuration; no DBT dependency change is in scope.
+- Wintappy only as an optional later consumer/dataset-root configuration;
+  compaction and validation use DuckDB 2.0.0 with Parquet input/output.
 - Wintap shared .NET upload code is a separate TODO and requires separate code
   authorization before modification.
 
@@ -115,6 +128,11 @@ original raw objects.
 
 See [[wiki/work/raw-sensor-file-aggregation/references]] and the interview
 record in [[wiki/work/raw-sensor-file-aggregation/interview]].
+
+The reviewed [[wiki/work/raw-sensor-file-aggregation/implementation_plan]] maps
+delivery steps and tests to these acceptance criteria. Runtime evidence will be
+recorded in [[wiki/work/raw-sensor-file-aggregation/verification]]. Its proposed
+publication, CLI, and schema policies remain implementation decisions to settle.
 
 ## Open Questions
 
@@ -125,7 +143,9 @@ record in [[wiki/work/raw-sensor-file-aggregation/interview]].
 - What DuckDB 2.0.0 S3 credential/endpoint and extension setup is supported in
   the intended runtime?
 - What staging/manifest/publication protocol provides partition-level safety
-  under S3 object semantics?
+  under S3 object semantics? See
+  [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] and the plan's
+  proposed immutable-window dataset roots with explicit consumer selection.
 - What target shard size best balances fewer files with scan parallelism and
   memory/runtime limits?
 - The current .NET producer/uploader does not yet implement the intended
@@ -135,14 +155,14 @@ record in [[wiki/work/raw-sensor-file-aggregation/interview]].
 
 - Synthetic local Parquet fixtures: multiple hosts, event types, `protoPK`,
   missing columns, compatible schema drift, and incompatible types.
-- DuckDB 2.0.0 row/column conservation and repeat-run tests against temporary
-  input/output roots.
+- DuckDB 2.0.0 per-partition source/output row-count and repeat-run tests against
+  temporary input/output roots, plus small fixtures for name alignment and fields.
 - S3 tests against an isolated test bucket/prefix: bounded object discovery,
   staged publication, injected failures, retries, and source immutability.
 - Representative S3 benchmark across event families to select a configurable
   shard target.
-- Read the completed output through the Wintappy-compatible raw-source path;
-  do not require a full DBT dependency upgrade to DuckDB 2.0.0.
+- Reopen completed Parquet through the preserved raw-source partition layout
+  using DuckDB 2.0.0 and run the same operational row-count check.
 - No production-bucket mutation during development or acceptance testing.
 
 ## Done When

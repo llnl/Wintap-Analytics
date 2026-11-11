@@ -134,6 +134,7 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/tension/research-flexibility-vs-production-hardening]] | medium | Explains the research-first posture and flags hardening gaps such as unrestricted proof-of-concept MCP SQL access. |
 | [[wiki/tension/etw-ebpf-and-cross-platform-compatibility]] | medium | Captures tradeoffs between Windows ETW, Linux eBPF/sysdig support paths, raw sensor Parquet, and cross-platform semantics. |
 | [[wiki/tension/dbt-duckdb-output-vs-legacy-stdview-parquet]] | medium | Captures the open mismatch between Wintappy's canonical DuckDB-only DBT output and Wintap-Analytics' documented expectations of published stdview-* parquet datasets. |
+| [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] | high | Open multi-shard S3 publication conflict: existing recursive readers ignore completion manifests; explicit immutable-window root selection is proposed. |
 ## Decision
 
 | Page | Confidence | Summary |
@@ -254,11 +255,17 @@ UTC partition contract.
 
 Raw sensor S3 compaction proposal:
 [[wiki/work/raw-sensor-file-aggregation/brief]],
-[[wiki/work/raw-sensor-file-aggregation/interview]], and
+[[wiki/work/raw-sensor-file-aggregation/interview]],
+[[wiki/work/raw-sensor-file-aggregation/implementation_plan]],
+[[wiki/work/raw-sensor-file-aggregation/verification]], and
 [[wiki/work/raw-sensor-file-aggregation/references]] — standalone DuckDB 2.0.0
 utility, manual hourly compaction across hosts into a separate `raw_sensor`
-dataset root; daily rollup and cron are deferred. Its separate upload-time
-partition TODO is [[wiki/todo/raw-sensor-upload-time-partition]].
+dataset root. Processing is a name-aligned union-all; development and operational
+validation use DuckDB 2.0.0 to require equal source/merged row counts per partition.
+Plan also covers S3 failures/reruns and a shard-size benchmark; runtime tests are pending.
+Immutable-window publication remains proposed; object filenames may change while
+the partition scheme is preserved. Daily rollup and cron are deferred; the
+upload-time partition TODO is [[wiki/todo/raw-sensor-upload-time-partition]].
 
 Pidstat Go rewrite, fpc-03 review checkpoint and four-hour VM soak completed
 (2026-10-31 05:18–09:18UTC;49files/399312rows,2880sample times,80canaries;

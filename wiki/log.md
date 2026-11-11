@@ -4275,3 +4275,36 @@ page and indexes, and recorded the no-lookback scheduled design dependency.
 The human estimates were supplied as durations only (4 solo days / 2 AI days);
 hours and absolute availability dates were not provided and were not inferred.
 No source code, schema, raw document, or S3 object was changed.
+
+## [2026-11-10] planning | raw_sensor compaction implementation and verification
+
+Reviewed the brief against live S3-access patterns, Wintappy consumer macros and
+pidstat projections, and official DuckDB 2.0/S3 documentation. Created
+`wiki/work/raw-sensor-file-aggregation/implementation_plan.md` with seven delivery
+steps, proposed isolated Python/DuckDB packaging, schema/type and exact multiset
+conservation requirements, publication/rerun failure tests, consumer-version
+checks, and a representative shard-size benchmark mapped to all ten acceptance
+criteria. Added the verification scaffold and expanded references/brief/index
+links. Created `wiki/tension/raw-sensor-compaction-publication-vs-glob-readers.md`:
+multi-object S3 writes are not atomic for current recursive readers. Immutable
+window roots with explicit completed-root selection are proposed, not confirmed.
+The user clarified that object filenames may change; recorded this in the
+interview/brief and applied payload/hive-value equality to consumer acceptance.
+The separate upload-time TODO remains the no-lookback scheduling dependency.
+Runtime, S3 write, benchmark, and consumer acceptance are not yet executed.
+Feature-scoped documentation checks passed: six pages' YAML/required fields and
+inbound links, 49 grounding entries, 40 wikilinks, and `git diff --check`.
+
+## [2026-11-10] decision | simplify raw_sensor compaction validation
+
+The user confirmed DuckDB 2.0.0 for Parquet-in/Parquet-out processing and a
+shared development/operational check: each partition's total source rows must
+equal its total merged rows. Updated the interview, brief, implementation plan,
+verification record, references, and index. Replaced the proposed full-row
+multiset validation and DuckDB 1.5.6/DBT test gate with name-aligned `UNION ALL`,
+small schema fixtures, and a reusable `COUNT(*)` comparison reporting source
+rows, merged rows, delta, and status. A count mismatch fails completion and
+operational verification. Compactor implementation and runtime tests remain
+pending.
+Documentation revalidation passed for six pages, 49 grounding entries, and 42
+wikilinks; `git diff --check` passed.
