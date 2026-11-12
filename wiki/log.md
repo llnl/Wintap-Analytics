@@ -4143,6 +4143,9 @@ are not source changes. No live host, package or S3 operations performed.
 
 Replaced the console-history helper/polling path with default-disabled Microsoft.Windows.Console.Host ETW collection after operator-confirmed LocalSystem prototype success. Reduced the modeled payload to CommandText, SessionId and StartTime, retaining canonical process attribution and dynamic Parquet integration; removed obsolete helper/IPC/config/tests. SDK 10 build, 62 focused tests and 380 nearby regressions pass, including production Parquet roundtrip. Live capture exposed timestamp-skew attribution drops; corrected lifetime validation preserves canonical joins and requires fresh OS verification for bounded differences. Feature documentation remains compact and sanitized. Updated self-contained Windows x64 output is published locally; integrated service/session coverage, live joins, performance and shutdown acceptance remain pending in [[wiki/work/windows-shell/verification]].
 
+## [2026-10-28] feature | PowerShell ETW POC
+
+Opened a native-ETW shape POC for 5.1/7; built and tested a temporary wrapper (35 tests), repaired `-File` path initialization, inspected 5.1 events including interactive `write-host hi`, and added 4104-only output while retaining originals and unchanged collection/loss. The 60-second sample had 89 lost events and five incomplete blocks; the operator reports the focused rerun works, but its new data and formal POC acceptance remain unreviewed. Findings/audits: [[wiki/work/powershell-sensor/findings]], [[wiki/work/powershell-sensor/P0.2-focused-scriptblock-output]]. Logging policy stayed unchanged; integration remains separate.
 ## [2026-11-03] docs | Queue medium-priority ETL DuckDB instance reuse
 
 Added `wiki/work/reuse-etl-duckdb-instance/brief.md` as a deferred future fix and
@@ -4606,3 +4609,17 @@ snapshots with dataset-level context checkpoints. Operational live/recent seed
 retention plus ancestor closure remains a proposal; bounded derived-state eviction
 must not silently discard retained ground truth or imply historical completeness.
 No implementation, retention duration, or feature-scope expansion approved.
+
+## [2026-11-12] docs | PowerShell ETW sensor implementation status
+
+Added canonical component and event-type pages for Wintap's native PowerShell
+4104 sensor. Recorded its branch status (`6add359` is present on the inspected
+feature/develop lines but not Wintap `origin/main` as of this date), default-off
+setting, broad provider subscription, event-time attribution, raw Parquet output,
+sensitive script-text handling, and the absence of a PowerShell-specific Wintappy
+DBT bronze model. Reframed the October native-tool POC brief, handoff, plan,
+findings, and verification as historical evidence; cross-linked the distinct
+cmd.exe WindowsShell sensor. Code tests and the Windows smoke harness were not run;
+live ETW load/loss and host-policy qualification remain open. Merged Analytics
+`origin/main`, preserving both sides' index/log entries. No source code, raw data,
+or sibling-repository files were changed.

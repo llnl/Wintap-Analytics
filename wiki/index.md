@@ -193,6 +193,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/component/sensor-upload-cache-pipeline]] | high | Canonical page for the shared upload/cache pipeline: merge cycle, type-agnostic ride-along sweep contract, delete-after-upload (fixed 2026-08-17), prune backstop, hang-recovery scoping, deployment prerequisites, and the small-file consolidation follow-up. |
 | [[wiki/component/sensor-health-monitor]] | high | Canonical page for the always-on Windows egress QA layer (shc feature, closed 2026-08-25): InspectForHealth hook on both egress branches + MemoryMap bypass, five constant-time checks, six-stream 5 s liveness watchdog, aggregated Wintap.log reporting, config keys, and the shc-03 QueryDosDevice drive-map/fromNative accuracy fix. |
 | [[wiki/component/registry-sensor]] | high | Canonical page for the manifest-only Windows registry sensor (wrc feature, closed 2026-08-25, commit 1f66a47): undocumented capture-mode enablement (Option A guarded reflection, TraceEvent 3.1.23 pin), 0x5300/0x5700 keyword mask, capture-loss canary + 5-min re-assert, six-REG-type decode with pre/post values, CreateKey Join(BaseName, RelativeName) path assembly, and the 18-column parquet contract incl. Reg_DataType/Reg_PreviousData/Reg_PreviousDataType. |
+| [[wiki/component/powershell-sensor]] | medium | Default-disabled native ETW sensor for 4104 v1 from Windows PowerShell and PowerShell Core; implemented on Wintap feature/develop, not yet Wintap main as of 2026-11-12; raw output exists but DBT staging and live load/loss qualification remain absent. |
 ## Data_model
 
 | Page | Confidence | Summary |
@@ -204,6 +205,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/event_type/process-events]] | high | Defines the unified WindowsProcessSensor semantics (2026-08): kernel-ETW Start/Stop on the shared session with ETW-canonical create times/PidHash, snapshot Refresh with dedup, SID/command-line/path enrichment fallbacks, manifest Stop-metric merge, opt-in boot-trace replay, QA counters, and ETL boundaries. |
 | [[wiki/event_type/file-events]] | high | Defines ETW FileIO producer behavior, file-key path resolution, feedback suppression, and 10-second aggregate ETL semantics. |
 | [[wiki/event_type/network-events]] | high | Defines TCP/UDP ETW producer behavior, endpoint fields, reversible TCP caveats, and 10-second network aggregate ETL semantics. |
+| [[wiki/event_type/powershell-events]] | medium | Script-block event contract, fragment/attribution semantics, sensitivity, `raw_powershell` output, and no dedicated Wintappy DBT staging model found. |
 ## Pipeline
 
 | Page | Confidence | Summary |
@@ -278,6 +280,15 @@ UTC partition contract.
 
 ## Work
 
+Historical PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
+[[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],
+[[wiki/work/powershell-sensor/findings]] and [[wiki/work/powershell-sensor/verification]].
+Native wrapper/focused 4104 output pass 35 tests; inspected 5.1 data includes interactive
+`write-host hi`, with loss/fragment/test-overlap limits disclosed. Full originals retained;
+collection traffic/loss unchanged. Focused rerun works by operator report. These pages
+preserve the POC's evidence and limits; the later integrated sensor is documented in
+[[wiki/component/powershell-sensor]] and [[wiki/event_type/powershell-events]]. Its
+PowerShell 7/live ETW qualification and downstream DBT modeling remain open.
 Raw sensor S3 compaction proposal:
 [[wiki/work/raw-sensor-file-aggregation/brief]],
 [[wiki/work/raw-sensor-file-aggregation/interview]],
