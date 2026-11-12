@@ -11,7 +11,7 @@ grounded_by:
   - ../wintap/devtools/smoke_parquet.py
   - ../wintap/wintap/core/etl/load/CacheManager.cs
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-10-30
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -27,6 +27,22 @@ The user approved open-ended disposable-host collection, manual stopping, severa
 hosts and opportunistic S3-backed DBT checks. Analytics owns this small runner;
 Wintap owns stimulus/manifest production and the collector uploader; Wintappy owns
 the canonical DBT pipeline. See `validation/telemetry-soak/README.md` for commands.
+
+Diagram and terminology: [[wiki/workflow/live-collector-validation]] — live-collector
+validation, with recurring bounded runs described as telemetry canaries.
+
+For the root-owned data-directory/Python setup and S3 handoffs, start with
+[[wiki/tool/named-telemetry-smoke-workload]]. Create its persistent venv as the login
+user, then pass `PYTHON="$HOME/.local/share/wintap-smoke/venv/bin/python"` to
+`sudo bash ... --python "$PYTHON"`. The runner README's `uv run --no-sync` lookup
+assumes an existing project environment; a temporary `uv run --with` interpreter
+is not a substitute. Supply the actual local collector
+`--data-root`; the runner passes it to each workload as `--smoke-data-root`.
+Its Python environment requires DuckDB 1.5.6. Keep the runner's evidence root outside
+collector data/runtime roots and configured file filters because it also contains
+the file stimuli; `$HOME/qa/wintap-smoke-soak` is an example. Begin with `--rounds 1`.
+<!-- SYNTHESIS: validation/telemetry-soak/README.md §Generation; validation/telemetry-soak/run-smoke-soak.sh §ROUND, args; ../wintap/devtools/README.md §Portable smoke run manifests and results dashboard -->
+<!-- CONTRADICTION[soft]: the runner README example puts evidence-root under runtime/smoke-soak, while shared workload guidance excludes collector runtime paths; prefer an external QA root for portable file-capture checks. -->
 
 The operator explicitly wants the signal generator disconnected from the regular
 deployed Lintap service, launched separately on each Linux test host (e.g. tmux),

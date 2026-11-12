@@ -12,6 +12,14 @@ grounded_by:
   - ../Lintap/multipass-check-dev.sh
   - ../wintap/global.json
   - ../wintap/wintap/platform/linux/sensor/ebpf/helpers/LibBpf.cs
+  - ../Lintap/pidstat-go/main.go
+  - ../Lintap/pidstat-go/schema.go
+  - ../Lintap/pidstat-go/Makefile
+  - ../Lintap/pidstat-go/sampler.go
+  - ../Lintap/pidstat-go/config.go
+  - ../Lintap/pidstat-go/kernel.go
+  - ../Lintap/pidstat-go/replay.go
+  - ../Lintap/pidstat-go/collector.go
 policy: agent-editable
 last_validated: 2026-10-26
 repo_scope: Lintap
@@ -52,6 +60,50 @@ The older sysdig workflow captures process, file, network, and optional SELinux 
 <!-- GROUND_TRUTH: ../Lintap/pidstat-collector.py; ../Lintap/packaging/lintap-rpm/lintap-pidstat.service; ../Lintap/README.md §Managed pidstat collector -->
 
 Open watch item: collector CPU usage looked higher than expected in early RHEL 8 field runs — investigate with data from more systems (tracked in [[wiki/work/improve-pidstat-collector/implementation_plan]]).
+
+### Go writer feasibility checkpoint (validated 2026-10-30)
+
+`../Lintap/pidstat-go` is an **unpackaged Go collector with explicit durable modes**,
+not the installed Python service or a qualified release.
+Go1.27.3/parquet-go0.32.0 with pure-Go ZSTD build static Linux arm64/amd64 binaries;
+native Ubuntu arm64 execution encoded captured Python TSV with exact26-column
+physical-column/schema/value/null and partition/window parity on266/705/1640 rows.
+Rates remain FLOAT, signed integer widths/legacy annotations remain unchanged,
+all columns are OPTIONAL and timestamp MICROS is local/`isAdjustedToUTC=false`.
+Analytics owns native commands/skill and private evidence; Lintap owns the spike;
+`../Wintap-PyUtil` is the canonical consumer and has not been DBT-qualified
+in this unit. Its separately authorized source preflight is documented in
+[[wiki/work/dbt-source-validation/verification]]. See
+[[wiki/work/fix-pidstat-collector/verification]] for collector evidence.
+Human fpc-01 acceptance is recorded. fpc-02 now passes exact **raw-input** sampler
+replay of all3captures,14Go tests,17actual-Python config cases and two52-row controlled
+sampler fixtures (100Hz/4KiB;250Hz/16KiB). Native arm64 raw replay and a bounded411-row
+diagnostic pass; fpc-02 human approval is recorded. Linux clock ticks come from kernel AT_CLKTCK,
+page size from os.Getpagesize, without cgo or child commands. Rates/scheduling are
+monotonic in live mode; raw replay retains Python captured durations/clamp. Rounded
+microsecond row time can cross midnight while source epoch remains in the preceding
+window/partition. Go bounds identity caches and skips malformed optional counters
+where Python can raise; missing-field zero/default semantics stay unchanged.
+Fpc-02 was human-approved. Fpc-03 now retains legacy TSV/meta with seal/publication
+journals, exclusive Go spool locking, unique active-file ownership, successful-close
+synced atomic no-overwrite publication, source-retaining retry, codec validation,
+signal shutdown and scoped oldest-first caps. Metadata chooses the sample window;
+configured hostname owns filenames independently of row hostname. Exact durable raw
+replay passes all3real captures and actual Python-created spool recovery;26Go tests
+also pass natively on arm64. Native SIGTERM/SIGINT each seal411readable rows;
+SIGKILL restart recovers137rows and filesystem failure retries20unchanged-source rows.
+Review pending; original host pytest runner is unavailable, not counted as PASS.
+The four-hour default-cadence sensor-on soak is complete: 49 files/399312 rows,
+2880 uninterrupted sample times, median CPU 0.47% of one core and median RSS about
+17 MiB (peak 44.86 MiB). See [[wiki/work/fix-pidstat-collector/soak_review]].
+Python/service/package behavior above remains unchanged; comparative resources,
+paired-live, DBT and inspected RHEL/native amd64 qualification remain later gates.
+The operator reports RHEL execution; no new native evidence was inspected. No lower CPU
+claim, power-loss or exactly-once delivery guarantee is established. Python does not
+honor Go's lock/journals: never share a spool, and inspect/drain Go state before rollback.
+See [[wiki/tension/pidstat-publication-versus-uploader-receipts]].
+<!-- GROUND_TRUTH: ../Lintap/pidstat-go/main.go; ../Lintap/pidstat-go/schema.go; ../Lintap/pidstat-go/sampler.go; ../Lintap/pidstat-go/kernel.go; ../Lintap/pidstat-go/replay.go; ../Lintap/pidstat-go/Makefile; ../Wintap-Analytics/wiki/work/fix-pidstat-collector/verification.md -->
+<!-- GROUND_TRUTH: ../Lintap/pidstat-go/collector.go; ../Lintap/pidstat-go/collector_test.go; ../Wintap-Analytics/validation/pidstat-loop/check_spool.py; ../Wintap-Analytics/validation/pidstat-loop/check_native_spool.py -->
 
 ## Package Builder Contract (promoted 2026-10-05)
 

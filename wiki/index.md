@@ -8,6 +8,14 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+DBT source-aware validation: [[wiki/work/dbt-source-validation/verification]] —
+local/split/S3 inputs, explicit named AWS profile selection, no placeholder directory,
+partition-scoped DuckDB preflight, offline dashboard checks. Combined SELinux/source
+validation now passes 286 regressions; historical config failure does not reproduce.
+Combined release gates: [[wiki/work/selinux-dbt-pipeline/verification]] — required
+PR review, full split-local/authenticated-S3 builds, temporary network-ID consumer
+qualification, and S3 pull-helper hardening.
+
 Package release policy: [[wiki/workflow/package-release-versioning]] — shared 7.0
 release identity, format-specific Debian/RPM/MSI encoding and build-to-install checklist.
 
@@ -61,12 +69,16 @@ Durable startup evidence: [[wiki/schema/runtime-capability-receipt]];
 Clone default-TRUE acceptance: [[wiki/work/clone-default-true/verification]];
 RHEL transfer: [[wiki/work/clone-default-true/dev_handoff]].
 
-Field-friendly named process/file/network stimulus:
-[[wiki/tool/named-telemetry-smoke-workload]].
+Field-friendly named process/file/network stimulus and **root-owned field-host S3
+quick start**: [[wiki/tool/named-telemetry-smoke-workload]] — persistent user-created
+venv, explicit sudo Python/DuckDB, `--smoke-data-root`, automatic `raw_smoke_test` upload and
+dashboard validation.
+Visual workflow: [[wiki/workflow/live-collector-validation]] — editable two-page
+draw.io diagram for **live-collector validation** and recurring telemetry canaries.
 Open-ended disposable-host stimuli with uploaded ground-truth snapshots:
 [[wiki/tool/periodic-telemetry-soak-runner]] (pilot first; DBT smoke joins deferred).
 
-Read-only smoke results / cross-host run manifests:
+Smoke dashboard **first-time configuration and launch**, results / cross-host run manifests:
 [[wiki/tool/smoke-test-results-dashboard]];
 [[wiki/work/smoke-test-dashboard/implementation_plan]];
 [[wiki/work/smoke-test-dashboard/verification]].
@@ -77,6 +89,16 @@ validation. One-click canary-round observations and passive HOST startup compari
 expose coverage gaps without certifying capture. Initial S3 rounds show TCP Accept,
 UDP and endpoint observations; dedicated native clone passes with the optional helper.
 `sched_exec` source provenance and overall completeness remain unresolved.
+
+Recent Host Activity dashboard: [[wiki/tool/recent-host-activity-dashboard]] —
+standalone Streamlit direct-S3 view using DBT's existing dataset/AWS environment
+variables, without invoking DBT. The default file-metadata mode lists object
+keys/sizes (no Parquet reads), parses filename Win32 FILETIME as collect time,
+and reports per-host counts and sizes; raw-row DuckDB analysis remains optional.
+27 offline tests and metadata-mode AppTest pass; live metadata-mode performance
+remains unverified. The row mode retains family-aware timestamps and guarded
+exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
+20 seconds); standard families retain the 2-million-row cap.
 
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
 — current-source Accept emission and UDP memory-domain defects, live incomplete UDP
@@ -120,11 +142,13 @@ same existing branches, feature-only commit/PR scope).
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]] | medium | Preserves the unresolved boundary between raw ETW/sysdig/eBPF producer details and stable WintapAPI semantics. |
+| [[wiki/tension/refresh-republication-vs-durable-process-context]] | medium | Open refresh-volume versus durable historical context tradeoff; hybrid reconciliation/context-closure proposal, no selected cadence. |
 | [[wiki/tension/linux-process-lifecycle-vs-exec-attempt-observations]] | medium | Open tradeoff between scheduler-primary process/image lifecycle and syscall attempt/argument evidence; separate semantics and measured costs remain to be decided. |
 | [[wiki/tension/linux-file-path-case-projection]] | high | Resolved sensor projection: approved greenfield producer-case preservation; separate Wintappy lowercase-derived file_id remains a downstream limit. |
 | [[wiki/tension/research-flexibility-vs-production-hardening]] | medium | Explains the research-first posture and flags hardening gaps such as unrestricted proof-of-concept MCP SQL access. |
 | [[wiki/tension/etw-ebpf-and-cross-platform-compatibility]] | medium | Captures tradeoffs between Windows ETW, Linux eBPF/sysdig support paths, raw sensor Parquet, and cross-platform semantics. |
 | [[wiki/tension/dbt-duckdb-output-vs-legacy-stdview-parquet]] | medium | Captures the open mismatch between Wintappy's canonical DuckDB-only DBT output and Wintap-Analytics' documented expectations of published stdview-* parquet datasets. |
+| [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] | high | Open multi-shard S3 publication conflict: existing recursive readers ignore completion manifests; explicit immutable-window root selection is proposed. |
 ## Decision
 
 | Page | Confidence | Summary |
@@ -154,6 +178,8 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 | [[wiki/concept/lintap-cpu-unit-conventions]] | high | Defines raw pidstat CPU as core-summed percent, normalized DBT aliases and dashboard labels, host normalization formula, and raw-schema compatibility rule. |
 | [[wiki/concept/telemetry-identity-and-endpoint-orientation]] | high | Foundational agent_id, pid_hash and canonical five-tuple conn_id scopes; identity versus direction, socket roles and connection lifetimes. |
+| [[wiki/concept/durable-process-context-and-stream-table-enrichment]] | medium | Durable entity state, snapshot plus changelog, Kafka/Splunk comparisons, historical ancestry and refresh-cadence proposals; not implemented. |
+| [[wiki/work/raw-sensor-file-aggregation/process-context-options]] | speculative | Optional compactor-fed process state for ground-truth datasets: runtime-spanning inputs, live/recent references plus ancestor closure, reachability GC and dataset checkpoints; no experiment-specific retention or approved scope expansion. |
 ## Component
 
 | Page | Confidence | Summary |
@@ -192,11 +218,14 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/tool/wintap-workbench]] | high | Summarizes the Angular Workbench UI, feature routes, SignalR/EPL query path, and query-state boundary. |
+| [[wiki/tool/recent-host-activity-dashboard]] | high | Standalone manually refreshed 12-hour UTC S3 metadata-first dashboard (keys/sizes and filename collect-time series, no Parquet reads), with optional DuckDB raw-row mode; 27 offline tests pass, but live metadata-mode performance remains unverified. |
 ## Workflow
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/workflow/wintap-etl-data-flow]] | high | Editable data ETL diagram: Wintap/Lintap host-local raw Parquet → S3 → Wintap-PyUtil `make dbt-build` → bronze/silver/gold in local DuckDB, with core Makefile validation targets and scope limits. |
 | [[wiki/workflow/future-experiment-analysis-workflows]] | high | Tracks first-class analytics topics including ACME4 Explore, DuckDB view construction, process trees/paths, process-centric SQL, and network joins. |
+| [[wiki/workflow/process-ancestry-completeness-qa]] | medium | Proposed root-reachable fraction, immediate-parent gaps, first-unresolved-ancestor impacts, concentration/K95 and independent validity checks. |
 | [[wiki/workflow/lintap-dev-field-workflow]] | high | The Lintap dev/field split: field-host clones are read-only by policy (reviews transcribed dev-side), diagnostics bundles must be self-sufficient, deploys pull and rebuild tracers on-host, pushes require the human's credentials, and agent memory must mirror into the wiki. |
 | [[wiki/workflow/rhel8-rpm-build-prerequisites]] | high | Preflight and software prerequisites for a native RHEL 8 x86_64 Lintap RPM build, including exact .NET SDK 10.0.402 and the current BTF/CO-RE limitation. |
 ## Repo
@@ -212,6 +241,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/diagnostic/linux-capability-data-quality-matrix]] | medium | Linux build/runtime/distro evidence and per-sensor CO-RE/fallback matrix; explains missing/placeholder fields, thread/identity/byte-count caveats, output permutations, and a recommended dataset capability receipt. |
+| [[wiki/diagnostic/lintap-rhel8-selinux-s3-policy]] | medium | Operator-reported RHEL 8 SELinux denials for Garage TCP upload and raw_sensor partition cleanup; custom port labeling, AVC triage, and host-local policy build/deploy notes. |
 | [[wiki/diagnostic/nesper-repro]] | high | Documents the standalone Fedora/shared-mount NEsper repro and the evidence that Bad IL range failures are output-location related. |
 | [[wiki/diagnostic/dependency-inventory-and-update-status]] | medium | Inventories Python, npm, and .NET dependency manifests across the ecosystem and records observed update availability with tooling caveats. |
 | [[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]] | medium | RHEL 8 field findings: clone sensor attaches (Fedora failure doesn't generalize), the fork-without-exec warning signature (parent = child−1), and a suspected ~500-700 forks/sec storm with event-processing lag under investigation. |
@@ -219,7 +249,73 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/diagnostic/windows-attribution-validation-executive-summary]] | low | Sanitized historical summary of 46 developer-archive files: architecture, reported tests and attribution metrics, improved File unresolved rates, unresolved Registry/validator reliability, and evidence limitations; original source references omitted at Architect request ahead of archive deletion. |
 | [[wiki/diagnostic/linux-tcp-investigation-2026-06]] | high | Historical June Linux TCP investigation with October source and Ubuntu 24.04 live validation: attachment/PID/protocol/rundown work is present; TCP AgentId, state template, and watchdog defects are resolved; no resolver negative cache was justified. |
 | [[wiki/diagnostic/duplicate-agent-id-and-os-family]] | medium | Two hosts share a raw UUID also present in initialized local state; Linux metadata mislabeled Windows by DBT/legacy SQL. Evidence and proposed remediation/regression gates. |
+| [[wiki/diagnostic/process-tree-context-completeness]] | medium | Anonymized six-host short-window audit: root reachability, concentrated ancestor breakpoints, independent pidstat corroboration and provenance limits. |
+
+## To-do
+
+Priority finding intake queue: [[wiki/todo/index]] — tracks emerging bugs,
+data-quality issues, and enhancements before promotion into a full deep-dive
+feature folder. Current P1 items include [[wiki/todo/linux-process-name-exe-fallback]],
+on validating and fixing reported Linux process names labeled `exe`;
+[[wiki/todo/linux-process-executable-attribution]], on nondeterministic Linux
+process executable attribution in Wintappy's silver model; and
+[[wiki/todo/lintap-linux-process-command-line-quality]], on source capture,
+provenance, and deterministic dbt command-line semantics. The P2
+[[wiki/todo/linux-nfs-process-network-attribution]] intake tracks the observed
+SSH-on-NFS-tuple example, likely process-context attribution, and the need to
+verify NFS-backed home and deployed tracer semantics. An untriaged enhancement,
+[[wiki/todo/listening-socket-capture-and-modeling]], tracks process-attributed
+listening-socket lifecycle capture and downstream modeling; priority and platform
+scope remain open. [[wiki/todo/canonical-process-owned-network-grains]] tracks
+canonical process-owned increment/connection grains, conflict visibility, and
+network-observed process identity semantics for reusable analytics.
+[[wiki/todo/transformer-five-tuple-connection-port-key]] tracks the suspected
+high-endpoint-port argument duplication in Wintap's five-tuple connection key;
+the collision impact and compatibility implications remain unverified.
+The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
+.NET gap between current merge-time partitions and the requested actual-upload
+UTC partition contract.
+
 ## Work
+
+Raw sensor S3 compaction proposal:
+[[wiki/work/raw-sensor-file-aggregation/brief]],
+[[wiki/work/raw-sensor-file-aggregation/interview]],
+[[wiki/work/raw-sensor-file-aggregation/implementation_plan]],
+[[wiki/work/raw-sensor-file-aggregation/verification]], and
+[[wiki/work/raw-sensor-file-aggregation/references]] — standalone DuckDB 2.0.0
+utility, manual hourly compaction across hosts into a separate `raw_sensor`
+dataset root. Processing is a name-aligned union-all; development and operational
+validation use DuckDB 2.0.0 to require equal source/merged row counts per partition.
+Plan also covers S3 failures/reruns and a shard-size benchmark; runtime tests are pending.
+Immutable-window publication remains proposed; object filenames may change while
+the partition scheme is preserved. Daily rollup and cron are deferred; the
+upload-time partition TODO is [[wiki/todo/raw-sensor-upload-time-partition]].
+
+Pidstat Go rewrite, fpc-03 review checkpoint and four-hour VM soak completed
+(2026-10-31 05:18–09:18UTC;49files/399312rows,2880sample times,80canaries;
+human acceptance/packaging pending): [[wiki/work/fix-pidstat-collector/soak_review]], [[wiki/work/fix-pidstat-collector/brief]],
+[[wiki/work/fix-pidstat-collector/implementation_plan]],
+[[wiki/work/fix-pidstat-collector/dev_handoff]],
+[[wiki/work/fix-pidstat-collector/verification]] — remove installed-host uv/Python/
+DuckDB requirements while preserving metrics and Parquet contracts. First live gate:
+existing Multipass `lintap-dev`, Ubuntu arm64; RHEL 8/amd64 runtime proof deferred.
+Native workflow: [[wiki/tool/pidstat-implementation-loop]] — `/pidstat-loop`,
+bounded skill, deterministic Python/Parquet/ELF evidence utility and human fpc-01 pause;
+fresh review via `/pidstat-review` in a new session. fpc-01 human-approved; fpc-02 raw
+sampler/config port passes26-column parity on266/705/1640 real Python rows,
+14Go tests,17config cases, static binaries/native arm64 replay and bounded411-row
+diagnostic. Fpc-02 approved; fpc-03 durable legacy spool/raw replay,26Go/native tests,
+signal seal/SIGKILL recovery/locking/retry pass. Human acceptance pending; original
+host pytest runner was blocked, while the current utility rerun passes 19 tests.
+Fresh Go checks are blocked by the retained temporary toolchain's missing standard
+library. Packaging, comparative resources, DBT and paired-live remain unqualified.
+Delivery limits:
+[[wiki/tension/pidstat-publication-versus-uploader-receipts]].
+
+Future medium-priority fix: [[wiki/work/reuse-etl-duckdb-instance/brief]] —
+dedicated ETL engine reuse, separate from the resolver; lifecycle/concurrency,
+CPU comparison and memory-growth qualification required before rollout.
 
 Approved DuckDB1.5 maintenance: [[wiki/work/duckdb-1-5-maintenance/implementation_plan]],
 [[wiki/work/duckdb-1-5-maintenance/verification]] — official .NET wrapper1.5.6.1,
@@ -239,6 +335,7 @@ isolated restart/endpoint acceptance passed; installed hosts/history unchanged.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/work/recent-host-activity-dashboard/brief]] | medium | Implemented metadata-first S3 object dashboard (per-host file count/size over filename collect time, no Parquet reads) with optional DuckDB raw-row mode; includes partition pruning, adaptive bins, and explicit refresh. The row mode's guarded `raw_process_file` aggregation returns 7.9 million rows as 479 five-minute groups in about 20 seconds. See [[wiki/work/recent-host-activity-dashboard/interview]], [[wiki/work/recent-host-activity-dashboard/design]], [[wiki/work/recent-host-activity-dashboard/implementation_plan]], [[wiki/work/recent-host-activity-dashboard/dev_handoff]], and [[wiki/work/recent-host-activity-dashboard/verification]]. |
 | [[wiki/work/net10-dependency-prune/verification]] | medium | .NET 10 Debian arm64 package: 30-minute soak passes 20 runs/5,000 unique file paths with zero restarts or observed serializer drops; Mac reads all 24 runs; named server-network gaps remain yellow. |
 | [[wiki/work/network-endpoint-normalization/implementation_plan]] | high | Shared TCP endpoint/name fix; done checklist and pending package/Windows-live/historical repair gates. |
 | [[wiki/work/network-endpoint-normalization/verification]] | high | Enum-based normalization and compatible DBT/legacy counters; 28 .NET + 74 SQL regressions, same-host separate/same-PID live proof and independent green Mac confirmation. |
@@ -325,6 +422,7 @@ isolated restart/endpoint acceptance passed; installed hosts/history unchanged.
 | [[wiki/work/selinux-monitoring/implementation_plan]] | medium | Five sel-NN slices, evidence-first: sel-01 validation measurements + timeboxed R1 prototype, sel-02 tracer+sensor skeleton, sel-03 resolver/dedup/policy-epoch, sel-04 ETL (frozen message types, group-by rule), sel-05 four-criteria validation; files-to-change map, cross-slice invariants, kill-switch rollback. |
 | [[wiki/work/selinux-monitoring/dev_handoff]] | medium | Handoff authorizing ../wintap changes (tracer/sensor/EPL/serializer, additive-only message types) plus Analytics validation assets: copy/paste prompt with interview-seal warning, spike traps (noaudit hook, inlined avc_audit, BPF LSM silent-inert, RHEL 8.10 noaudit-kprobe EINVAL), field-workflow rules, delegated decisions, next-session priorities after sel-02. |
 | [[wiki/work/selinux-monitoring/verification]] | medium | sel-02 + sel-03 records (2026-09-18, transcribed from sanitized validation summaries): all three streams captured in an RHEL 8.10 validation environment via the wrapper fallback (noaudit kprobe EINVAL-blocked; gate open); sel-03 core mechanics package-validated — decoder 132/2150, R2/R3 resolver (source contexts resolving, targets mostly learned-or-numeric), LRU flush with zero-delta skip (errors=0), policy-epoch polling, unknown-perm-mask telemetry (fd/sem watch item). |
+| [[wiki/work/selinux-dbt-pipeline/brief]] | medium | DBT-only downstream work for native SELinux AVC, interaction, and transition parquet: optional bronze, silver normalization, gold detail/summaries, constrained process attribution, and quality verification. |
 | [[wiki/work/support-docker-contexts-linux/interview]] | medium | Confirmed interview for a research prototype comparing cgroup, namespace, eBPF, shared-resolver, runtime, and systemd approaches to Linux context enrichment and inventory. |
 | [[wiki/work/support-docker-contexts-linux/brief]] | medium | Feature brief for broad Linux cgroup context support across process, file, network, and pidstat telemetry, with schema deferred until prototype evidence is available. |
 | [[wiki/work/support-docker-contexts-linux/references]] | medium | Live source and external reference map for Linux cgroup, namespace, OCI, runtime, systemd, and eBPF context collection. |

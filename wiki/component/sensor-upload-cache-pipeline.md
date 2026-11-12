@@ -10,7 +10,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/ETLConfig.json
   - ../Lintap/pidstat-collector.py
 policy: agent-editable
-last_validated: 2026-10-19
+last_validated: 2026-11-10
 repo_scope: wintap
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -44,6 +44,16 @@ fix-upload-cache-deletion and improve-pidstat-collector feature work
   type per cycle, materialized into the partition layout; then the upload
   sweep enumerates `raw_sensor/**/*.parquet` once and hands each file to
   every enabled adapter.
+
+Current Wintap timestamp detail: `doMerge()` supplies a UTC merge time,
+`Merge` embeds it in the generated file name, and `RawSensorWriter` derives
+`dayPK`/`hourPK` from that timestamp. If all uploads fail, the local file is
+retained for retry; the S3 adapter mirrors its existing relative path, so a
+delayed retry can arrive later under the earlier partition. This is the current
+merge/materialization-time behavior, not the requested actual-upload-time UTC
+contract. See [[wiki/todo/raw-sensor-upload-time-partition]] for the separate
+.NET correction intake.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/CacheManager.cs §doMerge/§upload; ../wintap/wintap/core/etl/load/Merge.cs §Start; ../wintap/wintap/core/etl/load/RawSensorWriter.cs §MaterializeFromParquetGlob; ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs §getS3ObjectNameForFile -->
 
 ## Contracts (verified 2026-08-15..17)
 
@@ -84,6 +94,10 @@ fix-upload-cache-deletion and improve-pidstat-collector feature work
   directories; direct-to-`raw_sensor` producers (pidstat) accumulate small
   per-window files. Next slice in
   [[wiki/work/fix-upload-cache-deletion/brief]].
+- Separate downstream S3 proposal: compact already-uploaded raw objects by UTC
+  hour into a distinct dataset root, retaining sources; this is not a change to
+  the in-host upload-cycle merge. See
+  [[wiki/work/raw-sensor-file-aggregation/brief]].
 - Live 3+ cycle uploader validation and the Windows service-mode
   delete-after-upload run are pending (post-merge).
 

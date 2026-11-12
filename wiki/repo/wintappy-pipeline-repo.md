@@ -3,6 +3,14 @@ title: "Wintappy (Wintap-PyUtil) Pipeline Repository"
 type: repo
 confidence: high
 grounded_by:
+  - ../Wintap-PyUtil/wintap_dbt/README.md
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/selinux_attribution.sql
+  - ../Wintap-PyUtil/wintap_dbt/macros/network_keys.sql
+  - ../Wintap-PyUtil/tests/test_selinux_sql.py
+  - ../Wintap-PyUtil/Makefile
+  - ../Wintap-PyUtil/scripts/check_dbt_config.py
+  - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
+  - ../Wintap-PyUtil/tests/test_dbt_source_validation.py
   - ../Wintappy/README.md
   - ../Wintappy/pyproject.toml
   - ../Wintappy/wintap_dbt/dbt_project.yml
@@ -21,7 +29,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-10-24
+last_validated: 2026-11-11
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -118,6 +126,75 @@ The dedicated `PIDSTAT_DATA_PATH` override and `wintap_dbt/macros/pidstat.sql` h
 <!-- GROUND_TRUTH: ../Wintappy/Makefile §dbt vars -->
 <!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/README.md §Configuration -->
 <!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/models/bronze/stg_pidstat_metrics.sql §typed empty fallback -->
+
+## Source-aware DBT preflight (2026-10-31)
+
+Current checkout path: `../Wintap-PyUtil` (older citations use `../Wintappy`).
+PyUtil owns the implementation; Analytics hosts this wiki and verification record.
+
+`make dbt-check-config` validates the effective raw input root:
+`WINTAP_DBT_RAW_SENSOR_DATASET`, falling back to `WINTAP_DBT_DATASET`.
+Local input requires a readable `<raw-root>/raw_sensor` directory, including
+split local input/output roots. S3 input requires `s3://bucket[/prefix]` and explicit
+inclusive `YYYYMMDD` start/end dates, but **no local raw_sensor placeholder**.
+Other URI schemes are rejected. Local date discovery uses the effective raw root,
+not unrelated output-root partitions. Database output remains local; date/hour
+validity/order and output-directory writability are checked.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/scripts/check_dbt_config.py -->
+
+`make dbt-check-source` uses DBT/DuckDB and the existing S3 credential-chain,
+endpoint/path-style/TLS configuration to list supported bronze events/aliases in
+the requested partitions and read one matching Parquet schema. When `AWS_PROFILE`
+is set, the macro explicitly selects that named profile via DuckDB's `config` chain;
+otherwise the default credential chain is used. The macro gets region from
+`AWS_DEFAULT_REGION` / `AWS_REGION` and endpoint only from `AWS_ENDPOINT_URL`; it
+does not import a profile's custom `endpoint_url` setting, which must be exported
+for Garage/path-style stores. Event names precede
+wildcards so S3 LIST prefixes include day/hour narrowing; nested `protoPK` is
+supported. Listing stops at a sample. An empty supported-event window fails;
+missing individual optional events remain valid. Engine access/TLS/Parquet errors
+are not suppressed as empty input. This is basic access evidence, not an all-file
+integrity scan or full DBT/Go-pidstat qualification. New bronze event names must also
+be added to the probe's event list.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql; ../Wintap-PyUtil/wintap_dbt/macros/s3.sql; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql -->
+
+`make dbt-build` runs both checks. `make print-dbt-config` stays offline and now
+prints the raw root/type and hour window without credentials. `qa-dashboard` and
+`qa-pidstat` check only the existing local database, not raw-source availability
+or dates; querying S3-backed bronze views still needs S3 access. Regression scope
+and limits: [[wiki/work/dbt-source-validation/verification]].
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintap_dbt/README.md -->
+
+## SELinux pipeline (2026-11-11 candidate)
+
+PyUtil owns optional bronze/silver/gold support for `raw_selinuxavc`,
+`raw_selinuxinteraction`, and `raw_selinuxtransition`; missing families produce
+typed empty relations. Silver retains raw timestamps and normalizes Unix-second
+`EventTime` and FILETIME observation bounds. Bronze removes identical rows with
+`num_dups` retained; gold preserves normalized producer `EventCount`, not raw
+duplicate contributions. Interaction telemetry is folded/permission-expanded,
+not one distinct kernel event per row or count unit.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/README.md §SELinux telemetry; ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_raw_selinuxinteraction.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/selinux_interaction.sql -->
+
+`selinux_attribution` accepts exact identity or one host/PID/lifetime candidate;
+ambiguous and unmatched observations remain unassigned. Shared gold detail,
+context, and process summaries preserve these outcomes. The Marimo overview
+exposes family counts, producer counts, context completeness and attribution QA.
+Sensor collection remains owned outside PyUtil; Analytics hosts the evidence:
+[[wiki/work/selinux-dbt-pipeline/verification]]. Synthetic tests cover all four
+attribution outcomes, including cases absent from the supplied sample.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/selinux_attribution.sql; ../Wintap-PyUtil/tests/test_selinux_sql.py; ../Wintap-PyUtil/notebooks/wintap_dbt_overview.py -->
+
+## Temporary network connection IDs (2026-11-11 candidate)
+
+The current silver `process_conn_incr` replaces raw producer `connid` with an
+uppercase MD5 of canonical JSON containing context `llnl`, normalized protocol,
+and ordered IP/port endpoint pairs. Reversed endpoints share an ID; incomplete
+tuples yield NULL. This is a temporary DBT shim pending authoritative Wintap .NET
+implementation, not a unique connection-instance key. Repeated five-tuples share
+the key; producer-ID joins and existing materialized IDs can change. Rebuild
+dependent models together and qualify downstream consumers before release.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/network_keys.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/wintap_dbt/README.md §Temporary network identity compatibility change -->
 
 ## Legacy Python ETL
 
