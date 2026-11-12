@@ -23,6 +23,17 @@ tags: [todo, research-workflows, Wintap-Analytics]
 
 This page tracks analysis workflows that should become first-class wiki topics as the Wintap-Analytics documentation matures.
 
+## Process-tree context quality (2026-11-12)
+
+Use [[wiki/workflow/process-ancestry-completeness-qa]] alongside tree/path queries:
+the longest available chain is not proof of OS-root reachability. The anonymized
+[[wiki/diagnostic/process-tree-context-completeness]] audit demonstrates descendant
+amplification from a few missing ancestors. Short-window activity plus historical
+ancestor closure is proposed in
+[[wiki/concept/durable-process-context-and-stream-table-enrichment]]; context-only
+rows must remain separate from in-window birth/activity counts. No new workflow
+implementation is implied.
+
 ## ACME4 Explore
 
 ACME4 Explore is a notebook-driven research surge for exploratory analysis and auditing of the ACME4 host-based dataset. It uses Python, Jupyter, `uv`, DuckDB, and Wintap standard-view Parquet files, either from LLNL's HTTP-published dataset or a local dataset copy.

@@ -171,3 +171,18 @@ now a default-off,locally tested candidate,not installed final-fate evidence.
 
 Related: [[wiki/concept/wintap-ecosystem-glossary]],
 [[wiki/concept/telemetry-identity-and-endpoint-orientation]].
+
+## Short extracts need historical context (2026-11-12)
+
+The anonymized [[wiki/diagnostic/process-tree-context-completeness]] audit separates
+immediate-parent availability from OS-root reachability. Selecting recent
+publication partitions can omit long-lived ancestors even when their descendants
+are interior to the analysis window. Expanding an event-time filter alone does
+not fetch excluded partitions. Conversely, a new Refresh can carry an old birth
+EventTime and be removed by a strict birth-time filter.
+
+Proposed mitigation: select activity by its analysis window, but obtain process
+instances and transitive ancestor context from retained history. See
+[[wiki/concept/durable-process-context-and-stream-table-enrichment]] and
+[[wiki/workflow/process-ancestry-completeness-qa]]. This is documentation/design
+guidance, not a new collection boundary or an implemented extract mechanism.

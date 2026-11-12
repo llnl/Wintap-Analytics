@@ -1,5 +1,7 @@
 <img width="200" src="https://user-images.githubusercontent.com/50601643/218871643-2d3af433-0923-4786-b5e5-24c6a72e803e.png" alt="Wintap logo">
 
+**Chat with our AI docs using [DeepWiki](https://deepwiki.com/LLNL/Wintap-Analytics)** 
+
 # Wintap-Analytics
 
 Wintap-Analytics is the research and analysis workspace for Wintap host

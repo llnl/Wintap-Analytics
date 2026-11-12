@@ -1,11 +1,11 @@
 ---
-title: "Verification: PowerShell ETW POC"
+title: "Historical Verification: PowerShell ETW POC"
 type: concept
 confidence: medium
 grounded_by:
   - ../Wintap-Analytics/wiki/work/powershell-sensor/brief.md
 policy: agent-editable
-last_validated: 2026-10-28
+last_validated: 2026-11-12
 repo_scope: cross-repo
 implementation_area: windows-sensor
 event_domain: process
@@ -15,7 +15,13 @@ source_paths: wiki/work/powershell-sensor/verification.md
 tags: [feature-work, powershell, etw, verification]
 ---
 
-# PowerShell ETW Verification
+# Historical PowerShell ETW POC Verification
+
+> This page records the October native-tool capture and wrapper tests only. It
+> does not verify the later Wintap sensor. The integrated sensor's code-level
+> test coverage and optional smoke harness are listed in
+> [[wiki/component/powershell-sensor]], but were not run for this documentation
+> update; live ETW load/loss and host logging-policy qualification remain open.
 
 Evidence chain: [[wiki/work/powershell-sensor/P0.1-native-etw-wrapper]] (20 tests),
 [[wiki/work/powershell-sensor/Patch-P0.1a-file-entry-default]] (23 tests; fixes the
@@ -33,5 +39,8 @@ see [[wiki/work/powershell-sensor/findings]]. On 2026-10-28 the operator reporte
 "cool that works" after the focused-output change: rerun success is operator-reported,
 not independent inspection of its newer dataset or formal POC acceptance. PowerShell 7,
 logging baselines, Ctrl+C and general input/execution coverage remain unqualified;
-no policy, provider-traffic or loss reduction is claimed. Next review findings before
-integration and record any acceptance anchor in [[wiki/work/powershell-sensor/metrics]].
+no policy, provider-traffic or loss reduction is claimed. At the time, the next POC
+step was review of the findings and recording any acceptance anchor in
+[[wiki/work/powershell-sensor/metrics]].
+For the later sensor's event contract and DBT status, see
+[[wiki/event_type/powershell-events]].

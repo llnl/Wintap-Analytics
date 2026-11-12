@@ -1,12 +1,12 @@
 ---
-title: "POC Findings: PowerShell ETW Event Shapes"
+title: "Historical POC Findings: PowerShell ETW Event Shapes"
 type: concept
 confidence: medium
 grounded_by:
   - ../Wintap-Analytics/wiki/work/powershell-sensor/references.md
   - ../Wintap-Analytics/wiki/work/powershell-sensor/verification.md
 policy: agent-editable
-last_validated: 2026-10-28
+last_validated: 2026-11-12
 repo_scope: cross-repo
 implementation_area: windows-sensor
 event_domain: process
@@ -16,7 +16,12 @@ source_paths: wiki/work/powershell-sensor/findings.md
 tags: [feature-work, powershell, etw, event-shapes, findings]
 ---
 
-# PowerShell ETW Findings
+# Historical PowerShell ETW Findings
+
+> These findings describe the inspected October 2026 Windows PowerShell 5.1
+> capture. They are empirical POC evidence, not a complete specification or
+> qualification of the later integrated sensor. See
+> [[wiki/event_type/powershell-events]] for the implementation contract.
 
 The inspected 60-second 5.1 capture (`a0c52268...`) contains 25,210 PowerShell events
 plus two trace metadata records, with 89 reported losses; 23,717 events came from

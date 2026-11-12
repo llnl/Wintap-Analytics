@@ -1,5 +1,5 @@
 ---
-title: "Execution Handoff: PowerShell ETW POC"
+title: "Historical Execution Handoff: PowerShell ETW POC"
 type: concept
 confidence: medium
 grounded_by:
@@ -7,7 +7,7 @@ grounded_by:
   - ../Wintap-Analytics/wiki/work/powershell-sensor/references.md
   - ../Wintap-Analytics/wiki/work/powershell-sensor/verification.md
 policy: agent-editable
-last_validated: 2026-10-28
+last_validated: 2026-11-12
 repo_scope: cross-repo
 implementation_area: windows-sensor
 event_domain: process
@@ -17,7 +17,12 @@ source_paths: wiki/work/powershell-sensor/dev_handoff.md
 tags: [feature-work, powershell, etw, handoff, poc]
 ---
 
-# PowerShell ETW POC Handoff
+# Historical PowerShell ETW POC Handoff
+
+> **Historical instructions:** The commands and local paths below apply only to
+> the temporary native-tool POC. They are not deployment instructions for the
+> implemented Wintap sensor. See [[wiki/component/powershell-sensor]] for its
+> current setting, lifecycle, output path, and unqualified operational checks.
 
 Approved local native-tool scope, not Wintap integration: from the elevated operator's
 `%TEMP%\opencode\powershell-etw-poc` directory run
@@ -36,4 +41,6 @@ Build/P0.1a/P0.2 evidence is in [[wiki/work/powershell-sensor/verification]]; la
 35/35, with original-capture preservation verified. The operator reports rerun success;
 next is findings review, not automatic recapture or integration. Code remains temporary,
 raw data private, and prior Wintap audit review was denied/not performed; review conventions
-and obtain authorization before future sibling-code work.
+and obtain authorization before future sibling-code work. The later Wintap sensor
+is documented separately in [[wiki/event_type/powershell-events]]; its tests and
+Windows smoke harness were not run as part of this historical handoff review.

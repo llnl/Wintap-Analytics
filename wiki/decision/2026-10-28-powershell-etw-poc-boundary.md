@@ -5,7 +5,7 @@ confidence: medium
 grounded_by:
   - ../Wintap-Analytics/wiki/work/powershell-sensor/interview.md
 policy: human-review-required
-last_validated: 2026-10-28
+last_validated: 2026-11-12
 repo_scope: cross-repo
 implementation_area: windows-sensor
 event_domain: process
@@ -30,7 +30,7 @@ Use local native ETW tools under unchanged logging policy; investigate available
 Inspect actual provider fields without building a listener or exhaustive coverage harness; equivalent underlying listener events remain a working assumption.
 
 ## Consequences
-Output filtering does not reduce collection traffic/loss or prove execution; no host-policy/remoting changes or sibling edits are authorized, and integration requires a separate Architect gate after [[wiki/work/powershell-sensor/brief]] acceptance.
+Output filtering does not reduce collection traffic/loss or prove execution; no host-policy/remoting changes or sibling edits were authorized by this POC. The POC decision did not itself approve or qualify integration. A separate Wintap sensor was subsequently added in commit `6add359`; see [[wiki/component/powershell-sensor]]. The original POC acceptance record remains in [[wiki/work/powershell-sensor/brief]].
 
 ## Alternatives Considered
 Rejected non-ETW reconstruction and logging enablement; deferred custom event-ID filtering, immediate integration and universal input/coverage guarantees.

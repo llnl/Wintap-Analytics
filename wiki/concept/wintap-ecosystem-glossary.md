@@ -166,9 +166,16 @@ Source: [[wiki/concept/telemetry-identity-and-endpoint-orientation]].
 | **ETL / DBT / DuckDB** | Extract-transform-load processing / SQL transformation-and-test tooling / embedded analytical database used for runtime history and offline analysis in separate contexts. |
 | **Bronze / silver / gold** | Wintappy layers for source/schema compatibility / normalized detail / analyst-facing summaries. These are modeling layers, not quality verdicts. |
 | **Join / fanout** | Relating rows using matching keys / accidental multiplication when a key matches multiple rows. Valid joins do not prove no upstream events were lost. |
+| **Durable entity state / stream-table duality** | Persisted instance state maintained by a stream of keyed updates; rare lifecycle observations remain available beyond a short activity window. |
+| **Snapshot plus changelog / stream-table enrichment** | Bootstrap state from inventory then apply changes / join frequent activity with retained entity context. |
+| **Historical process dimension / context closure** | Retained process-instance and ancestor evidence, including exited processes / recursively adding the ancestors needed by selected activity without counting them as new in-window births. |
+| **Temporal / as-of join** | Enrichment using entity state applicable at the selected historical time, not necessarily today's latest state. |
+| **Root-reachable fraction / ancestor breakpoint impact** | Share of eligible seeds reaching declared OS roots / number of seeds whose ancestry terminates at a particular unresolved boundary. Structural measures, not lifecycle-validity certificates. |
 | **Annotation / label / shadow classification** | Analysis added to observations / category assigned for analysis / experimental classification recorded without suppression or a definitive benign verdict. |
 
 Sources: [[wiki/pipeline/nesper-esper-event-stream-processing]],
+[[wiki/concept/durable-process-context-and-stream-table-enrichment]],
+[[wiki/workflow/process-ancestry-completeness-qa]],
 [[wiki/repo/wintappy-pipeline-repo]],
 [[wiki/work/improve-lintap-data-quality/diagram-glossary]],
 [[wiki/work/host-process-identity-patch/investigation_mitigation_plan]].

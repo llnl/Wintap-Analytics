@@ -41,6 +41,11 @@ recordings remain unmigrated. Verification: [[wiki/work/host-process-identity-pa
 
 ## Linux clone/exec boundary (validated 2026-10-22)
 
+Future investigation and separately qualified 2026-11-03 `develop` source baseline:
+[[wiki/work/lintap-process-creation-validation/future-scheduler-lifecycle-vs-syscalls]].
+It compares the existing scheduler/syscall hybrid, exec-attempt versus image
+semantics, group-aware termination and measured acquisition-to-ETL costs.
+
 Current Debian/RPM package templates enable Clone by default, retaining explicit
 `WINTAP_ENABLE_CLONE_SENSOR=false` opt-out. Existing locally opted-out installs
 are not automatically changed. Per-run HOST records identify effective enablement,
@@ -151,3 +156,18 @@ the column remains unknown unless an actual Arguments breadcrumb is present.
 - Stop records are first-class again (coverage restored), with resource metrics best-effort per the correlation-window semantics above — treat metric-defaulted stops (`manifest_metric_misses`) as valid terminations, not data errors.
 
 See also [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]], [[wiki/workflow/future-experiment-analysis-workflows]], and [[wiki/repo/wintappy-pipeline-repo]] (downstream `process`/`process_summary`/`process_uber_summary` DBT models).
+
+### Refresh is context, not a new creation (2026-11-12)
+
+The inspected Linux rundown emits Refresh at canonical birth time; Windows
+startup snapshot dedup can suppress known nonsynthetic instances. A restart or
+repeated inventory therefore does not guarantee complete historical republication.
+Live-only inventory also cannot recover exited ancestors with surviving descendants.
+<!-- GROUND_TRUTH: ../Wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §Start/CreateRefreshMessage; ../Wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §InitializeSnapshotRefresh -->
+
+Current downstream `num_process_start` counts Start **and** Refresh observations;
+it must not be interpreted as distinct new creations when evaluating refresh noise.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql §process_base -->
+See [[wiki/concept/durable-process-context-and-stream-table-enrichment]] for
+unimplemented reconciliation/history options, and
+[[wiki/workflow/process-ancestry-completeness-qa]] for structural coverage metrics.

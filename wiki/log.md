@@ -3870,6 +3870,275 @@ User subsequently reported successful Debian package builds and authorized
 commit/push of the provisioning changes and companion wiki notes. This is
 operator-reported build success; package installation/runtime results were not supplied.
 
+## [2026-10-27] docs | Cross-platform package release versioning
+
+Created `wiki/workflow/package-release-versioning.md` with a concise 7.0 release
+identity, Debian/RPM/MSI field mapping, shared build-number versus packaging
+revision guidance, architecture/EL suffix handling, and build-to-install checklist.
+Recorded the selected Debian tilde and current RPM underscore beta encodings;
+called out target RPM ordering verification and the still-undefined beta counter
+sequence before automation. Linked SemVer, Debian Policy, live Wintap/Lintap
+release/build docs, and the page from the index. Documentation only; no source or
+release configuration changed.
+
+## [2026-10-29] feature-plan | fix-pidstat-collector Go rewrite
+
+Human reported RHEL 8 sudo bootstrap failure because root lacks uv and accepted a
+compatibility-preserving Go binary rewrite rather than requiring root uv installation.
+First live validation target explicitly changed to existing Multipass lintap-dev,
+Ubuntu arm64; RHEL 8/amd64 runtime proof remains separate. Created brief, staged
+implementation plan, authorization-gated dev handoff and pending verification record;
+linked from index. Planned pure-Go Parquet/static-build spike, sampler/spool parity,
+Debian/RPM integration and bounded implement/test/review/repair loop for a later
+OpenCode session. Expected local Wintappy source unavailable; consumer proof pending.
+No source/configuration/VM/service changes, tests or automation setup. Existing
+untracked .claude work preserved. No new contradictions; sealed estimates not collected.
+
+### Follow-up — renamed downstream checkout and real Python parity gate
+
+Human identified Wintappy's renamed checkout as `../Wintap-PyUtil`; read live pidstat
+bronze and shared path/raw-source macros and corrected current feature references.
+Strengthened acceptance/plan/handoff/verification to require actual Python-produced
+data, exact replay on identical captured real /proc inputs, paired-live comparison
+with predefined skew tolerances, and review of all columns, row multiplicity and
+unmatched cases. Retain revision-pinned Python reference through acceptance; fixtures
+alone cannot close parity. No code/tests/VM changes or comparison execution yet.
+
+## [2026-10-29] code | Prepare bounded pidstat OpenCode runner
+
+User authorized runner/supporting files in Analytics, not collector implementation.
+Added Bash/Python external controller, fail-closed verification template, dedicated
+fresh implementation/report-only review profiles, private ignored state/logs, finite
+attempts, cumulative deterministic gates and candidate/evidence-bound human fpc-01
+approval. Config/contracts/check entry points and approved source scope are pinned;
+out-of-scope/reviewer mutations stop without reverting work. Explicit one-unit launches,
+no continuation/auto-approval/push/field rollout. Checked local OpenCode v2.0.32 help
+and official V2 docs;15 offline fake-agent tests, Bash syntax, diff check and ignore
+checks pass. Added canonical tool page; updated feature plan/handoff/verification/index.
+No actual model sessions, collector code, VM/package/service changes or parity runs.
+Real gate wiring, Lintap/VM authorization and effective permissions still required.
+Timeout remote-work cancellation is explicitly manual; no automatic uncertain retry.
+Existing untracked .claude work preserved; no commit/push.
+
+## [2026-10-30] diagnostic | RHEL 8 Lintap SELinux S3 upload denials
+
+Documented the operator-reported local `lintap-selinux` policy and AVC evidence:
+`init_t` TCP `name_connect` to Garage port 3900 and `var_log_t` directory `rmdir`
+for raw_sensor partition cleanup. Added the bounded auditd/ausearch workflow,
+custom port-type policy build/install steps, scope cautions, and live Wintap/Lintap
+source references. Linked the diagnostic from the index. This host-local policy
+is not confirmed as part of the canonical Lintap RPM; no sibling-repo changes.
+
+## [2026-10-30] docs | Root-owned smoke workload to S3 operator workflow
+
+Reviewed existing Wintap devtools, Analytics dashboard/soak, packaging/path docs and
+live publisher/uploader code. Durable export and sudo interpreter handoff already
+existed in separate guides; consolidated the complete one-shot workflow into
+`wiki/tool/named-telemetry-smoke-workload.md`. Added root-path discovery, user-side
+uv/DuckDB interpreter selection, sudo import check, fresh output/portable manifest,
+explicit smoke-data-root, publication/delivery/validation checkpoints and failure
+triage. Linked from dashboard/soak pages and index. Clarified workload-only privileges
+versus protected parquet export and replaced ambiguous temporary-path advice.
+Flagged a soft guidance mismatch: runner README's runtime-root evidence example
+also hosts file stimuli, whereas shared workload guidance excludes runtime paths;
+the wiki now recommends an external QA root. Source-owned README left cited in place.
+Verification: `git diff --check` passes; `bash -n` passes for seven documented shell
+blocks; three page frontmatters, 19 wikilinks and the workflow's live source paths
+check successfully. Root field-host execution and S3 arrival still require an
+operator run; no new capture result claimed.
+
+## [2026-10-30] correction | Persistent smoke Python environment for sudo
+
+Operator attempt exposed a flaw in the preceding documentation: capturing
+sys.executable from `uv run --no-project --with ...` returned a temporary
+`builds-v0/.tmp.../bin/python` that sudo could not execute after uv exited.
+The workload did not launch. Replaced that recipe with user-side `uv venv` in a
+named persistent directory, explicit `uv pip install --python` and direct sudo
+invocation of the venv interpreter. Added reuse/troubleshooting notes and corrected
+dashboard/soak/index pointers. Official uv environment docs and installed CLI help
+confirm the creation/install syntax; root field-host publication/S3 validation
+remains pending an operator rerun. This supersedes the earlier interpreter recipe.
+Checks: named-venv creation followed by a separate direct interpreter invocation
+passes locally after uv exits (temporary wiki-local environment removed); seven
+documented shell blocks pass `bash -n`, local wikilinks and `git diff --check` pass.
+This local check used the available host Python and did not install DuckDB or run sudo.
+
+## [2026-10-30] docs | Live-collector validation diagram
+
+Added `wiki/workflow/live-collector-validation.drawio` with two editable pages:
+data/evidence flow and operator workflow. Proposed “live-collector validation” for
+the in-situ workflow, with repeated bounded stimuli called telemetry canaries.
+The diagram shows persistent user-created venv → sudo workload, independent normal
+sensor capture, local raw_smoke_test publication, shared collector S3 upload and
+explicit dashboard checks. Added a source-anchored companion page and links from
+the named-workload, soak and dashboard pages plus the index. Preserves distinct
+generation/publication/delivery/validation checkpoints and stimulus-only limits.
+Verification: imported both pages into diagrams.net and visually reviewed layout;
+adjusted the expected-activity edge label to clear box borders. XML parsing,
+unique cell IDs, edge endpoints and page bounds pass. Required frontmatter and
+live source paths pass for the four topic pages; 245 wikilinks across those pages
+and the index plus the companion diagram link resolve. `git diff --check` passes.
+
+## [2026-10-30] docs | First-time Streamlit S3 setup
+
+Operator feedback identified the missing analysis-machine setup handoff. Expanded
+the dashboard wiki page with a first-time quick start: copy/edit the private JSON,
+map an uploaded raw_sensor object to its dataset root, select AWS credentials,
+launch Streamlit with uv and open port 8501, then discover and validate the run.
+Linked it directly from the named workload, live-collector workflow and index;
+updated diagram P7 to make configuration/launch explicit. Grounded in the live
+app, S3 config parser, example config, requirements and README.
+Verification: four dashboard shell blocks pass `bash -n`; documented JSON matches
+the shipped example and is accepted by the live config parser; dataset-root
+mapping, wiki/Markdown links and section anchors, updated diagram XML and
+`git diff --check` pass. No authenticated S3 session was exercised for this doc update.
+
+## [2026-10-30] code | Replace pidstat controller with native OpenCode workflow
+
+At human request, removed the first-pass external runner, configuration template,
+launcher, fake-agent tests and custom profiles. Supersedes the 2026-10-29 runner
+entry; its results remain history only. Added native `/pidstat-loop`, bounded skill,
+separate-session `/pidstat-review` prompt and deterministic evidence utility for
+actual Python capture, exact Parquet comparison, ELF checks and narrow root startup.
+OpenCode owns iteration; default three candidate revisions/60 minutes, human pause
+after fpc-01, no approval tokens or external state machine. Updated canonical tool
+page, README and feature brief/plan/handoff/verification/index; real-Python parity
+and Ubuntu arm64 first-target requirements retained. 19 offline tests pass, including
+actual Python sampler/writer with controlled inputs, not live Python/Go acceptance.
+Recorded test-command evidence, CLI help, source/link/frontmatter/ignore checks and
+`git diff --check` pass. Collector implementation, VM work and DBT remain unstarted;
+no sibling edits, dependency installs, commit or push. Unrelated work preserved.
+
+## [2026-10-30] code | fpc-01 static Go writer feasibility checkpoint
+
+Human approved scoped Lintap spike and isolated existing Ubuntu arm64 lintap-dev
+experiments, plus private pinned DuckDB reference venv. Added unpackaged writer-only
+Go1.27.3/parquet-go0.32.0 module/tests/Makefile/docs in `../Lintap/pidstat-go` and
+Analytics bounded workload/supplemental actual-Python writer check. Python source
+remains unchanged/hash-pinned. Actual live Python captures266/705/1640 rows compare
+exactly against Go: all26 columns, physical-column/DuckDB schema, nulls, multiplicity,
+partitions/windows, zero unmatched rows/error. Both cgo-disabled Linux ELF builds are
+static and reproduce hashes; native root restricted-PATH arm64 startup and1640-row
+encoding pass. Five Go tests/vet/module verification, five controlled writer rows and
+19 utility regressions pass. Workload observed203.29%CPU, memory/writes and10churnPIDs;
+cached reads and missing live container runtime IDs are explicit coverage gaps.
+Updated verification/checklist/handoff/brief, canonical repo/tool pages, README/index.
+Same-session inspection only; stopped for human review before fpc-02. Sampler,
+recovery/configuration, package/service, paired-live, DBT and native RHEL/amd64 remain
+pending. No production data/service/package changes, consumer edits, commit or push;
+private guest artifacts/evidence retained and unrelated work preserved.
+
+## [2026-10-30] code | fpc-01 approved; fpc-02 sampler/configuration checkpoint
+
+Human approved fpc-01 and requested continuation. Added injected Go proc sampler,
+Linux config resolution, native kernel AT_CLKTCK/page discovery, strict raw replay
+and bounded diagnostics in Lintap. All3real raw captures reproduce Python TSV and
+26-column Parquet exactly (266/705/1640rows), with no unmatched rows/schema errors;
+native arm64 raw replay passes. Actual Python controlled52-row fixtures pass at
+100Hz/4KiB and250Hz/16KiB;17config cases match;14Go tests/vet/modules/static builds,
+5writer rows and19utility regressions pass. Native four-sample run emits411readable
+rows, not paired-live qualification. Retained two failures and repaired numeric/path
+config fidelity and sub-microsecond midnight rounding/source-window provenance.
+Declared malformed-counter per-process skip, bounded cache and monotonic-live-time
+differences; valid math/missing optional defaults unchanged. Candidate3of3, stopped
+at technical completion/review gate before fpc-03. Updated verification/checklist,
+handoff/brief, canonical repo/tool/index and READMEs. Same-session inspection only;
+durable spool/recovery, package/service, DBT, paired-live and native RHEL/amd64 remain
+pending. Frozen Python/consumer sources unchanged; no shared service/data/package
+changes, commits or pushes; private guest evidence and unrelated work retained.
+
+## [2026-10-30] code | fpc-02 approved; fpc-03 durable pidstat checkpoint
+
+Human approved fpc-02 and requested continuation. Added explicit Go collector/recovery/
+durable raw-replay modes with legacy TSV/meta, seal/publication journals, exclusive
+spool lock, unique active ownership, synced no-overwrite publication, retained failed
+inputs, collision/compression handling, scoped caps and signal seal. Exact durable
+replay of266/705/1640real Python rows passes all26columns/schema/multiplicity/windows;
+actual Python-produced legacy current/pending/missing/invalid-meta spools recover
+exactly.26Go tests/vet/modules/static builds and native arm64 fault tests pass;
+native SIGTERM/SIGINT each produce411rows/2files, SIGKILL restart recovers137rows,
+destination obstruction retries20unchanged-input rows and competing spool lock fails.
+Sampler/config/writer/19utility regressions stay green. Retained failures; repaired
+legacy suffix/codec coverage, a case-insensitive fixture-path issue, and shared-output
+active ownership before final pass. Original host pytest command blocked (not installed),
+not counted as PASS. New tension page documents publication/uploader receipt gap:
+at-least-once, not exactly-once delivery; full power-loss/resources remain unqualified.
+Updated feature/canonical pages, README/index and verification; candidate3of3 stopped
+for review before package/service work. Same-session inspection only. Python/consumer
+sources, shared services/data and unrelated work unchanged; no commit/push/deployment.
+
+## [2026-10-30] verification-start | Four-hour Go pidstat and latest Lintap VM soak
+
+Human requested four-hour sensor-on qualification before packaging. Existing Ubuntu
+arm64 lintap-dev had no installed/running sensor. Built current Wintap66d8297 source
+archive natively (12tracers;0managed errors), started normal ETL with isolated retained
+data, then unchanged hash-matched fpc-03 candidate3 at default5s/300s. Run begins
+2026-10-31T05:18:50Z, planned stop09:18:50Z. Existing recurring five-family smoke
+runner reuses persistent DuckDB1.5.6 environment and prebuilt native helper; first
+round5/5exit0/recorded. FileOps partial legacy-hook and absent SELinux limits retained.
+Added scoped supervisor/inspector automation;30s resource/health records, bounded
+SIGTERM seal/drain, pidfd-blocking background retrieval and hash-checked safe extraction.
+Native inspector pilot checks1788actual Go rows against actual Python26-column schema
+and correctly rejects incomplete-run metadata. Scripts compile; diff check passes.
+Startup-log discovery failure retained/repaired before sampling. Preflight make run-env
+implicitly built/restored the shared checkout and rewrote a previously modified
+WintapAPI NuGet lockfile; original diff unavailable, no restoration claimed. Subsequent
+build used isolated archive; no collector/package/source implementation revision.
+Updated feature verification/checklist/handoff/index. RUNNING, not PASS; full review
+awaits completion. No package install, shared service restart, consumer edits or commit/push.
+
+## [2026-10-31] verification | Four-hour Go pidstat VM data collected and reviewed
+
+Completed14400.022s sensor-on default5s/300s run; smoke/Go/Lintap each exit0, no
+forced shutdown. All49pidstat files decode399312rows matching all26Python schema
+columns/physical types;2880sample times with uninterrupted5s gaps, contiguous300s
+windows including midnight,0duplicates/placement errors, clean final6484-row seal.
+16five-family rounds80/80exit0/recorded;436sensor/manifest files readable. Go median
+0.47%of one core and16.97MiB RSS, peak44.86MiB; four-hour memory medians stabilize
+around17MiB, not general leak or Python resource-improvement proof. Sensor partial
+FileOps/absent SELinux/disabled adapter-resolution/parent warnings retained; no full
+capture or upload acceptance claimed. Initial SFTP failed on root-private parent;
+private archive copy fixed transfer without changing original permissions. Hash
+verified archive and safely extracted969files; guest/failed evidence retained.
+Secondary DuckDB CREATE VIEW binding failure retained and read-only query repaired.
+Created feature soak_review and updated verification/checklist/handoff/index. Scoped
+same-session collection check passes; human review/packaging, paired-live Python,
+comparative resources, DBT/original pytest and native RHEL/amd64 remain pending.
+No collector revision, package install, consumer edits, commit/push or deployment.
+
+## [2026-10-31] code | Source-aware local/S3 DBT preflight
+
+Human approved scoped implementation in `../Wintap-PyUtil`. Make now validates
+effective raw input instead of requiring output-root/raw_sensor; S3 needs a valid
+URI/explicit dates, not a local placeholder. Local split-input date discovery,
+date/hour/output checks and raw-source printing added. DBT/DuckDB operation lists
+current bronze event/alias partition prefixes and reads one sample schema before
+build; missing optional events allowed, empty supported-input window/access/TLS/
+corrupt sample fail. Dashboard checks remain local-only.39new tests including real
+DBT and loopback S3 protocol fixtures;248focused tests pass. Broader suite272pass/
+1unchanged legacy Dynaconf-default failure, independently reproduced. Initial
+Make/test-setup failures fixed; event wildcard narrowed to avoid broad S3 listings.
+Updated PyUtil README and canonical wiki; created plan/verification and index entry.
+No live S3 requests, operator dataset/env edits, collector changes, commits or pushes.
+
+### DBT source-validation follow-up — operator confirmation and commit authorization
+
+The human reports the new checks work and authorized topic commits on
+`work/pidstat-and-dbt-validation`. Recorded this confirmation in feature verification;
+it does not substitute for an agent-inspected real-host DBT qualification.
+
+## [2026-10-31] review | Pidstat checkpoint prepared for topic commits
+
+Human authorized grouped commits on working branches across the repositories.
+Corrected stale default-cadence/resource and authorization wording; retained
+fpc-03/package/paired-live/native acceptance boundaries and all collector code/pins.
+19utility tests pass with existing PyUtil Python/DuckDB;10harness sources parse.
+Go test rerun is blocked: retained temporary Go1.27.3 cannot locate its standard
+library, so no fresh Go test/vet pass is claimed. Existing evidence remains intact.
+Private datasets, captures, generated artifacts and local settings remain uncommitted;
+the clean nested PyUtil checkout and generated/editor-only Wintap dictionary tree
+are not source changes. No live host, package or S3 operations performed.
+
 ## [2026-10-27] feature | WindowsShell ETW replacement
 
 Replaced the console-history helper/polling path with default-disabled Microsoft.Windows.Console.Host ETW collection after operator-confirmed LocalSystem prototype success. Reduced the modeled payload to CommandText, SessionId and StartTime, retaining canonical process attribution and dynamic Parquet integration; removed obsolete helper/IPC/config/tests. SDK 10 build, 62 focused tests and 380 nearby regressions pass, including production Parquet roundtrip. Live capture exposed timestamp-skew attribution drops; corrected lifetime validation preserves canonical joins and requires fresh OS verification for bounded differences. Feature documentation remains compact and sanitized. Updated self-contained Windows x64 output is published locally; integrated service/session coverage, live joins, performance and shutdown acceptance remain pending in [[wiki/work/windows-shell/verification]].
@@ -3877,3 +4146,480 @@ Replaced the console-history helper/polling path with default-disabled Microsoft
 ## [2026-10-28] feature | PowerShell ETW POC
 
 Opened a native-ETW shape POC for 5.1/7; built and tested a temporary wrapper (35 tests), repaired `-File` path initialization, inspected 5.1 events including interactive `write-host hi`, and added 4104-only output while retaining originals and unchanged collection/loss. The 60-second sample had 89 lost events and five incomplete blocks; the operator reports the focused rerun works, but its new data and formal POC acceptance remain unreviewed. Findings/audits: [[wiki/work/powershell-sensor/findings]], [[wiki/work/powershell-sensor/P0.2-focused-scriptblock-output]]. Logging policy stayed unchanged; integration remains separate.
+## [2026-11-03] docs | Queue medium-priority ETL DuckDB instance reuse
+
+Added `wiki/work/reuse-etl-duckdb-instance/brief.md` as a deferred future fix and
+linked it from the index. Proposes an ETL-owned long-lived instance, separate from
+the resolver, with serialized access, explicit disposal/recovery, unchanged parquet
+semantics, matched fresh-versus-reused CPU measurements, and bounded memory/resource
+soaks. Benefit and RNG-contention relevance remain unproven; no implementation
+approval, source changes, raw telemetry, host identifiers, or deployment.
+
+## [2026-11-03] research | Future scheduler lifecycle vs syscall observations
+
+Created `work/lintap-process-creation-validation/future-scheduler-lifecycle-vs-syscalls.md`
+and `tension/linux-process-lifecycle-vs-exec-attempt-observations.md`. Read current
+Linux Clone/Execve/Exit producers and callbacks on clean Wintap `develop` at
+`c29f973`, plus upstream Linux v6.12 tracepoint definitions and fork/exec/exit paths.
+The Linux sensor already uses all three scheduler hooks alongside exec syscall
+entry; Windows uses ETW. The topic compares successful lifecycle transitions with
+attempt/argument visibility, ordinary vs raw/CO-RE enrichment, duplicate Start work,
+thread-group exit and non-leader exec, with a bounded fidelity/performance spike.
+Kept the inspected develop baseline separate from dated October feature-branch
+evidence, including differing start-time ABIs and unresolved RHEL sched-exec
+provenance. No hard contradiction asserted across those distinct snapshots.
+Updated index, research-thread navigation and process-event cross-reference.
+Performance benefits and schema choices remain hypotheses; no live benchmark run.
+Verification: `git diff --check` passed; targeted documentation validation found
+all required frontmatter on both new pages, 12 existing local source anchors,
+249 resolving wikilinks across checked pages and inbound links to both new pages.
+
+## [2026-11-04] docs | Priority to-do intake for Linux executable attribution
+
+Added `wiki/todo/` as a reusable intake queue for emerging bug, data-quality, and
+enhancement findings, with a lightweight priority/lifecycle guide and a P1
+finding for nondeterministic silver process executable attribution. Grounded the
+issue in current Wintap exec provenance and Wintappy's independent `any_value`
+selection; linked the existing validation design and process-lifecycle tension.
+The finding remains an intake item: no model choice, feature brief, source-code
+change, or implementation authorization was made.
+
+## [2026-11-04] docs | Add Lintap process command-line quality to-do
+
+Added `wiki/todo/lintap-linux-process-command-line-quality.md` and listed it in
+the priority queue and master index. Preserved the human-reported focused-VM
+counts and marked the database/raw-data analysis as not independently
+recomputed for this intake update; verified the cited artifact paths exist.
+Grounded the sensor and dbt behavior in live source, linked the related
+executable-attribution to-do, and retained the proposed contract, implementation
+approach, verification matrix, acceptance criteria, and unresolved decisions.
+No sensor, schema, dbt, or raw-data changes were made.
+
+## [2026-11-04] feature-work | SELinux DBT pipeline definition
+
+Pages created: `wiki/work/selinux-dbt-pipeline/{brief,references,design,implementation_plan,verification}.md`
+Pages updated: `wiki/index.md`
+Contradictions flagged: none.
+Notes: Added a separate DBT-only work definition beginning at the existing SELinux raw-sensor parquet boundary. It covers optional bronze models, family-specific silver models, gold summaries, constrained exact-or-temporal process attribution, and validation of counts, timestamps, contexts, and no-data behavior. Existing producer-side SELinux monitoring work remains separate; no source code or raw documents were changed.
+
+## [2026-11-04] implementation | SELinux DBT pipeline
+
+Implemented the SELinux DBT pipeline in `../Wintap-PyUtil` on
+`feature/selinux-dbt-pipeline`: optional AVC, interaction, and transition bronze
+models; native-grain silver normalization; bounded process attribution; gold
+detail/context/family/process summaries; quality monitoring; source validation;
+and schema/count/timestamp tests. The supplied sample passed `make dbt-build`
+(`PASS=137`, `ERROR=0`) and `make dbt-test` (`PASS=83`, `ERROR=0`); the dataset
+without SELinux directories also passed the full build. Updated the feature
+implementation and verification records with counts, duplicate/EventCount
+deviations, context completeness, and attribution outcomes. No sensor files were
+changed and unrelated Wintap-PyUtil untracked files were preserved.
+
+## [2026-11-04] dashboard | SELinux QA views
+
+Added a first-cut SELinux page to the Wintap-PyUtil QA dashboard. It summarizes
+family coverage, duplicate/row-retention quality, producer EventCount, context
+completeness, attribution outcomes, host/time scope, and hourly volume, with
+paginated context, AVC, interaction, transition, and process-attribution detail
+views. The page handles databases without the optional SELinux relations and
+exported successfully against the supplied sample DuckDB build.
+
+## [2026-11-05] docs | Listening-socket capture and modeling to-do
+
+Added `wiki/todo/listening-socket-capture-and-modeling.md` and linked it from the
+to-do queue and master index. Grounded the intake in the Linux socket-state
+tracepoint, shared Wintap activity contract, and current Wintappy network models;
+preserved the distinction between listener close and accepted-connection close.
+Priority, platform scope, event semantics, and model shape remain undecided. No
+sensor, schema, or DBT implementation changes were made.
+
+## [2026-11-05] docs | Canonical process-owned network-grain to-do
+
+Added `wiki/todo/canonical-process-owned-network-grains.md` and linked it from
+the to-do queue and master index. The intake records the documented increment
+key versus current silver grouping, proposes explicit connection/activity
+grains and a separate network-observed process identity relation, and requires
+conflict visibility plus counter/bounds regression checks. No schema or DBT
+implementation changes were made; existing uncommitted wiki edits were
+preserved.
+
+## [2026-11-08] docs | Transformer five-tuple connection-key to-do
+
+Added `wiki/todo/transformer-five-tuple-connection-port-key.md` and linked it
+from the to-do queue and master index. The intake records the apparent
+`HiIPPortInt`-for-both-ports argument at `Transformer.cs:37`, grounded against
+the separate low/high tuple properties and key-generator inputs. Collision
+impact, intended compatibility, and persisted-ID implications remain
+unverified. No Wintap source, schema, or raw documents were changed.
+
+## [2026-11-09] code | DBT named AWS profile selection
+
+Updated Wintap-PyUtil's S3 secret macro to pass `AWS_PROFILE` explicitly as a
+DuckDB `credential_chain` profile and added loopback-S3 coverage proving the
+selected profile signs requests. Direct `make dbt-check-source` then passed with
+the named profile after exporting that profile's configured endpoint URL and
+matching TLS; the probe listed one requested-window Parquet file and read its
+schema. Updated the pipeline README and wiki guidance. The focused DBT/SQL
+regression set passes 249 tests; no full DBT build was run.
+
+## [2026-11-10] docs | Linux process name `exe` fallback to-do
+
+Added `wiki/todo/linux-process-name-exe-fallback.md` and linked it from the
+priority queue and master index. Preserved the user's report against the reviewed
+DuckDB as unverified data evidence; source review confirms a plausible path where
+an unresolved `/proc/<pid>/exe` path is basename-extracted as `exe`, but does not
+confirm that path produced the reviewed rows. Recorded row-lineage validation,
+producer regression, downstream quality checks, and evidence-backed historical
+repair as follow-up work. No sensor, DBT, schema, or data changes were made.
+
+## [2026-11-10] docs | Linux process attribution on NFS network tuple
+
+Inspected the local example DuckDB read-only. One shared NFS TCP five-tuple has
+129 rows, including one 264-byte send attributed to `ssh`; the same process has
+a separate port-22 SSH connection. The user confirmed that the home directory
+is mounted from the NFS device. The same SSH process has 14 home-path
+`PROCESS_FILE` rows across six paths under `.ssh` in its six-minute run, but a
+nearby Delete row's `min_event` is about five seconds later than `first_seen`,
+so exact timing remains unresolved. A roughly 19-hour endpoint-wide summary has
+1,619 rows, 254 five-tuples, 770 process hashes, 64,773 network events, and
+about 9.6 MB reported; 404 process hashes intersect file activity and 38 have
+home-path activity. Seven SSH hashes have 80 `.ssh` rows and 226 file events.
+The process mix is plausible for mounted-workload and scanner activity, but the
+large generic `exe` bucket and aggregation grain need qualification. Updated
+`wiki/todo/linux-nfs-process-network-attribution.md` with anonymized, cursory
+findings, the timestamp caveat, and a controlled-reproduction plan. Removed
+identifying local database paths and specific user, host, network, PID, and
+connection identifiers from the affected TODOs and this entry. No database,
+sensor, or DBT changes were made.
+
+## [2026-11-10] feature-work | recent-host-activity-dashboard opened
+
+Completed the adaptive interview and created `wiki/work/recent-host-activity-dashboard/`
+artifacts: interview, brief, references, design, spike, implementation plan,
+developer handoff, and verification. Confirmed a standalone read-only
+Streamlit/DuckDB dashboard over S3 bronze raw rows, rolling 12-hour UTC window,
+manual refresh, day/hour partition pruning, event-family selection with host
+series, adaptive buckets, and explicit linear/log plus normalized-to-host-peak
+views. Families without usable row-level hostname/time are to be skipped and
+reported; no universal logical-event count is claimed.
+
+Source review of `../Wintap-PyUtil/wintap_dbt/` confirms the canonical
+`<dataset>/raw_sensor/<event_type>/dayPK=YYYYMMDD/hourPK=HH/` layout, optional
+nested `protoPK`, and S3 partition-pruning conventions. Analytics SmokeTests
+already demonstrates direct read-only DuckDB/S3 access. Neither source identifies
+the user's actual bucket roots or live schemas; an operator-configured bounded
+S3 pilot remains open. No AWS access, code changes, or sibling-repository writes
+were performed. Human estimate values were not supplied.
+
+## [2026-11-10] implementation | recent-host-activity-dashboard
+
+Implemented `streamlit/projects/HostActivity/` as a standalone read-only
+Streamlit/DuckDB app. It reads the existing DBT dataset/AWS environment
+variables but does not invoke DBT; it discovers only supported event/day/hour
+partitions, coalesces compatible host/time aliases across schema drift, applies
+exact 12-hour UTC bounds, and fails closed on object/row/point budgets. The
+chart supports event-family and host selection, adaptive buckets, linear/log
+counts, and per-host-peak normalization. Launch docs, requirements, 15 offline
+tests, verification notes, and [[wiki/tool/recent-host-activity-dashboard]]
+were added/updated. Focused tests and compile checks pass under DuckDB 1.4.4;
+the target DuckDB 1.5.6/Streamlit UI stack and real S3 were unavailable, so live
+roots, schemas, and a real app render remain unverified. No AWS access, DBT run,
+source/schema/raw-file changes, or sibling-repository writes occurred.
+
+## [2026-11-10] verification | recent-host-activity-dashboard UV setup
+
+Replaced the pip requirements file with an app-scoped `pyproject.toml` and
+`uv.lock`, updated launch/test instructions to UV, and synced DuckDB 1.5.6,
+Streamlit 1.67.0, Altair 6.3.0, and Pandas 2.3.3. Altair 6 resolved a Python
+3.14 incompatibility found during `AppTest`; the initial app render passes and
+does not query before manual refresh. All 16 focused tests, compileall, lock
+check, and `git diff --check` pass. Updated verification/handoff/index/tool docs;
+the bounded live S3 pilot remains pending. No S3 access was attempted.
+
+## [2026-11-10] optimization | recent-host-activity-dashboard partition scan
+
+Reconfirmed that refresh discovery uses exact supported-event and intersecting
+`dayPK`/`hourPK` prefixes before recursive Parquet matching, with exact event-time
+bounds applied afterward. Hardened discovery to reject any returned key outside
+the requested event/day/hour set and made that coarse partition scope visible in
+the UI. Combined per-family row/host budgets and bucket aggregation into one
+materialized scan, avoiding a second full Parquet row scan per family. The 16
+focused UV tests pass, including an out-of-window partition rejection case;
+actual S3 listing/read latency remains unmeasured because no live access was
+attempted.
+
+## [2026-11-10] live verification | recent-host-activity-dashboard
+
+Using the operator-provided read-only environment, confirmed a 12-hour refresh
+selects 13 overlapping `dayPK`/`hourPK` partitions and found 3,988 Parquet object
+paths across 8 families; scoped listing took about 26 seconds. `raw_process`
+schema inspection of 1,226 objects took about 19 seconds and exact-window
+aggregation took about 67 seconds (1,305,103 rows, 6 hosts, 598 chart points).
+`raw_process_conn_incr` schema inspection over 990 objects took about 17 seconds
+and aggregation about 7 seconds, with no exact-window rows. The user reported a
+full refresh exceeding five minutes and `pidstat` failing closed above the
+2-million-row budget. This confirms partition-scoped discovery but shows
+all-family latency is still too high. The endpoint parser now accepts DBT's bare
+authority form. No source values, object keys, hostnames, credentials, or raw
+rows were retained; no write operations were issued.
+
+## [2026-11-10] performance | recent-host-activity-dashboard selected-family refresh
+
+After the all-family refresh exceeded five minutes, changed the sidebar so an
+explicit refresh scans only the selected family; changing families alone makes
+no S3 request. The default is Process, selected as a useful live-data family.
+AppTest verifies family switching remains query-free. A bounded `raw_host`
+refresh over 59 objects took about 5 seconds end-to-end but had no exact-window
+rows; a Process refresh remains about 86 seconds for schema plus aggregation on
+the observed source. Existing day/hour pruning and exact timestamp filtering are
+unchanged. Seventeen offline tests pass; full per-family latency and the
+`pidstat` 2-million-row limit remain to be discussed. No source values,
+credentials, object keys, hostnames, or raw rows were recorded.
+
+## [2026-11-10] usability | recent-host-activity-dashboard refresh status
+
+Added an expanded `st.status` panel for partition-scoped listing, schema
+inspection, and exact-timestamp aggregation, then collapse it with total elapsed
+time on completion/failure. The snapshot also records and displays refresh
+duration. Family processing failures use neutral messaging rather than claiming
+the schema is unsupported, and the detail expander reflects the selected-family
+model. A mocked explicit-refresh regression and real Streamlit `AppTest` verify
+that only Process is discovered, each progress stage is written, the DuckDB
+connection is closed, elapsed time is surfaced, and status completes; all 18
+focused tests pass. No live S3 call was needed for this UI verification.
+
+## [2026-11-10] correctness | recent-host-activity-dashboard event-time encodings
+
+The `process_file` empty result was an encoding mismatch: Wintap's `FileSerializer`
+sets raw `EventTime` from Unix seconds at serialization, while its 10-second
+activity batch preserves `FirstSeen`/`LastSeen` as FILETIME. The dashboard had
+interpreted all integer EventTime columns as FILETIME, placing a 2,000,001-row
+sample around 1601. Added family-specific timestamp decoding and made the chosen
+timestamp priority visible; synthetic tests cover `FirstSeen`, fallback fields,
+Unix seconds, and retain FILETIME semantics for `raw_process`. The source-backed
+probe found about 7.9 million `FirstSeen` rows in the reported process-file
+window, so the existing 2-million-row safety cap remains fail-closed and the
+corrected selected-family aggregate takes about 60 seconds to hit it. Corrected
+probes also found 59 `raw_host` rows (6 hosts) and 157,821
+`raw_process_conn_incr` rows (5 hosts, 479 points), confirming the earlier zeroes
+for these Unix-time families were likewise decoding artifacts. No cap increase or
+source write was made; operator direction is needed for process-file's high row
+volume. No raw rows, object keys, root, credentials, or host values were
+retained.
+
+## [2026-11-10] verification | recent-host-activity-dashboard timestamp correction
+
+Final closeout passed all 20 focused app tests, `compileall`, `uv lock --check`,
+and repository `git diff --check`. The suite includes producer-family Unix
+seconds versus FILETIME tests, file and connection timestamp priority, selected-
+family refresh behavior, and the over-budget no-chart UI path. The 2,000,000-row
+cap remains unchanged pending operator direction; wider family coverage and
+operational latency acceptance remain open.
+
+## [2026-11-10] strategy exploration | recent-host-activity-dashboard high-volume aggregation
+
+Without changing the app or its 2,000,000-row cap, ran a read-only feasibility
+query that grouped selected `raw_process_file` rows directly to exact five-minute
+host buckets. On 502 discovered objects it counted 7,923,378 in-window rows and
+produced 479 nonempty host/bucket groups across 5 hosts, with no hostless rows;
+the aggregate query took about 20 seconds and returned only summary aggregates.
+The expected full-window ceiling at five-minute resolution is 720 points for
+these hosts, within the existing 1,000-point cap. This suggests an exact
+aggregate-only path could be usable without retaining millions of raw rows, but
+it still reads all source rows and shifts protection from a raw-row limit to
+runtime, memory/intermediate-group, and output-point budgets. The existing capped
+query ran in 4.9 seconds on the same file list only after the candidate query had
+read the objects, so that warm-cache figure is not a cold comparison. The probe
+did not fetch or validate the chart series and is not an end-to-end guarantee.
+No source writes, code changes, or cap change; operator approval is still needed
+before implementing the alternative.
+
+## [2026-11-10] implementation | recent-host-activity-dashboard exact process-file aggregation
+
+Following operator approval, added a dedicated `raw_process_file` aggregate-only
+path. DuckDB now applies the exact timestamp filter and counts directly into
+five-minute host groups, then coarsens those compact groups if the chart-point
+budget requires it; it does not materialize millions of raw rows in Python.
+The standard families retain the 2,000,000-row cap. The new path fails closed at
+120 seconds, 1 GB DuckDB memory, 1 GB temporary storage, 20,000 intermediate
+groups, or the existing 1,000 chart points. App status/captions explain the exact
+strategy. Synthetic checks cover raw-cap bypass only for this family, exact row
+totals, hostless accounting, bucket coarsening, group-limit failure, and
+interrupt/timeout behavior. The read-only live query returned all 7,923,378
+matching rows as 479 five-minute points across 5 hosts in about 20 seconds over
+513 objects; counts sum to the exact total. No DBT execution or S3 write occurred.
+
+## [2026-11-10] feature-work | raw_sensor file aggregation opened
+
+Completed the interview and created `wiki/work/raw-sensor-file-aggregation/`
+brief, interview, and references. Scope is a standalone manual DuckDB 2.0.0
+utility in Wintap-Analytics, reading S3 and writing a separate mirrored
+`raw_sensor` dataset root; first milestone is hourly cross-host compaction by
+event type and exact hive leaf, with schema union-by-name, configurable
+target-size shards, and daily rollup/cron deferred. Sources remain unchanged.
+Source review found the current .NET path partitions at UTC merge time and
+preserves that key on delayed upload retry, contrary to the user's desired
+actual-upload-time partition contract. Created the separate
+`wiki/todo/raw-sensor-upload-time-partition.md`, linked it from the upload-pipeline
+page and indexes, and recorded the no-lookback scheduled design dependency.
+The human estimates were supplied as durations only (4 solo days / 2 AI days);
+hours and absolute availability dates were not provided and were not inferred.
+No source code, schema, raw document, or S3 object was changed.
+
+## [2026-11-10] planning | raw_sensor compaction implementation and verification
+
+Reviewed the brief against live S3-access patterns, Wintappy consumer macros and
+pidstat projections, and official DuckDB 2.0/S3 documentation. Created
+`wiki/work/raw-sensor-file-aggregation/implementation_plan.md` with seven delivery
+steps, proposed isolated Python/DuckDB packaging, schema/type and exact multiset
+conservation requirements, publication/rerun failure tests, consumer-version
+checks, and a representative shard-size benchmark mapped to all ten acceptance
+criteria. Added the verification scaffold and expanded references/brief/index
+links. Created `wiki/tension/raw-sensor-compaction-publication-vs-glob-readers.md`:
+multi-object S3 writes are not atomic for current recursive readers. Immutable
+window roots with explicit completed-root selection are proposed, not confirmed.
+The user clarified that object filenames may change; recorded this in the
+interview/brief and applied payload/hive-value equality to consumer acceptance.
+The separate upload-time TODO remains the no-lookback scheduling dependency.
+Runtime, S3 write, benchmark, and consumer acceptance are not yet executed.
+Feature-scoped documentation checks passed: six pages' YAML/required fields and
+inbound links, 49 grounding entries, 40 wikilinks, and `git diff --check`.
+
+## [2026-11-10] decision | simplify raw_sensor compaction validation
+
+The user confirmed DuckDB 2.0.0 for Parquet-in/Parquet-out processing and a
+shared development/operational check: each partition's total source rows must
+equal its total merged rows. Updated the interview, brief, implementation plan,
+verification record, references, and index. Replaced the proposed full-row
+multiset validation and DuckDB 1.5.6/DBT test gate with name-aligned `UNION ALL`,
+small schema fixtures, and a reusable `COUNT(*)` comparison reporting source
+rows, merged rows, delta, and status. A count mismatch fails completion and
+operational verification. Compactor implementation and runtime tests remain
+pending.
+Documentation revalidation passed for six pages, 49 grounding entries, and 42
+wikilinks; `git diff --check` passed.
+
+## [2026-11-11] implementation | metadata-first recent host activity dashboard
+
+Added a default File metadata query mode for quick herd status. Bounded,
+concurrent boto3 `ListObjectsV2` requests enumerate only the selected 12-hour
+event/day/hour partitions, use S3 object `Size`, and never GET/open Parquet files.
+The dashboard parses `hostname+event_type+FILETIME.parquet`, treats Win32
+FILETIME as collect time (not upload/LastModified time), filters the exact
+window, and charts per-host file count or size with a host summary. Malformed or
+family-mismatched filenames are reported and excluded. The existing DuckDB
+raw-row mode remains optional. Added boto3 to the app lock and tests for
+pagination, partition scoping, size/file budgets, timestamp parsing, exact
+window totals, and a metadata AppTest asserting no Parquet connection/schema/
+row query. All 27 tests pass; compileall, lock check, and diff check pass. No live
+metadata-mode S3 query was performed, so deployment latency/compatibility remain
+open.
+
+## [2026-11-11] implementation | show both metadata time-series charts
+
+Updated the metadata dashboard to display file count and S3 object size as
+separate collect-time charts at once, using the same selected hosts and bucket
+width. Removed the metric switch and updated app/workflow documentation.
+
+## [2026-11-11] verification | combined PyUtil PR #43 preparation
+
+Validated the SELinux branch containing all source-validation PR ancestry using
+the existing environment. Fixed the Python SQL renderer's missing network macro
+(baseline 38 failures), added shipping network-ID and nine synthetic SELinux
+regressions, and reached 286 passing tests. Config tests pass separately (4);
+historical failure evidence remains intact. No live operator data/S3 was accessed.
+Documented optional SELinux/count/attribution contracts and temporary five-tuple
+ID compatibility in PyUtil README and the canonical pipeline page. Updated both
+feature verification/plans and index; canonical SELinux promotion is complete.
+The human chose expansion of PR #43 while preserving both branches. Required
+review, full combined split-local/authenticated-S3 builds, network-ID consumer
+qualification and S3 helper hardening remain outstanding release work.
+PyUtil repair/docs commit `21db95e` was pushed to both preserved branches; PR #43
+was expanded and marked ready. Main remains blocked by required approving review;
+no reviewer is assigned. Private run-env files remain untracked and untouched.
+
+## [2026-11-11] workflow | Wintap/Lintap ETL data-flow diagram
+
+Added an editable draw.io view and wiki guide for host-local raw Parquet → S3 →
+Wintap-PyUtil `make dbt-build` → bronze/silver/gold in local DuckDB. Included the
+current Makefile config/source/build/test and QA targets, with the bounded source
+probe and no-Parquet-export limitations explicit. Linked from the index.
+
+## [2026-11-12] analysis | anonymized process-tree completeness and durable context
+
+Pages created: `wiki/diagnostic/process-tree-context-completeness.md`,
+`wiki/workflow/process-ancestry-completeness-qa.md`,
+`wiki/concept/durable-process-context-and-stream-table-enrichment.md`, and
+`wiki/tension/refresh-republication-vs-durable-process-context.md`.
+Preserved calculated six-host root-reachability, seed and ancestor-impact results
+using snapshot-local aliases; no real hostnames, IPs, instance hashes, private
+dataset path or alias map recorded. Read-only aggregate/graph rechecks confirmed
+denominators, root counts, top-three impacts and zero non-root cycles; distinct
+absent keys explicitly exclude blanks but can include unresolved sentinels.
+
+Pages updated: collection boundaries, identity, process retention/events, historical
+audit, analysis workflows, Esper semantics, glossary and index. Review-required
+identity/historical-audit additions are flagged as supplemental links; existing
+contradictions and original measurements remain unchanged. No new hard
+contradiction promoted or historical-loss conclusion asserted.
+
+Documented durable entity state, stream-table enrichment, snapshot plus changelog,
+historical/as-of context and a hybrid reconciliation/context-closure proposal.
+Kafka references were read; Splunk lookup capabilities have official-search support
+only because direct fetch returned 403. Hourly refresh is an unverified historical
+recollection and suggested pilot, not a current setting or selected policy.
+No sensor, pipeline, database, raw document or sibling-repo writes; unrelated
+working-tree changes preserved. Documentation validation results follow below.
+
+Validation: Ruby/Psych parsed all four new YAML frontmatters and confirmed required
+fields/nonempty grounding; 39 scoped wikilinks resolve, all new pages have inbound
+links, and all 17 local grounding paths exist. Additions passed a dataset-hostname,
+IPv4/hash/UUID/private-path privacy scan and new-page whitespace checks.
+`git diff --check -- wiki` passes; repository-wide `git diff --check` remains
+blocked solely by pre-existing README trailing whitespace, left unchanged.
+
+## [2026-11-12] design | tactical runtime windows and bounded compactor-fed context
+
+Recorded human tactical guidance: DBT publication inputs should span the relevant
+deployed sensor runtimes, including startup/rundown publications, while activity
+can remain experiment-windowed. Qualified as context-loss mitigation, not capture
+or ancestry completeness certification.
+Created `wiki/work/raw-sensor-file-aggregation/process-context-options.md` and
+linked it from the brief, durable-context concept and index. Proposed a separate
+derived process projection retaining live/recent/pinned seeds and transitive
+ancestors, with reachability-based reclamation, slim metadata, explicit context
+horizon/grace, archive fallback and row/byte budgets. Exact ancestry for arbitrary
+all-time queries cannot be guaranteed by fixed-size state; missing Stops and long
+dependency chains require explicit limits and degraded-coverage reporting.
+Compaction's UNION ALL/count-conservation acceptance, source retention and
+no-lookback scope remain unchanged; implementation/DBT integration are not approved.
+No code, raw data, database, sensor or sibling-repo writes.
+Validation: three affected page frontmatters parse with required fields and
+existing local grounding; 20 wikilinks resolve. New-note privacy-pattern checks
+and `git diff --check -- wiki` pass.
+
+## [2026-11-12] clarification | ground-truth collection independent of experiments
+
+User clarified that research means less concern about long-horizon changes and
+backward compatibility, not experiment-scoped collection. Updated the optional
+compactor-context note, durable-context concept and index: retained telemetry is
+the ground-truth dataset; experiments later consume all or subsets. Removed
+experiment pins from the proposed working-set policy and replaced experiment
+snapshots with dataset-level context checkpoints. Operational live/recent seed
+retention plus ancestor closure remains a proposal; bounded derived-state eviction
+must not silently discard retained ground truth or imply historical completeness.
+No implementation, retention duration, or feature-scope expansion approved.
+
+## [2026-11-12] docs | PowerShell ETW sensor implementation status
+
+Added canonical component and event-type pages for Wintap's native PowerShell
+4104 sensor. Recorded its branch status (`6add359` is present on the inspected
+feature/develop lines but not Wintap `origin/main` as of this date), default-off
+setting, broad provider subscription, event-time attribution, raw Parquet output,
+sensitive script-text handling, and the absence of a PowerShell-specific Wintappy
+DBT bronze model. Reframed the October native-tool POC brief, handoff, plan,
+findings, and verification as historical evidence; cross-linked the distinct
+cmd.exe WindowsShell sensor. Code tests and the Windows smoke harness were not run;
+live ETW load/loss and host-policy qualification remain open. Merged Analytics
+`origin/main`, preserving both sides' index/log entries. No source code, raw data,
+or sibling-repository files were changed.

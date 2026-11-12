@@ -9,7 +9,7 @@ grounded_by:
   - ../Wintap/wintap/platform/windows/sensor/WindowsShellSensor.cs
   - ../Wintap/wintap/platform/windows/sensor/shell/WindowsShellCookedRead.cs
 policy: agent-editable
-last_validated: 2026-10-27
+last_validated: 2026-11-12
 repo_scope: cross-repo
 implementation_area: windows-sensor
 event_domain: cross-domain
@@ -21,6 +21,6 @@ tags: [windows-shell, cooked-read, verification]
 
 # WindowsShell Brief
 
-WindowsShell is a default-disabled Windows sensor for interactive cmd.exe command lines, including built-ins, external programs and compound text. Collection uses machine-wide CookedRead events from the Microsoft.Windows.Console.Host ETW provider with keyword 0x1000. EventTime is the ETW event timestamp; attached client PID and creation time identify the shell, rather than the console-host PID. PowerShell, batch execution and cmd /c coverage remain outside scope.
+WindowsShell is a default-disabled Windows sensor for interactive cmd.exe command lines, including built-ins, external programs and compound text. Collection uses machine-wide CookedRead events from the Microsoft.Windows.Console.Host ETW provider with keyword 0x1000. EventTime is the ETW event timestamp; attached client PID and creation time identify the shell, rather than the console-host PID. PowerShell, batch execution and cmd /c coverage remain outside this sensor's scope. PowerShell script-block ETW collection is a distinct Wintap sensor documented in [[wiki/component/powershell-sensor]] and [[wiki/event_type/powershell-events]].
 
 Acceptance requires service collection across user sessions, canonical StartTime/PidHash association, persisted process/file joins, measured latency/resource use and clean shutdown. The user reports successful LocalSystem/session-0 ETW prototype collection; independent integrated qualification remains pending in [[wiki/work/windows-shell/verification]].

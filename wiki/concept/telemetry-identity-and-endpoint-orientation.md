@@ -135,3 +135,15 @@ Evidence: [[wiki/work/host-process-identity-patch/package_host_results]].
 Related: [[wiki/event_type/process-events]], [[wiki/event_type/network-events]],
 [[wiki/work/network-endpoint-normalization/verification]],
 [[wiki/diagnostic/duplicate-agent-id-and-os-family]].
+
+## Identity availability versus ancestry completeness (2026-11-12)
+
+<!-- REVIEW NEEDED: supplemental analysis links only; existing identity contradictions and rollout review remain unchanged. -->
+A successful join to an immediate parent does not prove that the parent itself
+connects to an OS root. See the anonymized
+[[wiki/diagnostic/process-tree-context-completeness]] and proposed
+[[wiki/workflow/process-ancestry-completeness-qa]]. Missing real-key candidates,
+unknown-parent sentinels, and blank parents require separate counts; do not invent
+a parent entity for a sentinel or backfill ancestry using PID alone. Proposed
+historical persistence is described in
+[[wiki/concept/durable-process-context-and-stream-table-enrichment]].
