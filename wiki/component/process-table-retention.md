@@ -78,3 +78,13 @@ long-run summarizer). Final long-run acceptance runs as
 [[wiki/work/extended-deployment-monitoring/brief]].
 The cache-specific 10h23m gate is recorded in
 [[wiki/work/improve-etl-and-qa/historical-cache-overnight-validation-2026-08-31]].
+
+## Runtime retention is not analytical ancestry retention (2026-11-12)
+
+The bounded resolver/cache contract above serves runtime event attribution; it
+does not promise indefinite recovery of historical ancestor chains. An exited
+parent can remain relevant to living descendants and retained activity long after
+its runtime row is evicted. The proposed sink-side historical dimension has a
+different retention objective, not a request to make the runtime cache unbounded.
+See [[wiki/concept/durable-process-context-and-stream-table-enrichment]] and the
+anonymized [[wiki/diagnostic/process-tree-context-completeness]] findings.

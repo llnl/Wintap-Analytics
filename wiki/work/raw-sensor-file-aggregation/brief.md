@@ -136,6 +136,12 @@ publication, CLI, and schema policies remain implementation decisions to settle.
 
 ## Open Questions
 
+Optional follow-on discussion (not part of current acceptance):
+[[wiki/work/raw-sensor-file-aggregation/process-context-options]] considers a
+bounded process-context projection fed by the hourly pass. It remains separate
+from row-preserving compaction; scope expansion and downstream integration require
+an explicit decision.
+
 - What exact CLI flags/defaults select the source root, destination root, and
   hour range?
 - Should the standalone utility use DuckDB's Python API or invoke the DuckDB

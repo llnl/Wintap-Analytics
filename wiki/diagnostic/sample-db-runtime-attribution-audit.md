@@ -265,3 +265,13 @@ Related: [[wiki/work/host-process-identity-patch/verification]],
 [[wiki/work/improve-lintap-data-quality/clone-validation-results]],
 [[wiki/diagnostic/linux-capability-data-quality-matrix]],
 [[wiki/concept/telemetry-identity-and-endpoint-orientation]].
+
+## Separate short-window ancestry investigation (2026-11-12)
+
+<!-- REVIEW NEEDED: supplemental cross-reference only; historical numerical findings and unresolved contradiction records above are unchanged. -->
+[[wiki/diagnostic/process-tree-context-completeness]] records a different,
+anonymized snapshot with concentrated missing-ancestor impacts. It does not
+retest or resolve this audit's timestamp-derived identity failures. Compare
+mechanisms without combining denominators or treating missing context as proof
+of event loss. Reusable structural metrics are proposed in
+[[wiki/workflow/process-ancestry-completeness-qa]].

@@ -142,6 +142,7 @@ same existing branches, feature-only commit/PR scope).
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]] | medium | Preserves the unresolved boundary between raw ETW/sysdig/eBPF producer details and stable WintapAPI semantics. |
+| [[wiki/tension/refresh-republication-vs-durable-process-context]] | medium | Open refresh-volume versus durable historical context tradeoff; hybrid reconciliation/context-closure proposal, no selected cadence. |
 | [[wiki/tension/linux-process-lifecycle-vs-exec-attempt-observations]] | medium | Open tradeoff between scheduler-primary process/image lifecycle and syscall attempt/argument evidence; separate semantics and measured costs remain to be decided. |
 | [[wiki/tension/linux-file-path-case-projection]] | high | Resolved sensor projection: approved greenfield producer-case preservation; separate Wintappy lowercase-derived file_id remains a downstream limit. |
 | [[wiki/tension/research-flexibility-vs-production-hardening]] | medium | Explains the research-first posture and flags hardening gaps such as unrestricted proof-of-concept MCP SQL access. |
@@ -177,6 +178,8 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 | [[wiki/concept/lintap-cpu-unit-conventions]] | high | Defines raw pidstat CPU as core-summed percent, normalized DBT aliases and dashboard labels, host normalization formula, and raw-schema compatibility rule. |
 | [[wiki/concept/telemetry-identity-and-endpoint-orientation]] | high | Foundational agent_id, pid_hash and canonical five-tuple conn_id scopes; identity versus direction, socket roles and connection lifetimes. |
+| [[wiki/concept/durable-process-context-and-stream-table-enrichment]] | medium | Durable entity state, snapshot plus changelog, Kafka/Splunk comparisons, historical ancestry and refresh-cadence proposals; not implemented. |
+| [[wiki/work/raw-sensor-file-aggregation/process-context-options]] | speculative | Optional compactor-fed process state for ground-truth datasets: runtime-spanning inputs, live/recent references plus ancestor closure, reachability GC and dataset checkpoints; no experiment-specific retention or approved scope expansion. |
 ## Component
 
 | Page | Confidence | Summary |
@@ -221,6 +224,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/workflow/future-experiment-analysis-workflows]] | high | Tracks first-class analytics topics including ACME4 Explore, DuckDB view construction, process trees/paths, process-centric SQL, and network joins. |
+| [[wiki/workflow/process-ancestry-completeness-qa]] | medium | Proposed root-reachable fraction, immediate-parent gaps, first-unresolved-ancestor impacts, concentration/K95 and independent validity checks. |
 | [[wiki/workflow/lintap-dev-field-workflow]] | high | The Lintap dev/field split: field-host clones are read-only by policy (reviews transcribed dev-side), diagnostics bundles must be self-sufficient, deploys pull and rebuild tracers on-host, pushes require the human's credentials, and agent memory must mirror into the wiki. |
 | [[wiki/workflow/rhel8-rpm-build-prerequisites]] | high | Preflight and software prerequisites for a native RHEL 8 x86_64 Lintap RPM build, including exact .NET SDK 10.0.402 and the current BTF/CO-RE limitation. |
 ## Repo
@@ -244,6 +248,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/diagnostic/windows-attribution-validation-executive-summary]] | low | Sanitized historical summary of 46 developer-archive files: architecture, reported tests and attribution metrics, improved File unresolved rates, unresolved Registry/validator reliability, and evidence limitations; original source references omitted at Architect request ahead of archive deletion. |
 | [[wiki/diagnostic/linux-tcp-investigation-2026-06]] | high | Historical June Linux TCP investigation with October source and Ubuntu 24.04 live validation: attachment/PID/protocol/rundown work is present; TCP AgentId, state template, and watchdog defects are resolved; no resolver negative cache was justified. |
 | [[wiki/diagnostic/duplicate-agent-id-and-os-family]] | medium | Two hosts share a raw UUID also present in initialized local state; Linux metadata mislabeled Windows by DBT/legacy SQL. Evidence and proposed remediation/regression gates. |
+| [[wiki/diagnostic/process-tree-context-completeness]] | medium | Anonymized six-host short-window audit: root reachability, concentrated ancestor breakpoints, independent pidstat corroboration and provenance limits. |
 
 ## To-do
 

@@ -4534,3 +4534,68 @@ qualification and S3 helper hardening remain outstanding release work.
 PyUtil repair/docs commit `21db95e` was pushed to both preserved branches; PR #43
 was expanded and marked ready. Main remains blocked by required approving review;
 no reviewer is assigned. Private run-env files remain untracked and untouched.
+
+## [2026-11-12] analysis | anonymized process-tree completeness and durable context
+
+Pages created: `wiki/diagnostic/process-tree-context-completeness.md`,
+`wiki/workflow/process-ancestry-completeness-qa.md`,
+`wiki/concept/durable-process-context-and-stream-table-enrichment.md`, and
+`wiki/tension/refresh-republication-vs-durable-process-context.md`.
+Preserved calculated six-host root-reachability, seed and ancestor-impact results
+using snapshot-local aliases; no real hostnames, IPs, instance hashes, private
+dataset path or alias map recorded. Read-only aggregate/graph rechecks confirmed
+denominators, root counts, top-three impacts and zero non-root cycles; distinct
+absent keys explicitly exclude blanks but can include unresolved sentinels.
+
+Pages updated: collection boundaries, identity, process retention/events, historical
+audit, analysis workflows, Esper semantics, glossary and index. Review-required
+identity/historical-audit additions are flagged as supplemental links; existing
+contradictions and original measurements remain unchanged. No new hard
+contradiction promoted or historical-loss conclusion asserted.
+
+Documented durable entity state, stream-table enrichment, snapshot plus changelog,
+historical/as-of context and a hybrid reconciliation/context-closure proposal.
+Kafka references were read; Splunk lookup capabilities have official-search support
+only because direct fetch returned 403. Hourly refresh is an unverified historical
+recollection and suggested pilot, not a current setting or selected policy.
+No sensor, pipeline, database, raw document or sibling-repo writes; unrelated
+working-tree changes preserved. Documentation validation results follow below.
+
+Validation: Ruby/Psych parsed all four new YAML frontmatters and confirmed required
+fields/nonempty grounding; 39 scoped wikilinks resolve, all new pages have inbound
+links, and all 17 local grounding paths exist. Additions passed a dataset-hostname,
+IPv4/hash/UUID/private-path privacy scan and new-page whitespace checks.
+`git diff --check -- wiki` passes; repository-wide `git diff --check` remains
+blocked solely by pre-existing README trailing whitespace, left unchanged.
+
+## [2026-11-12] design | tactical runtime windows and bounded compactor-fed context
+
+Recorded human tactical guidance: DBT publication inputs should span the relevant
+deployed sensor runtimes, including startup/rundown publications, while activity
+can remain experiment-windowed. Qualified as context-loss mitigation, not capture
+or ancestry completeness certification.
+Created `wiki/work/raw-sensor-file-aggregation/process-context-options.md` and
+linked it from the brief, durable-context concept and index. Proposed a separate
+derived process projection retaining live/recent/pinned seeds and transitive
+ancestors, with reachability-based reclamation, slim metadata, explicit context
+horizon/grace, archive fallback and row/byte budgets. Exact ancestry for arbitrary
+all-time queries cannot be guaranteed by fixed-size state; missing Stops and long
+dependency chains require explicit limits and degraded-coverage reporting.
+Compaction's UNION ALL/count-conservation acceptance, source retention and
+no-lookback scope remain unchanged; implementation/DBT integration are not approved.
+No code, raw data, database, sensor or sibling-repo writes.
+Validation: three affected page frontmatters parse with required fields and
+existing local grounding; 20 wikilinks resolve. New-note privacy-pattern checks
+and `git diff --check -- wiki` pass.
+
+## [2026-11-12] clarification | ground-truth collection independent of experiments
+
+User clarified that research means less concern about long-horizon changes and
+backward compatibility, not experiment-scoped collection. Updated the optional
+compactor-context note, durable-context concept and index: retained telemetry is
+the ground-truth dataset; experiments later consume all or subsets. Removed
+experiment pins from the proposed working-set policy and replaced experiment
+snapshots with dataset-level context checkpoints. Operational live/recent seed
+retention plus ancestor closure remains a proposal; bounded derived-state eviction
+must not silently discard retained ground truth or imply historical completeness.
+No implementation, retention duration, or feature-scope expansion approved.

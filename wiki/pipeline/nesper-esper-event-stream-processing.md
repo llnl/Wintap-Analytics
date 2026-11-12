@@ -99,3 +99,13 @@ The `diagnostics/nesper-repro` project isolates a Fedora/shared-mount NEsper com
 See also [[wiki/diagnostic/nesper-repro]] and [[wiki/tool/wintap-workbench]].
 For FileOps-specific throughput findings, see
 [[wiki/work/improve-etl-and-qa/esper-sender-path-analysis-2026-08-30]].
+
+## Durable entity state is a separate concern (2026-11-12)
+
+A stream query window is not a guarantee of persistent historical process
+context. [[wiki/concept/durable-process-context-and-stream-table-enrichment]]
+explains materialized entity tables, snapshot-plus-changelog bootstrap, Kafka
+state/changelog mechanisms, and qualified Splunk lookup comparisons. These are
+architectural options, not new Esper persistence or Wintap sink implementations.
+See [[wiki/diagnostic/process-tree-context-completeness]] for the observed
+short-window ancestry problem.
