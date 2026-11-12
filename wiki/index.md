@@ -223,6 +223,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/workflow/wintap-etl-data-flow]] | high | Editable data ETL diagram: Wintap/Lintap host-local raw Parquet → S3 → Wintap-PyUtil `make dbt-build` → bronze/silver/gold in local DuckDB, with core Makefile validation targets and scope limits. |
 | [[wiki/workflow/future-experiment-analysis-workflows]] | high | Tracks first-class analytics topics including ACME4 Explore, DuckDB view construction, process trees/paths, process-centric SQL, and network joins. |
 | [[wiki/workflow/process-ancestry-completeness-qa]] | medium | Proposed root-reachable fraction, immediate-parent gaps, first-unresolved-ancestor impacts, concentration/K95 and independent validity checks. |
 | [[wiki/workflow/lintap-dev-field-workflow]] | high | The Lintap dev/field split: field-host clones are read-only by policy (reviews transcribed dev-side), diagnostics bundles must be self-sufficient, deploys pull and rebuild tracers on-host, pushes require the human's credentials, and agent memory must mirror into the wiki. |

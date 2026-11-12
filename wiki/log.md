@@ -4535,6 +4535,13 @@ PyUtil repair/docs commit `21db95e` was pushed to both preserved branches; PR #4
 was expanded and marked ready. Main remains blocked by required approving review;
 no reviewer is assigned. Private run-env files remain untracked and untouched.
 
+## [2026-11-11] workflow | Wintap/Lintap ETL data-flow diagram
+
+Added an editable draw.io view and wiki guide for host-local raw Parquet → S3 →
+Wintap-PyUtil `make dbt-build` → bronze/silver/gold in local DuckDB. Included the
+current Makefile config/source/build/test and QA targets, with the bounded source
+probe and no-Parquet-export limitations explicit. Linked from the index.
+
 ## [2026-11-12] analysis | anonymized process-tree completeness and durable context
 
 Pages created: `wiki/diagnostic/process-tree-context-completeness.md`,
