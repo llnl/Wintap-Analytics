@@ -18,7 +18,9 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql
-  - ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql
+   - ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql
+   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
+   - ../Wintap-PyUtil/scripts/check_dbt_config.py
   - ../Wintap-PyUtil/tests/test_process_entities.py
   - ../Wintap-PyUtil/tests/test_process_entities_s3.py
 policy: agent-editable
@@ -113,6 +115,19 @@ ancestors; it is not evidence that the durable cache works. A valid next gate is
 an explicit identity-policy decision and rerun of entity bootstrap, followed by
 the entity-enabled DBT build and gold comparison.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql; ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql -->
+
+### Identity-policy resolution — 2026-11-13
+
+The unknown-identity decision is now explicit rather than implicit. `reject`
+remains the default and fails before entity publication. The authorized
+qualification policy is `quarantine`: raw evidence with an unknown/sentinel hash,
+missing or negative PID, or invalid hostname remains in raw telemetry but is not
+reduced into durable entity snapshots. The writer records the policy, per-hour
+counts, reason/host breakdowns and stable fingerprints in the durable
+`processing_metrics` checkpoint. DBT entity mode requires an explicitly matching
+`WINTAP_DBT_PROCESS_UNKNOWN_IDENTITY_POLICY`; it does not treat quarantined rows
+as entity coverage.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §identity_reasons/load_inputs; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §SCHEMA/metric_rows; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
 
 ### Bounded read-only on-prem fixture check — 2026-11-13
 

@@ -5194,3 +5194,16 @@ coverage was 89.60%; terminal root reachability was 0.0001% because the durable
 historical cache was not available. Entity-enabled DBT and post-cache gold QA
 remain blocked pending an explicit unknown-identity policy decision.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py; ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql -->
+
+## [2026-11-13] decision | explicit unknown-identity quarantine policy
+
+Resolved the durable entity identity blocker. `reject` remains the default
+fail-closed policy. The qualification path explicitly selects `quarantine`:
+unknown/sentinel hashes, missing or negative PIDs, and invalid hostnames remain in
+raw telemetry but are excluded from durable snapshots. The writer records policy,
+per-hour counts, reason/host breakdowns and stable fingerprints in
+`processing_metrics`; DBT requires the matching explicit policy and exposes those
+rows to QA. No PID-only repair or fabricated ancestor is permitted. Standalone
+reducer and DBT durable-context regression tests pass; the three-day quarantine
+qualification is running separately.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql -->

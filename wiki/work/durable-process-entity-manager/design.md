@@ -117,6 +117,22 @@ Recommended conservative parent rule:
 5. A more selective authority ranking between producer evidence kinds requires
    explicit review; Start is not universally assumed superior to Refresh or Stop.
 
+### Unknown process identity policy
+
+An entity input with a blank/known sentinel process hash, missing PID, negative
+PID, or invalid hostname cannot be assigned to a durable process instance. The
+writer supports two explicit policies:
+
+* `reject` (default): fail before snapshot publication and retain all source data.
+* `quarantine`: retain the raw evidence but exclude it from entity reduction;
+  publish its per-hour count, reason/host breakdown and stable fingerprint in the
+  processing checkpoint. DBT must explicitly select the same policy, and
+  quarantine is visible QA evidence rather than complete identity coverage.
+
+Neither policy creates an entity, repairs identity by PID alone, or fabricates an
+ancestor. The quarantine decision is limited to durable entity maintenance; raw
+bronze observations remain governed by their existing source-window semantics.
+
 Retain Stop evidence when later input is an older Refresh; a known exited instance
 does not become live again on replay. Conflicting birth/exit evidence must not be
 collapsed into an apparently certain lifetime. A same-boot collector restart is

@@ -121,9 +121,10 @@ Sharded state/delta files/retention are later design choices, not hidden additio
   objects match preserved copies. Human accepts the outputs as correct for this
   milestone. The delete-verification errors remain unresolved; no blind rerun or
   production repair was performed. See verification and dev handoff.
-- [ ] Historical identity-policy and capacity qualification: bootstrap and continued
-  entity mode fail unknown-identity guard; only one combined hour passes. No full
-  historical snapshot or original audit-window enriched DBT comparison qualified.
+- [x] Resolve unknown-identity policy: `reject` remains the default; explicit
+  `quarantine` retains raw evidence, excludes it from durable state, and records
+  per-hour QA counts/fingerprints in processing checkpoints. Three-day historical
+  cache/tree qualification remains a separate gate pending the rerun results.
 - [ ] Production-scale budgets, historical bootstrap and external schedule exclusion approved.
 - [x] Update [[wiki/work/durable-process-entity-manager/verification]], canonical
   pages and wiki log; only then prepare a separately approved production rollout.

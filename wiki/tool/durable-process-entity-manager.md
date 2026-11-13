@@ -81,8 +81,12 @@ lifecycle flags and display candidates. Duplicates, replay and out-of-order hour
 do not increment observation counters. Conflicting real parent pairs remain
 unresolved; a missing parent PID can be completed within one consistent real hash.
 Known modern/named sentinels are not fake ancestors. Unknown process identities
-fail updates rather than creating guessed instances. Refresh effective birth time
-does not reopen an exited process or become a new observation timestamp.
+use an explicit policy: `reject` is the default and aborts before publication;
+`quarantine` retains the raw rows, excludes them from durable entity state, and
+records per-hour counts, reason/host breakdowns and stable fingerprints in
+`processing_metrics`. Neither policy creates a guessed instance, repairs by PID
+alone, or invents an ancestor. Refresh effective birth time does not reopen an
+exited process or become a new observation timestamp.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §Evidence -->
 
 No initial TTL/GC: retain exited ancestors. Per-host defaults are one million
@@ -97,11 +101,13 @@ entire DBT build. Fixed object replacement has no global snapshot generations or
 reader/writer coordination service. Production-scale staging/rewrite budgets and
 external schedule exclusion still require operator review.
 
-Actual-data qualification exposes these limits: historical bootstrap and November
-5/hour 01 combined mode reject unknown identities (negative-PID Refresh and
-sentinel-key Stop evidence exists). Only one combined hour passes; the remaining
-week successes are explicitly raw-only, not continued entity maintenance. The
-retained week-limited snapshots must not be treated as complete historical state.
+Actual-data qualification exposed these limits: historical bootstrap initially
+rejected unknown identities (negative-PID Refresh and sentinel-key Stop evidence).
+The explicit quarantine policy is now separately qualified on the preserved
+three-day window; its excluded evidence remains visible in processing checkpoints
+and is not counted as durable entity coverage. The retained snapshots must not be
+treated as complete historical state until the post-quarantine DBT/tree checks
+pass. No silent filtering, TTL/GC, budget relaxation or PID-only repair is allowed.
 Full expanded source cardinalities also exceed default row limits on two hosts;
 identity rejection occurred before capacity certification. No silent filtering,
 TTL/GC, budget relaxation or PID-only repair was adopted. See
