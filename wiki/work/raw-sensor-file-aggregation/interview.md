@@ -12,7 +12,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs
   - ../Wintap-PyUtil/pyproject.toml
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-12
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -193,3 +193,121 @@ available?**
 
 **Combined response received verbatim:** `1: Human would take 4 days, 2: AI
 would take 2 days`
+
+## Publication Approval And Test Authorization — 2026-11-12
+
+Asked whether to approve immutable per-run roots selected explicitly after
+verification, each containing only requested hours/families rather than an
+accumulating history. Human response:
+
+> Yes. And you can run a test. You can use AWS_PROFILE=lintap-alpha and config
+> env env vars in /Users/johnson30/git/LLNL/Wintap-PyUtil/wintap-run.env-lintap-alpha.
+> You can create a new root prefix in the S3 to write to
+
+This approves the reader/root contract and bounded testing with a new destination
+prefix; it does not authorize source mutation or a relaxed reservation protocol.
+The supplied env file is read live, not copied or modified. Runtime findings
+are in [[wiki/work/raw-sensor-file-aggregation/verification]]; the accepted root
+decision is [[wiki/decision/raw-sensor-compaction-immutable-window-roots]].
+
+## Superseding Fixed-Root Correction And Order Clarification — 2026-11-12
+
+The human rejected persistent UUID run roots after clarifying their meaning:
+
+> Source: `lintap/raw_sensor/<event type>/dayPK/hourPK/....`
+> Dest: `lintap/compacted/<event type>/dayPK/hourPK/.../<merged>.parquet`
+>
+> for dayPK/hourPK to process:
+>     if dest dayPK/hourPK existis, skip
+>     else
+>         merge files into dest
+>
+> Very simple. If a merge fails, we'll clean manually.
+
+The human also suggested a **later** step: validate the merged hour against source
+then delete source, once basics work. This is not current deletion authorization.
+
+Further clarification:
+
+> Order doesn't really matter, except maybe for better compaction. even that is
+> a small gain. just merge all the small files in one partition.
+
+Current contract: fixed event/day/hour output, existence-based skip, direct
+name-aligned union-all without row sorting, manual cleanup for partial failures.
+Optional protocols remain separate leaves; the skip check covers their hour
+parent. No manifest/run ID/conditional reservation. This explicitly supersedes
+the earlier immutable-root approval and visibility expectations; see
+[[wiki/decision/raw-sensor-compaction-fixed-hours-and-manual-cleanup]].
+
+## Dual-Root DBT And Prefix Deletion Approval — 2026-11-12
+
+After the fixed-root basics passed, the human requested that DBT read the union
+of remaining raw_sensor and compacted input. Retention-caused overlap is artificial;
+before going live, successful merges must validate then delete source as they go.
+Temporary overlap and failures are explicitly accepted, without row deduplication
+or a compacted-preference reader rule.
+
+The human clarified the deletion scope:
+
+> The sensors sending data have a contract to send into UTC based partitions,
+> so waiting until ~5-10 minutes after assures we CAN delete by prefix.
+> Is there a risk a clock is off: yes, but extremely low for the deployments we're doing.
+
+The human approved the outlined isolated-copy test plan: raw baseline, partially
+migrated input, fully compacted input, fresh DBT builds/results comparison, genuine
+duplicates/NULL/schema drift/protocol leaves, merge/validation failures preserving
+source and deletion failures requiring manual reconciliation. This authorizes the
+compactor deletion implementation and PyUtil input/config/test changes. Live
+deletion tests operate only on newly created copies, not the original live dataset.
+The assistant chose default 10-minute grace, configurable down to 5 minutes.
+No sensor contract rewrite, clock-skew hardening, scheduling or production cutover.
+
+## Full-Model Live-Copy Qualification Expansion — 2026-11-12
+
+The human asked, “Can we expand to all models?” after the scoped host/pidstat
+DBT test instructions. Continue the approved isolated-copy migration approach:
+copy all available DBT event families for the same 2026-11-11 08:00 UTC hour,
+build the full graph in fresh raw/mixed/compacted databases, and compare schema
+types/counts/result hashes. No original live deletion or consumer cutover. Absent
+image-load/registry inputs are explicitly reported as absent, not live-qualified.
+
+## ANY_VALUE Debt Does Not Block Compaction — 2026-11-12
+
+After strict comparison and unchanged-input replay exposed unstable representatives,
+the human clarified:
+
+> The use of ANY_VALUE already has data quality issues we need to address
+> anyway, so thats not a blocker.
+
+Continue all-family isolated-copy migration without repairing production DBT
+representatives in this task. Retain full builds/tests, matching schemas and
+exact bronze results as gates. Record differences in ANY_VALUE-containing
+models and their descendants as explicit data-quality diagnostics; keep exact
+results required outside that dependency closure. This separates source fidelity
+from existing analysis-representative debt, without hiding differences or claiming
+all downstream results are equivalent. Original live cutover remains outside scope.
+
+## Compactor Ownership Relocation — 2026-11-12
+
+The human corrected the implementation location:
+
+> I should have noticed this sooner: the compaction code itself belongs in
+> Wintap-PyUtil. Can you move that?
+
+Move the standalone package, tests, README, pyproject and lockfile into
+`../Wintap-PyUtil/extras/raw-sensor-compact/`. Keep compaction behavior unchanged
+and DuckDB 2.0.0 isolated from the main PyUtil DuckDB 1.5.6 environment. Update
+integration subprocess paths and documentation/source anchors. Analytics retains
+the wiki and historical verification evidence. This relocation does not authorize
+new S3 operations, production cutover or ANY_VALUE repairs (ANY_VALUE is used
+in DBT, not compaction).
+
+## Artifact Cleanup And Commit Approval — 2026-11-12
+
+> This looks good. Cleanup the S3 artifacts you made, commit current changes.
+
+Remove only this work's identified test-copy/probe/generation objects and its
+two initial retain-source compacted outputs; preserve original raw telemetry and
+local verification evidence. Commit the feature implementation/documentation
+in the existing Analytics and PyUtil branches without publishing private run-env
+files. This does not request a push or production migration.

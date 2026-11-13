@@ -148,11 +148,15 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/tension/research-flexibility-vs-production-hardening]] | medium | Explains the research-first posture and flags hardening gaps such as unrestricted proof-of-concept MCP SQL access. |
 | [[wiki/tension/etw-ebpf-and-cross-platform-compatibility]] | medium | Captures tradeoffs between Windows ETW, Linux eBPF/sysdig support paths, raw sensor Parquet, and cross-platform semantics. |
 | [[wiki/tension/dbt-duckdb-output-vs-legacy-stdview-parquet]] | medium | Captures the open mismatch between Wintappy's canonical DuckDB-only DBT output and Wintap-Analytics' documented expectations of published stdview-* parquet datasets. |
-| [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] | high | Open multi-shard S3 publication conflict: existing recursive readers ignore completion manifests; explicit immutable-window root selection is proposed. |
+| [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] | high | Resolved by scope change: fixed-hour writes and manual cleanup accept visible partial output; atomic publication is not required. |
+| [[wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint]] | high | Dissolved: ignored conditional PUT remains an endpoint observation, but reservations/manifests were removed. |
+| [[wiki/tension/dbt-arbitrary-representatives-vs-compaction-equivalence]] | high | Resolved by human acceptance: existing ANY_VALUE quality debt is non-blocking for compaction; bronze/schema/build gates remain and affected downstream drift is reported. |
 ## Decision
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/decision/raw-sensor-compaction-fixed-hours-and-manual-cleanup]] | high | Accepted fixed hours/skip/manual cleanup; subsequently approved optional validated UTC-prefix deletion and unioned raw/compacted DBT input. |
+| [[wiki/decision/raw-sensor-compaction-immutable-window-roots]] | high | Historical UUID-generation approval, explicitly superseded by fixed hours and manual cleanup. |
 | [[wiki/decision/wiki-scope-cross-repo-wintap-focused]] | high | Records the decision that the wiki is cross-repo but prioritizes Wintap sensor internals, WintapAPI, Esper, and Wintap data analysis. |
 | [[wiki/decision/feature-work-artifacts]] | medium | Defines the optional feature-work module: store LLM-assisted feature briefs/design/verification under `wiki/work/<feature>/` and promote durable facts into canonical pages. |
 | [[wiki/decision/process-identity-attribution-contract]] | high | Migrated Wintap ADR locking the process identity and attribution contract: core-owned PidHash/ParentPidHash, flat event-time fields, durable Stop/parent backfill, and DuckDB as the starting substrate. |
@@ -289,17 +293,37 @@ collection traffic/loss unchanged. Focused rerun works by operator report. These
 preserve the POC's evidence and limits; the later integrated sensor is documented in
 [[wiki/component/powershell-sensor]] and [[wiki/event_type/powershell-events]]. Its
 PowerShell 7/live ETW qualification and downstream DBT modeling remain open.
-Raw sensor S3 compaction proposal:
+Raw sensor S3 compaction development:
 [[wiki/work/raw-sensor-file-aggregation/brief]],
 [[wiki/work/raw-sensor-file-aggregation/interview]],
 [[wiki/work/raw-sensor-file-aggregation/implementation_plan]],
 [[wiki/work/raw-sensor-file-aggregation/verification]], and
 [[wiki/work/raw-sensor-file-aggregation/references]] — standalone DuckDB 2.0.0
-utility, manual hourly compaction across hosts into a separate `raw_sensor`
-dataset root. Processing is a name-aligned union-all; development and operational
-validation use DuckDB 2.0.0 to require equal source/merged row counts per partition.
-Plan also covers S3 failures/reruns and a shard-size benchmark; runtime tests are pending.
-Immutable-window publication remains proposed; object filenames may change while
+utility owned by PyUtil at `../Wintap-PyUtil/extras/raw-sensor-compact/` (wiki/evidence
+remain in Analytics), manual hourly compaction across hosts from `lintap/raw_sensor/<event>/...`
+into `lintap/compacted/<event>/...`. Existing destination event/hours are skipped;
+otherwise merge all files per exact optional protocol leaf, without row sorting.
+`plan`/`compact`/`verify` and per-leaf count validation implemented; 107 local tests
+pass with 2 opt-in skips. Initial fixed-root live S3 test passes: 897,395 rows preserved,
+29 → 2 objects, unchanged source hashes, rerun skips with unchanged output hashes.
+See [[wiki/tool/raw-sensor-compaction]] and the accepted
+[[wiki/decision/raw-sensor-compaction-fixed-hours-and-manual-cleanup]]. No run IDs,
+manifests or conditional writes; partial failures need manual cleanup. Optional
+`--delete-source` now validates then deletes a closed source-hour prefix after
+grace (default 10 minutes, minimum 5). PyUtil scans raw_sensor + compacted without
+overlap masking. Full synthetic raw/mixed/compacted DBT tests match all 54 models
+with 139 gates per state; copied-live host/pidstat tests match 4 models across
+897,395 rows, delete 29 copied objects and preserve all original hashes. Suites:
+107 compactor and 299 PyUtil passes, with 2 opt-in skips each. Existing ANY_VALUE
+quality debt is explicitly non-blocking. Full copied-live migration passes:
+54 models/139 gates in each state, exact bronze/schemas/unaffected results,
+2,668,265 rows conserved, 399 copied objects → 10 outputs, all original hashes
+unchanged. Affected downstream differences are reported. The S3 fixtures and two
+initial retain-source outputs were subsequently cleaned up at the human's request
+(445 objects); all 399 original hashes still match. Local evidence is preserved;
+no surviving full-build fixture is claimed. Original live rollout,
+broad transport/fault coverage and shard/performance benchmark remain pending.
+Object filenames may change while
 the partition scheme is preserved. Daily rollup and cron are deferred; the
 upload-time partition TODO is [[wiki/todo/raw-sensor-upload-time-partition]].
 

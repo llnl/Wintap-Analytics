@@ -4623,3 +4623,272 @@ cmd.exe WindowsShell sensor. Code tests and the Windows smoke harness were not r
 live ETW load/loss and host-policy qualification remain open. Merged Analytics
 `origin/main`, preserving both sides' index/log entries. No source code, raw data,
 or sibling-repository files were changed.
+
+## [2026-11-12] code | raw_sensor compaction first development slice
+
+Started authorized implementation on `work/raw-sensor-file-aggregation` in
+`extras/raw-sensor-compact/`: isolated DuckDB 2.0.0 package/lock, read-only
+`plan`/`verify`, exact UTC-hour inventory/rechecks, conservative schema checks,
+local union-all writer, and shared per-leaf source/merged row-count validation.
+81 tests pass on Python 3.14.0/macOS arm64; one opt-in S3 read-only fixture test
+skipped. Ruff lint/format and lock checks pass. Tests cover NULL/missing/reordered
+fields, within/across-file duplicates, multiple shards, source bytes/drift,
+namespace/candidate safeguards, mismatches and timeout; mocked credential tests
+share frozen identity and resolved endpoint between boto3/DuckDB.
+
+Updated implementation plan/checklist, verification evidence and index; created
+`wiki/tool/raw-sensor-compaction.md` for verified development interfaces only.
+No real S3 endpoint or multipart writes tested; no compact/publish CLI exists.
+Immutable completed-root selection remains proposed/unapproved, representative
+benchmark/shard default pending, refresh unsupported and timeout cooperative.
+Scheduling/upstream upload correction and optional process projection remain
+outside this slice. No sibling repos, production datasets or raw documents changed.
+
+## [2026-11-12] code | immutable compaction roots and bounded live S3 qualification
+
+Recorded human approval of immutable per-run roots with explicit completed-root
+selection, plus `lintap-alpha` profile/config and new-prefix S3 test authorization.
+Added `compact`, fresh per-run reservations, final inventories/manifests, fresh
+manifest-backed `verify --dataset`, candidate error roots, and conditional metadata
+qualification. Local failure/new-generation/drift and lost-response tests pass;
+94 tests pass with 2 integration tests skipped by default. Ruff remains clean.
+
+Live direct DuckDB 2.0.0 S3 COPY/fresh count verification passed twice for a bounded
+pidstat/host hour: 897,395 rows, 29 → 2 files, all 29 source SHA-256 unchanged.
+Tracked opt-in write regression: 1 pass/1 distinct read-only-fixture skip. Outputs
+are intentionally unpublished; pidstat bytes grew 3.37× with current settings,
+so this is not a compression/performance benchmark or shard-default decision.
+
+Discovered DuckDB unfinished-result extension setup failure; drained internal
+results with `.fetchall()`. More importantly, live endpoint silently overwrites
+keys despite conditional PUT (HTTP 200). Managed publication now fails closed
+on a metadata-only probe before writing Parquet; no live consumer-ready root or
+cutover. Added accepted root ADR and a separate conditional-write endpoint tension;
+original publication tension held pending qualification. Updated brief/interview,
+plan/checklist, verification, canonical tool and index. No silent fallback, source
+write/deletion, sibling change or raw-document copy; new destination probes and
+unpublished test candidates remain for inspection. Benchmark, credential expiry,
+multipart faults, concurrency/SIGKILL and no-op reuse/resume still pending.
+
+## [2026-11-12] code | fixed compaction hours, skip and manual cleanup
+
+Human explicitly superseded UUID generations with
+`lintap/raw_sensor/<event>/dayPK/hourPK/...` →
+`lintap/compacted/<event>/dayPK/hourPK/...`: skip existing destination event/hours,
+otherwise merge all files per exact optional protocol leaf. Row order is immaterial;
+no sorting added. Removed manifests/reservations/conditional PUT and generation
+publication. Partial failures remain for manual cleanup; existence is not completion.
+Source deletion was suggested only as a later phase and is not authorized or available.
+
+Local fixed-root suite: 92 passed/2 opt-in skips. Actual fixed-root S3 integration:
+1 passed/1 separate read-only-fixture skip in 33.06 seconds. The pidstat/host hour
+preserved 897,395 rows with zero leaf deltas, reduced 29 objects to 2, and retained
+all 29 source SHA-256 hashes. Rerun skipped both existing hours with unchanged output
+hashes. Destination hours now exist; fresh-write fixture must not be repeated there
+unchanged. No source/test deletion, sibling change or consumer cutover performed.
+
+Accepted fixed-hour ADR supersedes immutable-root ADR; publication tension resolved
+by scope change and conditional-write tension dissolved, not an endpoint repair.
+Updated README, brief/interview/plan/verification, canonical tool and index; earlier
+generation evidence/log retained as historical. Benchmark/default, broader live
+family/protocol/resource and credential/multipart-fault qualification remain pending.
+Pidstat output bytes grew 3.37×; no compression/scan improvement claimed.
+Final local rerun: 92 passed/2 skipped in 0.77 seconds; Ruff lint/format (16 files)
+and locked dependency checks pass. Implementation remains uncommitted/unpushed on
+`work/raw-sensor-file-aggregation`.
+Scoped documentation validation passes: 11 frontmatters, 64 existing grounding
+paths, 57 resolving wikilinks and inbound links for every scoped page.
+`git diff --check` and current direct-root CLI help pass.
+
+## [2026-11-12] code | unioned DBT inputs and validated source-prefix deletion
+
+Human approved raw_sensor + compacted DBT input, accepted transient/failure overlap,
+and clarified UTC upload partitions plus 5–10 minute grace permit **prefix** deletion
+despite rare clock skew. Added explicit `compact --delete-source`, default 10-minute
+grace (minimum 5), whole event/hour validation before deletion, batched/paginated
+S3 prefix removal and local symlink refusal. Default retains source; skip never
+deletes an existing destination's source. Partial deletion stops for manual repair.
+
+Authorized PyUtil changes on `work/raw-sensor-compacted-union`: shared macros,
+event/optional-column/preflight discovery and local date discovery read both roots.
+Optional `WINTAP_DBT_COMPACTED_ROOT` is a direct event-root override. No new overlap
+deduplication/preference rule; existing bronze accounting stays unchanged. DBT
+DuckDB 1.5.6 pin remains; Analytics compactor stays 2.0.0. Both branches uncommitted/
+unpushed; private run-env files preserved. No sensor, raw-document or original
+live source/output change and no production cutover.
+
+Compactor: 107 pass/2 opt-in skips; PyUtil: 292 pass/2 opt-in skips. Full local
+raw/mixed/compacted migration: 7 tests pass, 54 equivalent model results, 139 gates
+per state, 28 fixture sources deleted/56 rows conserved. Includes genuine duplicate/
+NULL/missing-column, UTC rollover, protocol and explicit non-masked overlap cases.
+Copy/schema/validation/second-protocol failures preserve source; deletion failures,
+per-key S3 errors/remaining objects, adjacent-prefix and grace boundaries tested.
+
+Copied live S3 migration at `compaction-tests/dbt-union-20261112-02`: 1 pass in
+97.25 seconds. Raw-only, mixed event-family and fully compacted inputs each pass
+10 scoped DBT gates; 4 host/pidstat models match for 897,395 rows. All 29 test-copy
+source objects deleted by validated hour prefix; all 29 original source hashes
+unchanged. Passing compacted copies remain for inspection. Initial `-01` fixture
+failed only in fresh verification connection's temporary-secret setup before any
+merge/deletion; its raw copies remain untouched. Repaired harness and used fresh
+`-02`, not automatic recovery/cleanup. Original live deletion is not authorized.
+
+Updated brief/interview/decision/plan/verification, canonical tool/repo and index.
+Sorted-result hashes are test comparison only, not production sorting or a new
+compactor gate. Source/output verify is pre-deletion/retain-source only; save merge
+reports and use a baseline after migration. Rebuild bronze and materialized models
+after file migration. Broader live family/gold, transport/resource faults, benchmark/
+shard default and scheduling remain open.
+Final lint/format and both dependency-lock checks pass, as do `git diff --check`
+in both repos. Scoped wiki checks pass: 12 frontmatters, 86 current grounding paths,
+74 wikilinks and all scoped inbound links. Fifteen inherited unavailable old
+`../Wintappy/` checkout citations in the canonical repo page remain separate debt,
+not claimed as revalidated/repaired.
+
+## [2026-11-12] code | expanded all-model copied-S3 migration qualification
+
+Human requested expansion beyond host/pidstat. Added opt-in `all-models` scope to
+the PyUtil live-copy regression; default scoped test remains available. Read-only
+inventory of the same UTC hour found 399 files/35,471,263 bytes across 9 families,
+including file/process/TCP/UDP and all three SELinux families. Image-load/registry
+are absent. Full scope builds all 54 models in three fresh databases; compares
+names/types/counts/hashes, excluding only pidstat derived filename. Added bounded
+fixture file/byte caps and saved local inventory/merge/snapshot evidence. No model
+semantics/dependency changes, original source/output changes or production cutover.
+
+Strengthened-comparison local migration: 7 pass, 54 equivalent models/139 gates
+per state in 22.77 seconds. PyUtil regression: 292 pass/2 opt-in skips in 48.21
+seconds. Black/isort/lock/diff checks and scoped wiki validation pass. Full S3
+copy test launched at new `compaction-tests/dbt-union-all-20261112-01`; live result
+is pending, not claimed as acceptance. Plan/verification/interview and PyUtil
+test guide updated; earlier fixtures preserved.
+
+## [2026-11-12] verification | full DBT live-copy builds pass but equivalence fails
+
+Expanded live-copy regression failed strict raw/mixed comparison in 273.04
+seconds: both full builds pass 139 gates, all schemas and all bronze snapshots
+match, but 17 model results differ, including downstream file-model counts.
+Only copied host data was merged (five rows, zero delta) and deleted (five objects);
+remaining 394 copied raw objects remain, alongside one compacted host output.
+The fully compacted phase and final original-hash assertion were not reached.
+No original live write/delete or earlier-fixture cleanup was performed.
+
+A fresh DBT build over the **same mixed input without further compaction** passes
+139 gates and changes 18 model results. Read-only keyed comparisons and a direct
+shipping-SQL diagnostic identify unordered `ANY_VALUE` process name/path/parent
+and process_file PID representatives; identical reversed rows change derived
+filename/file_id. No production model changes, normalization, comparison bypass,
+or further deletion were used to manufacture a pass. Other aggregate effects
+remain unqualified, not claimed as exhaustively explained.
+
+Created [[wiki/tension/dbt-arbitrary-representatives-vs-compaction-equivalence]];
+updated canonical tool/repo, index, plan, verification and PyUtil testing guide.
+Full-model migration remains blocked pending explicit representative semantics
+or comparison-contract decision. Scoped host/pidstat and synthetic fixture results
+remain valid in their stated scope. The expanded mixed fixture is inspectable but
+must not be reused by the initially-absent-root regression.
+Final local migration with the direct diagnostic: 8 pass in 23.43 seconds;
+54 equivalent synthetic models/139 gates per state remain valid. Ordinary PyUtil
+suite: 293 pass/2 opt-in skips in 49.96 seconds; the separately run full live
+strict-equivalence failure is not claimed as a passing skipped test. Final
+Black/isort and both diff checks pass; scoped wiki checks pass (13 frontmatters,
+92 current grounding paths, 81 wikilinks), retaining the documented 15 inherited
+old-checkout exclusions. No compactor or production DBT model changes in this
+expansion; changes remain uncommitted/unpushed.
+
+## [2026-11-12] decision | ANY_VALUE debt is non-blocking for compaction
+
+Human explicitly says existing ANY_VALUE quality issues do not block this task.
+Resolved the gate tension by separating source fidelity from analysis-selection
+debt, not by repairing representatives. Added explicit full-test
+`RAW_COMPACT_DBT_COMPARISON=any-value-diagnostics`; default remains strict. Compute
+ANY_VALUE model/dependent closure from manifest; require exact schemas/model set,
+bronze results and results outside that closure. Report affected differences
+with counts/hashes; do not normalize or claim every difference's cause/equivalence.
+No production models, compactor settings/sorting, dependency pins or original
+live data changed. Six comparison/closure safety regressions pass; ordinary
+PyUtil suite 299 pass/2 opt-in skips in 49.69 seconds.
+
+Started a fresh three-state all-family S3-copy regression at
+`compaction-tests/dbt-union-all-20261112-02`, preserving the earlier mixed fixture.
+Save initial original hashes alongside evidence and recheck them on completion.
+Updated interview/tension/plan/verification/index, canonical tool/repo and PyUtil
+guide. Rerun is pending, not yet an all-family acceptance claim. Production
+cutover and separate ANY_VALUE semantics repair remain outside scope.
+
+## [2026-11-12] verification | full copied-live compaction and all-model DBT pass
+
+Approved ANY_VALUE diagnostic-mode live-copy rerun at
+`compaction-tests/dbt-union-all-20261112-02`: 7 pass (6 safety cases plus live
+migration), 502.83 seconds. Full DBT raw/mixed/compacted builds each pass 139
+gates and build all 54 models. All model schemas/all 11 bronze results match;
+36 model results match across every state. Differences in 18 ANY_VALUE-reachable
+models (18 mixed, 17 compacted) are saved with counts/hashes, not hidden or
+claimed causally explained/equivalent. No differences outside the closure accepted.
+
+Nine live families/10 protocol leaves conserve 2,668,265 rows with zero deltas.
+All 399 isolated copied raw objects deleted after validation, producing 10 outputs;
+all 399 original source SHA-256 hashes match their saved pre-copy baseline.
+Passing compacted copy survives for read-only full builds; added a fresh-database,
+hour-08/no-select command to the PyUtil guide. Previous mixed/scoped fixtures,
+private env files, original raw/compacted roots and engine pins remain untouched.
+No production cutover. Registry/image-load absent, representative benchmark,
+credential/resource faults and ANY_VALUE repair remain separate.
+
+Updated verification/plan done checklist, index and canonical tool/repo; promoted
+bounded full-model acceptance and explicit non-equivalence scope. Ordinary PyUtil
+299 pass/2 opt-in skips remains current. Implementation is uncommitted/unpushed.
+Final changed-Python Black/isort and both diff checks pass. Scoped wiki checks:
+13 frontmatters, 94 current grounding paths, 82 wikilinks/inbound links pass;
+15 inherited old-checkout grounding exclusions remain separate documentation debt.
+
+## [2026-11-12] relocation | compactor now owned by Wintap-PyUtil
+
+Human explicitly corrected ownership. Moved the standalone package (17 Python
+source/test files, README, pyproject, lockfile) from Analytics `extras/` into
+`../Wintap-PyUtil/extras/raw-sensor-compact/`, preserving code/test logic and
+DuckDB 2.0.0 pin. Fresh nested environment verified; main pipeline remains
+DuckDB 1.5.6. Updated both local/S3 integration subprocess paths, PyUtil README
+and DBT guide, and added a scoped ignore exception for the nested lockfile.
+Archived only verified generated old caches/environment outside the repo;
+the old Analytics package directory is absent. No broad deletion or discarded work.
+
+Relocated compactor: 107 pass/2 S3 skips (1.57s). PyUtil: 299 pass/2 opt-in skips
+(49.64s). Full isolated-local migration: 8 pass (23.25s), all 54 models equivalent,
+139 gates per raw/mixed/compacted state and 28 fixture sources deleted. Both
+lock checks, runtime/CLI checks, Ruff/Black/isort and diff checks pass. No S3
+operation rerun, dataset change, production cutover, dependency upgrade or
+ANY_VALUE semantic repair. Historical live test evidence preserved.
+
+Updated source anchors/ownership in canonical tool/repo, feature brief/interview/
+plan/verification, index and relevant decision/tensions. Fixed-hour ADR is still
+human-review-required: annotated the source-path-only relocation for review;
+accepted behavior unchanged. Analytics retains shared wiki and evidence ownership.
+Implementation remains uncommitted/unpushed in the existing branches.
+Scoped wiki validation passes: 13 frontmatters, 96 current grounding paths,
+83 wikilinks/inbound links; 15 inherited old-checkout exclusions remain unchanged.
+
+## [2026-11-12] cleanup | remove compaction S3 artifacts, preserve source telemetry
+
+Human requested cleanup and committing current changes. Read-only inventory and
+identity recheck scoped deletion to 443 objects in this work's nine test prefixes
+plus its two initial retain-source pidstat/host outputs under `lintap/compacted`
+for day 20261111/hour 08. Removed 445 objects/102,200,467 bytes by exact-key SDK
+batch, with 445 confirmations/zero errors; all selected prefixes now empty.
+Bucket versioning disabled; zero unfinished multipart uploads in these scopes.
+All 399 original raw-source SHA-256 hashes matched the saved baseline before
+and after cleanup. No original raw key targeted, broader root removal, production
+migration or cutover. Private inventory/results and earlier local evidence retained.
+
+Updated verification/interview, canonical tool/repo, index and PyUtil docs to
+record cleanup and mark the saved-fixture DBT command historical. Prior live-test
+results remain evidence; no surviving test dataset is advertised. Prepare commits
+in both existing branches, excluding private run-env files; no push requested.
+
+PyUtil implementation committed as `aa99efd` on `work/raw-sensor-compacted-union`
+(33 files). Analytics wiki/evidence committed separately in this change on
+`work/raw-sensor-file-aggregation`. Private run-env files remain unchanged and
+untracked; neither branch pushed. Final staged diff checks and scoped wiki checks
+pass (13 frontmatters, 96 current grounding paths, 84 wikilinks/inbound links;
+15 inherited exclusions unchanged). Regression evidence remains 107 compactor,
+299 PyUtil and 8 isolated-local migration passes from relocation verification.

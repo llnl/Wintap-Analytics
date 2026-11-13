@@ -3,6 +3,8 @@ title: "Wintappy (Wintap-PyUtil) Pipeline Repository"
 type: repo
 confidence: high
 grounded_by:
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/README.md
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/pyproject.toml
   - ../Wintap-PyUtil/wintap_dbt/README.md
   - ../Wintap-PyUtil/wintap_dbt/models/silver/selinux_attribution.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/network_keys.sql
@@ -11,6 +13,10 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/check_dbt_config.py
   - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
   - ../Wintap-PyUtil/tests/test_dbt_source_validation.py
+  - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
+  - ../Wintap-PyUtil/tests/test_compacted_inputs.py
+  - ../Wintap-PyUtil/tests/test_compacted_s3_migration.py
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - ../Wintappy/README.md
   - ../Wintappy/pyproject.toml
   - ../Wintappy/wintap_dbt/dbt_project.yml
@@ -29,7 +35,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-11-11
+last_validated: 2026-11-12
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -61,7 +67,14 @@ This is dependency validation, not repair of existing data-quality defects or
 rollout to installed collectors. See [[wiki/work/duckdb-1-5-maintenance/verification]].
 <!-- GROUND_TRUTH: ../Wintappy/pyproject.toml; ../Wintappy/.gitignore; ../Wintappy/uv.lock; wiki/work/duckdb-1-5-maintenance/validation_receipt.json -->
 
-DBT is now the primary canonical ETL path. The intended flow is sensor `raw_sensor` parquet into `Wintap-PyUtil/wintap_dbt`, into a DuckDB analysis database, into notebooks/SQL/future parquet export. `raw_sensor` is the only canonical post-processing input; the older flat `merged` directory stage is deprecated and removed from the normal pipeline.
+DBT is the primary canonical ETL path. The intended flow is sensor `raw_sensor`
+Parquet (plus the newly supported `compacted` Parquet representation) into
+`Wintap-PyUtil/wintap_dbt`, into a DuckDB analysis database, into notebooks/SQL/
+future Parquet export. The older flat binary/legacy `merged` directory stage is
+deprecated; it is distinct from this new partition-preserving compacted input.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/README.md §Compaction migration contract; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql -->
+The older review notes below describe the raw-only architecture before this
+explicitly approved input expansion.
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/Architecture.md §Current architectural stance -->
 <!-- GROUND_TRUTH: ../Wintappy/review-notes/ProjectSummary.md §Key decisions -->
 
@@ -134,10 +147,10 @@ PyUtil owns the implementation; Analytics hosts this wiki and verification recor
 
 `make dbt-check-config` validates the effective raw input root:
 `WINTAP_DBT_RAW_SENSOR_DATASET`, falling back to `WINTAP_DBT_DATASET`.
-Local input requires a readable `<raw-root>/raw_sensor` directory, including
+Local input requires a readable `<raw-root>/raw_sensor` **or compacted** directory, including
 split local input/output roots. S3 input requires `s3://bucket[/prefix]` and explicit
 inclusive `YYYYMMDD` start/end dates, but **no local raw_sensor placeholder**.
-Other URI schemes are rejected. Local date discovery uses the effective raw root,
+Other URI schemes are rejected. Local date discovery uses both effective input roots,
 not unrelated output-root partitions. Database output remains local; date/hour
 validity/order and output-directory writability are checked.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/scripts/check_dbt_config.py -->
@@ -164,6 +177,64 @@ prints the raw root/type and hour window without credentials. `qa-dashboard` and
 or dates; querying S3-backed bronze views still needs S3 access. Regression scope
 and limits: [[wiki/work/dbt-source-validation/verification]].
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintap_dbt/README.md -->
+
+## Unioned raw/compacted input (2026-11-12 candidate)
+
+PyUtil's shared macros now scan `<raw_sensor_dataset>/raw_sensor/<event>/...`
+and `<raw_sensor_dataset>/compacted/<event>/...`. An optional
+`WINTAP_DBT_COMPACTED_ROOT` overrides the direct compacted event root. Partition
+globs, event/alias/optional-column discovery and preflight include both; absent
+local roots are allowed when the other exists. S3 auth is configured if either
+root is remote. The DuckDB 1.5.6 pin is unchanged.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/paths.sql; ../Wintap-PyUtil/wintap_dbt/dbt_project.yml; ../Wintap-PyUtil/wintap_dbt/macros/s3.sql; ../Wintap-PyUtil/scripts/check_dbt_config.py -->
+
+Input is name-aligned UNION ALL, preserving missing-field NULLs and duplicates.
+No new overlap masking/deduplication/preference rule; existing bronze duplicate
+accounting and silver/gold transformations remain unchanged. PyUtil owns the
+standalone [DuckDB 2.0.0 compactor](../../../Wintap-PyUtil/extras/raw-sensor-compact/README.md)
+and DBT adapter/config/tests; Analytics hosts the shared wiki and feature evidence.
+The compactor's own lockfile and environment keep it separate from DBT's 1.5.6 pin.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/README.md; ../Wintap-PyUtil/extras/raw-sensor-compact/pyproject.toml -->
+Deployment sequence is merge → validate every leaf → delete closed source hour
+prefix after UTC grace → rebuild DBT. The human accepts rare clock skew and
+transient/failure overlap; reconcile failures manually before a build. Bronze
+views bind discovered physical globs and need rebuild along with materialized
+models after source deletion.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/README.md §Compaction migration contract; wiki/work/raw-sensor-file-aggregation/interview.md §Dual-Root DBT And Prefix Deletion Approval -->
+
+Qualification: all 54 full synthetic models match in fresh raw/mixed/compacted
+databases (139 gates each); live-copy host/pidstat migration preserves 897,395 rows,
+matches 4 scoped models, deletes 29 copied sources and preserves all original
+hashes. Full available-family qualification is recorded below; broader datasets,
+benchmark and production rollout remain separate. [[wiki/work/raw-sensor-file-aggregation/verification]] records
+commands and bounded results; [[wiki/tool/raw-sensor-compaction]] records operation.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_compacted_inputs.py; ../Wintap-PyUtil/tests/test_compacted_s3_migration.py; wiki/work/raw-sensor-file-aggregation/verification.md §Dual-Root DBT And Prefix-Deletion Tests -->
+
+Expanded 399-file/9-family live input builds all 54 models with 139 passing
+gates in raw, mixed, and unchanged-input mixed-repeat runs. Strict results do
+not match: 17 models differ in raw/mixed, and 18 in identical-input replay.
+`process.sql` uses unordered `ANY_VALUE` for representative names/paths/parents;
+derived filename/file_id propagate selection changes to downstream models.
+The shipping-SQL order-reversal diagnostic reproduces this on identical rows.
+This is existing analytics nondeterminism, not evidence of compactor payload loss.
+The human explicitly accepts this existing quality debt as non-blocking for
+compaction. The full live test's approved diagnostic mode requires exact schemas,
+model sets, bronze and models outside the ANY_VALUE dependency closure; affected
+result/count differences remain visible. This is not a representative fix or a
+claim of fully equivalent downstream results. No production semantics were
+changed. The all-family migration rerun passes all 54 builds/139 gates in each
+state, with exact schemas/all 11 bronze models, 36 exact model results across
+states, and reported differences in 18 affected models. It conserves 2,668,265
+rows, deletes 399 isolated copied sources → 10 outputs, and preserves all 399
+original source hashes. The compacted copy supported read-only full builds at
+`s3://lintap-alpha/compaction-tests/dbt-union-all-20261112-02`, day 20261111/hour 08.
+It was subsequently removed with this work's other S3 artifacts at the human's
+request (445 objects total, original raw hashes unchanged); the saved-copy command
+is now historical. This bounded acceptance excludes nonempty registry/image-load
+families (absent), performance defaults and production cutover.
+[[wiki/tension/dbt-arbitrary-representatives-vs-compaction-equivalence]].
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/tests/test_compacted_inputs.py §test_existing_process_model_depends_on_row_order; wiki/work/raw-sensor-file-aggregation/verification.md §Full-Model Live-Copy Expansion -->
+<!-- GROUND_TRUTH: wiki/work/raw-sensor-file-aggregation/verification.md §Accepted ANY_VALUE Diagnostics And All-Family Rerun; ../Wintap-PyUtil/wintap_dbt/README.md §Read-only full-model test of the surviving compacted copy -->
 
 ## SELinux pipeline (2026-11-11 candidate)
 
