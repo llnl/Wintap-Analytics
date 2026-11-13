@@ -5086,3 +5086,58 @@ Documented the optional every-node Garage debug-log reproduction. Refreshed the
 implementation checklist, index and dev handoff for measured on-prem versus
 laptop/VPN performance work. No code, qualification data, DBT or production data
 was changed. Committed and pushed the Analytics wiki update as requested.
+
+## [2026-11-13] verification | bounded read-only Garage fixture check
+
+The approved one-hour synthetic fixture passed the isolated read-only S3 count test:
+24 expected rows, zero source/destination row delta, 24 source objects / 17,544 bytes,
+and one compacted object / 970 bytes. Pytest reported 2.18 seconds including process
+and test overhead. No S3 mutation, DBT, or preserved qualification-data access occurred.
+The same fixture still needs a laptop/VPN run for an apples-to-apples path comparison;
+the historical week aggregate is not comparable. Details: durable-process-entity-manager
+verification and dev handoff.
+
+## [2026-11-13] verification | Nov 7 one-day raw compaction on-prem
+
+Read-only inventory confirmed the immutable Nov 7 baseline at 7,360 objects,
+788,009,194 bytes and 57,047,250 rows for the populated compaction scope. Copied it
+to a fresh disposable source in 436.168 seconds, then ran 24 sequential hourly
+128-MiB compactions in 612.17 seconds. Eighteen hours completed; six stopped at
+source-prefix deletion verification with partial outputs and disposable inputs
+retained. Fresh output currently has 209 objects, 669,242,885 bytes and 52,399,728
+rows; the full-day read-only verify reports 209/240 partitions present and zero
+delta for every emitted partition. No immutable source data, DBT, or entity
+bootstrap was changed or run. Details: `wiki/work/raw-sensor-file-aggregation/verification.md`.
+
+## [2026-11-13] diagnosis | Garage post-delete verification failures
+
+The Nov 7 disposable-copy run produced six `Source prefix remains after deletion`
+failures, versus three in the prior 168-hour run. All six exact failing prefixes
+were empty on a later read-only listing; the staged copy had no producer, and the
+implementation reaches this message only after a delete response without reported
+per-object errors followed by an immediate positive listing. Evidence therefore
+supports, but does not prove, GarageFS/S3-compatible stale read-after-delete
+behavior. Recommended mitigation is bounded exact-prefix post-delete retries with
+backoff plus a separate deletion-reconciliation path; no code change was made.
+
+## [2026-11-13] code | Garage deletion mitigation implemented
+
+Implemented bounded S3 post-delete exact-prefix confirmation retries with safe
+remaining-key and response diagnostics, fail-closed exhaustion, and two-phase
+hourly processing so one deletion failure does not stop other event compactions.
+Added explicit `reconcile-delete --confirm-delete` validation-gated cleanup with
+grace enforcement. The standalone compactor suite passes 137 tests with 2 opt-in
+skips; no live S3 rerun was performed. Details:
+`wiki/work/raw-sensor-file-aggregation/verification.md`.
+
+## [2026-11-13] verification | mitigated Nov 7 one-day Garage rerun
+
+Re-copied the immutable Nov 7 baseline into a fresh disposable source/destination
+and ran all 24 independent hourly compactions with bounded deletion confirmation.
+The copy matched 7,360 objects / 788,009,194 bytes in 443.653 seconds; hourly
+processing took 731.664 seconds. All 24 commands exited 0 with zero deletion
+failures, the disposable source ended empty, and the destination contained 240
+objects. Read-only verification against the untouched baseline passed 240/240
+partitions with 57,047,250 rows preserved and zero delta. No DBT/entity bootstrap
+ran and no immutable source was modified. Details:
+`wiki/work/raw-sensor-file-aggregation/verification.md`.

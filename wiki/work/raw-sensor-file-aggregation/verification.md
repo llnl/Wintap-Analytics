@@ -15,7 +15,7 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_compacted_inputs.py
   - ../Wintap-PyUtil/tests/test_compacted_s3_migration.py
 policy: agent-editable
-last_validated: 2026-11-12
+last_validated: 2026-11-13
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -109,6 +109,136 @@ and explicit UTC hours. There is no manifest-backed verification mode.
 
 ## Results
 
+### One-day on-prem copied-baseline run — 2026-11-13
+
+The complete immutable Nov 7 baseline was available at the existing raw source
+root. The selected populated scope matched the prior daily reference exactly:
+**7,360 source objects / 788,009,194 bytes / 57,047,250 rows**. This scope has
+nine populated direct event roots; the network root contains separate TCP and UDP
+leaves, producing ten output leaves per hour. The staged disposable source
+inventory matched the immutable baseline exactly. Copy/setup took **436.168 s**.
+
+The run then executed 24 sequential one-hour `compact` commands with a 128 MiB
+target and `--delete-source` restricted to the disposable copy. Compaction command
+wall time was **612.17 s** (10.20 minutes), excluding the source copy. Eighteen
+hours completed; six stopped at the source-prefix deletion check and retained their
+partial destination outputs and remaining disposable inputs. No DBT or entity
+bootstrap ran, and the immutable baseline was not modified.
+
+The untouched-baseline-to-fresh-output read-only verification covered all 240
+expected partitions: **209 passed and 31 were absent from partial failed hours**.
+Every emitted partition had zero row delta. Aggregate output currently contains
+**209 objects / 669,242,885 bytes / 52,399,728 rows**, versus the full input
+**57,047,250 rows**; the **−4,647,522** aggregate delta is the preserved partial
+output state, not an accepted completed-day result. The disposable source retains
+**1,058 objects / 96,403,358 bytes** for the six failed hours. The prior complete
+day reference remains 7,360 → 240 objects and approximately 788.009 → 740.919 MB.
+
+| UTC hour | command | input files | input bytes | input rows | output files | output bytes | output rows | delta |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| 00 | pass | 319 | 29,726,565 | 2,124,499 | 10 | 28,526,264 | 2,124,499 | 0 |
+| 01 | pass | 320 | 29,156,906 | 2,135,866 | 10 | 28,403,033 | 2,135,866 | 0 |
+| 02 | failed/delete-check | 302 | 27,169,325 | 2,006,472 | 2 | 8,491,107 | 897,006 | −1,109,466 |
+| 03 | failed/delete-check | 295 | 26,587,516 | 2,002,239 | 2 | 8,397,556 | 896,172 | −1,106,067 |
+| 04 | failed/delete-check | 294 | 26,890,161 | 2,002,618 | 6 | 11,426,385 | 1,007,602 | −995,016 |
+| 05 | pass | 313 | 39,329,627 | 2,727,253 | 10 | 35,921,967 | 2,727,253 | 0 |
+| 06 | pass | 310 | 36,266,577 | 2,641,764 | 10 | 33,579,462 | 2,641,764 | 0 |
+| 07 | pass | 312 | 37,931,369 | 2,678,415 | 10 | 34,352,190 | 2,678,415 | 0 |
+| 08 | pass | 316 | 39,283,993 | 2,790,529 | 10 | 36,529,939 | 2,790,529 | 0 |
+| 09 | pass | 318 | 39,764,742 | 2,814,412 | 10 | 36,706,235 | 2,814,412 | 0 |
+| 10 | failed/delete-check | 319 | 35,999,994 | 2,567,321 | 7 | 29,273,469 | 2,310,567 | −256,754 |
+| 11 | pass | 321 | 28,460,321 | 2,085,485 | 10 | 27,749,931 | 2,085,485 | 0 |
+| 12 | pass | 320 | 27,491,133 | 2,042,314 | 10 | 27,173,918 | 2,042,314 | 0 |
+| 13 | pass | 304 | 27,185,211 | 2,030,519 | 10 | 26,567,877 | 2,030,519 | 0 |
+| 14 | failed/delete-check | 320 | 28,534,346 | 2,057,076 | 9 | 26,714,779 | 2,056,956 | −120 |
+| 15 | failed/delete-check | 321 | 28,400,745 | 2,074,184 | 3 | 8,501,395 | 894,085 | −1,180,099 |
+| 16 | pass | 311 | 38,945,711 | 2,671,590 | 10 | 35,233,640 | 2,671,590 | 0 |
+| 17 | pass | 298 | 38,298,576 | 2,790,067 | 10 | 35,656,709 | 2,790,067 | 0 |
+| 18 | pass | 293 | 38,371,543 | 2,747,144 | 10 | 35,551,941 | 2,747,144 | 0 |
+| 19 | pass | 287 | 31,824,599 | 2,333,646 | 10 | 30,457,240 | 2,333,646 | 0 |
+| 20 | pass | 293 | 38,291,753 | 2,762,586 | 10 | 35,352,075 | 2,762,586 | 0 |
+| 21 | pass | 293 | 33,965,459 | 2,541,673 | 10 | 32,045,288 | 2,541,673 | 0 |
+| 22 | pass | 294 | 33,666,350 | 2,426,069 | 10 | 30,780,536 | 2,426,069 | 0 |
+| 23 | pass | 287 | 26,466,672 | 1,993,509 | 10 | 25,849,949 | 1,993,509 | 0 |
+
+The failed commands reported `Source prefix remains after deletion; manual repair
+required`. Their partial outputs are intentionally retained for follow-up; no
+blind retry or cleanup was performed.
+
+#### Deletion-check interpretation
+
+The six failures are consistent with a stale or delayed post-delete listing rather
+than a confirmed `DeleteObjects` failure. In the current run, the failing prefixes
+were respectively `raw_host` (hours 02 and 03), `raw_process_conn_incr` (04),
+`raw_process_file` (10), `raw_selinuxinteraction` (14), and `raw_macip` (15).
+The implementation reaches this error only after the delete request returns without
+reported per-object errors and the immediate `ListObjectsV2(MaxKeys=1)` existence
+check still returns an object. A later read-only listing found all six exact failing
+prefixes empty. The staged copy had no producer, so an intentional late arrival was
+not part of this run.
+
+This is strong evidence for a GarageFS/S3-compatible read-after-delete consistency
+or listing-cache issue, but not a server-side root-cause proof: the client does not
+retain request IDs or server logs, and no packet/server trace was collected. The
+prior week showed the same generic failure mode in three other event/hour prefixes;
+the event-family variation argues against a single family-specific payload defect.
+
+The implemented mitigation is bounded post-delete confirmation: after a
+successful delete response, retry the exact-prefix listing with capped exponential
+backoff and require an empty result before declaring deletion complete. It remains
+fail-closed after the retry budget, preserves destination/source state, and reports
+remaining keys and safe response metadata. A separate deletion-reconciliation
+command is preferable to rerunning `compact`, because an existing destination hour
+is intentionally skipped. The retry remains bounded so a genuine late arrival is
+not hidden.
+
+### Garage mitigation implementation — 2026-11-13
+
+Implemented in `../Wintap-PyUtil/extras/raw-sensor-compact/`:
+
+- S3 source-prefix deletion now confirms an empty exact-prefix listing with a
+  bounded exponential retry budget (default five attempts, one-second initial
+  delay), retaining fail-closed behavior after exhaustion.
+- Deletion failures expose sampled remaining keys, confirmation-attempt count, and
+  safe `DeleteObjects` response metadata in the JSON report. Per-object delete
+  errors are retained when returned by GarageFS.
+- `compact --delete-source` now merges and validates all selected event families
+  for an hour before attempting any source deletion. A `DeletionError` changes the
+  affected hour status to `merged_with_deletion_error` and does not stop other
+  event-family compactions; the command exits 2 with status
+  `completed_with_deletion_errors`.
+- `reconcile-delete --confirm-delete` validates existing source/output inventories
+  and per-leaf row counts before deleting an exact source event/hour prefix. It is
+  intentionally separate because rerunning `compact` skips existing destinations.
+
+The standalone compactor suite passes **137 tests with 2 opt-in skips**. The full
+PyUtil repository test collection was not usable in the compactor environment
+because unrelated repository tests require unavailable `pandas`, `jinja2`, and
+`dynaconf` dependencies; no live S3 rerun was performed after this code change.
+
+### Mitigated one-day Garage rerun — 2026-11-13
+
+The same immutable Nov 7 baseline was copied into a **new disposable source and
+destination** and processed again with the mitigation enabled. The copy matched
+the baseline at **7,360 objects / 788,009,194 bytes** and took **443.653 s**.
+The 24 independent hourly commands used 128 MiB targets, `--delete-source`, and
+five post-delete confirmation attempts with one-second initial backoff. Hourly
+compaction/deletion wall time was **731.664 s** (12.19 minutes), excluding copy.
+
+All **24/24 commands exited 0**. There were **0 deletion failures**, all 240
+expected partitions were emitted (10 per hour, including TCP/UDP leaves), and the
+disposable source ended with **0 objects**. The fresh destination contains
+**240 objects / 740,772,734 bytes**. A read-only full-day verification against the
+untouched immutable baseline passed **240/240 partitions** with
+**57,047,250 source rows → 57,047,250 merged rows and zero aggregate delta**.
+No DBT or entity bootstrap ran, and the immutable baseline was only read.
+
+This live rerun demonstrates that the bounded confirmation/two-phase implementation
+completed the previously failing one-day workload without leaving source prefixes or
+partial output. It does not by itself prove that every successful deletion required
+a retry; server-side Garage request/listing traces remain useful for quantifying
+stale-listing events.
+
 | Area | Status | Required evidence |
 | --- | --- | --- |
 | Source/API review | Complete, 2026-11-10 | Live consumer/S3 patterns and official docs summarized in [[wiki/work/raw-sensor-file-aggregation/references]]. |
@@ -117,7 +247,7 @@ and explicit UTC hours. There is no manifest-backed verification mode.
 | P1–P2 / T01–T05 | Partial local/mocked passes | Exact-hour discovery, name/NULL/schema fixtures, duplicates, shared counts, local shards and file-reduction guard pass. Full partition/sharding/resource matrix and live listing/read checks pending. |
 | P3 / T06–T08 | Fixed-root local and bounded live pass | Direct merge, existing-hour/protocol-parent skip, local partial validation failure/manual rebuild, unchanged live source/output hashes. Multipart failures, SIGKILL and broader faults pending; one writer assumed. |
 | P4 / T09 | Fresh local and live verification pass | Direct-root CLI totals/deltas tested; fixed S3 output verified with zero delta. Count equality is not full-row multiset proof. |
-| P5 / T10 | Not run | Representative S3 benchmark and documented D4 default. |
+| P5 / T10 | One-day on-prem run, incomplete | Nov 7 sequential hourly run measured copy separately from compaction; six deletion-check failures left partial outputs. Representative default/resource matrix remains open. |
 | P6 / manual workflow | Bounded basics pass; broader acceptance pending | Plan, compact, fresh verify, fixed-layout read and rerun skip pass. Consumer adaptation/representative acceptance pending. |
 | T11 / scheduled readiness | Open dependency | [[wiki/todo/raw-sensor-upload-time-partition]] remains unresolved. |
 

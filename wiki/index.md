@@ -309,14 +309,16 @@ utility owned by PyUtil at `../Wintap-PyUtil/extras/raw-sensor-compact/` (wiki/e
 remain in Analytics), manual hourly compaction across hosts from `lintap/raw_sensor/<event>/...`
 into `lintap/compacted/<event>/...`. Existing destination event/hours are skipped;
 otherwise merge all files per exact optional protocol leaf, without row sorting.
-`plan`/`compact`/`verify` and per-leaf count validation implemented; 107 local tests
+`plan`/`compact`/`verify` and per-leaf count validation implemented; 137 local tests
 pass with 2 opt-in skips. Initial fixed-root live S3 test passes: 897,395 rows preserved,
 29 → 2 objects, unchanged source hashes, rerun skips with unchanged output hashes.
 See [[wiki/tool/raw-sensor-compaction]] and the accepted
 [[wiki/decision/raw-sensor-compaction-fixed-hours-and-manual-cleanup]]. No run IDs,
 manifests or conditional writes; partial failures need manual cleanup. Optional
 `--delete-source` now validates then deletes a closed source-hour prefix after
-grace (default 10 minutes, minimum 5). PyUtil scans raw_sensor + compacted without
+grace (default 10 minutes, minimum 5), with bounded post-delete confirmation and
+diagnostics; hourly deletion is separate from event compaction and
+`reconcile-delete --confirm-delete` handles explicit cleanup. PyUtil scans raw_sensor + compacted without
 overlap masking. Full synthetic raw/mixed/compacted DBT tests match all 54 models
 with 139 gates per state; copied-live host/pidstat tests match 4 models across
 897,395 rows, delete 29 copied objects and preserve all original hashes. Suites:
@@ -327,8 +329,14 @@ quality debt is explicitly non-blocking. Full copied-live migration passes:
 unchanged. Affected downstream differences are reported. The S3 fixtures and two
 initial retain-source outputs were subsequently cleaned up at the human's request
 (445 objects); all 399 original hashes still match. Local evidence is preserved;
-no surviving full-build fixture is claimed. Original live rollout,
-broad transport/fault coverage and shard/performance benchmark remain pending.
+no surviving full-build fixture is claimed. A Nov 7 on-prem sequential day run
+measured 436.168 s copy/setup plus 612.17 s hourly compaction; 18/24 hours
+completed and six deletion-check failures were preserved with partial outputs.
+The mitigated fresh-copy rerun then completed all 24/24 hours with zero deletion
+failures, 240/240 partitions and a zero-delta 57,047,250-row immutable-baseline
+verification; copy took 443.653 s and hourly processing 731.664 s.
+Broad transport/fault coverage and the representative shard/performance benchmark
+remain pending.
 Object filenames may change while
 the partition scheme is preserved. Daily rollup and cron are deferred; the
 upload-time partition TODO is [[wiki/todo/raw-sensor-upload-time-partition]].

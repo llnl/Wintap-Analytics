@@ -14,7 +14,7 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_compacted_inputs.py
   - ../Wintap-PyUtil/tests/test_compacted_s3_migration.py
 policy: agent-editable
-last_validated: 2026-11-12
+last_validated: 2026-11-13
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -70,7 +70,11 @@ for each selected event/day/hour:
   These are **direct event roots**; no appended raw_sensor directory in destination.
 - `compact` needs explicit positive `--target-size-bytes` until benchmarked.
   `--delete-source` opts into whole source event/hour-prefix deletion after
-  validation; `--grace-minutes` defaults to 10 and must be at least 5.
+  validation; `--grace-minutes` defaults to 10 and must be at least 5. S3
+  deletion uses bounded post-delete exact-prefix confirmation retries (five
+  attempts with one-second initial backoff by default); retry exhaustion is
+  fail-closed and reports remaining keys/response metadata. `reconcile-delete`
+  is a separate validation-gated cleanup path requiring `--confirm-delete`.
   Parquet names and approximate shard boundaries are implementation-defined.
 - Same-bucket sibling source/destination roots are supported; overlapping roots,
   globs, malformed UTC bounds, symlinks and file-limit truncation are rejected.
@@ -96,11 +100,16 @@ for each selected event/day/hour:
    Report source/merged files, bytes, rows and delta; multi-file success reduces files.
 7. Compare actual output inventory to the written leaf/file set and recheck source.
    A failure stops the command and identifies the destination hour for manual recovery.
-8. With `--delete-source`, delete the complete validated source event/hour prefix
-   (all protocol leaves and markers) after all checks pass. Preflight requires
-   UTC end plus grace for the entire selected window before writes. List S3 keys
-   before batching deletes; per-key errors or remaining objects fail. Keep output
-   and stop for manual reconciliation on deletion failures.
+8. With `--delete-source`, first complete compaction/validation for every selected
+   event family in an hour, then delete each complete validated source event/hour
+   prefix (all protocol leaves and markers). Preflight requires UTC end plus grace
+   for the entire selected window before writes. List S3 keys before batching
+   deletes; per-key errors or retry-exhausted remaining objects fail only that
+   deletion phase, with diagnostics, while other event families continue. Keep
+   output and reconcile explicitly.
+9. `reconcile-delete --confirm-delete` validates existing destination/source
+   per-leaf row counts and inventories before attempting deletion; it never
+   rebuilds or overwrites an existing destination hour.
 
 Operational `verify` uses a fresh DuckDB connection, discovers both direct roots,
 and compares row totals for the union of leaf keys. Deliberately altered/extra or
@@ -181,6 +190,8 @@ AC numbers refer to the corrected [[wiki/work/raw-sensor-file-aggregation/brief]
 - [ ] P6: broader live manual acceptance and full closeout completed.
 - [x] Canonical tool, verification, index/log updated for current interfaces.
 - [x] Retain-source default plus explicit validated prefix deletion/grace tested.
+- [x] Bounded post-delete confirmation diagnostics, two-phase hourly deletion,
+  and explicit validation-gated deletion reconciliation implemented and tested.
 - [x] Approved PyUtil dual-root input/config/preflight adaptation implemented.
 - [x] Full synthetic raw/mixed/compacted migration and duplicate/NULL/protocol tests pass.
 - [x] Copied live pidstat/host S3 migration/deletion and original-byte preservation pass.

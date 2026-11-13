@@ -13,7 +13,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
 policy: agent-editable
-last_validated: 2026-11-12
+last_validated: 2026-11-13
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -81,11 +81,17 @@ visible and reruns skip them until manually cleaned. One writer per destination;
 do not read an hour during merge. No run IDs/manifests/conditional PUT/atomic
 publication or automatic failed-output cleanup. Source is retained by default.
 `compact --delete-source` validates **every leaf in the event/hour** before
-deleting its whole source prefix, including markers. `--grace-minutes` defaults
+deleting its whole source prefix, including markers. All event families for an hour
+are compacted/validated before deletion attempts begin. `--grace-minutes` defaults
 to 10 (minimum 5); preflight rejects selected hours younger than UTC end plus grace.
 The human accepts rare clock skew under the deployment's UTC upload-partition
-contract. S3 pagination/batch deletion errors or remaining objects fail; local
-deletion refuses symlinks. An existing destination is never a source-delete trigger.
+contract. S3 deletion uses bounded exact-prefix confirmation retries after a
+successful delete response; exhaustion remains fail-closed and reports sampled
+remaining keys and safe response metadata. A deletion failure for one event is
+reported without aborting other event compactions. Local deletion refuses symlinks.
+An existing destination is never a source-delete trigger. Use
+`reconcile-delete --confirm-delete` to validate and explicitly clean source prefixes
+left behind by a prior run.
 Original live rollout is not authorized; deletion tests use isolated copies.
 Daily rollup/scheduling/lookback remain deferred.
 <!-- GROUND_TRUTH: wiki/work/raw-sensor-file-aggregation/interview.md §Dual-Root DBT And Prefix Deletion Approval; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py -->
@@ -98,7 +104,9 @@ not atomic snapshots; late arrivals do not rebuild existing destinations.
 Run source/output `verify` before deletion or in retain-source mode; after
 migration compare unioned inputs/DBT results to a saved baseline. Merge reports
 retain both totals and delta before source deletion. Deletion failures identify
-source/destination hour and phase; reconcile manually before DBT.
+source/destination hour and phase with confirmation/remaining-key details; the
+command exits 2 with `completed_with_deletion_errors`, and
+`reconcile-delete --confirm-delete` is the manual recovery path before DBT.
 
 ## Runtime And Evidence
 
