@@ -5219,3 +5219,14 @@ standalone tests (2 skipped), 56 DBT/config tests and formatter/linter checks.
 The isolated three-day rerun is in progress; final bootstrap and tree QA remain
 unqualified until its results are recorded.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql -->
+
+## [2026-11-13] verification | three-day quarantine capacity gate
+
+The threshold-enabled 72-hour bootstrap used the explicit 0.05 per-hour ceiling
+and failed closed on the existing decoded-state byte budget before publishing
+any entity snapshot or processing checkpoint. The fresh qualification prefixes
+remain empty; no source or compacted object was modified. Entity-enabled DBT and
+post-cache tree QA were therefore not run. A read-only identity audit of the
+preserved compacted process files is retained separately to report denominator,
+exclusion and ratio evidence without relaxing capacity limits.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §load_inputs -->

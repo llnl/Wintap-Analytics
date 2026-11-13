@@ -144,9 +144,15 @@ denominator, numerator and ratio to match its configuration.
 Focused validation passed: **139** standalone tests with two expected skips,
 **56** DBT/config tests, and formatter/linter checks for the changed standalone
 Python files. The isolated three-day quarantine bootstrap was restarted with the
-explicit 0.05 ceiling after correcting the command's hour-window limit; its
-qualification result remains pending and is not represented by the earlier
-pre-threshold attempt.
+explicit 0.05 ceiling after correcting the command's hour-window limit. It then
+failed closed on the existing decoded-state byte budget before publication;
+there are no entity snapshots or processing-metrics checkpoints in the fresh
+qualification prefixes. This is a capacity blocker, not evidence to relax the
+budget or to treat the pre-threshold attempt as qualification.
+
+The preserved compacted process files are being audited read-only for per-hour
+identity denominator/numerator evidence. Entity-enabled DBT and post-cache gold
+tree QA are not run because no durable state or checkpoints were published.
 
 ### Bounded read-only on-prem fixture check — 2026-11-13
 
