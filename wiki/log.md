@@ -5207,3 +5207,15 @@ rows to QA. No PID-only repair or fabricated ancestor is permitted. Standalone
 reducer and DBT durable-context regression tests pass; the three-day quarantine
 qualification is running separately.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql -->
+
+## [2026-11-13] code | bounded quarantine identity threshold
+
+Implemented and committed the configurable 5% per-UTC-hour quarantine ceiling in
+the entity loader, CLI, version-3 processing checkpoints, DBT preflight and
+configuration/docs. Each checkpoint records denominator, numerator, ratio,
+ceiling, reasons, hosts and fingerprints; threshold violations fail before
+publication and raw evidence remains available. Focused validation passed 139
+standalone tests (2 skipped), 56 DBT/config tests and formatter/linter checks.
+The isolated three-day rerun is in progress; final bootstrap and tree QA remain
+unqualified until its results are recorded.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql -->

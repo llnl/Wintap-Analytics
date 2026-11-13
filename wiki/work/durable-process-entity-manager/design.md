@@ -125,9 +125,11 @@ writer supports two explicit policies:
 
 * `reject` (default): fail before snapshot publication and retain all source data.
 * `quarantine`: retain the raw evidence but exclude it from entity reduction;
-  publish its per-hour count, reason/host breakdown and stable fingerprint in the
-  processing checkpoint. DBT must explicitly select the same policy, and
-  quarantine is visible QA evidence rather than complete identity coverage.
+  publish its per-hour input denominator, exclusion count, ratio, configured
+  ceiling, reason/host breakdown and stable fingerprint in the processing
+  checkpoint. The default ceiling is 5% per UTC hour; a configurable ceiling
+  violation fails closed. DBT must explicitly select the same policy and ceiling,
+  and quarantine is visible QA evidence rather than complete identity coverage.
 
 Neither policy creates an entity, repairs identity by PID alone, or fabricates an
 ancestor. The quarantine decision is limited to durable entity maintenance; raw

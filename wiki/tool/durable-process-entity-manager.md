@@ -83,10 +83,12 @@ unresolved; a missing parent PID can be completed within one consistent real has
 Known modern/named sentinels are not fake ancestors. Unknown process identities
 use an explicit policy: `reject` is the default and aborts before publication;
 `quarantine` retains the raw rows, excludes them from durable entity state, and
-records per-hour counts, reason/host breakdowns and stable fingerprints in
-`processing_metrics`. Neither policy creates a guessed instance, repairs by PID
-alone, or invents an ancestor. Refresh effective birth time does not reopen an
-exited process or become a new observation timestamp.
+records per-hour input denominators, exclusion numerators, ratios, configured
+ceiling, reason/host breakdowns and stable fingerprints in `processing_metrics`.
+The default quarantine ceiling is 5% per UTC hour and is configurable; a
+partition above it fails closed. Neither policy creates a guessed instance,
+repairs by PID alone, or invents an ancestor. Refresh effective birth time does
+not reopen an exited process or become a new observation timestamp.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §Evidence -->
 
 No initial TTL/GC: retain exited ancestors. Per-host defaults are one million

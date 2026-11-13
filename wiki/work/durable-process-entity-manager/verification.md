@@ -129,6 +129,25 @@ counts, reason/host breakdowns and stable fingerprints in the durable
 as entity coverage.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §identity_reasons/load_inputs; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §SCHEMA/metric_rows; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
 
+### Bounded quarantine threshold — 2026-11-13
+
+The explicit qualification policy now permits quarantine only up to a configurable
+**5% per-UTC-hour** identity-exclusion ceiling. The entity loader records the
+distinct process-input denominator, excluded-row numerator, observed ratio,
+configured ceiling, reason/host breakdowns and stable fingerprints for every
+partition, including hours with zero exclusions. Any hourly ratio above the
+ceiling fails before entity publication; raw evidence remains untouched. The
+checkpoint schema is version 3, and DBT preflight requires the recorded ceiling,
+denominator, numerator and ratio to match its configuration.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §load_inputs; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §SCHEMA/metric_rows; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
+
+Focused validation passed: **139** standalone tests with two expected skips,
+**56** DBT/config tests, and formatter/linter checks for the changed standalone
+Python files. The isolated three-day quarantine bootstrap was restarted with the
+explicit 0.05 ceiling after correcting the command's hour-window limit; its
+qualification result remains pending and is not represented by the earlier
+pre-threshold attempt.
+
 ### Bounded read-only on-prem fixture check — 2026-11-13
 
 The selected `seeded_fixture_counts` test passed against the approved synthetic

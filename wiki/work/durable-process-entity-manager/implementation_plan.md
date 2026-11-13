@@ -125,6 +125,9 @@ Sharded state/delta files/retention are later design choices, not hidden additio
   `quarantine` retains raw evidence, excludes it from durable state, and records
   per-hour QA counts/fingerprints in processing checkpoints. Three-day historical
   cache/tree qualification remains a separate gate pending the rerun results.
+- [x] Bound quarantine with a configurable 5% per-hour exclusion ceiling; record
+  denominator, numerator, ratio, ceiling, reasons, hosts and fingerprints; require
+  matching DBT configuration and add regression coverage.
 - [ ] Production-scale budgets, historical bootstrap and external schedule exclusion approved.
 - [x] Update [[wiki/work/durable-process-entity-manager/verification]], canonical
   pages and wiki log; only then prepare a separately approved production rollout.
