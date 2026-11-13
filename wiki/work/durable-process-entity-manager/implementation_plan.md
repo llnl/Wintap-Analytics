@@ -109,8 +109,11 @@ Sharded state/delta files/retention are later design choices, not hidden additio
   terminal-QA comparisons, window counters/summary populations and replay pass.
 - [x] Seven daily inventories, 168-hour test execution and file/byte/day/event/runtime
   metrics recorded: 165 raw successes / 3 failed hours; all original hashes unchanged.
-- [ ] Reconcile three failed deletion-verification hours without blind existing-output
-  reruns; partial outputs and unprocessed inputs are retained.
+- [x] Reconcile three failed deletion-verification hours against immutable local
+  evidence: all 25 partial compacted outputs match input rows; all 142 remaining raw
+  objects match preserved copies. Human accepts the outputs as correct for this
+  milestone. The delete-verification errors remain unresolved; no blind rerun or
+  production repair was performed. See verification and dev handoff.
 - [ ] Historical identity-policy and capacity qualification: bootstrap and continued
   entity mode fail unknown-identity guard; only one combined hour passes. No full
   historical snapshot or original audit-window enriched DBT comparison qualified.

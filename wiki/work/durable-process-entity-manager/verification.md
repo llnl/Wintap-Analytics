@@ -9,6 +9,8 @@ grounded_by:
   - wiki/diagnostic/process-tree-context-completeness.md
   - wiki/workflow/process-ancestry-completeness-qa.md
   - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entities.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
   - ../Wintap-PyUtil/tests/test_process_entities.py
   - ../Wintap-PyUtil/tests/test_process_entities_s3.py
 policy: agent-editable
@@ -35,6 +37,23 @@ raw/mixed/compacted DBT and independent entity checks. The week driver completed
 Historical bootstrap failed identity validation; only **one combined entity/raw
 hour** passed before the driver explicitly continued raw-only qualification.
 This is not a successful week-long entity qualification or full historical DBT repair.
+
+### Intermediate milestone disposition — 2026-11-13
+
+The three failed-hour partial outputs were compared with the retained immutable
+local input evidence: all **25 compacted Parquet objects** match their corresponding
+input rows exactly. The **142 source objects still present at final inspection**
+also match their immutable copies. The three failed event/hour source prefixes were
+empty on the later S3 inspection. The human accepts the failed-hour compacted data
+as correct for this milestone and chooses to proceed on that assumption. This is
+an operational disposition supported by the local evidence comparison; it does
+not turn the three commands into successful runs, explain why immediate deletion
+verification failed, or establish a reusable production deletion guarantee.
+
+No production repair, additional mutation of qualification data, or DBT run is
+authorized by this milestone. The original failure should remain visible in the
+run record, while further root-cause work is optional follow-up rather than a
+blocker to this intermediate handoff.
 
 Read-only discovery located the original six-host materialized audit and its
 explicit process globs for November 11 hours 08–22 (configured inclusive end 23).
@@ -264,6 +283,39 @@ November 11/hour 20 SELinux transition (24). November 9/hour 11 has no inputs le
 but its failed command still lacks a successful full-hour report.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion.py §delete_hour -->
 
+#### Controlled Garage delete diagnostic — synthetic isolated prefixes
+
+Two isolated synthetic runs against the current Garage S3 endpoint exercised the
+real compactor at the historical input-object counts. The 72-object case retained
+the 36-TCP/36-UDP shape; the other cases used 24 and 35 objects. In all three
+baseline cases, `DeleteObjects` returned HTTP 200 with no per-object errors and
+zero retries; the immediate prefix listing was empty. The outputs matched all
+synthetic input rows exactly as multisets (72, 24 and 35 rows respectively).
+
+A separate four-object case injected one synthetic marker **after** a successful
+`DeleteObjects` response and before the compactor's immediate prefix check. The
+check found exactly that marker, and the CLI returned the same
+`Source prefix remains after deletion; manual repair required` error in
+`delete_source`. Its four original rows still matched the compacted outputs.
+This validates the failure path and shows that an object arriving in that interval
+can produce the message; it does **not** show that this was the historical cause.
+The ordinary cases did not reproduce an unexplained Garage deletion/listing error.
+
+Garage's responses exposed no request ID or `x-amz` correlation header to the
+client (only content/date headers). The harness cleaned its isolated prefixes;
+an independent final listing found zero objects. No Garage logging configuration
+was changed. The harness and detailed reports are temporary laptop artifacts,
+not committed qualification data.
+
+**Potential follow-up, not part of the accepted milestone:** if root-cause evidence
+is needed later, rerun the same level of test from the on-prem development host on
+a new synthetic prefix while Garage debug logging is enabled on every node. Record
+server-side delete/list sequence and timing, compare any available correlation
+metadata, retain the exact object found by the immediate check, and verify cleanup.
+The current client response has no request ID, so server-side logs are needed for
+useful correlation. Keep this distinct from a read-only performance comparison;
+do not retarget the test to production or mutate the preserved qualification copy.
+
 Final test-root storage accounting, deliberately not all claimed as compacted savings:
 
 | Storage class | Objects | Bytes |
@@ -300,8 +352,9 @@ full-suite rerun; earlier full-suite evidence remains recorded below. Handoff:
 
 Implementation committed as Wintap-PyUtil `2cfbad1` (25 scoped files) on
 `work/raw-sensor-compacted-union`; private `wintap-run.env-lintap-alpha` and
-`wintap-run.env-micro-range` remain untracked/excluded. Analytics wiki/evidence
-is committed separately with this milestone; neither branch is pushed.
+`wintap-run.env-micro-range` remain untracked/excluded. That implementation branch
+is unchanged by the Garage diagnostic. The current Analytics handoff/wiki update
+is a separate documentation commit; no Wintap-PyUtil commit or push is included.
 
 First-round implementation is complete in Wintap-PyUtil following the human's
 explicit "Proceed!" instruction. The standalone writer remains DuckDB 2.0.0;

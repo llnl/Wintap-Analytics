@@ -5072,3 +5072,17 @@ milestone committed separately on its existing branch; neither branch pushed.
 Following human authorization, the single canonical wiki-content privacy rule is
 now in the root `AGENTS.md`. Deleted the interim standalone policy page and its
 index link to avoid duplication.
+
+## [2026-11-13] handoff | Garage deletion milestone and on-prem continuation
+
+Recorded the read-only reconciliation: all 25 partial compacted objects from the
+three failed hours match immutable local input rows, and all 142 remaining raw
+objects match preserved copies. The human accepts the compacted outputs as correct
+for this intermediate milestone; the failed delete-verification commands and
+historical cause remain explicitly unresolved. Added two synthetic Garage test
+passes: normal deletion at 72/24/35 objects succeeded, and an injected post-delete
+marker reproduced the exact failure path; all test-prefix objects were cleaned.
+Documented the optional every-node Garage debug-log reproduction. Refreshed the
+implementation checklist, index and dev handoff for measured on-prem versus
+laptop/VPN performance work. No code, qualification data, DBT or production data
+was changed. Committed and pushed the Analytics wiki update as requested.

@@ -187,8 +187,8 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/work/durable-process-entity-manager/brief]] | medium | Accepted first-round S3/hourly/DBT direction; implementation authorized with synthetic orphan-breakpoint tests. |
 | [[wiki/work/durable-process-entity-manager/design]] | speculative | Historical design record plus concrete implementation choices; no initial GC, entity-before-delete ordering, JSON evidence and separate DBT context. |
 | [[wiki/work/durable-process-entity-manager/implementation_plan]] | speculative | DPE-01–05 first-round slices completed on synthetic local/S3 fixtures; production capacity/bootstrap/exclusion still gates. |
-| [[wiki/work/durable-process-entity-manager/verification]] | medium | Earlier actual-hour DBT/entity checks pass; week 165/168 raw successes, 96.91% fewer files/4.51% fewer bytes. Historical entity bootstrap blocked; three deletion failures retained, originals unchanged. |
-| [[wiki/work/durable-process-entity-manager/dev_handoff]] | medium | Milestone summary and ordered follow-up: reconcile failed hours, decide unknown-identity policy, qualify scale/history/DBT, separately tune PIDstat, then review production operation. |
+| [[wiki/work/durable-process-entity-manager/verification]] | medium | Earlier actual-hour DBT/entity checks pass; week 165/168 raw successes, 96.91% fewer files/4.51% fewer bytes. Failed-hour outputs match preserved input evidence and are accepted for this milestone; synthetic Garage test reproduced the delete-check failure with a controlled late object. Historical entity bootstrap remains blocked. |
+| [[wiki/work/durable-process-entity-manager/dev_handoff]] | medium | Intermediate handoff for on-prem continuation: measure laptop/VPN versus on-prem performance; keep Garage debug-log reproduction optional; preserve unknown deletion cause and historical/entity/production gates. |
 ## Component
 
 | Page | Confidence | Summary |

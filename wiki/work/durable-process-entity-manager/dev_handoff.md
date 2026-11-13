@@ -22,15 +22,23 @@ tags: [feature-work, handoff, milestone, entity-state, compaction, dbt]
 
 # Milestone summary
 
-**First-round implementation is complete; production readiness is not.** The
-human requested committing this milestone on November 13. Wintap-PyUtil owns the
-implementation, Analytics the wiki/evidence. Use the existing branches; no push,
-test-output cleanup, private-config inclusion or production cutover is authorized.
+**First-round implementation is complete; this is an intermediate handoff, not
+production readiness.** The human accepts the three failed-hour compacted outputs
+as correct for this milestone based on their exact comparison with retained local
+input evidence. The deletion-verification failures remain failures with unknown
+historical cause. Wintap-PyUtil owns the implementation; Analytics owns this wiki
+and evidence. The human authorized committing and pushing this Analytics handoff;
+that does not authorize a PyUtil code change/push, qualification-data mutation,
+DBT run, or production cutover.
 
 Implementation milestone: Wintap-PyUtil **`2cfbad1`**, branch
 `work/raw-sensor-compacted-union` (25 files). This handoff, canonical pages and
 qualification record are committed separately on Analytics
-`work/raw-sensor-file-aggregation`. Neither branch is pushed.
+`work/raw-sensor-file-aggregation`. The Analytics wiki/evidence changes are
+committed and pushed independently; this handoff is for continuation from an
+on-prem development host. The PyUtil implementation commit is not included in
+that wiki push; verify its availability from the on-prem checkout before any code
+work, and arrange a separate authorized transfer/push if it is not available.
 
 ## Complete
 
@@ -54,40 +62,69 @@ qualification record are committed separately on Analytics
   **360,027,830 rows count-preserved**, 6.58 hours successful-command time.
 - All **71,155 original hashes unchanged**. Daily/event/runtime metrics and
   separate entity/partial-output/source-copy accounting recorded in verification.
+- Read-only reconciliation found all **25 partial compacted objects** from failed
+  hours match their immutable input rows exactly; all **142 remaining raw objects**
+  match their immutable copies. The failed-hour source prefixes were empty later.
+- Synthetic Garage deletion diagnostic: 72/24/35-object baseline cases all
+  deleted and immediately listed empty; output rows matched exactly. A controlled
+  post-delete marker reproduced the exact failure message. This demonstrates one
+  possible mechanism, not the historical cause. All synthetic test prefixes were
+  cleaned and independently listed empty. Details and optional server-debug
+  follow-up are in [[wiki/work/durable-process-entity-manager/verification]].
 
 ## Next, in order
 
-1. **Reconcile three failed raw hours, read-only first.** November 5/06 network,
-   November 9/11 SELinux transition, November 11/20 SELinux interaction failed
-   immediate deletion verification. Exact failed event prefixes are empty later,
-   but this does not establish why the checks failed or certify the whole hour.
-   Inventory and compare partial outputs against immutable local input copies;
-   propose exact repair actions before mutating anything. Retain 25 partial
-   outputs/60,900,907 bytes and 142 unprocessed inputs/28,481,517 bytes. A blind
-   rerun skips existing destinations and cannot reconcile overlap safely.
-2. **Resolve unknown-identity handling explicitly.** Historical bootstrap fails
+1. **Resume on the on-prem development host.** Establish repository/branch state
+   and the Garage endpoint without changing production data. The human expects a
+   substantial performance improvement versus the laptop-over-VPN path; measure
+   it rather than assuming it. Begin with a bounded, read-only or synthetic
+   comparison and record wall time, object counts/bytes, and network path. Do not
+   run DBT, repeat production deletion, or mutate preserved qualification data
+   without a new explicit authorization.
+2. **Keep the Garage root-cause test as optional follow-up.** The baseline passed
+   and injected-arrival case reproduced the failure signature, but the cause of
+   the historical failures remains unknown. If needed, coordinate Garage debug
+   logging on every node and rerun the documented synthetic test with client and
+   server timestamps. Do not interpret a successful baseline as proof that the
+   historical failure was a race.
+3. **Resolve unknown-identity handling explicitly.** Historical bootstrap fails
    before publication; week entity maintenance stops at November 5/hour 01 after
    one combined hour. Negative-PID Refresh and sentinel-key positive-PID Stop
    evidence exists. Decide an evidence-preserving contract and tests; do not
    silently filter, invent identities/ancestors or repair by PID alone. The
    retained 33,824-entity/nine-snapshot state is stale and week-limited.
-3. **Qualify historical scale after identity policy.** Expanded source counts
+4. **Qualify historical scale after identity policy.** Expanded source counts
    exceed the default one-million-row per-host limit on two hosts. Bootstrap
    failed identity validation, not a demonstrated capacity failure.
    Measure actual staging/decoded evidence/full-snapshot rewrite costs; obtain
    approval for budget changes or sharding rather than silently pruning history.
-4. **Complete original audit-window DBT enrichment qualification.** Bootstrap a
+5. **Complete original audit-window DBT enrichment qualification.** Bootstrap a
    verified historical state, hold the original seed population fixed, compare
    parents/root/gap/conflict verdicts independently, and distinguish larger source
    coverage and recorded-root policy from genuine enrichment improvements.
-5. **Consider PIDstat layout tuning separately.** Week PIDstat expands 467.563 →
+6. **Consider PIDstat layout tuning separately.** Week PIDstat expands 467.563 →
    1,395.968 MB; other families save 26.21%. Larger-row-group local candidates are
    promising, but shipping settings and S3 outputs were not changed. Qualify
    payload/NULL/duplicate/schema preservation and representative resource/performance
    behavior before accepting a new default.
-6. **Only then review production operation.** Explicit roots/hosts/namespace/root
+7. **Only then review production operation.** Explicit roots/hosts/namespace/root
    PID policy, complete bootstrap, one writer, external DBT-reader exclusion,
    missed-hour catch-up and manual failure recovery need operator acceptance.
+
+## On-prem continuation prompt
+
+    Continue the durable-process/compaction work from the on-prem development host.
+    Read AGENTS.md, this handoff, and
+    wiki/work/durable-process-entity-manager/verification.md.
+    First establish the checked-out branches/commits and verify the configured
+    Garage endpoint with read-only checks. Measure the on-prem versus laptop/VPN
+    performance path on a bounded read-only or synthetic workload; record commands,
+    durations, bytes and object counts. Do not run DBT, delete production data,
+    or mutate the preserved qualification copy without explicit approval.
+    The three compacted failed-hour outputs are accepted as correct for this
+    milestone based on exact comparison with preserved local inputs; the deletion
+    cause remains unknown. Treat the Garage debug-log reproduction as optional
+    follow-up, not as a prerequisite for this handoff.
 
 ## Evidence and retained test locations
 
@@ -99,7 +136,7 @@ qualification record are committed separately on Analytics
   `s3://lintap-alpha/entity-tests/dpe-actual-week-20261112-8f52baa9-5d38-41f1-89a2-79043b50e4bd/`.
   Week raw outputs: `compacted/`; stale entity state:
   `week-limited-process-entities/`; separate earlier hour: `earlier-hour/`.
-- Private detailed reports, immutable local copies and scripts:
-  `/private/var/folders/gj/mckt0dsj0xv2vwr1jd1wv8nc0004ys/T/opencode/dpe-actual-week-1vnezp50/`.
-  These temporary-machine artifacts are not committed; verify availability before
-  resuming. The wiki preserves the durable findings, not raw telemetry or credentials.
+- Detailed reports, generated inputs and scripts from qualification/diagnostics are
+  temporary laptop artifacts and are not committed. Verify their availability and
+  safely transfer only what is needed before changing machines. Do not copy raw
+  telemetry or credentials into the wiki or a general-purpose handoff.
