@@ -90,12 +90,16 @@ deletion was disabled. The retained qualification output is isolated from the
 source dataset.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/engine.py -->
 
-Entity bootstrap did not qualify. It failed before publication on **18** raw
-process rows: **16** negative-PID `unknown-sys` Refresh records and **2**
-positive-PID Stop records carrying the producer unknown-hash sentinel. No durable
-entity snapshots or processing-metrics checkpoints were published. This is an
-expected fail-closed result under the current identity contract; no rows were
-silently filtered and no identity or ancestor was invented.
+An earlier entity attempt did not qualify: it failed before publication on **18**
+raw process rows: **16** negative-PID `unknown-sys` Refresh records and **2**
+positive-PID Stop records carrying the producer unknown-hash sentinel. The
+threshold-enabled rerun instead reached the decoded-state byte budget first and
+also published no durable entity snapshots or processing-metrics checkpoints. An
+explicitly configured retry raised the entity limits to **10,000,000 rows** and
+**2 GiB decoded state**, with **8 GiB DuckDB memory** and **16 GiB temporary
+storage**; it failed closed on the same decoded-state byte-budget condition.
+Both outcomes are fail-closed; no rows were silently filtered and no identity or
+ancestor was invented.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §unknown/load_inputs -->
 
 Because the durable cache was not initialized, the requested entity-enabled DBT
@@ -150,9 +154,111 @@ there are no entity snapshots or processing-metrics checkpoints in the fresh
 qualification prefixes. This is a capacity blocker, not evidence to relax the
 budget or to treat the pre-threshold attempt as qualification.
 
-The preserved compacted process files are being audited read-only for per-hour
-identity denominator/numerator evidence. Entity-enabled DBT and post-cache gold
-tree QA are not run because no durable state or checkpoints were published.
+The preserved compacted process files were audited read-only for per-hour identity
+denominator/numerator evidence; that evidence is recorded below. Entity-enabled
+DBT and post-cache gold tree QA are not run because no durable state or
+checkpoints were published.
+
+### Read-only identity audit — 2026-11-13
+
+The audit replayed the exact distinct-input projection and identity predicate
+against the preserved compacted `raw_process` files. It covered **71
+process-bearing UTC hours** (the 72-hour window had one hour with no process
+input), **6,439,029** distinct inputs, and **14** exclusions. The aggregate ratio
+was **2.1742408676836212e-06** (**0.000217424%**) versus the **0.05** ceiling;
+the largest hourly ratio was **2.19346347883e-05** (**0.00219346%**). The
+exclusion reasons were `negative_pid=12` and `unknown_pid_hash=2`; no invalid
+hostname or missing-PID exclusions occurred. All 14 exclusions mapped to one
+anonymized host token, `host-3eb51f0e72ac`. The aggregate evidence fingerprint
+was `134df80547c50489e578b0a8aa3d73ff063b146ec2cc9326405c431d7445b698`.
+
+Command form: the project-local `uv run --project extras/raw-sensor-compact
+--locked python` DuckDB audit was run against the preserved compacted root with
+read-only S3 access; no source, compacted, entity, or metrics object was opened
+for writing.
+
+The table reports every process-bearing hour. Host tokens are stable one-way
+identifiers, not hostnames. An em dash means zero exclusions and therefore an
+empty reason/host/fingerprint value.
+
+| UTC hour | input rows | excluded | ratio | reasons | anonymized hosts | fingerprint |
+|---|---:|---:|---:|---|---|---|
+| 20261110 00Z | 91,786 | 1 | 1.08949077201e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `ca89b46f360a22502760b26e3a1239fcdbe67e0be74cbf3ce919fc01c9f53ea7` |
+| 20261110 01Z | 78,287 | 1 | 1.27735128438e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `900bc5892c1be2fc6f34ca3fe9fc51202f07aa17f0619ce9aab428c4f4ad23c3` |
+| 20261110 02Z | 78,967 | 0 | 0 | — | — | — |
+| 20261110 03Z | 84,191 | 0 | 0 | — | — | — |
+| 20261110 04Z | 84,829 | 0 | 0 | — | — | — |
+| 20261110 05Z | 118,472 | 0 | 0 | — | — | — |
+| 20261110 06Z | 108,882 | 0 | 0 | — | — | — |
+| 20261110 07Z | 104,550 | 0 | 0 | — | — | — |
+| 20261110 08Z | 101,010 | 0 | 0 | — | — | — |
+| 20261110 09Z | 89,491 | 0 | 0 | — | — | — |
+| 20261110 10Z | 86,870 | 0 | 0 | — | — | — |
+| 20261110 11Z | 81,709 | 0 | 0 | — | — | — |
+| 20261110 12Z | 83,603 | 0 | 0 | — | — | — |
+| 20261110 13Z | 86,230 | 1 | 1.15968920329e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `bbb7b47df75bb0457c2a961628d796a52110b57259bfb566c87d1cc065322bdd` |
+| 20261110 14Z | 93,252 | 0 | 0 | — | — | — |
+| 20261110 15Z | 96,929 | 1 | 1.03168298445e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `c1378e8291f9a1f0a04d8c0cf388169b18e74431bf112fd73f81332066267d58` |
+| 20261110 16Z | 92,450 | 1 | 1.08166576528e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `72335932e718c5509f32a0da535d6b91b4ca4b6b52860e2adac0b55fba6b9a0d` |
+| 20261110 17Z | 89,986 | 0 | 0 | — | — | — |
+| 20261110 18Z | 90,221 | 0 | 0 | — | — | — |
+| 20261110 19Z | 90,122 | 1 | 1.10960697721e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `4e2ae52e535b6537aab17cced3fd455dc0b2ce216a4ddbe80786b5ee1527ae1b` |
+| 20261110 20Z | 91,996 | 1 | 1.08700378277e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `7ba20aa7fa13fb0608e0dc506bc1e0701ddb36f6cb285c7e98c9a159147ec320` |
+| 20261110 21Z | 90,157 | 0 | 0 | — | — | — |
+| 20261110 22Z | 114,037 | 0 | 0 | — | — | — |
+| 20261110 23Z | 109,182 | 1 | 9.1590188859e-06 | negative_pid=1 | host-3eb51f0e72ac=1 | `64869ba10f68e0ec2575ebd2e668336bb114316b3bba4ddd4da060b25a96c486` |
+| 20261111 00Z | 98,745 | 1 | 1.01270950428e-05 | unknown_pid_hash=1 | host-3eb51f0e72ac=1 | `fa29ccd1fef8a3a70d9f5059af1e4bd5e79f47c282a16f017b2c615720511e3f` |
+| 20261111 01Z | 77,860 | 0 | 0 | — | — | — |
+| 20261111 02Z | 79,385 | 0 | 0 | — | — | — |
+| 20261111 03Z | 82,732 | 0 | 0 | — | — | — |
+| 20261111 04Z | 83,569 | 0 | 0 | — | — | — |
+| 20261111 05Z | 133,298 | 0 | 0 | — | — | — |
+| 20261111 06Z | 98,404 | 0 | 0 | — | — | — |
+| 20261111 07Z | 105,379 | 0 | 0 | — | — | — |
+| 20261111 08Z | 101,996 | 0 | 0 | — | — | — |
+| 20261111 09Z | 91,126 | 0 | 0 | — | — | — |
+| 20261111 10Z | 86,813 | 0 | 0 | — | — | — |
+| 20261111 11Z | 82,782 | 0 | 0 | — | — | — |
+| 20261111 12Z | 83,031 | 0 | 0 | — | — | — |
+| 20261111 13Z | 99,394 | 0 | 0 | — | — | — |
+| 20261111 14Z | 86,992 | 0 | 0 | — | — | — |
+| 20261111 15Z | 95,811 | 1 | 1.04372149336e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `6c67a45da12b73d9e65659e3145927602809077c7d9fb3459a16763524ddb69e` |
+| 20261111 16Z | 99,705 | 1 | 1.00295872825e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `bfd15084dbcd5ec2c18533c279f02a403be8cdd1feeb257a3aa00ddf54e6337a` |
+| 20261111 17Z | 91,180 | 2 | 2.19346347883e-05 | negative_pid=1; unknown_pid_hash=1 | host-3eb51f0e72ac=2 | `e5b181097cebb11d54ee94697d46fa862a0931eee27e7943e1bbaaf25124346d` |
+| 20261111 18Z | 91,300 | 1 | 1.09529025192e-05 | negative_pid=1 | host-3eb51f0e72ac=1 | `f93caf6090cdeeae6f4a138fc81174fba9e432e3bf26041d91407b95a2ec995b` |
+| 20261111 19Z | 88,513 | 0 | 0 | — | — | — |
+| 20261111 20Z | 85,903 | 0 | 0 | — | — | — |
+| 20261111 21Z | 82,039 | 0 | 0 | — | — | — |
+| 20261111 22Z | 79,631 | 0 | 0 | — | — | — |
+| 20261111 23Z | 82,203 | 0 | 0 | — | — | — |
+| 20261112 00Z | 84,729 | 0 | 0 | — | — | — |
+| 20261112 01Z | 81,004 | 0 | 0 | — | — | — |
+| 20261112 02Z | 75,068 | 0 | 0 | — | — | — |
+| 20261112 03Z | 81,269 | 0 | 0 | — | — | — |
+| 20261112 04Z | 84,212 | 0 | 0 | — | — | — |
+| 20261112 05Z | 134,635 | 0 | 0 | — | — | — |
+| 20261112 06Z | 95,768 | 0 | 0 | — | — | — |
+| 20261112 07Z | 103,714 | 0 | 0 | — | — | — |
+| 20261112 08Z | 103,985 | 0 | 0 | — | — | — |
+| 20261112 09Z | 98,301 | 0 | 0 | — | — | — |
+| 20261112 10Z | 79,678 | 0 | 0 | — | — | — |
+| 20261112 11Z | 81,028 | 0 | 0 | — | — | — |
+| 20261112 12Z | 84,377 | 0 | 0 | — | — | — |
+| 20261112 13Z | 93,034 | 0 | 0 | — | — | — |
+| 20261112 14Z | 80,883 | 0 | 0 | — | — | — |
+| 20261112 15Z | 82,034 | 0 | 0 | — | — | — |
+| 20261112 16Z | 83,245 | 0 | 0 | — | — | — |
+| 20261112 17Z | 82,167 | 0 | 0 | — | — | — |
+| 20261112 18Z | 76,514 | 0 | 0 | — | — | — |
+| 20261112 19Z | 80,998 | 0 | 0 | — | — | — |
+| 20261112 20Z | 84,224 | 0 | 0 | — | — | — |
+| 20261112 21Z | 83,277 | 0 | 0 | — | — | — |
+| 20261112 22Z | 79,885 | 0 | 0 | — | — | — |
+
+The complete machine-readable audit evidence is retained at
+`../Wintap-PyUtil/.opencode-work/dpe-3day-quarantine-v2/reports/identity-exclusion-evidence.json`.
+This is read-only evidence and does not convert the blocked capacity run into a
+durable-state qualification.
 
 ### Bounded read-only on-prem fixture check — 2026-11-13
 

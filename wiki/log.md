@@ -5230,3 +5230,27 @@ post-cache tree QA were therefore not run. A read-only identity audit of the
 preserved compacted process files is retained separately to report denominator,
 exclusion and ratio evidence without relaxing capacity limits.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §load_inputs -->
+
+## [2026-11-13] verification | read-only identity exclusion evidence
+
+The preserved compacted process history was audited without writes: 71
+process-bearing UTC hours, 6,439,029 distinct input rows, and 14 exclusions.
+The aggregate ratio was 2.1742408676836212e-06 (0.000217424%), and the maximum
+hourly ratio was 2.19346347883e-05, both below the configured 0.05 ceiling.
+Reasons were negative_pid=12 and unknown_pid_hash=2; no invalid-hostname or
+missing-PID exclusions occurred. Per-hour denominators, counts, ratios,
+anonymized host tokens, and fingerprints are recorded in the verification page
+and in the project-local machine-readable evidence file. This evidence does not
+override the decoded-state byte-budget blocker; no entity DBT or post-cache tree
+QA was run.
+<!-- EVIDENCE: ../Wintap-PyUtil/.opencode-work/dpe-3day-quarantine-v2/reports/identity-exclusion-evidence.json -->
+
+## [2026-11-13] verification | explicit capacity retry remained blocked
+
+An explicitly configured entity-bootstrap retry used a 10,000,000-row limit, a
+2 GiB decoded-state limit, 8 GiB DuckDB memory and 16 GiB temporary storage.
+It still failed closed on the decoded-state byte budget before publishing any
+entity snapshot or processing checkpoint. The isolated output prefixes remain
+empty; the retry did not alter preserved source or compacted evidence. Entity
+DBT and post-cache process-tree QA remain blocked.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities -->
