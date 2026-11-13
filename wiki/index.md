@@ -182,8 +182,13 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 | [[wiki/concept/lintap-cpu-unit-conventions]] | high | Defines raw pidstat CPU as core-summed percent, normalized DBT aliases and dashboard labels, host normalization formula, and raw-schema compatibility rule. |
 | [[wiki/concept/telemetry-identity-and-endpoint-orientation]] | high | Foundational agent_id, pid_hash and canonical five-tuple conn_id scopes; identity versus direction, socket roles and connection lifetimes. |
-| [[wiki/concept/durable-process-context-and-stream-table-enrichment]] | medium | Durable entity state, snapshot plus changelog, Kafka/Splunk comparisons, historical ancestry and refresh-cadence proposals; not implemented. |
+| [[wiki/concept/durable-process-context-and-stream-table-enrichment]] | medium | Durable entity state/stream-table concepts; first-round S3 Parquet hourly writer and DBT context implemented, broader refresh/changelog proposals remain open. |
 | [[wiki/work/raw-sensor-file-aggregation/process-context-options]] | speculative | Optional compactor-fed process state for ground-truth datasets: runtime-spanning inputs, live/recent references plus ancestor closure, reachability GC and dataset checkpoints; no experiment-specific retention or approved scope expansion. |
+| [[wiki/work/durable-process-entity-manager/brief]] | medium | Accepted first-round S3/hourly/DBT direction; implementation authorized with synthetic orphan-breakpoint tests. |
+| [[wiki/work/durable-process-entity-manager/design]] | speculative | Historical design record plus concrete implementation choices; no initial GC, entity-before-delete ordering, JSON evidence and separate DBT context. |
+| [[wiki/work/durable-process-entity-manager/implementation_plan]] | speculative | DPE-01–05 first-round slices completed on synthetic local/S3 fixtures; production capacity/bootstrap/exclusion still gates. |
+| [[wiki/work/durable-process-entity-manager/verification]] | medium | Earlier actual-hour DBT/entity checks pass; week 165/168 raw successes, 96.91% fewer files/4.51% fewer bytes. Historical entity bootstrap blocked; three deletion failures retained, originals unchanged. |
+| [[wiki/work/durable-process-entity-manager/dev_handoff]] | medium | Milestone summary and ordered follow-up: reconcile failed hours, decide unknown-identity policy, qualify scale/history/DBT, separately tune PIDstat, then review production operation. |
 ## Component
 
 | Page | Confidence | Summary |
@@ -224,6 +229,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/tool/wintap-workbench]] | high | Summarizes the Angular Workbench UI, feature routes, SignalR/EPL query path, and query-state boundary. |
+| [[wiki/tool/durable-process-entity-manager]] | high | Implemented optional S3 fixed-host snapshots, replay-safe evidence/no GC, entity-before-delete ordering and DBT ancestor closure/terminal QA; production scheduling deferred. |
 | [[wiki/tool/recent-host-activity-dashboard]] | high | Standalone manually refreshed 12-hour UTC S3 metadata-first dashboard (keys/sizes and filename collect-time series, no Parquet reads), with optional DuckDB raw-row mode; 27 offline tests pass, but live metadata-mode performance remains unverified. |
 ## Workflow
 
@@ -231,7 +237,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 |------|------------|---------|
 | [[wiki/workflow/wintap-etl-data-flow]] | high | Editable data ETL diagram: Wintap/Lintap host-local raw Parquet → S3 → Wintap-PyUtil `make dbt-build` → bronze/silver/gold in local DuckDB, with core Makefile validation targets and scope limits. |
 | [[wiki/workflow/future-experiment-analysis-workflows]] | high | Tracks first-class analytics topics including ACME4 Explore, DuckDB view construction, process trees/paths, process-centric SQL, and network joins. |
-| [[wiki/workflow/process-ancestry-completeness-qa]] | medium | Proposed root-reachable fraction, immediate-parent gaps, first-unresolved-ancestor impacts, concentration/K95 and independent validity checks. |
+| [[wiki/workflow/process-ancestry-completeness-qa]] | medium | First-round DBT terminal/context QA implemented; broader root fraction, concentration/K95 and independent validity-audit guidance remains separate. |
 | [[wiki/workflow/lintap-dev-field-workflow]] | high | The Lintap dev/field split: field-host clones are read-only by policy (reviews transcribed dev-side), diagnostics bundles must be self-sufficient, deploys pull and rebuild tracers on-host, pushes require the human's credentials, and agent memory must mirror into the wiki. |
 | [[wiki/workflow/rhel8-rpm-build-prerequisites]] | high | Preflight and software prerequisites for a native RHEL 8 x86_64 Lintap RPM build, including exact .NET SDK 10.0.402 and the current BTF/CO-RE limitation. |
 ## Repo

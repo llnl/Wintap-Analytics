@@ -124,7 +124,7 @@ and rebuild bronze as well as materialized downstream models. Existing bronze
 views bind discovered file globs and must not be reused after raw deletion.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/paths.sql; ../Wintap-PyUtil/wintap_dbt/README.md §Compaction migration contract -->
 
-Latest qualification: **107 compactor passes/2 opt-in skips** and **299 PyUtil
+Compaction baseline qualification: **107 compactor passes/2 opt-in skips** and **299 PyUtil
 passes/2 opt-in skips**. Full local migration matches all 54 models (139 gates
 per raw/mixed/compacted state). Copied live S3 host/pidstat migration matches 4
 models/897,395 rows, deletes 29 copied objects and preserves all original hashes.
@@ -155,3 +155,14 @@ Feature context: [[wiki/work/raw-sensor-file-aggregation/brief]],
 [[wiki/work/raw-sensor-file-aggregation/implementation_plan]],
 [[wiki/work/raw-sensor-file-aggregation/verification]], and scheduling dependency
 [[wiki/todo/raw-sensor-upload-time-partition]].
+
+## Optional durable entity phase — 2026-11-12
+
+[[wiki/tool/durable-process-entity-manager]] now adds an opt-in process-entity
+phase before raw merge/deletion, with source inventory binding and persisted
+snapshot verification. Raw COPY/duplicate/NULL/skip/grace semantics remain unchanged.
+DBT ancestry uses separate state/context relations, not injected raw events.
+Current combined regressions are 132 extra and 310 main passes; isolated synthetic
+S3 qualification restores 33 seed paths without changing summary populations.
+Production scheduling/capacity/bootstrap remains deferred; earlier compaction
+qualification above is historical, separate evidence.

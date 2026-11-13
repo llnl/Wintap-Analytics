@@ -20,6 +20,15 @@ tags: [feature-work, compaction, entity-state, ancestry, retention, proposal]
 
 # Recommendation and scope
 
+**Follow-on planning selected 2026-11-12:**
+[[wiki/work/durable-process-entity-manager/brief]] records the human's first-round
+S3 Parquet store/hourly writer/infrequent DBT direction. That design proposes full
+per-host rewrites and no initial entity GC. The bounded-horizon/mark-and-sweep
+options below remain future alternatives, not selected first-round retention.
+The human subsequently authorized implementation; the first round is now
+[[wiki/tool/durable-process-entity-manager]]. The bounded-state alternatives below
+remain proposals. Completed raw compaction row semantics are unchanged.
+
 **Use the hourly compaction pass to feed an optional process-context projection,
 not to replace raw process events with latest-state rows.** Compaction remains
 row-preserving `UNION ALL` with source/output count equality. The projection has

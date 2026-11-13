@@ -174,15 +174,27 @@ would need review before implementation.
 
 ## Optional compactor integration
 
-The proposed hourly [[wiki/work/raw-sensor-file-aggregation/brief]] could share
-its process-row scan with a separate bounded entity-state projection. Keep raw
-compaction row-preserving; do not mix derived context into its count-conserved
-output. [[wiki/work/raw-sensor-file-aggregation/process-context-options]] proposes
+**First round implemented 2026-11-12:** the human selected and authorized S3 Parquet entity
+persistence maintained by the hourly compaction job, consumed by infrequent DBT
+runs for parent enrichment. See [[wiki/work/durable-process-entity-manager/brief]]
+and [[wiki/tool/durable-process-entity-manager]]. Fixed per-host snapshot
+rewrite/no initial GC and conservative evidence/publication rules are implemented
+as opt-in behavior in Wintap-PyUtil. The worker is locally stateless; its entity
+state persists in S3. This supersedes infrastructure uncertainty for the first
+round, not the older notes' warnings about ancestry, conflicts or missing evidence.
+
+The hourly [[wiki/work/raw-sensor-file-aggregation/brief]] now supports a separate
+entity phase before raw compaction/deletion, binding process input inventories
+across phases. Raw compaction remains row-preserving; derived entity context is
+not mixed into its count-conserved output.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py §process_inventory -->
+
+[[wiki/work/raw-sensor-file-aggregation/process-context-options]] historically proposed
 retaining recently referenced/live instances and their transitive ancestors,
 with reachability-based reclamation, explicit coverage horizons and budget limits.
 Dataset-level checkpoints/history support later full or subset reads independently
-of particular experiments. This is a follow-on design option, not an approved
-expansion of that feature.
+of particular experiments. Bounded retention/GC/checkpoint generations remain
+future alternatives, not the no-GC fixed-host implementation.
 
 Related: [[wiki/workflow/process-ancestry-completeness-qa]],
 [[wiki/concept/collector-process-telemetry-and-collection-boundaries]],

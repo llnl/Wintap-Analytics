@@ -4892,3 +4892,177 @@ untracked; neither branch pushed. Final staged diff checks and scoped wiki check
 pass (13 frontmatters, 96 current grounding paths, 84 wikilinks/inbound links;
 15 inherited exclusions unchanged). Regression evidence remains 107 compactor,
 299 PyUtil and 8 isolated-local migration passes from relocation verification.
+
+## [2026-11-12] plan | durable process entity manager with S3 Parquet persistence
+
+Human selects first-round S3 Parquet persistence, hourly compaction-job entity
+updates and infrequent DBT parent enrichment. Worker has no durable local state;
+S3 entity state persists. Created feature brief/design/implementation plan/
+verification under `wiki/work/durable-process-entity-manager/`; updated index,
+durable concept, original optional-context note and refresh tension.
+
+Proposed defaults: fixed full snapshot per host (rewrite also compacts entity
+state), retain all known instances/no initial GC, replay-safe evidence/conflict
+sets, explicit bootstrap/rebuild, entity publication/verification before process
+source deletion, one writer/no DBT overlap, separate DBT context closure with no
+raw lifecycle-count inflation. Avoid ANY_VALUE parent selection and PID-only repair;
+unobserved/conflicted ancestors remain unresolved. Proposed schema, policies and
+limits await review, not implementation approval.
+
+Read current PyUtil compactor/bronze/silver/path/gold source to ground integration
+boundaries. No source code, schema, private config or S3 operation changed; no
+entity prototype/tests run. Earlier compactor qualification is separate evidence.
+
+Planning review passes `git diff --check` and scoped structural validation:
+7 frontmatters, 35 local grounding paths, 25 wikilinks, 4 feature index entries.
+Added explicit entity/raw cross-phase inventory binding to prevent deletion of
+new evidence not incorporated in entities, and Parquet metadata for initialized
+empty hosts. No entity implementation or endpoint tests run; plan remains uncommitted.
+
+## [2026-11-12] implement | first-round durable process entities and DBT ancestry
+
+Human accepts the plan and explicitly authorizes implementation/testing ("Proceed!").
+Implemented in Wintap-PyUtil: canonical evidence JSON in fixed per-host S3 Parquet,
+explicit host/namespace/init/replay/verify/new-root rebuild and partial-init resume,
+no initial GC, conservative paired-parent/Stop conflicts, resource limits, full
+GET verification, entity-before-delete phase and cross-phase process inventory
+binding. Main DuckDB remains 1.5.6; standalone writer remains 2.0.0. Main pytest
+collection explicitly excludes the independently tested extra.
+
+DBT opt-in materializes state, reduces retained/current evidence, builds activity/
+ancestor context, keeps window seeds/counters and original hostname payloads,
+and emits terminal root/gap/conflict/cycle QA. A new summary assertion caught and
+fixed the normalized-host output join regression. Non-root self-links remain
+cycles; accepted roots require recorded self-parent evidence plus declared root
+PID candidates. No historical snapshot rows injected into raw telemetry.
+
+Verification: **132 extra passes/2 skips**, **310 main passes/3 skips**, final
+targeted locked entity/DBT tests **11 passes**. Actual generated-S3 qualification
+**1 pass**; final read-only full build **58 models/145 gates**, **33 complete seed
+paths and 33 summaries**, 36 entities, 2 context-only ancestors. Snapshot 5,843
+bytes; 32 generated source hashes verified before optional validated deletion.
+Retained 14 compacted outputs plus 1 snapshot (48,182 bytes) at the exact synthetic
+root recorded in [[wiki/work/durable-process-entity-manager/verification]]. No
+original telemetry access/mutation, private run-env edits, broad S3 operation,
+output cleanup, production rollout, commits or pushes. Mocked lost-ACK/corrupt
+publication/partial-host cases are not a claim of live network-failure qualification.
+
+Created [[wiki/tool/durable-process-entity-manager]] and promoted implemented facts
+from work artifacts; updated brief/design/plan/verification, canonical concept/
+compactor tool/ancestry QA, original optional-state note, refresh tension and index.
+Large-host capacity, actual historical bootstrap/root configuration and external
+writer/DBT scheduling exclusion remain production gates, not silently implemented
+services. Broad refresh/retention tension and downstream ANY_VALUE debt remain open.
+
+Final scoped wiki validation passes 10 YAML frontmatters, 61 local grounding paths
+and 47 wikilinks. Both repo diff checks pass; final locked reducer/store tests pass
+25 cases after the publication-report refinement. Work remains uncommitted.
+
+## [2026-11-12] verification | begin earlier-window and week-long actual-data tests
+
+Human authorizes many days/a week of compaction on test telemetry. Clarified that
+prior entity proof used synthetic fixtures, not the earlier actual telemetry.
+Read-only inventory freezes 71,155 objects/5,958,506,820 bytes: November 5–11 full
+available telemetry plus October 25–November 4 process-only bootstrap history.
+Located the original six-host materialized audit and its 08–22 process globs;
+independent saved-graph audit reproduces its large breakpoint concentration.
+Today's inventory is larger, and recorded-self-root QA differs from legacy PID
+root policy; neither difference will be mislabeled as enrichment improvement.
+
+Fresh actual-data copies are hash-verified before test mutation. Earlier-hour
+raw/mixed/compacted DBT qualification runs separately; 168 hourly tests and default
+historical-state capacity probe are prepared. Copy timeout resumed safely; corrected
+a test-harness query for nonexistent Refresh counters, with no shipped-code change.
+Evidence lives in the private dpe-actual-week-1vnezp50 directory recorded in feature
+verification. Expanded results pending; originals read-only, no cleanup/cutover,
+private env edits, commits or pushes. Updated verification and plan tracking.
+
+Human adds file-count/byte-size metrics to the active qualification. Prepared
+overall/day/hour/event reduction ratios, output-size distribution and throughput
+from validated partition reports; exclude failed/partial outputs, bootstrap copies
+and entity-state storage from raw-compaction savings. Negative byte savings remain
+visible. Helper arithmetic/grouping/failure-exclusion checks pass; live aggregates
+pending, not claimed from inventory alone.
+
+## [2026-11-12] verification | earlier actual hour passes; report file and byte savings
+
+Real November 11/hour 08 isolated migration completes: 399 → 10 raw Parquet
+files (97.49% fewer, 39.9×); 35,471,263 → 32,792,809 bytes (7.55% saving);
+all 2,668,265 rows preserved and 399 original hashes unchanged. Disabled baseline
+54 models/140 gates; enabled raw/mixed/compacted 58 models/145 gates each. Bronze,
+schema, host-level Start/Stop counters and 40,982 summaries preserved. Four accepted
+ANY_VALUE-reachable downstream differences retained explicitly in comparisons.
+
+Entity init/no-op replay/combined-before-delete/compacted replay/verify pass:
+40,982 entities, 86 direct parent conflicts, five snapshots/3,277,708 bytes.
+Hour-only context does not repair historical ancestry: terminal QA still reports
+40,893 missing-ancestor and 89 parent-conflict seeds, zero recorded-root seeds.
+Do not confuse integration success with historical completeness; week/bootstrap
+qualification is separate and pending.
+
+Metrics expose pidstat expansion (2.339 → 7.892 MB), despite overall saving. Both
+layouts use ZSTD, but compacted output has 426 small row groups vs 24 originals.
+Local controlled row-group A/B retains counts/all-column row-hash sums; requesting
+122,880 rows/group yields 1,122,558 bytes vs 7,969,344 at 2,048. This is a tuning
+opportunity, not a shipped change or remote benchmark. Raw plus entity dimension
+totals 36,070,517 bytes, 1.69% above raw alone; storage types reported separately.
+Full table/timings/private evidence paths saved in feature verification. No
+original mutation, cleanup, private config edits, production deployment or commit.
+
+Full 71,155-object copy/hash qualification completes; resumed copy command took
+1,628.44 seconds (copy/verification, not compaction). Started historical/default
+capacity plus sequential 168-hour driver. Independent SQL raw-evidence reduction
+exactly matches 40,982 persisted entity scalar tuples; independent Python graph
+walk matches all real-hour DBT terminal-status counts. Full history and week
+compaction results remain pending, and no completeness inference is made from
+these passing one-hour integration/reducer checks.
+
+## [2026-11-13] verification | week completes; raw savings and entity/deletion limits
+
+Completed November 5–11 copied-data driver: 168 hours attempted, 165 successful raw
+compactions and three immediate deletion-verification failures. Successful reports
+preserve 360,027,830 rows: 53,415 → 1,650 files (96.91% fewer / 32.37×),
+4,841,533,292 → 4,623,379,532 bytes (218,153,760 / 4.51% saving). Recomputed metrics
+and successful leaf gates pass; final read-only S3 listing independently matches
+output count/bytes. All 71,155 original full-GET hashes remain unchanged.
+Successful command time 6.58 hours / 15,197 rows/s; daily/event/runtime breakdowns
+and accounting exclusions recorded in feature verification. PIDstat expands
+467.563 → 1,395.968 MB; other families save 26.21%. No layout tuning shipped.
+
+Historical entity bootstrap rejects unknown identity before publication/capacity
+certification. Week-limited init passes with 33,824 entities/nine snapshots/
+2,730,739 bytes; only one combined hour passes, then two PID −1 Refresh
+rows stop entity updates and the harness explicitly continues raw-only. Expanded
+history also contains positive-PID sentinel-key Stops. Do not label the week a
+successful entity-manager or historical DBT qualification; default large-host
+budgets, identity policy and original audit-window enrichment remain open.
+
+Failures: November 5/06 network, November 9/11 SELinux transition, November 11/20
+SELinux interaction. Those exact event prefixes are empty on later inspection,
+but transient/stale listing is only a hypothesis and commands remain failed.
+Retain 25 partial output objects/60,900,907 bytes and 142 unprocessed inputs/
+28,481,517 bytes for manual reconciliation; no blind reruns/deletes. Pre-week
+process copies/entity storage excluded from raw savings. Updated verification,
+plan checklist, canonical entity limitations and index. No source changes,
+original mutation, private-env edits, cleanup, commits, pushes or deployment.
+
+Final diff check and scoped validation pass: three frontmatters, 24 grounding
+paths, six links, all day/event/hour metric totals and identity-category counts.
+
+## [2026-11-13] milestone | commit durable entities and copied-week qualification
+
+Human requests committing current milestone and a complete/next summary. Prepared
+[[wiki/work/durable-process-entity-manager/dev_handoff]] with completed code/test/
+actual-hour/raw-week evidence and prioritized deletion reconciliation, explicit
+identity policy, historical capacity/bootstrap/DBT qualification, separate PIDstat
+tuning and production exclusion/operations gates. Corrected stale brief test-status
+wording and indexed the handoff. Commit scope is the existing PyUtil implementation
+and Analytics wiki feature changes; private run-env files and temporary/raw evidence
+are excluded. No push, cleanup or deployment requested.
+
+PyUtil milestone committed as `2cfbad1` on `work/raw-sensor-compacted-union`
+(25 files); the two private run-env files remain untracked/excluded. Fresh targeted
+checks: 11 DBT/entity passes and 25 reducer/store passes. Staged wiki checks pass:
+11 frontmatters, 67 live grounding paths and 360 links; five existing external
+citations excluded from local-path checks. Both staged diff checks pass. Analytics
+milestone committed separately on its existing branch; neither branch pushed.
