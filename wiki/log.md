@@ -5182,3 +5182,15 @@ deletion status and operation status. DBT now fails preflight when selected
 preventing stale durable entity state from being consumed silently. Local focused
 tests pass (35 standalone and 12 DBT regressions); S3 qualification remains opt-in.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql -->
+
+## [2026-11-14] verification | three-day raw qualification and DBT baseline
+
+The isolated 72-hour all-event raw qualification preserved 151,733,675 rows,
+passed 752/752 partition checks with zero row deltas, and performed no source
+deletion. Durable entity bootstrap correctly failed closed on 18 unknown-identity
+rows before publishing snapshots or metrics. A separate non-entity DBT baseline
+completed 54 models and 84 tests with 140/140 resources passing. Gold direct-parent
+coverage was 89.60%; terminal root reachability was 0.0001% because the durable
+historical cache was not available. Entity-enabled DBT and post-cache gold QA
+remain blocked pending an explicit unknown-identity policy decision.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py; ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql -->

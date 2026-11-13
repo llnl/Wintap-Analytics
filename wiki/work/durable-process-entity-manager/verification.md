@@ -17,6 +17,8 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/tests/process_entity_context_integrity.sql
   - ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql
+  - ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql
   - ../Wintap-PyUtil/tests/test_process_entities.py
   - ../Wintap-PyUtil/tests/test_process_entities_s3.py
 policy: agent-editable
@@ -75,6 +77,42 @@ because its explicit isolated-write approval variables were not set.
 
 The opt-in S3 qualification remains separate and was not treated as a local test
 result; no live dataset or credential was written by this verification step.
+
+### Three-day raw-source qualification and DBT baseline — 2026-11-14
+
+The isolated three-day raw qualification covered 72 UTC hours and all 12 event
+families discovered in the source. Raw compaction merged **27,402 source files**
+into **752 outputs**, preserving **151,733,675 rows**; the source/destination
+verification passed all **752/752 partitions** with zero row deltas. Source
+deletion was disabled. The retained qualification output is isolated from the
+source dataset.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/engine.py -->
+
+Entity bootstrap did not qualify. It failed before publication on **18** raw
+process rows: **16** negative-PID `unknown-sys` Refresh records and **2**
+positive-PID Stop records carrying the producer unknown-hash sentinel. No durable
+entity snapshots or processing-metrics checkpoints were published. This is an
+expected fail-closed result under the current identity contract; no rows were
+silently filtered and no identity or ancestor was invented.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §unknown/load_inputs -->
+
+Because the durable cache was not initialized, the requested entity-enabled DBT
+build and post-cache tree qualification were not run. A clearly separate
+non-entity DBT baseline over the isolated compacted output completed successfully:
+**54 models, 84 data tests, 140/140 resources passed**. The gold
+`process_summary` relation contained **2,613,680** process rows. Direct parent
+classification found **2,341,914 (89.60%)** parent-present rows, **271,478
+(10.39%)** missing ancestors, **282 (0.01%)** parent-PID mismatches, 5 missing
+parents and one root/self row.
+
+The corresponding baseline `process_path` terminal classification reached only
+**3 roots (0.0001%)**, with **2,589,960 (99.09%)** terminal missing-ancestor
+verdicts and **23,717 (0.91%)** missing-parent verdicts. This poor terminal result
+is explainable for a three-day activity-only window without historical durable
+ancestors; it is not evidence that the durable cache works. A valid next gate is
+an explicit identity-policy decision and rerun of entity bootstrap, followed by
+the entity-enabled DBT build and gold comparison.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql; ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql -->
 
 ### Bounded read-only on-prem fixture check — 2026-11-13
 
