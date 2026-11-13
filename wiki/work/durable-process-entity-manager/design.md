@@ -7,12 +7,15 @@ grounded_by:
   - wiki/concept/telemetry-identity-and-endpoint-orientation.md
   - wiki/workflow/process-ancestry-completeness-qa.md
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
   - ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_raw_process.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql
+  - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
+  - ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_processing_metrics.sql
   - ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql
 policy: agent-editable
-last_validated: 2026-11-12
+last_validated: 2026-11-13
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -210,6 +213,25 @@ No normal-run S3 temporary objects or automated generation cleanup are needed.
 Local staging/spill is disposable and private. Retained row-preserving compacted
 archives are the recovery source even after original small files are deleted.
 If archive history is removed too, full entity reconstruction cannot be promised.
+
+The entity-enabled writer also publishes a separate operational checkpoint table
+under `<dataset>/processing_metrics/`, not under a generic logs prefix. It writes
+one verified Parquet object per requested UTC hour at
+`dayPK=YYYYMMDD/hourPK=HH/metrics.parquet`. Each row records the entity namespace
+and expected-host count, snapshot identities, process input/output inventory
+fingerprints, source/output file-byte-row totals, deletion status and operation
+status. The local writer uses staged replacement; the S3 writer verifies the
+object by a full GET and content hash. This table is operational evidence, not
+another telemetry fact relation.
+
+The DBT preflight requires successful entity-enabled checkpoint rows for every
+`raw_process` hour selected by the build. Missing, duplicate, incompatible, or
+failed rows reject the build. This closes the failure mode in which an entity
+bootstrap/update fails and a raw-only continuation leaves stale durable state that
+DBT would otherwise consume silently. A metrics root may be explicitly overridden,
+but it must remain separate from raw, compacted and entity roots.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §ProcessingMetricsStore -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
 
 ## 6. DBT integration: context is not activity
 

@@ -7,8 +7,11 @@ grounded_by:
   - wiki/work/durable-process-entity-manager/design.md
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/engine.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql
+  - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
+  - ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_processing_metrics.sql
 policy: agent-editable
 last_validated: 2026-11-13
 repo_scope: cross-repo
@@ -105,6 +108,10 @@ Sharded state/delta files/retention are later design choices, not hidden additio
 - [x] DPE-03 publisher/source-deletion safety pass on isolated generated fixtures.
 - [x] DPE-04 DBT ancestry enrichment and disabled-mode regressions pass.
 - [x] DPE-05 synthetic breakpoint fixtures pass full local and actual-S3 DBT builds.
+- [x] Add a sibling `processing_metrics/` Parquet checkpoint per requested UTC hour;
+  verify local replacement and fail DBT preflight on missing or incomplete
+  `raw_process` coverage. The S3 PUT/GET path is implemented but remains part of
+  the separately approved opt-in qualification.
 - [x] Earlier actual hour: raw/mixed/compacted DBT, independent entity scalar and
   terminal-QA comparisons, window counters/summary populations and replay pass.
 - [x] Seven daily inventories, 168-hour test execution and file/byte/day/event/runtime

@@ -74,13 +74,15 @@ work, and arrange a separate authorized transfer/push if it is not available.
 
 ## Next, in order
 
-1. **Resume on the on-prem development host.** Establish repository/branch state
-   and the Garage endpoint without changing production data. The human expects a
-   substantial performance improvement versus the laptop-over-VPN path; measure
-   it rather than assuming it. Begin with a bounded, read-only or synthetic
-   comparison and record wall time, object counts/bytes, and network path. Do not
+1. **Compare the on-prem and laptop/VPN paths.** On-prem checkout and approved
+   Garage access are established. The bounded read-only synthetic fixture check
+   passed on-prem in 2.18 seconds (pytest-reported duration), covering 24 source
+   objects / 17,544 bytes and one compacted object / 970 bytes, with 24 rows and
+   zero row delta. This duration includes process/test overhead, not just network
+   time. Run the same fixture check from the laptop for a comparable measurement;
+   the historical seven-day aggregate is not an apples-to-apples baseline. Do not
    run DBT, repeat production deletion, or mutate preserved qualification data
-   without a new explicit authorization.
+   without new explicit authorization.
 2. **Keep the Garage root-cause test as optional follow-up.** The baseline passed
    and injected-arrival case reproduced the failure signature, but the cause of
    the historical failures remains unknown. If needed, coordinate Garage debug

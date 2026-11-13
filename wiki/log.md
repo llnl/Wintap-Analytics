@@ -5141,3 +5141,44 @@ objects. Read-only verification against the untouched baseline passed 240/240
 partitions with 57,047,250 rows preserved and zero delta. No DBT/entity bootstrap
 ran and no immutable source was modified. Details:
 `wiki/work/raw-sensor-file-aggregation/verification.md`.
+
+## [2026-11-13] verification | Nov 7 compacted-only DBT with durable enrichment
+
+Ran the exact `make dbt-build` target against the completed 240-file compacted
+destination, using the empty disposable source parent and the retained nine-host
+durable entity snapshots. Source preflight passed; all 58 models materialized and
+85 data tests were evaluated. The durable `process_entity_context_integrity` test
+passed. Across 145 resources, the build returned nonzero only for the existing
+`unique_selinux_interaction_event_id` test (19 duplicate rows; 127 pass, 17 skip).
+Process-tree QA found 919,508 seeds but only
+2 root-reached paths: 908,487 missing ancestors, 2,861 parent conflicts, 8,156
+sentinel terminals and 2 missing entities. The stale week-limited state therefore
+does not provide complete Nov 7 trees and remains unsuitable as a production DBT
+entity input. Details: `wiki/work/durable-process-entity-manager/verification.md`.
+
+## [2026-11-13] diagnosis | high Nov 7 ancestry-gap count explained
+
+Reconciled the Nov 7 result with the earlier ancestry audit and QA workflow. The
+908,487 `missing_ancestor` results are per-seed terminal impacts, not distinct
+missing parents: 88,701 direct context rows collapse to 2,203 distinct missing
+parent keys, and the top three breakpoints affect 800,504 seeds (88.1%). More
+importantly, the retained durable cache is stale: all 33,824 snapshot rows cover
+only partition `2026110500`, zero of 919,508 Nov 7 process keys overlap the cache,
+and no current child links to a durable parent. The earlier bootstrap/maintenance
+failure and stale-state warning were already recorded. Root-PID policy is not the
+main cause: only one self-parent PID-4 root candidate exists and no PID-2 process
+record is present. A validated historical bootstrap through Nov 7 is required
+before expecting enrichment to improve ancestry completeness.
+Details: `wiki/work/durable-process-entity-manager/verification.md`.
+
+## [2026-11-13] code | durable process coverage checkpoints
+
+Added the hourly operational checkpoint contract to Wintap-PyUtil: entity-enabled
+init/replay/compact runs publish one verified Parquet row per requested UTC hour
+under the sibling `processing_metrics/` prefix. Rows carry source/compacted
+process inventory fingerprints, entity snapshot identities, row/file/byte totals,
+deletion status and operation status. DBT now fails preflight when selected
+`raw_process` hours lack exactly one successful, namespace-compatible checkpoint,
+preventing stale durable entity state from being consumed silently. Local focused
+tests pass (35 standalone and 12 DBT regressions); S3 qualification remains opt-in.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql -->

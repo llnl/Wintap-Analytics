@@ -7,7 +7,9 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
   - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
+  - ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_processing_metrics.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_entities.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql
@@ -57,6 +59,19 @@ process source inventory across phases. Rewriting a changed host also compacts
 its entity evidence. Existing raw-hour skips never authorize source deletion.
 Partial host advancement is reported and replay-safe, not a multi-host transaction.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py §process_inventory -->
+
+Every entity-enabled `entities-init`, `entities-replay` and `compact` run also
+publishes one verified checkpoint per requested UTC hour under the sibling
+`<dataset>/processing_metrics/dayPK=YYYYMMDD/hourPK=HH/metrics.parquet` prefix.
+The operational row records the run/operation status, entity namespace and
+expected-host count, snapshot hashes, process input/output fingerprints, source
+and output file-byte-row totals, and deletion outcome. The root defaults from the
+compactor's source-root sibling and can be overridden explicitly; it must not
+overlap raw, compacted or entity roots. DBT treats this as coverage evidence, not
+telemetry: selected `raw_process` hours without exactly one successful compatible
+checkpoint fail preflight, preventing stale state after a failed entity update and
+raw-only continuation from being consumed silently.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows/ProcessingMetricsStore; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
 
 ## Evidence, conflicts and limits
 

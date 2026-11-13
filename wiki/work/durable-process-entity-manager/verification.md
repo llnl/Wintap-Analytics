@@ -11,6 +11,12 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entities.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
+  - ../Wintap-PyUtil/Makefile
+  - ../Wintap-PyUtil/wintap_dbt/README.md
+  - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
+  - ../Wintap-PyUtil/wintap_dbt/tests/process_entity_context_integrity.sql
+  - ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql
   - ../Wintap-PyUtil/tests/test_process_entities.py
   - ../Wintap-PyUtil/tests/test_process_entities_s3.py
 policy: agent-editable
@@ -28,6 +34,65 @@ tags: [feature-work, verification, entity-state, ancestry]
 
 ## Current result
 
+### Durable processing checkpoint coverage — 2026-11-13
+
+The hourly entity-enabled writer now maintains the dedicated sibling prefix
+`<dataset>/processing_metrics/`, with one verified Parquet checkpoint per requested
+UTC hour. The checkpoint schema includes operation/entity status, namespace and
+expected-host count, snapshot identities, source/compacted process inventory
+fingerprints, file/byte/row totals, deletion outcome and completion time. It is
+separate from raw telemetry and from the durable entity snapshots.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py -->
+
+DBT preflight now derives required hours from the selected `raw_process` raw or
+compacted inputs and requires exactly one successful entity-enabled metric row for
+each hour with the configured namespace and schema version. Missing, duplicate,
+failed, or incompatible checkpoint coverage fails closed instead of consuming a
+stale entity snapshot. A regression that removes the checkpoint files passed by
+failing the DBT operation as expected.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
+
+Focused verification after formatting/import cleanup:
+
+* standalone compactor entity/CLI tests: **35 passed**;
+* DBT durable-process-entity regression tests, including missing-checkpoint
+  coverage: **12 passed**;
+* changed standalone Python files pass `ruff format --check` and `ruff check`.
+
+Commands:
+
+```text
+uv run --project extras/raw-sensor-compact --locked pytest extras/raw-sensor-compact/tests/test_entities.py extras/raw-sensor-compact/tests/test_cli.py -q
+uv run --project . --dev python -m pytest tests/test_process_entities.py tests/test_dbt_source_validation.py -q
+uv run --project extras/raw-sensor-compact --locked ruff format --check <changed standalone Python files>
+uv run --project extras/raw-sensor-compact --locked ruff check <changed standalone Python files>
+```
+
+A one-hour synthetic entity initialization also produced the expected fixed
+Parquet schema and exclusive hour end (`00:00`–`01:00` UTC) under the local
+`processing_metrics/` sibling. The opt-in S3 test was discovered and skipped
+because its explicit isolated-write approval variables were not set.
+
+The opt-in S3 qualification remains separate and was not treated as a local test
+result; no live dataset or credential was written by this verification step.
+
+### Bounded read-only on-prem fixture check — 2026-11-13
+
+The selected `seeded_fixture_counts` test passed against the approved synthetic
+one-hour fixture: **1 passed, 1 deselected in 2.18 seconds**. The expected
+**24 rows** were present and the source/destination row delta was zero. A separate
+read-only object listing found **24 source objects / 17,544 bytes** and **one
+compacted object / 970 bytes**; neither listing was truncated. The pytest duration
+includes process and test overhead and is not a pure network measurement.
+
+The run used the approved Garage profile, endpoint and path-style access from the
+on-prem development host. Only the read-only `verify` path ran; no S3 writes,
+deletions, DBT, or access to preserved qualification data occurred. Dependencies
+were installed into an isolated temporary environment outside the repository.
+The fixture URI and profile values are intentionally omitted from this persistent
+record. The archived laptop/VPN week aggregate is not an apples-to-apples baseline;
+run this same bounded fixture check from the laptop before drawing a path comparison.
+
 ### Actual-data extension — run completed with failures, 2026-11-13
 
 The human authorized several days/a week of testing after asking whether the
@@ -37,6 +102,76 @@ raw/mixed/compacted DBT and independent entity checks. The week driver completed
 Historical bootstrap failed identity validation; only **one combined entity/raw
 hour** passed before the driver explicitly continued raw-only qualification.
 This is not a successful week-long entity qualification or full historical DBT repair.
+
+### Nov 7 compacted-only DBT build with durable enrichment — 2026-11-13
+
+The completed mitigated Nov 7 destination was built with the repository's exact
+`make dbt-build` target. The final invocation used the disposable source parent
+(whose `raw_sensor` subtree was empty after successful deletion) together with the
+240-file compacted destination; it did not union the immutable baseline with its
+compacted copy. Durable enrichment used the retained nine-host snapshot root and
+its declared identity namespace. `dbt-check-source` passed, including S3 listing,
+Parquet access and schema preflight.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile §dbt-build; ../Wintap-PyUtil/wintap_dbt/README.md §Durable process context -->
+<!-- EVIDENCE: /tmp/opencode/dpe-nov7-mitigated/run.json; /tmp/opencode/dpe-nov7-mitigated/full-day-verify.json -->
+
+The build materialized all **58 models** and evaluated **85 data tests**. Across
+145 total DBT resources, **127 passed**, **17 were skipped**, and one errored. It
+returned exit code 1 because the existing
+`unique_selinux_interaction_event_id` test reported **19** duplicate rows. This
+failure is unrelated to durable process context. The enabled
+`process_entity_context_integrity` test passed, as did entity snapshot preflight;
+no duplicate durable entity keys or invalid stored parent evidence were reported.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/tests/process_entity_context_integrity.sql; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql -->
+
+Process-tree completeness **failed** on the retained week-limited state: the
+`process_ancestry_quality` table contains **919,508** window seeds, of which only
+**2** reached a root. The remaining verdicts are **908,487 missing ancestors**,
+**2,861 parent conflicts**, **8,156 sentinel terminals**, and **2 missing
+entities**. There were zero cycles, unresolved verdicts, or parent-PID mismatch
+verdicts. The context relation independently reports 820,609 linked rows, 88,701
+missing ancestors, 3,010 missing entities, 2,042 parent conflicts, 8,153
+sentinels, and one root. Thus the optional enrichment executes and passes its
+structural integrity gate, but this snapshot does **not** provide complete Nov 7
+process trees; the previously documented stale week-limited state must not be
+promoted to a production DBT input.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql -->
+<!-- EVIDENCE: /tmp/opencode/dbt-nov7-mitigated/process-tree-validation-compacted-only.json -->
+
+#### Investigation of the high missing-ancestor count — 2026-11-13
+
+The **908,487** value is not a count of distinct missing parent processes. It is
+one terminal verdict per window seed, so descendants sharing one broken ancestor
+are counted repeatedly. In the direct context relation there are **88,701**
+`missing_ancestor` rows but only **2,203** distinct missing parent keys. The top
+one breakpoint accounts for **577,191** affected seeds; the top three account for
+**800,504 (88.1%)**, and the top ten account for **876,276 (96.5%)**. This is the
+same descendant-amplification pattern documented by the earlier short-window
+audit; its absent-key metric explicitly was not a count of proven missing real
+processes.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql; ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql -->
+<!-- SYNTHESIS: wiki/diagnostic/process-tree-context-completeness.md; wiki/workflow/process-ancestry-completeness-qa.md -->
+
+The durable cache nevertheless had **no effective coverage for this Nov 7
+window**. All **33,824** loaded snapshot rows have `first_partition` and
+`last_partition` equal to `2026110500`. Of **919,508** current process keys,
+**zero** overlap a durable row; there are **zero** current-child-to-durable-parent
+links; and the materialized `process_context` relation contains **zero**
+`from_store` rows. The cache had rows, but they were stale state from the first
+hour of the earlier week run, not a bootstrap/replay through Nov 7. Previous work
+records that historical bootstrap failed identity validation and week maintenance
+halted, and explicitly labels this nine-snapshot state stale and unsuitable for
+production DBT input.
+<!-- EVIDENCE: /tmp/opencode/dbt-nov7-mitigated/process-tree-investigation.json -->
+<!-- SYNTHESIS: wiki/work/durable-process-entity-manager/verification.md §Completed week; wiki/work/durable-process-entity-manager/dev_handoff.md §Next, in order -->
+
+The configured root-PID set was not the primary explanation: the current materialized
+process graph contains only one self-parent root candidate (the PID-4 case) and no
+PID-2 process records. The missing-root result is therefore consistent with absent
+historical process context, not with counting every Linux PID-2 process as a gap.
+The correct next experiment is a validated historical entity bootstrap/rebuild
+covering the Nov 7 source, followed by the same direct-gap and breakpoint-impact
+queries; no parent should be invented or repaired by PID alone.
 
 ### Intermediate milestone disposition — 2026-11-13
 
