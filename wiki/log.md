@@ -5066,3 +5066,9 @@ checks: 11 DBT/entity passes and 25 reducer/store passes. Staged wiki checks pas
 11 frontmatters, 67 live grounding paths and 360 links; five existing external
 citations excluded from local-path checks. Both staged diff checks pass. Analytics
 milestone committed separately on its existing branch; neither branch pushed.
+
+## [2026-11-13] policy | centralize persistent-content privacy rule
+
+Following human authorization, the single canonical wiki-content privacy rule is
+now in the root `AGENTS.md`. Deleted the interim standalone policy page and its
+index link to avoid duplication.

@@ -137,6 +137,28 @@ The LINT operation flags source policy violations:
 
 ---
 
+## Persistent Wiki Content Privacy
+
+Unless a human expressly authorizes disclosure, **do not include actual hostnames,
+usernames/account names, or IP addresses in persistent wiki content**. This applies
+to canonical pages, feature-work artifacts, verification records, logs, examples,
+copied command output and other committed wiki material. Do not assume an identifier
+is safe because it is internal, appears in source/raw data, or was present in a
+private test environment.
+
+Use generic placeholders, clearly synthetic labels, anonymized descriptions, or
+aggregate statistics instead. Technical field names and generic placeholder forms
+(for example, `<hostname>`) are allowed when needed to explain schemas or behavior;
+never substitute an actual value without authorization. Before persisting or
+committing wiki changes, inspect the complete diff for these identifiers and remove
+any unauthorized values. An exception requires explicit human authorization scoped
+to the specific disclosure.
+
+This is the single canonical privacy rule for wiki content; do not maintain a
+duplicate copy as a separate wiki policy page.
+
+---
+
 ## Page Frontmatter Schema
 
 Every wiki page **must** include this YAML frontmatter:
