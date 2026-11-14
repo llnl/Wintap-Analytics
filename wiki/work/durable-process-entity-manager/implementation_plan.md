@@ -8,6 +8,7 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/engine.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
@@ -128,6 +129,17 @@ Sharded state/delta files/retention are later design choices, not hidden additio
 - [x] Bound quarantine with a configurable 5% per-hour exclusion ceiling; record
   denominator, numerator, ratio, ceiling, reasons, hosts and fingerprints; require
   matching DBT configuration and add regression coverage.
+- [x] Replace the Python per-process decoded reducer with DuckDB 2.0.0 SQL
+  relations, retaining Parquet and `evidence_json` at the durable interchange
+  boundary; local reducer/DBT regression suites and formatter/linter checks pass.
+- [x] Complete the isolated three-day SQL bootstrap and SQL snapshot verification:
+  seven snapshots, 2,613,678 entities, 28 quarantined identity rows below the
+  5% hourly ceiling, and no evidence-budget failure.
+- [x] Run entity-enabled DBT and compare post-cache outputs with the non-entity
+  baseline: 146/146 DBT resources pass and process/process-summary/path row and
+  key counts are preserved.
+- [x] Execute post-cache ancestry QA; record the successful structural checks and
+  the explicit limitation that only two terminal seeds reach a declared root.
 - [ ] Production-scale budgets, historical bootstrap and external schedule exclusion approved.
 - [x] Update [[wiki/work/durable-process-entity-manager/verification]], canonical
   pages and wiki log; only then prepare a separately approved production rollout.

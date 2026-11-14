@@ -5,6 +5,18 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-13] code | DuckDB-backed durable process reducer
+
+The Wintap-PyUtil entity update path now uses DuckDB 2.0.0 relations and SQL
+aggregation for working process state instead of retaining one decoded Python
+`Evidence` object per process. Parquet remains the durable/interoperable snapshot
+and retains `evidence_json` for DBT compatibility; the node-local qualification
+uses 16 threads, 128 GB DuckDB memory and 256 GB temporary storage. The standalone
+suite passes 140 tests with 2 expected skips, the DBT/config suite passes 56 tests,
+and changed-file formatter/linter checks pass. The isolated three-day SQL bootstrap
+then completed with all seven snapshots and 2,613,678 entities verified; entity-
+enabled DBT and tree QA remain gated on the active build.
+
 ## [2026-10-26] code | RHEL 8 CO-RE start-time field compatibility
 
 Added shared CO-RE flavor probes for upstream `task_struct.start_boottime` and
@@ -5254,3 +5266,14 @@ entity snapshot or processing checkpoint. The isolated output prefixes remain
 empty; the retry did not alter preserved source or compacted evidence. Entity
 DBT and post-cache process-tree QA remain blocked.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities -->
+
+## [2026-11-13] verification | SQL cache and entity DBT ancestry QA
+
+The isolated SQL-backed three-day qualification completed with seven verified
+snapshots and 2,613,678 entities; quarantine remained below the 5% hourly ceiling.
+Entity-enabled DBT completed 146/146 PASS, and process/process-summary/path row and
+key counts matched the non-entity baseline. Post-cache QA found two root-reached
+seeds, zero cycles and zero resolved parent-PID mismatches, but the selected window
+still lacks historical ancestors; ancestry completeness and production rollout
+remain unqualified.
+<!-- EVIDENCE: ../Wintap-PyUtil/.opencode-work/dpe-3day-sql/reports/post-cache-qa.json -->

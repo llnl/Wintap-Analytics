@@ -10,6 +10,7 @@ grounded_by:
   - wiki/workflow/process-ancestry-completeness-qa.md
   - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entities.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
   - ../Wintap-PyUtil/Makefile
   - ../Wintap-PyUtil/wintap_dbt/README.md
@@ -18,9 +19,9 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql
-   - ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql
-   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
-   - ../Wintap-PyUtil/scripts/check_dbt_config.py
+  - ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
+  - ../Wintap-PyUtil/scripts/check_dbt_config.py
   - ../Wintap-PyUtil/tests/test_process_entities.py
   - ../Wintap-PyUtil/tests/test_process_entities_s3.py
 policy: agent-editable
@@ -145,7 +146,7 @@ checkpoint schema is version 3, and DBT preflight requires the recorded ceiling,
 denominator, numerator and ratio to match its configuration.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §load_inputs; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §SCHEMA/metric_rows; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
 
-Focused validation passed: **139** standalone tests with two expected skips,
+Focused validation passed: **140** standalone tests with two expected skips,
 **56** DBT/config tests, and formatter/linter checks for the changed standalone
 Python files. The isolated three-day quarantine bootstrap was restarted with the
 explicit 0.05 ceiling after correcting the command's hour-window limit. It then
@@ -154,10 +155,75 @@ there are no entity snapshots or processing-metrics checkpoints in the fresh
 qualification prefixes. This is a capacity blocker, not evidence to relax the
 budget or to treat the pre-threshold attempt as qualification.
 
-The preserved compacted process files were audited read-only for per-hour identity
-denominator/numerator evidence; that evidence is recorded below. Entity-enabled
-DBT and post-cache gold tree QA are not run because no durable state or
-checkpoints were published.
+### SQL-backed capacity rerun — completed, 2026-11-13
+
+The reducer was changed to keep working entity state in DuckDB 2.0.0 relations:
+distinct evidence values, bounds, parent classification and scalar projection are
+managed by SQL, while Python retains only paths and publication metadata. Parquet
+remains the durable snapshot format and retains `evidence_json` for DBT
+interoperability. Local validation passes with **140 standalone tests and 2
+expected skips**, **56 DBT/config tests**, and changed-file formatter/linter
+checks. <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities -->
+
+An isolated three-day bootstrap completed with the explicit quarantine ceiling
+and node-local limits of **16 threads**, **128 GB DuckDB memory** and **256 GB
+temporary storage**. The command used `max-entity-rows=10,000,000` and
+`max-entity-bytes=64 GiB`; its output prefixes are isolated from both the source
+dataset and earlier failed attempts. All **7** requested host snapshots were
+published and the SQL verification command passed all of them: **2,613,678
+entities** and **280,529,521 bytes** of Parquet. The aggregate input projection
+contained **12,878,058** source-plus-compacted rows; **28** duplicate-source
+identity exclusions were quarantined at ratio **2.1742408676836212e-06**, below
+the **0.05** ceiling. The exclusion reasons were `negative_pid=24` and
+`unknown_pid_hash=4`.
+
+### Entity-enabled DBT and post-cache ancestry QA — completed, 2026-11-13
+
+The entity-enabled DBT build used the isolated compacted-only root and matching
+processing checkpoints, avoiding a reread of the original raw copies. Its source
+preflight and build completed with **59 models, 85 data tests and 2 hooks/
+operations: 146 PASS, 0 WARN, 0 ERROR, 0 SKIP**. The materialized
+`process`, `process_summary` and `process_path` relations each contain
+**2,613,680** rows. Compared with the non-entity baseline, process key sets,
+per-key row counts, process-summary counts and process-path counts are identical;
+the two process keys excluded from the durable entity snapshot remain visible as
+window rows and are explicitly reported as missing entity context.
+
+The expected enrichment differences are retained rather than hidden: durable
+parent resolution changes parent-hash/PID selections where retained evidence
+resolves conflicts or sentinels, and cached display candidates change selected
+name/path/argument values for metadata-conflicted keys. One OS-PID selection
+difference belongs to an excluded key with multiple source names; it does not
+change row or key counts. The comparison therefore confirms row/count semantics
+while treating enriched field differences as intentional entity-mode behavior.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_entities.sql; ../Wintap-PyUtil/wintap_dbt/models/gold/process_summary.sql -->
+
+Post-cache tree QA executed against `process_context`, `process_path` and
+`process_ancestry_quality`. The context relation contains **2,618,147** rows:
+2,340,776 linked, 255,347 missing-ancestor, 11,474 sentinel, 6,076
+parent-conflict, 4 missing-parent, 4,469 missing-entity and 1 root row. The
+terminal ancestry relation contains **2,613,680** window seeds: **2 root-reached**,
+**2,569,888 missing-ancestor**, **23,726 missing-parent**, **8,583
+parent-conflict**, **11,479 sentinel** and **2 missing-entity** verdicts. There
+were **0 cycles**, **0 unresolved verdicts**, **0 resolved-parent PID mismatches**,
+and all **2,613,678** available terminals came from the durable entity store.
+
+This proves that the SQL-backed cache is readable, structurally validated and
+does not fabricate ancestry, but it does **not** pass a complete-tree gate: only
+2 of 2,613,680 terminal seeds reached a declared root, while the three-day
+bootstrap has no history before the selected window. The cache/DBT qualification
+is consequently successful for durable-state construction, evidence preservation,
+DBT execution and row/count compatibility; historical ancestry completeness and
+production rollout remain unqualified. The machine-readable aggregate QA report
+is retained outside the wiki; no raw telemetry or actual host identifiers are
+copied into persistent documentation.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql; ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql -->
+
+The preserved compacted process files were also audited read-only for per-hour
+identity denominator/numerator evidence; that evidence is recorded below. The
+later SQL-backed bootstrap and DBT run supersede the earlier no-publication
+blocker, while the ancestry completeness result above remains an explicit
+qualification limitation.
 
 ### Read-only identity audit — 2026-11-13
 

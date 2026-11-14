@@ -187,7 +187,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/work/durable-process-entity-manager/brief]] | medium | Accepted first-round S3/hourly/DBT direction; implementation authorized with synthetic orphan-breakpoint tests. |
 | [[wiki/work/durable-process-entity-manager/design]] | speculative | Historical design record plus concrete implementation choices; no initial GC, entity-before-delete ordering, JSON evidence and separate DBT context. |
 | [[wiki/work/durable-process-entity-manager/implementation_plan]] | speculative | DPE-01–05 first-round slices completed on synthetic local/S3 fixtures; production capacity/bootstrap/exclusion still gates. |
-| [[wiki/work/durable-process-entity-manager/verification]] | medium | Hourly `processing_metrics/` checkpoints prove entity-enabled `raw_process` coverage before DBT. Unknown identities now have an explicit reject/quarantine policy; quarantine preserves raw evidence and records per-hour QA fingerprints. Three-day cache/tree qualification is in progress. |
+| [[wiki/work/durable-process-entity-manager/verification]] | medium | The DuckDB 2.0.0 SQL reducer, seven-snapshot bootstrap, SQL verification and entity-enabled DBT all pass with row/count compatibility. Post-cache QA finds only 2 root-reached seeds in the selected three-day window; historical ancestry completeness and production rollout remain unqualified. |
 | [[wiki/work/durable-process-entity-manager/dev_handoff]] | medium | Intermediate handoff for on-prem continuation: measure laptop/VPN versus on-prem performance; keep Garage debug-log reproduction optional; preserve unknown deletion cause and historical/entity/production gates. |
 ## Component
 

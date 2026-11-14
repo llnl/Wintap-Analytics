@@ -4,6 +4,7 @@ type: tool
 confidence: high
 grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
@@ -40,8 +41,10 @@ Each expected host has one complete snapshot at
 Recorded instance hashes are preserved in host scope, never replaced by PID.
 File metadata supplies version/host/identity namespace/bootstrap declaration and
 timestamp basis, including initialized empty hosts. The worker uses disposable
-local staging, not a persistent local DB. The separate entity root must not
-overlap raw or compacted scan roots.
+local staging for publication, not a durable local database. The working reducer
+state is held in DuckDB 2.0.0 relations and may spill to the configured temporary
+directory; the durable/interoperable state remains the validated Parquet snapshot.
+The separate entity root must not overlap raw or compacted scan roots.
 
 `entities-init` bootstraps an explicitly new root from selected raw and compacted
 process archives. `--allow-empty-host` acknowledges absent history; `--resume-init`
@@ -75,6 +78,14 @@ raw-only continuation from being consumed silently.
 
 ## Evidence, conflicts and limits
 
+The SQL reducer projects current observations and prior snapshot evidence into
+DuckDB relations, performs distinct aggregation and scalar derivation there, and
+only materializes a host's Parquet publication at the boundary. Python retains
+paths, publication metadata and reports rather than one decoded `Evidence` object
+per process. `evidence_json` remains in the Parquet schema for DBT compatibility;
+it is an interchange field, not the Python working-state representation.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities -->
+
 Typed scalar context accompanies canonical JSON candidate sets inside Parquet.
 The reducer retains paired parent hash/PID/kind, PID, birth/Stop FILETIME evidence,
 lifecycle flags and display candidates. Duplicates, replay and out-of-order hours
@@ -92,9 +103,10 @@ not reopen an exited process or become a new observation timestamp.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py §Evidence -->
 
 No initial TTL/GC: retain exited ancestors. Per-host defaults are one million
-entities and 256 MiB snapshot/estimated decoded-evidence budget, plus existing
-DuckDB memory/spill/file/hour/deadline limits. Python reduction is not spillable.
-Capacity exhaustion fails visibly; large-host sharding is not implemented.
+entities and 256 MiB snapshot budget, plus DuckDB memory/spill/file/hour/deadline
+limits. The standalone writer requires DuckDB 2.0.0; the main DBT environment
+remains isolated at DuckDB 1.5.6. Capacity exhaustion fails visibly; large-host
+sharding is not implemented.
 The declared bootstrap start and first/last publication partitions do not prove
 gap-free collection or automatically discover missed scheduler windows.
 
@@ -105,11 +117,14 @@ external schedule exclusion still require operator review.
 
 Actual-data qualification exposed these limits: historical bootstrap initially
 rejected unknown identities (negative-PID Refresh and sentinel-key Stop evidence).
-The explicit quarantine policy is now separately qualified on the preserved
-three-day window; its excluded evidence remains visible in processing checkpoints
-and is not counted as durable entity coverage. The retained snapshots must not be
-treated as complete historical state until the post-quarantine DBT/tree checks
-pass. No silent filtering, TTL/GC, budget relaxation or PID-only repair is allowed.
+The explicit quarantine policy and SQL-backed capacity rerun completed on the
+preserved three-day window; excluded evidence remains visible in processing
+checkpoints and is not counted as durable entity coverage. Entity-enabled DBT and
+structural ancestry QA passed, but only two terminal seeds reached a declared
+root because the selected bootstrap window has no earlier history. The retained
+snapshots are therefore qualification evidence, not complete historical state or
+production ancestry proof. No silent filtering, TTL/GC, budget relaxation or
+PID-only repair is allowed.
 Full expanded source cardinalities also exceed default row limits on two hosts;
 identity rejection occurred before capacity certification. No silent filtering,
 TTL/GC, budget relaxation or PID-only repair was adopted. See
