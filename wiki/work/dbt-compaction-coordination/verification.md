@@ -555,6 +555,85 @@ versions confirm identical findings, and neither is reformatted. Evidence:
 This is an interim snapshot, not dcc-02 acceptance or real-writer qualification.
 No push was performed; the human will push both repositories.
 
+### Maintainer milestone review — November 14
+
+Fresh review after fast-forward pulls to Analytics `660b5a8` and PyUtil `fe7fcb5`.
+Earlier feedback notes were preserved, index/log conflicts resolved and the verified
+preservation stash dropped. Read the worker plan/verification and live repair,
+authority, phase-archive, routing, protocol/ledger and tick/supervision sources.
+Findings and dispositions: [[wiki/work/dbt-compaction-coordination/implementation-review]].
+
+**Fresh macOS runs:** standalone Python 3.14.0 / DuckDB 2.0.0; main Python
+3.12.12 / DuckDB 1.5.6. Wrappers resolve interpreter/test paths absolutely, run
+from automatically cleaned temporary directories under the harness-approved root,
+set `PYTHONDONTWRITEBYTECODE=1`, `PYTHONPATH` and `TMPDIR`, and pass isolated pytest
+`--basetemp` plus `-p no:cacheprovider`. Commands below show checkout-relative
+interpreter/targets. No source/test files were edited.
+
+Standalone full suite:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m pytest -q -rs -p no:cacheprovider tests
+```
+
+**305 passed, 2 failed, 2 skipped**, 61.28 seconds. Both failures are the
+`test_new_publication_directory_links_are_fsynced_before_success` cases: the test's
+fsync observer reads Linux `/proc/self/fd`, unavailable on macOS. The two skips
+are opt-in S3 transport cases. Other authority, integrity, provenance, phase repair
+and compaction cases pass.
+
+Main focused suite:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 .venv/bin/python -B -m pytest -q -rs -p no:cacheprovider \
+  tests/test_coordination_protocol.py tests/test_coordination_ledger.py \
+  tests/test_coordination_tick.py tests/test_coordination_supervisor.py \
+  tests/test_entity_freshness.py tests/test_effective_input_roots.py \
+  tests/test_checkpoint_repair.py tests/test_process_entities.py \
+  tests/test_dbt_source_validation.py tests/test_compacted_inputs.py
+```
+
+**196 passed, 3 failed, 35 skipped**, 205.15 seconds. All three failures are
+unguarded Linux assumptions in `test_coordination_tick.py`: abrupt tick death with
+a surviving child reads `/proc/<pid>/stat`; two supervisor integration tests expect
+a report or PID file after the Linux-only supervisor correctly refuses launch.
+The dedicated supervisor module correctly skips its 34 cases; the remaining skip
+is opt-in isolated migration. The included real-DBT freshness/forward-lineage,
+cross-runtime checkpoint repair and local-only routing/build cases pass. These
+results do not repeat the worker's Linux supervision or remote qualification.
+
+**Independent review probes:**
+
+- R6: wrap the original `Ledger.ingest_many`, advancing only an injected clock
+  after it returns, using real local DuckDB and the existing fake S3 helper.
+  Pre-grace control passes (`OPEN`, one reader/grant). Crossing `00:09:59` →
+  `00:10:00` produces `DRAINING`, one new reader/grant and zero waiting instead
+  of zero new readers/grants and one waiting request. The script exits 1 at that
+  behavioral assertion. This independently corroborates the worker's known defect.
+- R7: in a separate standalone Python process, replace
+  `entity_sql._validate_evidence` with a no-op in memory and call `pytest.main`
+  for `tests/test_entity_integrity.py -k corrupt_snapshot_rejected_by_verify_and_update`.
+  **80 passed, 14 deselected**, 8.93 seconds. The test selection still passes
+  because it rewrites committed snapshots and accepts generic authority errors.
+  This is mutation evidence of a test gap, not a valid integrity acceptance run.
+- R7 controls: use the live seed/rewrite fixture helpers for duplicate-key and
+  `os_pid`/evidence disagreement, then invoke `EntityStore.validate_sql` directly.
+  Both are rejected with the intended SQL diagnostics. Under the same in-memory
+  no-op mutation, both are accepted. The probes establish the repaired validator's
+  behavior and identify an independent entrypoint for durable negative tests.
+
+Each probe used disposable synthetic fixtures with automatic cleanup and restored
+in-process patches. No actual endpoint, scheduled writer or source-code edit was
+involved. R6–R8 are open follow-through in the plan; dcc-02–05 remain unchecked.
+The earlier R1–R5 red/green history is retained with its original scope.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py §tick; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entity_integrity.py; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_phase_evidence.py; ../Wintap-PyUtil/tests/test_coordination_tick.py -->
+
+Documentation checks pass for five changed wiki files: three frontmatters, 65
+grounding paths and 15 wikilinks/section targets. Whitespace and added-content
+home-path/IP scans pass; the complete diff was reviewed for privacy. PyUtil retains
+only its pre-existing untracked environment artifacts. Review additions were
+uncommitted at review completion; the human subsequently requested publication.
+
 ### Baseline review regressions
 
 Independent focused rerun before implementation, November 13, in the standalone
@@ -628,6 +707,10 @@ units. Ledger/protocol tests may use fake children independently of writer fixes
 
 ## Known Gaps
 
+- Maintainer R6–R8 follow-through: the ingestion/grace defect is independently
+  reproduced, 80 integrity negatives are masked by authority rejection, and five
+  unguarded Linux test cases fail on macOS. See the fresh milestone review above;
+  these results do not replace the historical Linux suite records.
 - Protocol/ledger library is regression accepted with 54 focused and 397 full-main
   passes. The admission/draining tick focus passes 100 cases; its full-main
   regression passes 443 tests (three skips), before supervisor implementation.

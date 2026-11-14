@@ -304,6 +304,8 @@ startup / 60-second release-observation polling budget.
 Post-pull [[wiki/work/dbt-compaction-coordination/implementation-review]] records
 four-root/checkpoint recovery requirements, snapshot validation/provenance findings,
 and fresh focused regressions (38 standalone; 63 main passed, 1 skipped).
+Initial worker feedback corroborated SQL validation/provenance defects and
+recommended a repair milestone before ledger/protocol implementation.
 Worker [[wiki/work/dbt-compaction-coordination/implementation_plan]] adds safety
 prerequisites before real writer integration, followed by the five handoff units;
 [[wiki/work/dbt-compaction-coordination/verification]] distinguishes independent
@@ -333,7 +335,13 @@ The review also requires an allowlisted, non-secret effective execution/configur
 receipt bound to writer intent; implementation and identity/privacy gates are pending.
 Current implementation snapshot is PyUtil `fe7fcb5`; a fresh coordination-only
 rerun passes 142 tests, without covering the known ingestion/grace defect. Both
-repository snapshots are committed locally; pushing remains the human's task.
+repository snapshots were subsequently pushed and pulled for maintainer review
+(Analytics `660b5a8`, PyUtil `fe7fcb5`). The updated implementation review confirms
+R1–R5 repairs and records R6–R8 follow-through: independently reproduced grace
+admission, authority-masked SQL regression tests and unguarded Linux assumptions.
+Fresh macOS results: standalone 305 passed/2 failed/2 skipped; focused main
+196 passed/3 failed/35 skipped. All five suite failures are platform-specific tests;
+dcc-02–05 remain open in the plan.
 
 Historical PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
 [[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],

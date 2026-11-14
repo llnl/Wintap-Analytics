@@ -13,8 +13,19 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_process_entities.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entities.py
   - wiki/work/durable-process-entity-manager/verification.md
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entity_integrity.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_phase_evidence.py
+  - ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql
+  - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
+  - ../Wintap-PyUtil/wintappy/coordination/ledger.py
+  - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
+  - ../Wintap-PyUtil/tests/test_coordination_tick.py
+  - wiki/work/dbt-compaction-coordination/implementation_plan.md
+  - wiki/work/dbt-compaction-coordination/verification.md
 policy: agent-editable
-last_validated: 2026-11-13
+last_validated: 2026-11-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -26,13 +37,101 @@ tags: [review, coordination, entity-state, checkpoints, recovery, local-only]
 
 # Durable entity implementation: coordination review
 
-**The single-coordinator/shared-reader/exclusive-writer design still fits.** Extend
-its dataset binding and completion checks to processing checkpoints. Several
-reproducible correctness gaps need attention when integrating writer recovery.
+**The milestone makes substantial progress; dcc-02 acceptance remains open.**
+R1–R5 have implemented repairs, and the protocol/ledger provides a conservative
+foundation. Review follow-through covers the confirmed admission bug, SQL-test
+isolation and platform-aware tests before continuing integrated completion work.
 Implementation remains owned by Wintap-PyUtil; this review and the coordination
 handoff live in Wintap-Analytics.
 
-## Integrated revisions
+## Milestone review — 2026-11-14
+
+Pulled Analytics `91f741e` → `660b5a8` and PyUtil `c782f63` → `fe7fcb5`, both
+fast-forward. Both heads match their fetched upstream branches. Restored the earlier
+feedback notes, resolved index/log conflicts retaining both histories, verified the
+preserved review/log content and dropped the preservation stash. The worker's
+[[wiki/work/dbt-compaction-coordination/implementation_plan]] and
+[[wiki/work/dbt-compaction-coordination/verification]] are now available and reviewed.
+
+### Assessment of R1–R5 and implementation scope
+
+| Area | Current assessment |
+|---|---|
+| R1 freshness | The new authority journal binds committed current state and historical checkpoint generations; pending intent blocks ordinary reads, and forward evolution retains historical lineage. Whole-store rollback still requires the planned independent high-water mark. |
+| R2 SQL integrity | Unique/valid keys, evidence structure/types, publication bounds and derived scalar/flag agreement are restored in SQL. Independent direct probes reject the original duplicate/scalar defects. R7 below identifies a regression-test gap. |
+| R3 provenance | Existing validated bootstrap metadata is retained for changed/unchanged updates, replay and resumed init. |
+| R4 recovery | Immutable local phase archives, explicit CLI/coordinator ID mapping and original-generation checkpoint repair address the prior missing-evidence boundary. Integrated coordinator completion still needs independent verification. |
+| R5 local routing | Active-root resolution ignores unused metrics overrides when entities are disabled; ordinary local DBT retains its direct path. |
+| dcc-01 | Reader reservation/outbox COMMIT precedes grant publication; writer intent COMMIT precedes callbacks. Restart retains unresolved ownership and blocks replacement. |
+| dcc-02–05 | Tick/supervisor libraries are partial. Every callback outcome remains `BLOCKED`; there is no success/cursor/reopening API or DBT client wrapper yet. |
+
+<!-- SYNTHESIS: live milestone sources listed in frontmatter, compared with implementation_plan.md and verification.md; original R1–R5 below describe c782f63. -->
+
+The next integration gates remain the non-secret effective execution/configuration
+receipt, independent phase and shutdown verification, authority high-water checks,
+atomic completion/run/cursor/mode COMMIT, client lifetime/release handling and
+isolated sequential-hour/concurrency/resource qualification. The worker's Linux
+red/green and full-suite records remain attributed evidence; this maintainer's
+fresh macOS results and probes are recorded separately in
+[[wiki/work/dbt-compaction-coordination/verification#Maintainer milestone review — November 14]].
+
+### R6 — Medium: ingestion can cross grace and still admit a reader
+
+**Independently reproduced; already disclosed by the worker.** `tick` refreshes
+time before `ingest_many`, then uses that observation for `writer_due` and admission.
+The next refresh follows grant publication. A disposable real-DuckDB/fake-S3 probe
+runs the original ingestion and advances only the injected clock on return:
+
+- Control at `00:09:59`: `OPEN`, one reader/grant, zero waiting.
+- Ingestion crosses to `00:10:00`: `DRAINING`, one newly reserved reader/grant,
+  zero waiting; expected zero new readers/grants and one waiting request.
+
+This violates writer priority and can delay catch-up by an entire DBT run. The
+reservation still excludes the writer, so the probe establishes no overlap.
+Refresh after ingestion before admission, add the formal failing/passing boundary
+test, and retain already committed reader reservations.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py §tick, lines 87–103 -->
+
+### R7 — Medium: authority rejection masks SQL-integrity regression tests
+
+**New test-isolation finding.** The 80 parameterized corruption tests rewrite a
+committed snapshot, then assert only a generic CLI error or `CompactionError`.
+Current-state authority now rejects those bytes even if SQL validation stops
+checking keys, evidence and scalar agreement.
+
+**Reproduced:** replace `_validate_evidence` with a no-op only in the review
+process, leaving authority active; all **80 tests pass** (14 deselected). No source
+file is edited. Direct `EntityStore.validate_sql` probes reject duplicate keys and
+scalar/evidence disagreement normally, but accept the same fixtures under that
+mutation. Thus the implementation is repaired, while these tests cannot independently
+protect it from recurrence.
+
+Add authority-independent negative checks through `validate_sql` and/or corrupt
+pre-publication candidates through the active update path, retaining the existing
+end-to-end freshness checks. Removing the SQL validator must make the integrity
+regressions fail. Require SQL-specific diagnostics where appropriate; do not seed
+new trust from an arbitrary edited committed snapshot.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entity_integrity.py §test_corrupt_snapshot_rejected_by_verify_and_update; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §validate_sql/update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py §_validate_evidence -->
+
+### R8 — Medium: Linux-only test assumptions escape platform guards
+
+The standalone directory-fsync test resolves descriptors through `/proc/self/fd`
+without a platform guard; both parameter cases fail on macOS. Two tick integration
+tests also invoke the explicitly Linux-only supervisor without the skip applied
+to `test_coordination_supervisor.py`. One requires a captured report; the other
+requires a child PID file and `/proc` state even though launch is refused.
+The abrupt-tick-death test's `launch_child=True` case independently assumes
+`/proc/<pid>/stat` exists. These account for all five fresh suite failures:
+standalone **305 passed, 2 failed, 2 skipped**; focused main **196 passed,
+3 failed, 35 skipped**.
+
+Use portable descriptor observation where practical and mark actual Linux-only
+integration tests explicitly. Retain Linux execution of these durability/tree tests
+and add a separate non-Linux refusal control; skipping unsupported execution is
+not evidence of successful supervision on other client platforms.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_phase_evidence.py §test_new_publication_directory_links_are_fsynced_before_success; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_abrupt_tick_death_never_launches_replacement_even_when_child_survives/test_real_supervised_callback_holds_ledger_lock_and_still_cannot_certify_empty_hour/test_supervisor_death_with_surviving_workload_remains_blocked; ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_config -->
+
+## Baseline integrated revisions — 2026-11-13
 
 - Analytics fast-forwarded `9edb246` → `d904559` (nine commits).
 - PyUtil fast-forwarded `c60dbdb` → `c782f63`: coverage checkpoints (`f1aa9c5`),
@@ -42,7 +141,10 @@ handoff live in Wintap-Analytics.
   ETL files and the feature folder matched the preservation stash before review
   edits. The conflict is resolved and the verified preservation stash was dropped.
 
-## Findings
+## Baseline findings — PyUtil c782f63
+
+The following reproductions and source descriptions are historical. Their current
+dispositions are in the milestone assessment above.
 
 ### R1 — High: checkpoint presence does not bind the current entity snapshot
 
@@ -165,7 +267,7 @@ remains incomplete (two root-reached seeds); that is separate from mutual exclus
 These are imported results, not newly repeated remote tests.
 <!-- GROUND_TRUTH: wiki/work/durable-process-entity-manager/verification.md §SQL-backed capacity rerun/Repeat three-day round; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py §state_hash -->
 
-## Fresh review evidence
+## Baseline review evidence — 2026-11-13
 
 - Standalone `.venv/bin/python -B -m pytest -q -p no:cacheprovider
   tests/test_entities.py tests/test_cli.py`: **38 passed**.
@@ -192,6 +294,37 @@ The probes import the live fixture helpers and use the existing isolated DuckDB
 2.0.0 writer / 1.5.6 DBT environments. They add no source/test files. No remote
 qualification was run for this review. Coordination implementation and its
 concurrency/restart tests remain future work.
+
+## Worker response — reported 2026-11-13
+
+The human relayed the implementing worker's initial feedback. The worker agrees
+with R1–R5 and reports independent reproduction of duplicate-key acceptance,
+non-parent scalar corruption acceptance and bootstrap reset, plus the same focused
+results: 38 standalone passed; 63 main passed, one skipped. This corroborates the
+reported defects; it does not close them or add an independent reproduction of
+R1/R4/R5.
+<!-- SOURCE: Human-relayed initial worker feedback, conversation 2026-11-13; worker artifacts not yet available in this checkout. -->
+
+The worker recommends a small SQL-integrity/provenance repair milestone before
+ledger/protocol work, followed by scheduler, DBT wrapper, compactor/recovery and
+isolated sequential-hour/concurrency qualification. Freshness, independent migration
+receipts and unused-root routing remain prerequisites for real integration. The
+worker reports saving an implementation plan and verification record, with wiki
+changes uncommitted and no code changes, cron deployment or push. Those new files
+were not present locally when this feedback was received. They became available
+and were reviewed with the November 14 milestone above.
+
+**Maintainer assessment:** this is a compatible refinement of the handoff's order.
+For the first repair milestone, require failing-before/passing-after regression
+evidence through the active verification/update paths; cover invalid/duplicate
+keys, evidence/scalar integrity and bootstrap preservation across changed and
+unchanged updates/replay. Restore validation in the bounded SQL path so the repair
+does not reintroduce the full-state Python materialization bottleneck. Subsequent
+freshness checks must accept legitimate forward snapshot evolution while rejecting
+rollback; historical checkpoint hashes cannot all equal the current snapshot.
+The combined incremental lifecycle and realistic server-budget qualification remain
+open acceptance work.
+<!-- SYNTHESIS: review R1–R4 and Qualification interpretation above, compared with the human-relayed worker plan. -->
 
 Follow-through: [[wiki/work/dbt-compaction-coordination/dev_handoff]] and
 [[wiki/work/dbt-compaction-coordination/design]].

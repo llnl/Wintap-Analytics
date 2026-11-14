@@ -5384,6 +5384,17 @@ specific fixes with reproduced evidence, five coordination implementation units
 and worker validation gates. Recorded review-time repository status as historical
 context for publication.
 
+## [2026-11-13] ingest | initial coordination worker feedback
+
+Recorded the human-relayed worker response in the coordination implementation
+review and updated the index. The worker reports independently reproducing SQL
+duplicate/scalar validation gaps and bootstrap reset, with the same focused test
+counts; all findings remain open. Its recommended first milestone repairs SQL
+integrity/provenance before protocol/ledger work. Added assessment criteria for
+bounded SQL validation, changed/unchanged update and replay provenance, and
+forward-compatible snapshot freshness. The worker's newly saved plan/verification
+files are not yet available in this checkout. No contradictions flagged.
+
 ## [2026-11-13] planning | worker review and coordination implementation order
 
 Pulled manager commit `91f741e` into Analytics; PyUtil remains at `c782f63`.
@@ -5634,3 +5645,34 @@ lint's 53 findings match unchanged HEAD findings in two legacy test files.
 Staged scope/whitespace and complete wiki privacy/artifact checks pass. dcc-02–05
 stay unchecked; no code repair, production operation or fresh full-suite claim.
 Unrelated data/environment/settings remain excluded. No pushes; the human will push.
+
+## [2026-11-14] review | pulled entity recovery and coordination milestone
+
+Fast-forwarded Analytics `91f741e` → `660b5a8` and PyUtil `c782f63` → `fe7fcb5`.
+Preserved prior feedback, resolved index/log conflicts with both histories retained,
+verified restoration and dropped the preservation stash. Read the now-available
+worker plan/verification and reviewed live repair, authority, phase-evidence,
+DBT routing and coordination sources. Marked the original R1–R5 review as historical
+and added their current implemented dispositions.
+
+Independent real-DuckDB/fake-S3 probe confirms the worker's known ingestion/grace
+admission defect (R6). A no-source-edit mutation disables SQL integrity validation
+yet all 80 corruption negatives pass; direct duplicate/scalar controls prove the
+validator works and isolate authority masking in the regression suite (R7).
+Fresh macOS standalone suite: 305 passed, two failed, two skipped; focused main:
+196 passed, three failed, 35 skipped. All five failures arise from unguarded Linux
+test assumptions (R8); real-DBT freshness/repair/local routing cases pass. Linux
+supervision and remote/resource qualification retain their separately attributed
+worker scope. Added open R6–R8 follow-through to the plan and recorded commands,
+results and qualification limits in verification; dcc-02–05 stay open. Updated
+review/index/log. Five-file documentation review passes three frontmatters, 65
+grounding paths, 15 links/section targets, whitespace and complete-diff privacy
+checks. Review additions were uncommitted at review completion. No source changes
+or deployment.
+
+## [2026-11-14] publish | milestone review handoff to worker
+
+Human requested committing and pushing the five review documents for worker
+follow-through. The handoff records R6–R8, independent probes, fresh macOS suite
+results and open implementation checklist items. Publication includes the preserved
+initial worker-feedback notes and current R1–R5 dispositions.

@@ -359,6 +359,12 @@ code. Post-deletion failures require verified data/state repair before reopening
 
 ## Done Checklist
 
+November 14 maintainer review of PyUtil `fe7fcb5` confirms implemented R1–R5
+repairs while adding test-isolation/platform follow-through. Prior checked gates
+retain their worker-reported Linux scope. See
+[[wiki/work/dbt-compaction-coordination/implementation-review]] R6–R8 and the fresh
+macOS commands/results in [[wiki/work/dbt-compaction-coordination/verification]].
+
 - [x] Pull manager documentation and inspect live implementation supporting R1–R5.
 - [x] Prepare phased plan without implementing or deploying coordination.
 - [x] Receive implementation authorization and record the four human acceptance gates.
@@ -369,6 +375,9 @@ code. Post-deletion failures require verified data/state repair before reopening
 - [x] R5: active-root routing and final-revision regression review.
 - [x] dcc-00: integrity, provenance, freshness/phase-evidence and routing safety gates.
 - [x] dcc-01: protocol/ledger with transaction and restart evidence.
+- [ ] R6: formal ingestion/grace-boundary regression and post-ingestion admission-clock repair.
+- [ ] R7: SQL-integrity negative tests fail when the SQL validator is disabled, independently of authority rejection.
+- [ ] R8: portable observations or explicit Linux guards for the five failing macOS cases; retain Linux coverage and non-Linux refusal checks.
 - [ ] dcc-02: scheduling/exclusion with controlled-clock and child-failure evidence.
 - [ ] dcc-03: DBT lifetime, terminal-message retry and local compatibility.
 - [ ] dcc-04: qualified CLI integration and audited recovery operations.
