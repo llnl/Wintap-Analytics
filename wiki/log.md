@@ -5383,3 +5383,63 @@ review, updated ETL/sequence diagrams and canonical guidance. The handoff includ
 specific fixes with reproduced evidence, five coordination implementation units
 and worker validation gates. Recorded review-time repository status as historical
 context for publication.
+
+## [2026-11-13] planning | worker review and coordination implementation order
+
+Pulled manager commit `91f741e` into Analytics; PyUtil remains at `c782f63`.
+Read the new handoff/design and updated canonical guides, then inspected live
+entity, checkpoint, CLI and DBT sources supporting findings R1–R5. Created
+`wiki/work/dbt-compaction-coordination/implementation_plan.md` and `verification.md`,
+and indexed them. The plan proposes integrity/provenance/freshness and phase-evidence
+safety prerequisites before real writer/recovery integration, then preserves the
+five handoff units. Protocol/ledger tests can start with fake children independently.
+
+Independent baseline reruns pass 38 standalone tests and 63 main DBT/source tests
+with one opt-in skip. Three disposable local probes independently reproduce SQL
+duplicate/scalar-corruption acceptance and incremental bootstrap reset. Other manager
+probes and remote three-day results remain separately attributed evidence.
+No coordinator source changes, deployment or push;
+implementation awaits human authorization. Temporary test fixtures are isolated
+under the approved temporary root and cleaned automatically.
+New-page frontmatter/grounding/link checks, diagram XML/reference checks and
+complete-addition privacy/whitespace review pass.
+
+## [2026-11-13] code | coordination safety: SQL integrity and bootstrap provenance
+
+Human authorized implementation with four explicit red/green, bounded-SQL,
+provenance and rollback/forward-evolution gates. Added independent CLI verification
+and update regressions before implementation: 75 failures and ten already-rejected
+controls. Restored SQL validation of keys, evidence fields/types, publication bounds
+and every derived scalar/flag using separate spillable relations, and retained
+validated original bootstrap metadata across changed/unchanged updates, replay and
+resumed init. The new suite passes 92 tests; standalone full regressions pass 232
+with two opt-in skips. A main cross-runtime rerun exposed lowercase caller-host
+handling, now repaired without accepting noncanonical stored hosts; full rerun pending.
+
+A disposable 20,000-entity SQL/no-Python-decoding probe passes initial update and
+unchanged replay under explicit 256 MB/512 MB DuckDB memory/spill settings. This is
+small-scale evidence, not production budget qualification. An independent real-DBT
+probe permits forward evolution with differing historical hashes but still accepts
+snapshot rollback with retained checkpoints: freshness remains open. Updated canonical
+entity guidance, implementation/checklists, verification and index. No scheduling,
+push or real-dataset mutation; unrelated local artifacts preserved.
+
+## [2026-11-13] verification | integrity/provenance final regression gate
+
+Final standalone suite passes 234 tests with two opt-in skips, including 94 new
+integrity/provenance/compatibility cases. The main suite passes 315 with three skips
+from an isolated working directory. Its initial checkout-root run passed 314 but
+failed the default-config test because of a pre-existing ignored local dataset
+setting; independently reproduced that dependency and left the settings file intact.
+Ruff lint/format, both repositories' whitespace checks, three wiki frontmatters,
+32 source anchors, ten wikilinks and privacy/diff review pass. R2/R3 are complete in
+the working tree; R1 freshness, phase evidence/recovery and coordination remain open.
+No commit, push, scheduler deployment or real-dataset mutation.
+
+## [2026-11-13] milestone | committed SQL integrity and bootstrap provenance
+
+Human requested a milestone commit and continuation of the plan. Committed only
+the verified R2/R3 code/tests/README in PyUtil as `7d2b7f8`; this wiki milestone
+records the red/green and full regression evidence. Unrelated local artifacts remain
+untouched. Continue with formal freshness rollback/forward regressions and a selected
+receipt/publication-intent contract. No push or production scheduling.

@@ -87,11 +87,17 @@ can update snapshots but does not publish checkpoints. Recovery must reconcile
 entity state, raw migration and checkpoint coverage independently.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py §run/publish_metrics -->
 
-Follow-up review of `c782f63` reproduces two SQL-migration defects: active snapshot
-verification misses duplicate keys and non-parent scalar/evidence disagreement;
-incremental updates reset `bootstrap_start` to the update window. These remain
-open implementation findings, with evidence and recovery implications in
-[[wiki/work/dbt-compaction-coordination/implementation-review]].
+The SQL-migration integrity/provenance defects reproduced at `c782f63` are repaired
+in PyUtil milestone `7d2b7f8`. Active verification/update paths check canonical host
+scope, valid/unique instance keys, exact evidence fields/element types, publication
+hour bounds, and all derived scalars and lifecycle flags. Validation reuses the SQL
+reducer in separate spillable temporary relations, never a per-process Python cache.
+Validated original bootstrap metadata is preserved for changed/unchanged updates,
+replay and resumed initialization, including report/file agreement. This does **not**
+repair the separate current-state freshness or post-deletion checkpoint boundaries.
+Red/green evidence and remaining gates:
+[[wiki/work/dbt-compaction-coordination/verification]].
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py §validate_state/_validate_evidence/_reduce_state; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities -->
 
 ## Evidence, conflicts and limits
 
@@ -108,6 +114,8 @@ The reducer retains paired parent hash/PID/kind, PID, birth/Stop FILETIME eviden
 lifecycle flags and display candidates. Duplicates, replay and out-of-order hours
 do not increment observation counters. Conflicting real parent pairs remain
 unresolved; a missing parent PID can be completed within one consistent real hash.
+An empty parent-candidate set remains missing context; SQL validation/reduction does
+not drop the entity for lacking parent candidates.
 Known modern/named sentinels are not fake ancestors. Unknown process identities
 use an explicit policy: `reject` is the default and aborts before publication;
 `quarantine` retains the raw rows, excludes them from durable entity state, and

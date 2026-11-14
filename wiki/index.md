@@ -304,6 +304,14 @@ startup / 60-second release-observation polling budget.
 Post-pull [[wiki/work/dbt-compaction-coordination/implementation-review]] records
 four-root/checkpoint recovery requirements, snapshot validation/provenance findings,
 and fresh focused regressions (38 standalone; 63 main passed, 1 skipped).
+Worker [[wiki/work/dbt-compaction-coordination/implementation_plan]] adds safety
+prerequisites before real writer integration, followed by the five handoff units;
+[[wiki/work/dbt-compaction-coordination/verification]] distinguishes independent
+baseline reruns from imported probes and future concurrency evidence. Authorized
+integrity/provenance work now repairs active SQL validation and original bootstrap
+retention: 75 pre-fix regression failures, then 94 new tests pass; full suites pass
+234 standalone and 315 main tests with opt-in skips. Receipt-backed
+freshness, phase-safe recovery and coordination implementation remain open.
 
 Historical PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
 [[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],
