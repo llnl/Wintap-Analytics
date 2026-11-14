@@ -71,7 +71,38 @@ were manually reviewed for persistent-content privacy and read-mode consistency.
 These are scoped documentation checks, not a repository-wide wiki lint or runtime
 qualification. Changes remain uncommitted/unpushed.
 
-## Source/manual checks
+## Post-pull producer review — November 14
+
+Authorized utility planning was committed and rebased as Analytics `94a6688` over
+pulled `deae3a3`. PyUtil was already current at `8ee714c`; source review confirms
+retained v3 completed runs, receipt-bound independent verification and atomic local
+completion. Updated the stale initial planning claims below in brief/design/plan;
+advisory status/run/catalog exports and the reader client remain unimplemented.
+
+The original `8ee714c` actual-Mac coordination attempt was **blocked before tests**:
+the manifest required root `uv.lock`, which was Git-ignored and absent from that
+commit. Main provisioning failed and neither test stage ran. Original evidence:
+[[wiki/work/dbt-compaction-coordination/verification#Maintainer completion review — Mac provisioning blocked]].
+
+Human selected the committed worker repair. Pulled PyUtil `fab647f` and Analytics
+`6459c74`, rebasing planning as `1051a8c` while preserving both histories. Independent
+pre/post-run checks confirm all 22 exact manifest identities and both locked native
+runtimes; 18 harness controls pass. The unchanged corrected Mac baseline finishes
+with **169 main passed/129 reviewed Linux-only skips** and **267 standalone
+passed/zero skipped**, both exit 0 without timeout. Full versions, timings and skip
+boundaries: [[wiki/work/dbt-compaction-coordination/verification#Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed]].
+Mac reader shutdown, producer service/client/advisory exports/audited recovery and
+S3/resource qualification remain open. No utility gate is accepted by these tests.
+
+No utility code, new app tests, deployment or assistant push; the 27-test historical
+raw-viewer baseline and all utility acceptance gates retain their original scope.
+
+**Finalization:** the human authorizes committing/pushing the planning and review
+documentation, not utility implementation or deployment. Remaining producer gates
+return to the worker through
+[[wiki/work/dbt-compaction-coordination/dev_handoff#Worker continuation after the Mac review]].
+
+## Source/manual checks — original planning baseline
 
 - Read HostActivity main, source discovery, filename metadata, query projection,
   README, dependency pin and offline tests; canonical/original dashboard artifacts.
@@ -82,8 +113,8 @@ qualification. Changes remain uncommitted/unpushed.
   unsuitable for side-effect-free status. Current run states are `INTENT`/`BLOCKED`.
 - Confirmed coverage is fixed-hour/replay-overwritable and independent phase
   archives preserve order without a uniform measured phase timestamp.
-- Planning remains tied to inspected PyUtil `fe7fcb5`; no newer worker progress
-  was pulled or independently accepted. Existing coordination gates remain in
+- Original planning used inspected PyUtil `fe7fcb5`; newer producer review and
+  repaired Mac results are recorded above. Existing coordination gates remain in
   [[wiki/work/dbt-compaction-coordination/verification]].
 
 ## Pending acceptance matrix
@@ -107,8 +138,9 @@ qualification. Changes remain uncommitted/unpushed.
 ## Known gaps and follow-ups
 
 No status/export/client API is assumed implemented by this draft. Agree the
-consumer/producer contract now; coordinated refresh and authoritative run history
-still depend on the worker's qualified client/completion milestones. Then record
+consumer/producer contract now; coordinated refresh needs the qualified client,
+while authoritative run history needs an export of the implemented local committed
+completion disposition. Then record
 actual commands, before/after failures, test results, identity/privacy
 checks and isolated pilot limits here. Use synthetic labels in committed evidence;
 do not persist private host/account/network values or raw diagnostic payloads.

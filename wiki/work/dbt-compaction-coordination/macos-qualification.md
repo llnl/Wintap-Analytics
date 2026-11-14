@@ -32,7 +32,21 @@ The human selected a reproducible, human-run Mac harness rather than CI or remot
 machine access. This is a runner choice, **not macOS support or acceptance**.
 <!-- SOURCE: Human runner selection, conversation 2026-11-14. -->
 
-## Next task: dcc-mac-baseline-01
+## Stage 1 baseline: dcc-mac-baseline-01
+
+**Original actual-Mac result: blocked before tests at `8ee714c`.** That commit
+omitted root `uv.lock`, although the manifest required it; main locked provisioning
+and checkout validation failed. Neither test stage ran. The repaired `fab647f`
+handoff below includes the reviewed lock; independent Mac source checks and both
+locked native runtimes pass. The corrected baseline **passes**: 169 main tests with
+129 reviewed Linux-only skips, and 267 standalone tests with no skips; both stages
+exit 0 without timeout. Original evidence and repair disposition:
+[[wiki/work/dbt-compaction-coordination/verification#Maintainer completion review — Mac provisioning blocked]]
+and [[wiki/work/dbt-compaction-coordination/implementation-review#R9 — Medium: exact Mac handoff omits its required main lockfile]].
+
+Fresh Mac timings, versions and skip review:
+[[wiki/work/dbt-compaction-coordination/verification#Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed]].
+Stage 2 reader-backend acceptance remains the next Mac gate, not granted by this pass.
 
 **Run the unchanged committed coordination baseline on an actual Mac and return
 sanitized evidence. Do not implement a backend or qualify real S3 in this task.**
@@ -42,9 +56,9 @@ Qualification revision in **Wintap-PyUtil**:
 on `work/raw-sensor-compacted-union`. This corrective follow-up includes the exact
 original main `uv.lock`, a root-only tracking exception and committed-file coverage
 checks/controls. It retains the prior feature code, README, harness and public
-source manifest. The original 18 feature Python
-files and four runtime/lock files retain the hashes used for the completed Linux
-641-main/439-standalone regressions. The committed manifest's SHA-256 is
+source manifest. The 18 feature Python files and four runtime/lock files retain
+the hashes used for the worker-reported Linux 641-main/439-standalone regressions.
+The committed manifest's SHA-256 is
 `c37247ac1962cb6a259e5387d1c9177a37f82a5ff78f913382b293770d2bf3b7`.
 
 **Original result: blocked.** The Mac worker reports that the original
@@ -58,15 +72,17 @@ record; this is a packaging correction, not a retroactive pass or Mac execution.
 The corrected revision passes all 22 committed/local manifest hashes and the
 identity-only validator from a fresh Git-only clone without copied ignored files
 or virtual environments. Eighteen local harness controls pass, including three
-new committed-coverage regressions. Actual Mac provisioning/tests still require
-a new run and a **new private output directory**.
+new committed-coverage regressions. The maintainer's separate actual-Mac run now
+verifies provisioning, 18 harness controls and both baseline stages. Any subsequent
+rerun still requires a **new private output directory**.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/.gitignore; ../Wintap-PyUtil/uv.lock; ../Wintap-PyUtil/scripts/dcc_macos_baseline.py §validate_checkout; ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py -->
 
-The scratch `fe7fcb5` plus uncommitted-overlay procedure is **superseded**. Both
-repositories' new commits are local, not pushed by the assistant. Make this exact
-commit available on the Mac through your chosen transfer/push method; an older
-remote branch is insufficient. Do not transfer datasets, settings, credentials or
-Linux virtual environments.
+The scratch `fe7fcb5` plus uncommitted-overlay procedure is **superseded**. The
+maintainer pulled the corrective commits; the human now authorizes committing and
+pushing Analytics utility planning `1051a8c` and the finalized review. This does not
+authorize new implementation or deployment. For any new Mac run, make this exact
+qualification commit available; an older branch is insufficient. Do not transfer
+datasets, settings, credentials or Linux virtual environments.
 
 ### Stage 1: commands and scope
 
@@ -134,8 +150,9 @@ remain separate human-confirmed gates.
 
 ## Stage 2: reader backend acceptance remains pending
 
-The macOS reader backend and client are not implemented. Linux full main now passes
-641 tests (three skips) on the unchanged revision, and its freeze is lifted. After
+The macOS reader backend and client are not implemented. Worker-reported Linux
+full main passes 641 tests (three skips); the scoped Mac baseline passes with
+Linux-only supervision paths skipped. After
 the backend exists, refresh the manifest/harness for that
 exact revision and run real Mac controls for ordinary DBT lifetime, preflight/build
 failure, interruption, descendants, detached-child attempts and wrapper death.

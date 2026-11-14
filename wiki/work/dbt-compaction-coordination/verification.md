@@ -1273,6 +1273,155 @@ gates and dcc-02–05 remain open. No push, remote access, production mutation,
 scheduler installation or unrelated-artifact cleanup occurred.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/.gitignore; ../Wintap-PyUtil/uv.lock; ../Wintap-PyUtil/scripts/dcc_macos_baseline.py §validate_checkout; ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json; ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py -->
 
+### Maintainer completion review — Mac provisioning blocked
+
+Human requested the latest pull, source review and actual Mac tests. Utility planning
+was committed and rebased as Analytics `94a6688` over pulled `deae3a3`; PyUtil's
+fast-forward pull was already current at
+`8ee714c0c58e9781a29b0cdc488e3aaf6ebea181`. No assistant push or source repair.
+
+Created a clean detached disposable worktree at that exact PyUtil revision. Actual
+platform: **macOS 26.7.1, arm64**; uv **0.11.26**. Applied the committed runbook:
+
+```sh
+uv sync --locked --dev --python 3.12
+uv sync --locked --dev --python 3.12 --project extras/raw-sensor-compact
+git ls-tree -r --name-only 8ee714c0c58e9781a29b0cdc488e3aaf6ebea181 uv.lock extras/raw-sensor-compact/uv.lock
+git check-ignore -v uv.lock
+```
+
+- Main provisioning: **exit 2**, `Unable to find lockfile at uv.lock, but --locked
+  was provided`. Python 3.12.12 was selected and an empty main environment created;
+  dependencies were not installed. It is not a usable test runtime.
+- The independent standalone provisioning command succeeded (**exit 0**), reporting
+  Python **3.12.12**, DuckDB **2.0.0**, pytest **9.2.0**. These are provisioner-reported
+  versions, not completed import/version gates or test results.
+- Git tree check finds only `extras/raw-sensor-compact/uv.lock`; root `uv.lock` is
+  excluded by `.gitignore`. The original checkout's ignored lock exists but does not
+  match the reviewed manifest, so it was not copied or used.
+- Direct standard-library `validate_checkout` check of the disposable checkout fails
+  with `Required feature source is missing or aliased`. Exact HEAD, reviewed ancestry
+  and clean tracked state pass; **21/22** named manifest files are present and match.
+  The manifest SHA-256 is unchanged:
+  `c37247ac1962cb6a259e5387d1c9177a37f82a5ff78f913382b293770d2bf3b7`.
+
+**Original dcc-mac-baseline-01 attempt: BLOCKED before tests.** No main/standalone pytest stage, runtime
+import/version check or committed harness execution followed the provisioning
+failure. No harness `summary.json` exists; private `provisioning-review.json` records
+the original command outcomes and separate source checks without fabricating test
+counts. No lockfiles/manifests were changed and no substitute runtime was used.
+
+The corrected run is recorded separately below; this original failure remains intact.
+
+The source review covers R6–R8 controls, effective execution receipts, separate
+verification, retained authority and v3 history/atomic completion. Findings and
+worker repair request: [[wiki/work/dbt-compaction-coordination/implementation-review#Completion phase review — 2026-11-14]].
+Worker-reported Linux **641/439 full-suite passes** and **298 focus passes** are not
+fresh Mac evidence. dcc-02–05, service/client/advisory exports/audited recovery,
+supported Mac reader shutdown, actual-S3 and representative-resource gates remain
+open. The utility remains planning only; its previous 27-test result is unchanged.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/.gitignore; ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json; ../Wintap-PyUtil/scripts/dcc_macos_baseline.py §validate_checkout; wiki/work/dbt-compaction-coordination/macos-qualification.md §Stage 1 -->
+
+### Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed
+
+Human selected the newly committed worker repair rather than a substitute-runtime
+diagnostic run. Pulled PyUtil `8ee714c` →
+`fab647f900196b0bc473fe7977b7dadcf7f4ce52` and Analytics `deae3a3` → `6459c74`;
+rebased authorized utility planning as `1051a8c`. Preserved worker documentation,
+planning and the original maintainer provisioning evidence through rebase/stash
+resolution. No new review commit or assistant push.
+
+A **new clean detached disposable checkout** uses only the repaired committed
+sources and newly provisioned native environments. Actual platform: **macOS 26.7.1,
+arm64**, uv **0.11.26**. The root lock has the exact previously reviewed SHA-256
+`61912ee3abb9e095b46e03fba4a021272d77bed9f1235a8901e92a92a5d9d367`;
+the public manifest SHA-256 remains
+`c37247ac1962cb6a259e5387d1c9177a37f82a5ff78f913382b293770d2bf3b7`.
+All **22 manifest files** pass local and committed-Git-blob identity checks before
+and after testing. No source/test/lock/manifest bytes were altered for the run.
+
+Commands from the repaired checkout:
+
+```sh
+uv sync --locked --dev --python 3.12
+uv sync --locked --dev --python 3.12 --project extras/raw-sensor-compact
+.venv/bin/python -B -c 'import sys, duckdb, pytest; print("main", sys.version.split()[0], duckdb.__version__, "pytest", pytest.__version__); assert duckdb.__version__ == "1.5.6"'
+extras/raw-sensor-compact/.venv/bin/python -B -c 'import sys, duckdb, pytest; print("standalone", sys.version.split()[0], duckdb.__version__, "pytest", pytest.__version__); assert duckdb.__version__ == "2.0.0"'
+.venv/bin/python -B scripts/dcc_macos_baseline.py \
+  --root . --manifest scripts/dcc_macos_source_manifest.json \
+  --commit fab647f900196b0bc473fe7977b7dadcf7f4ce52 \
+  --output '<new-private-output-directory>'
+```
+
+Both locked provisioning commands and import/version gates exit **0**. Independent
+harness controls also exit **0**: **18 tests in 0.279 seconds**, using
+`<checkout>/.venv/bin/python -B <checkout>/scripts/test_dcc_macos_baseline.py`
+from isolated CWD/HOME/temp without inherited AWS credentials. The committed
+baseline similarly isolates its environment and runs its nine main / three
+standalone modules unchanged, **not the full suites**.
+
+| Stage | Import-checked Python / DuckDB / pytest | Passed | Skipped | Exit / timeout | Harness elapsed | Pytest elapsed |
+|---|---|---:|---:|---|---:|---:|
+| Main | 3.12.12 / 1.5.6 / 9.1.1 | 169 | 129 | 0 / false | 29.53 s | 29.05 s |
+| Standalone | 3.12.12 / 2.0.0 / 9.2.0 | 267 | 0 | 0 / false | 47.51 s | 47.12 s |
+
+Both stages report **zero failures, errors and deselections**. Private `summary.json`
+reports `baseline_passed: true` and `reader_backend_qualified: false`. Raw
+`main.txt`/`standalone.txt`, separate `qualification-review.json` and the full skip
+inventory remain private; no account paths or telemetry identifiers are copied here.
+The original `8ee714c` checkout and `provisioning-review.json` remain intact in their
+separate failed-attempt directory; this result does not retroactively pass that run.
+
+**Skip review:** every one of the **129 cases in 62 report groups** maps to a
+committed `sys.platform != "linux"` guard with its reported reason. No unexpected
+dependency, provisioning or standalone skip is present. Representative test names
+below identify the excluded contracts; the private inventory retains every name
+and per-group count.
+
+| Main module | Skipped | Excluded contract and representative test names |
+|---|---:|---|
+| `test_coordination_authority.py` | 20 | Linux authority/writer-verifier supervision: `test_real_verified_authority_initialization_and_fresh_session_gate`, `test_abrupt_death_recovers_verified_high_water_without_reopening`, `test_entire_history_is_validated_beyond_first_bounded_batch`. |
+| `test_coordination_completion.py` | 33 | Linux writer/completion supervision: `test_real_empty_completion_retains_proof_and_advances_exactly_one_hour`, `test_real_entity_completion_advances_high_water_atomically_and_preserves_originals`, `test_abrupt_completion_death_recovers_all_or_none_and_cannot_relaunch`. |
+| `test_coordination_completion_controls.py` | 27 | Real Linux writer/verifier controls: `test_retained_proof_semantic_negatives_are_independent_of_audit_rejection`, `test_three_real_completed_hours_validate_across_instrumented_two_row_pages`, `test_v2_schema_fixture_preserves_genuine_authority_proof_and_reader_reservation`. |
+| `test_coordination_execution.py` | 2 | Linux writer subreaper: `test_real_bound_empty_compactor_has_receipt_before_launch_but_still_blocks`, `test_real_local_migration_keeps_original_phase_evidence_and_blocks`. |
+| `test_coordination_verification.py` | 10 | Linux writer supervision: `test_real_separate_standalone_empty_verifier_binds_intent_without_reopening`, `test_verifier_refuses_missing_or_changed_execution_shutdown_phase_evidence`. |
+| `test_coordination_tick.py` | 3 | Linux procfs/subreaper: `test_abrupt_tick_death_never_launches_replacement_even_when_child_survives`, `test_real_supervised_callback_holds_ledger_lock_and_still_cannot_certify_empty_hour`, `test_supervisor_death_with_surviving_workload_remains_blocked`. |
+| `test_coordination_supervisor.py` | 34 | Linux subreaper contract, including scalar/report negatives within the guarded module: `test_root_exit_does_not_leave_sleeping_or_detached_descendants`, `test_timeout_stops_sigterm_ignoring_tree_but_not_unrelated_child`, `test_caller_interruption_or_death_requests_cleanup_of_detached_tree`. |
+
+**Disposition:** dcc-mac-baseline-01 passes and R9's reproducible packaging repair is
+verified. R6 admission-clock and R7 SQL-integrity controls are included in the passing
+native modules, but the worker's separate SQL-mutation result was not rerun. R8's
+portable observers/platform refusal baseline passes; Linux-only real-tree and
+completion paths remain skipped, not Mac-qualified. The worker's **641 main / 439
+standalone full-suite** and **298 focus** Linux results remain separately attributed.
+Supported Mac reader lifetime/shutdown, service/client/advisory exports/audited
+recovery, actual-S3 and representative 32 GB RAM / 64 GB disk resource qualification
+remain open. **dcc-02–05 stay unchecked.** No utility implementation, real grants or
+dataset operation, source repair, deployment or assistant push; test data is synthetic.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/scripts/dcc_macos_baseline.py; ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json; ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py; ../Wintap-PyUtil/uv.lock; ../Wintap-PyUtil/extras/raw-sensor-compact/uv.lock -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_authority.py; ../Wintap-PyUtil/tests/test_coordination_completion.py; ../Wintap-PyUtil/tests/test_coordination_completion_controls.py; ../Wintap-PyUtil/tests/test_coordination_execution.py; ../Wintap-PyUtil/tests/test_coordination_verification.py; ../Wintap-PyUtil/tests/test_coordination_tick.py; ../Wintap-PyUtil/tests/test_coordination_supervisor.py §Linux-only skip guards -->
+
+Maintainer documentation closure: `git diff --check` passes. Scoped checks cover
+**11 changed wiki files, nine required-field frontmatters, 177 grounding paths,
+208 inline source paths and 394 wikilinks (31 section targets)** with no new errors.
+Existing index/log frontmatter exceptions and one historical broken log link remain
+baseline issues, not whole-wiki acceptance. Complete diff/privacy review finds no
+unauthorized identifiers; worker/original maintainer log histories and private
+failed-attempt evidence are preserved. All stash conflicts are resolved; review
+edits were left unstaged/uncommitted at that review checkpoint and the preservation
+stash was retained. PyUtil's
+unrelated environment artifacts remain untouched.
+
+**Finalization:** the human subsequently authorized commit/push of the wiki review
+and existing utility planning. Remaining implementation returns to the worker via
+[[wiki/work/dbt-compaction-coordination/dev_handoff#Worker continuation after the Mac review]].
+No additional runtime tests or acceptance claims are introduced by publication;
+the original failure, reviewed skip boundaries and dcc-02–05 gates remain unchanged.
+Finalization checks pass the same 11 wiki files/nine frontmatters, 177 grounding
+paths, 208 inline sources and 401 links/37 section targets with no new errors;
+complete diff/privacy and whitespace inspection pass. Baseline exceptions above
+remain unchanged, and the pending push contains only wiki documentation.
+
 ### Baseline review regressions
 
 Independent focused rerun before implementation, November 13, in the standalone
@@ -1346,9 +1495,12 @@ units. Ledger/protocol tests may use fake children independently of writer fixes
 
 ## Known Gaps
 
+- R9's original `8ee714c` provisioning failure is historical. The repaired `fab647f`
+  handoff passes exact-source/locked-runtime checks and the scoped actual-Mac baseline;
+  it does not qualify skipped Linux writer/completion paths or Mac reader shutdown.
 - R6–R8 are addressed by slice A's formal clock repair, authority-independent SQL
   negatives/mutation evidence and portable observers/platform guards. Actual macOS
-  rerun and supported reader shutdown remain open; historical review results retain
+  offline rerun passes; supported reader shutdown remains open. Historical results retain
   their original scope.
 - Protocol/ledger library is regression accepted with 54 focused and 397 full-main
   passes. The admission/draining tick focus passes 100 cases; its full-main
@@ -1388,8 +1540,10 @@ units. Ledger/protocol tests may use fake children independently of writer fixes
 
 ## Follow-Ups
 
-Local v3 high-water/history/atomic-completion full regressions now pass. Obtain the
-human-run actual-Mac baseline and qualify reader-shutdown feasibility before broad
-client integration; continue service and audited operations before real destructive qualification.
+Worker-reported local v3 high-water/history/atomic-completion full regressions pass;
+R9's repair and the actual-Mac offline baseline are now verified. Qualify supported
+Mac reader-shutdown feasibility before claiming client acceptance. Follow
+[[wiki/work/dbt-compaction-coordination/macos-qualification#Stage 2: reader backend acceptance remains pending]];
+continue service and audited operations before real destructive qualification.
 Add commands, negative regressions and runtime
 qualification results as each planned unit is implemented.

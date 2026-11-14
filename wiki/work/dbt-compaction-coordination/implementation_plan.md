@@ -599,9 +599,11 @@ in [[wiki/work/dbt-compaction-coordination/macos-qualification]]. The original
 `8ee714c` attempt was blocked before both test stages by the missing main lockfile;
 preserve that result. Corrective commit `fab647f900196b0bc473fe7977b7dadcf7f4ce52`
 tracks the exact original lock and checks committed/local bytes; all 22 identities
-and 18 harness controls pass from a fresh Git-only clone. The human's new-directory
-Mac rerun and future reader-backend shutdown acceptance remain pending. Never copy access
-secrets or actual host/account/IP identifiers into this wiki.
+and 18 harness controls pass from a fresh Git-only clone. The separate actual-Mac
+rerun now passes 169 main tests/129 reviewed Linux-only skips and 267 standalone
+tests/zero skips; future reader-backend shutdown acceptance remains pending. See
+[[wiki/work/dbt-compaction-coordination/verification#Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed]].
+Never copy access secrets or actual host/account/IP identifiers into this wiki.
 
 First run the combined lifecycle with synthetic local fixtures, then the approved
 isolated S3 fixtures: two overlapping readers, due writer, queued third reader,
@@ -704,7 +706,9 @@ macOS commands/results in [[wiki/work/dbt-compaction-coordination/verification]]
 - [ ] Completion slice B/D: Linux and macOS reader supervision and actual-platform qualification.
 - [x] Completion slice B: human-run Mac harness selected and committed with public source manifest/15 local harness controls in PyUtil `8ee714c`; exact-revision task dcc-mac-baseline-01 defined (not actual-Mac execution or reader-shutdown acceptance).
 - [x] Mac qualification packaging correction: exact original main lock tracked in PyUtil `fab647f`; all 22 committed/local identities verified from a fresh Git-only clone; three pre-fix coverage failures become 18 passing harness controls. Manifest/runtime hashes unchanged; original blocked Mac result retained.
-- [ ] dcc-mac-baseline-01: rerun corrective PyUtil `fab647f` on an actual Mac with a new report directory and separate locked runtimes; original `8ee714c` attempt was blocked before both stages. Retain sanitized pass/failure/skip evidence per [[wiki/work/dbt-compaction-coordination/macos-qualification]].
+- [x] dcc-mac-baseline-01: unchanged corrective PyUtil `fab647f` passes on an actual Mac with a new private report directory and separate locked runtimes: 169 main passed/129 reviewed Linux-only skips; 267 standalone passed/zero skipped; no timeout. See [[wiki/work/dbt-compaction-coordination/verification#Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed]]. Original `8ee714c` pre-test failure remains separate; reader shutdown is not qualified.
+- [x] Maintainer reviews `8ee714c` and attempts actual-Mac locked provisioning; retains the original pre-test failure and R9 handoff finding without substituting dependencies.
+- [x] R9 packaging repair: reviewed main lock and committed-blob guard pulled in `fab647f`; independent 22-file pre/post-run identities, both locked Mac runtimes and 18 harness controls pass. Corrected baseline passes; original failed attempt remains in [[wiki/work/dbt-compaction-coordination/verification#Maintainer completion review — Mac provisioning blocked]].
 - [x] Completion slice C local library: independent verifier, entity high-water enforcement and atomic retained-history/cursor transaction, with red/green and full main/standalone evidence; not service/platform/endpoint acceptance.
 - [ ] dcc-02: scheduling/exclusion with controlled-clock and child-failure evidence.
 - [ ] dcc-03: DBT lifetime, terminal-message retry and local compatibility.

@@ -24,6 +24,16 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_coordination_tick.py
   - wiki/work/dbt-compaction-coordination/implementation_plan.md
   - wiki/work/dbt-compaction-coordination/verification.md
+  - ../Wintap-PyUtil/wintappy/coordination/execution.py
+  - ../Wintap-PyUtil/wintappy/coordination/writer.py
+  - ../Wintap-PyUtil/wintappy/coordination/verification.py
+  - ../Wintap-PyUtil/wintappy/coordination/authority.py
+  - ../Wintap-PyUtil/wintappy/coordination/completion.py
+  - ../Wintap-PyUtil/scripts/dcc_macos_baseline.py
+  - ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json
+  - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
+  - ../Wintap-PyUtil/uv.lock
+  - ../Wintap-PyUtil/.gitignore
 policy: agent-editable
 last_validated: 2026-11-14
 repo_scope: cross-repo
@@ -37,12 +47,77 @@ tags: [review, coordination, entity-state, checkpoints, recovery, local-only]
 
 # Durable entity implementation: coordination review
 
-**The milestone makes substantial progress; dcc-02 acceptance remains open.**
-R1–R5 have implemented repairs, and the protocol/ledger provides a conservative
-foundation. Review follow-through covers the confirmed admission bug, SQL-test
-isolation and platform-aware tests before continuing integrated completion work.
+**Local verified completion/history now exists; service acceptance remains open.**
+The new source addresses R6–R8 and adds receipt-bound execution, independent
+verification, retained authority and atomic normal completion. R9's packaging repair
+is independently verified at `fab647f`; the exact-Mac offline baseline passes
+169 main tests (129 reviewed Linux-only skips) and 267 standalone tests.
 Implementation remains owned by Wintap-PyUtil; this review and the coordination
 handoff live in Wintap-Analytics.
+
+## Completion phase review — 2026-11-14
+
+Pulled Analytics `deae3a3` and rebased the authorized utility planning commit as
+`94a6688`, preserving both log histories. PyUtil was already at
+`8ee714c0c58e9781a29b0cdc488e3aaf6ebea181`; its fast-forward pull reported current.
+The review/test request activates developer mode, but authorizes no utility
+implementation, sibling-source repair, deployment or assistant push.
+
+| Area | Independent source assessment |
+|---|---|
+| R6 admission | `tick` observes UTC after ingestion and before admission. Formal boundary/fault controls preserve existing reservations while keeping a post-grace request waiting; included in the passing Mac main baseline. |
+| R7 SQL controls | New direct `validate_sql` and pre-publication candidate negatives require SQL-specific diagnostics, independently of committed-snapshot authority. The worker's 80-case mutation result remains attributed, not freshly reproduced here. |
+| R8 portability | Directory-fsync tests use device/inode observations with procfs denied; actual Linux tree tests are guarded and non-Linux refusal controls remain. The native baseline passes; supported Mac reader shutdown is still a separate open gate. |
+| Execution | Preparation binds explicit scope/budgets, standalone code/runtime and receipt checksum to intent before launch. Credentials remain ephemeral rather than receipt/environment dumps. |
+| Authority | Verified initialization requires confirmation/reason, no retained baseline and zero readers. Entity admission/intent requires same-session freshness against retained predecessor-linked proofs; reopening clears that freshness. |
+| Completion | `execute_and_complete_prepared` obtains fresh data/authority evidence internally under the existing lock, rechecks captures/original archives and uses one transaction for proof/run/high-water/hour-cursor/backlog state. The conservative API and restart-blocked intents cannot use this as recovery. |
+| Integration | The existing `tick` callback still creates its own conservative intent and blocks every outcome; the new normal-success API is not a drop-in callback. Service/client/advisory exports/audited recovery remain unfinished. |
+
+The source review supports the local library scope, not operational acceptance.
+Worker-reported Linux results remain **641 main passed/three skipped**, **439
+standalone passed/two skipped** and **298 coordination-focus passed**. The fresh
+Mac baseline below is a smaller scoped run, not a reproduction of those full-suite
+counts or the skipped Linux completion paths. Whole-ledger-plus-authority restoration,
+actual-S3, accumulated-state resources and reader shutdown retain their separate
+qualification boundaries; dcc-02–05 remain unchecked.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py §tick; ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/writer.py; ../Wintap-PyUtil/wintappy/coordination/verification.py; ../Wintap-PyUtil/wintappy/coordination/authority.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py §_validate_completion_history/_complete_writer/_require_entity_authority -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_tick.py §test_ingestion_clock_is_refreshed_before_new_reader_admission/test_clock_failure_after_ingestion_cannot_admit_or_revoke_readers; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entity_integrity.py §test_sql_integrity_rejects_corruption_independently_of_authority; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_phase_evidence.py §test_new_publication_directory_links_are_fsynced_before_success -->
+
+### R9 — Medium: exact Mac handoff omits its required main lockfile
+
+**Original failure independently reproduced; repaired in `fab647f`.** A clean
+detached worktree at `8ee714c` could not provision the main runtime:
+`uv sync --locked --dev --python 3.12` exited **2**, reporting missing root `uv.lock`.
+That commit's source manifest named the file, but `git ls-tree` contained only the
+standalone lock and `.gitignore` excluded the root lock. Checkout validation raised
+`Required feature source is missing or aliased`; 21/22 manifest files otherwise
+existed with matching bytes. The pre-existing local main lock had a different hash.
+
+Required main lock SHA-256:
+`61912ee3abb9e095b46e03fba4a021272d77bed9f1235a8901e92a92a5d9d367`.
+Original standalone locked provisioning succeeded, but was not a test or baseline pass.
+Neither test stage ran, and the harness produced no test summary. The original
+failure and separate source checks are retained privately; sanitized evidence is in
+[[wiki/work/dbt-compaction-coordination/verification#Maintainer completion review — Mac provisioning blocked]].
+
+**Repair disposition: closed for the reproducible baseline handoff.** At the human's
+request, pulled corrective PyUtil
+`fab647f900196b0bc473fe7977b7dadcf7f4ce52` and Analytics `6459c74`, rebasing utility
+planning as `1051a8c`. The worker recovered the exact reviewed main lock, added a
+root-only tracking exception and strengthened validation against committed blobs.
+The manifest and all feature/runtime hashes are unchanged. Independent Mac checks
+verify all 22 local/committed files before and after testing, both locked native
+runtimes and **18 harness controls** (0.279 s, exit 0).
+
+The unchanged repaired harness finishes both stages: **169 main passed/129 skipped**
+and **267 standalone passed/zero skipped**, with exit 0 and no timeout. All 129 skips
+were reviewed against their Linux-only guards; real writer/authority/completion and
+tree-shutdown paths are not qualified by this Mac run. The original blocked attempt
+remains separate and is not relabeled as successful. Detailed timings, versions and
+skip boundaries: [[wiki/work/dbt-compaction-coordination/verification#Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed]].
+No source repair by this maintainer, utility implementation, S3, deployment or push;
+service/client/advisory exports/audited recovery and dcc-02–05 remain open.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/.gitignore §root lock tracking exception; ../Wintap-PyUtil/uv.lock; ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json §files.uv.lock; ../Wintap-PyUtil/scripts/dcc_macos_baseline.py §validate_checkout; ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py; wiki/work/dbt-compaction-coordination/verification.md §Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed -->
 
 ## Milestone review — 2026-11-14
 

@@ -52,7 +52,7 @@ Requirements: [[wiki/work/compaction-status-utility/brief]].
 | Raw metadata parses `hostname+event_type+FILETIME.parquet`. Compaction preserves partition/row semantics, not original filenames. | Keep raw filename charts distinct. Use partition inventory for compacted metadata and row-level host/time for compacted activity. |
 | App and main coordination runtime pin DuckDB 1.5.6; compactor is isolated at 2.0.0. | Do not import compactor writer code into the app or use its runtime to open the ledger. |
 | `Ledger.open` takes the persistent lock and calls `_block_unresolved_writer`. | It is not a side-effect-free dashboard reader. A SELECT after calling it can already have mutated recovery state. |
-| Current run table accepts only `INTENT`/`BLOCKED` and has no completed-run history API. | Success/history export depends on the worker's remaining completion implementation. |
+| At reviewed PyUtil `8ee714c`, ledger v3 retains `COMPLETED` runs and bound completion proofs; normal completion exists as a locked local library. | Agree a bounded advisory export of committed disposition/history; do not open the ledger from the app or infer an implemented service/export API. |
 | Metrics v4 are fixed one-row hourly objects and can be overwritten by entity replay; status can mean coverage despite deletion errors. | Separate coverage from immutable migration history and coordinator disposition. |
 | Phase archives preserve checksummed sequence/lineage, but have no uniform phase timestamp field. | Existing records establish order, not measured phase duration. Do not invent timestamps from file modification times. |
 
@@ -387,7 +387,11 @@ last-qualified producer evidence separately, with its original scope and time.
 Before code: agree export schema/ownership, client interface, catalog bootstrap/
 retention, freshness cadence, OS permissions and entity validation/detail scope.
 No telemetry/schema changes are proposed; observability exports and catalog are
-new advisory artifacts. Timeline completion fields may require the already-planned
-coordination schema extension, owned by that worker.
+new advisory artifacts. The worker's v3 completion/history schema now provides a
+local source for timeline disposition; service/export qualification is still needed.
+The repaired `fab647f` handoff now passes the actual-Mac offline baseline with
+Linux-only supervision paths skipped. This is not Mac reader-shutdown or producer
+service/export/client acceptance. The original missing-lock failure remains separate. See
+[[wiki/work/dbt-compaction-coordination/implementation-review]].
 
 Next: [[wiki/work/compaction-status-utility/implementation_plan]].

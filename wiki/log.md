@@ -6043,3 +6043,85 @@ frontmatters, 213 grounding path references and 28 added wikilinks/five section
 targets, whitespace and added-content privacy-pattern scans. Complete additions
 were reviewed for privacy and mode-contract consistency. All utility/runtime gates
 remain pending; documentation is uncommitted/unpushed.
+
+## [2026-11-14] review | pulled completion phase and blocked actual-Mac handoff
+
+Committed authorized utility planning, then pulled Analytics `deae3a3` and rebased
+the plan as `94a6688`, retaining both log histories through the sole conflict.
+PyUtil's fast-forward pull was already current at `8ee714c`. Reviewed R6–R8 source
+controls, effective receipts, independent verification, retained authority and v3
+atomic normal completion/history; tick service/client/advisory exports/audited
+recovery remain open. Refreshed utility dependencies without implementing it.
+
+Entered developer mode for the requested tests and created a clean exact-revision
+disposable PyUtil worktree on macOS 26.7.1 arm64. Main locked provisioning exits 2
+because root `uv.lock` is absent from Git but required by the committed manifest;
+standalone provisioning exits 0. Independent checkout validation also fails; 21/22
+manifest files otherwise match. The existing ignored main lock differs and was not
+substituted. R9 requests a reproducible worker handoff with the reviewed lock.
+
+Preserved the original provisioning failure and source checks privately; sanitized
+evidence is in coordination verification/review/runbook/plan/handoff and index.
+Neither test stage ran, no harness summary exists, and no new Mac pass counts are
+claimed. Worker Linux 641/439 full-suite and 298 focus results remain attributed.
+No source/lockfile repair, real S3, deployment, new review commit or assistant push;
+dcc-mac-baseline-01 and dcc-02–05 remain open. Original unrelated artifacts preserved.
+
+## [2026-11-14] verification | repaired exact-Mac coordination baseline passes
+
+Human selected the new worker repair, not a substitute-environment diagnostic run.
+Pulled PyUtil `fab647f900196b0bc473fe7977b7dadcf7f4ce52` and Analytics `6459c74`;
+rebased authorized utility planning as `1051a8c`. Preserved worker documentation,
+utility planning and original `8ee714c` failed-attempt evidence through rebase/stash
+resolution; preservation stash retained. No new review commit or assistant push.
+
+New clean detached Mac checkout verifies all 22 manifest files against both local
+bytes and committed Git blobs before/after testing. Exact reviewed main lock and
+manifest/runtime hashes are unchanged. Both locked provisioning/import gates pass:
+Python 3.12.12; main DuckDB 1.5.6/pytest 9.1.1; standalone DuckDB 2.0.0/pytest 9.2.0.
+Independent isolated harness controls pass 18 tests in 0.279 s, exit 0.
+
+Committed offline baseline on macOS 26.7.1 arm64 passes **169 main/129 skipped**
+(29.53 s harness, 29.05 s pytest) and **267 standalone/zero skipped** (47.51 s harness,
+47.12 s pytest), both exit 0 without timeout or failures/errors. Reviewed all 129
+skips in 62 groups against committed Linux-only guards; private reports/full skip
+inventory retained. Recorded sanitized versions, timings, skip boundaries and R9
+repair disposition in review/verification/runbook/handoff/plan/index; refreshed
+utility producer dependencies. Original blocked provisioning is not relabeled.
+
+dcc-mac-baseline-01 is checked; dcc-02–05 remain unchecked. Mac reader shutdown,
+skipped Linux writer/completion paths, service/client/advisory exports/audited
+recovery, actual-S3 and representative resources remain separate. Worker Linux
+641/439 full-suite and 298 focus results remain attributed, not this scoped Mac run.
+No utility implementation, source repair, real endpoint/dataset operation,
+scheduling, deployment, cleanup or assistant push; unrelated artifacts preserved.
+
+Scoped documentation closure passes 11 changed wiki files, nine required-field
+frontmatters, 177 grounding paths, 208 inline sources and 394 links/31 section
+targets, with no new errors. Existing index/log frontmatter exceptions and one
+historical broken log link are preserved baseline issues. Whitespace and complete
+diff/privacy inspection pass; all stash conflicts resolved, edits unstaged and
+uncommitted, preservation stash retained. Both log histories and original private
+failure evidence verified intact; PyUtil unrelated environment artifacts untouched.
+
+## [2026-11-14] finalize | publish Mac review and return remaining gates to worker
+
+Human authorized committing and pushing the finalized wiki review plus the existing
+utility planning commit. Added the worker continuation for reader-platform shutdown,
+service/client/advisory exports, audited recovery and integrated S3/resource
+qualification; corrected the remaining stale Mac-baseline pending statement.
+The baseline result remains 169 main passed/129 reviewed Linux-only skips, 267
+standalone passed and 18 harness controls passed. Original provisioning failure and
+worker/maintainer histories remain separate and preserved.
+
+Publication is documentation only: dcc-02–05 and utility implementation/deployment
+remain unaccepted; production rollout and actual-endpoint access require their
+existing human gates. Private reports, preservation stash and unrelated source/
+environment artifacts are excluded from the commit. No further runtime execution
+or sibling-source changes are part of finalization.
+
+Finalization checks pass 11 wiki files/nine required-field frontmatters, 177 grounding
+paths, 208 inline sources and 401 wikilinks/37 section targets with no new errors.
+Complete diff/privacy and whitespace inspection pass; the existing broken log link
+and index/log frontmatter exceptions remain baseline. Pending commit/push scope is
+wiki-only; existing log history is preserved.

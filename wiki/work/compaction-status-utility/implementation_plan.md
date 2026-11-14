@@ -27,7 +27,10 @@ implementation or modify sibling code now. Read
 [[wiki/work/compaction-status-utility/brief]] and
 [[wiki/work/compaction-status-utility/design]], then obtain implementation and
 cross-repo authorization. Re-read the worker's latest source/verification before
-coding; the planning baseline is PyUtil `fe7fcb5`, not a current-worker review.
+coding. Initial planning used PyUtil `fe7fcb5`; the subsequent `8ee714c` source
+review confirms local completion/history, not qualified service/export/client
+interfaces. The repaired `fab647f` exact-Mac baseline passes with Linux-only
+supervision paths skipped; Mac reader-shutdown and producer interfaces remain open.
 
 The two read modes and scoped diagnostic exception are human-approved, not code
 authorization. The status/export agreement can be coordinated now. Mocked
@@ -155,6 +158,10 @@ Preserve local-only DBT and optional compaction/entities throughout.
 - [x] Re-run existing offline HostActivity baseline: 27 tests pass.
 - [x] Human approves default live diagnostics, optional coordinated refresh and the
   explicit diagnostic exception while retaining DBT/ledger/maintenance protection.
+- [x] Refresh producer dependencies after `8ee714c` source review; distinguish local
+  completion/history from pending exports/client and the separately scoped Mac baseline.
+- [x] Record `fab647f` handoff repair and passing actual-Mac offline baseline without
+  accepting skipped Linux paths, Mac reader shutdown or utility producer interfaces.
 - [ ] Human/worker approves csu-01 contract and implementation scope.
 - [ ] csu-01 inspection/export/lock-probe negative gates pass.
 - [ ] csu-02 status/timeline/AppTest gates pass.

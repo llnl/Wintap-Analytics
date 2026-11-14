@@ -303,8 +303,9 @@ coordinated refresh uses bounded reader grants. The scoped exception does not
 relax DBT, authoritative verification, ledger locking or maintenance. Separate
 inventory, migration/deletion evidence and entity coverage; all-partition catalog
 is resumable with explicit unknown scope. Worker interfaces, remaining defaults
-and implementation approval are pending. Unchanged offline raw-viewer baseline
-passes 27 tests; no code/deployment.
+and implementation approval are pending. Reviewed PyUtil `8ee714c` now has local
+verified completion/history, not qualified status/export/client integration.
+Unchanged offline raw-viewer baseline passes 27 tests; no utility code/deployment.
 
 Scheduled DBT/compaction coordination:
 [[wiki/work/dbt-compaction-coordination/brief]],
@@ -390,14 +391,19 @@ repairs. Full standalone passes 439 tests (two skips) on that final revision;
 combined main focus passes 298 tests; full main passes 641 (three skips). Both full
 regressions completed on the unchanged revision. This does not accept the service.
 dcc-02–05 stay open.
-Next task **dcc-mac-baseline-01** (corrective PyUtil `fab647f`): human-run exact-commit
-Mac offline rerun with a new report directory. Original `8ee714c` was blocked before
-both stages by the omitted main lockfile. Exact original lock and committed-byte
-guard now pass all 22 identities and 18 controls in a fresh Git-only clone;
-manifest/runtime hashes are unchanged. Later reader-backend acceptance is separate:
+**dcc-mac-baseline-01 passes** (corrective PyUtil `fab647f`, actual macOS arm64):
+169 main passed/129 reviewed Linux-only skips; 267 standalone passed/zero skipped;
+both exit 0, no timeout. All 22 pre/post-run identities, separate locked native
+runtimes and 18 harness controls pass. Manifest/runtime hashes are unchanged.
+Original `8ee714c` was blocked before both stages by the omitted main lockfile;
+its evidence remains separate. R9's repair disposition and fresh results are in
+[[wiki/work/dbt-compaction-coordination/implementation-review]] and verification.
+Later reader-backend acceptance is separate:
 [[wiki/work/dbt-compaction-coordination/macos-qualification]].
-Injected SDK scope/secret-exclusion tests make no endpoint requests; actual macOS,
-S3, representative resource and integrated completion/service gates remain open.
+Finalized worker continuation:
+[[wiki/work/dbt-compaction-coordination/dev_handoff#Worker continuation after the Mac review]].
+Injected SDK scope/secret-exclusion tests make no endpoint requests; supported Mac
+reader shutdown, S3, representative resource and integrated service gates remain open.
 
 Historical PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
 [[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],

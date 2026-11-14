@@ -48,18 +48,23 @@ tags: [feature-work, dev-handoff, dbt, compaction, coordination, cron, duckdb, s
 
 ## Handoff summary
 
-**Current snapshot / next task:** local PyUtil commit
+**Current snapshot / next gate:** PyUtil commit
 `fab647f900196b0bc473fe7977b7dadcf7f4ce52` contains the receipt-bound launch,
 independent verification and ledger-v3 completion/history work plus the durable
 Mac harness and exact original main lockfile. All 22 manifest files pass committed/
 local identity checks in a fresh Git-only clone; 18 harness controls pass. The original
 `8ee714c` Mac attempt was blocked before either test stage by the omitted lockfile;
-preserve that result. Rerun **dcc-mac-baseline-01** unchanged with a new private
-output directory on the human's actual Mac using
-[[wiki/work/dbt-compaction-coordination/macos-qualification]]; return sanitized
-summary/runtime/failure/skip evidence. The uncommitted-overlay procedure is
-superseded. No assistant push; reader-backend/service/recovery/S3/resource gates
-and dcc-02–05 remain open.
+preserve that result. **dcc-mac-baseline-01 now passes** at `fab647f` on macOS arm64:
+169 main passed/129 reviewed Linux-only skips; 267 standalone passed/zero skipped.
+Both locked runtimes and all 22 identities pass, with no timeout. Evidence:
+[[wiki/work/dbt-compaction-coordination/verification#Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed]].
+R9's reproducible packaging repair is verified; skipped Linux writer/completion
+paths do not establish Mac support. The uncommitted-overlay procedure is superseded.
+Finalized review returns the remaining work to the worker; reader-backend/service/
+client/advisory exports/audited recovery/
+S3/resource gates and dcc-02–05 remain open. Follow
+[[wiki/work/dbt-compaction-coordination/macos-qualification#Stage 2: reader backend acceptance remains pending]]
+for the later Mac lifetime/shutdown gate, not another unchanged baseline rerun.
 
 Implement the accepted basic plan: **one cron-driven Python coordinator, S3
 messages, and a persistent server-local DuckDB ledger**, coordinating hourly
@@ -67,9 +72,10 @@ compaction with three to five researchers' occasional local DBT builds over S3.
 Preserve the ordinary single-user local-raw workflow as a first-class path.
 
 This document specifies the full integration task. Protocol/ledger and the first
-controlled-clock tick and Linux supervision libraries exist; integrated completion,
-client and production scheduling remain proposed. Current local DBT, dual-root
-reads, compaction and optional durable entities already exist. Wintap-PyUtil owns
+controlled-clock tick and Linux supervision libraries exist. Verified normal
+completion/history exists as a locked local library, not the current tick callback;
+service integration, client and production scheduling remain proposed. Current local
+DBT, dual-root reads, compaction and optional durable entities already exist. Wintap-PyUtil owns
 implementation; Wintap-Analytics owns
 the shared wiki and this feature folder. Independent deeper compactor qualification
 continues separately; integrate against its latest qualified CLI/report contract.
@@ -107,6 +113,39 @@ The utility is separate planning work, not added implementation scope here. Read
 [[wiki/work/dbt-compaction-coordination/design#Diagnostic observation exception]]
 before documenting that all dashboards must acquire grants. The worker-owned
 local status/run-summary export agreement remains a follow-on dependency.
+
+## Worker continuation after the Mac review
+
+The human finalized this review for commit/push and returns the remaining
+implementation to the PyUtil worker. Resume the existing completion plan; do not
+restart the accepted baseline or interpret its Linux-only skips as Mac support.
+
+1. **Reader platform gate:** implement and qualify Linux/macOS reader lifetime and
+   descendant shutdown. If Mac shutdown cannot be established, stop for human review;
+   uncertain readers retain reservations.
+2. **Service/client integration (slice D):** wire the qualified locked completion
+   adapter into the service, not the conservative `tick` callback. Complete durable
+   request/grant/cancel/release handling and bounded advisory exports. Preserve direct
+   local-only `make dbt-build` and optional compaction/entities.
+3. **Audited recovery (slice E):** add explicit confirmed/reasoned operator operations
+   using original evidence under exclusion. Stopped processes or diagnostic reads
+   alone never authorize reopening.
+4. **Integrated qualification (slice F):** first synthetic local lifecycle controls,
+   then human-approved isolated S3 fixtures and representative resource measurements.
+   Keep dcc-02–05 unchecked until their own acceptance evidence is recorded.
+5. **Utility dependency agreement:** agree status/run/catalog export and reader
+   interfaces with the follow-on HostActivity plan. Utility implementation/deployment
+   still requires separate approval; Live diagnostic remains non-authoritative and
+   Coordinated refresh remains optional.
+
+Read [[wiki/work/dbt-compaction-coordination/implementation_plan#Completion plan — November 14]],
+[[wiki/work/dbt-compaction-coordination/macos-qualification#Stage 2: reader backend acceptance remains pending]],
+the review/verification evidence, and
+[[wiki/work/compaction-status-utility/implementation_plan]] before the next code pass.
+Preserve original failures and private reports; record new red/green commands,
+revisions and qualification limits in the shared wiki. Production rollout remains
+a separate human gate. The original full-scope prompt below is reference material.
+<!-- SOURCE: Human finalization and return-to-worker decision, conversation 2026-11-14. -->
 
 ## Copy/paste prompt
 

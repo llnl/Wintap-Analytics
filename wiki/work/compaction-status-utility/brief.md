@@ -149,9 +149,15 @@ and optional shared-reader interfaces with the active worker before integrating;
 sibling changes require explicit authorization.
 Wintap sensor code and Lintap packaging are unaffected.
 
-The inspected baseline is PyUtil `fe7fcb5`: status publication, client wrapper,
-successful-run history and verified completion integration remain unfinished.
-Do not assume the worker's newer interfaces or treat this plan as their review.
+The initial planning baseline was PyUtil `fe7fcb5`. The subsequent source review
+at `8ee714c` confirms local retained completion/history and authority now exist;
+service integration, advisory exports and the reader client remain unfinished.
+The corrected `fab647f` handoff passes the scoped actual-Mac baseline: 169 main
+passed/129 Linux-only skips and 267 standalone passed. Mac reader shutdown and
+service/client/export qualification remain open; the original lockfile failure is
+preserved separately.
+See [[wiki/work/dbt-compaction-coordination/implementation-review]]; this refresh
+does not authorize utility implementation or accept its producer interfaces.
 
 ## Open choices for human/worker review
 
