@@ -39,6 +39,13 @@ tags: [feature-work, verification, entity-state, ancestry]
 
 ## Current result
 
+Follow-up review of the pulled `c782f63` implementation:
+[[wiki/work/dbt-compaction-coordination/implementation-review]]. Fresh focused
+regressions pass, while local probes reproduce snapshot/checkpoint freshness,
+SQL integrity-validation and incremental bootstrap-provenance gaps. The imported
+qualification below remains evidence for its executed scenarios; it does not
+qualify those additional recovery/corruption cases.
+
 ### Durable processing checkpoint coverage — 2026-11-13
 
 The hourly entity-enabled writer now maintains the dedicated sibling prefix

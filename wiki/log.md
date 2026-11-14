@@ -5288,3 +5288,98 @@ ancestry QA repeated two root-reached seeds, zero cycles and zero resolved
 parent-PID mismatches. The selected-window ancestry-completeness limitation is
 unchanged.
 <!-- EVIDENCE: ../Wintap-PyUtil/.opencode-work/dpe-3day-round2/reports/post-cache-qa.json -->
+
+## [2026-11-13] workflow | ETL diagram compaction and durable entity flow
+
+Extended the ETL diagram/guide with the sibling `/compacted` prefix, validated
+hourly compaction and DBT's name-aligned UNION ALL across `raw_sensor` plus
+compacted event files. Broke out the optional per-host durable process-entity
+snapshot store and its separate DBT context relations, including entity-before-
+raw-deletion ordering and overlap/history caveats. Updated the index.
+Follow-up: replaced diagram path strings with semantic storage labels and added a
+matching path glossary to the guide; removed the interpretation and deployment
+footer boxes from the diagram while retaining the important history caveats in
+the Markdown.
+
+## [2026-11-13] plan | scheduled DBT and compaction coordination with DuckDB
+
+Human accepts cron-driven coordination through S3 messages and selects a local
+DuckDB ledger. Added brief and companion design under
+`wiki/work/dbt-compaction-coordination/` plus a two-page editable draw.io sequence:
+shared DBT request/grant/build/release, then reader draining and exclusive hourly
+compaction. Specified Python modules, cron/config, S3 and local artifacts,
+transaction-before-grant ordering, DBT preflight/build wrapper integration,
+single-process ledger access, durable catch-up cursor and blocked-writer recovery.
+Manual abandoned-reader recovery remains the proposed v1 default. Existing Garage
+conditional-write evidence grounds the single-authority design. Updated the index;
+implementation and runtime qualification remain future work.
+Artifact checks pass: two Markdown frontmatters/source/link checks, JSON example,
+draw.io XML/geometry (42 and 44 cells), two-page viewer rendering and vertex-label
+bounds, plus whitespace and privacy review.
+
+## [2026-11-13] plan | preserve simple local-only DBT builds
+
+Human requests preserving the direct local-raw path for small single-user environments.
+Checked current Makefile defaults, missing-compacted handling, entity-disabled
+branches and S3 credential-setup bypass in live PyUtil source. Added explicit
+local-only compatibility criteria and mixed-root routing checks to the coordination
+brief/design, plus a canonical two-command quick start and shell-override reset
+instructions in the ETL guide; updated index summaries. The planned wrapper must
+bypass coordination setup/messages/state for entirely local inputs and require
+neither a compactor nor durable entity bootstrap. This is source-grounded planning;
+wrapper runtime qualification remains future work.
+Scoped checks pass: three frontmatters, live grounding paths, links/section targets,
+JSON examples, two-page diagram XML and `git diff --check`; additions reviewed for
+persistent-content privacy.
+
+## [2026-11-13] handoff | scheduled DBT and compaction implementation plan
+
+Finalized `wiki/work/dbt-compaction-coordination/dev_handoff.md` with a copy/paste
+development prompt, five implementation units, live source/artifact map, local-only
+compatibility and failure-point acceptance checks. Recorded the clarified polling
+budget: one-minute coordinator ticks plus ten-second client polling give a nominal
+70-second startup delay and 60-second release-observation delay; successful release
+upload lets the client return immediately. Processing/storage/contended-writer
+delays are additional. Rechecked the current compactor CLI/report contract and
+explicitly covered mixed completed/skipped reports and stderr error JSON. Linked
+the handoff from brief/design/index and synchronized the timing explanation.
+Coordinator implementation and runtime qualification are the next development task.
+Handoff checks pass: three frontmatters, 32 grounding paths, 13 wikilinks/section
+targets, live source-table and prompt paths, four shell examples, JSON example,
+five work units and two-page diagram XML; whitespace and privacy review pass.
+
+## [2026-11-13] review | integrate durable entity updates and revise coordination handoff
+
+Fast-forwarded Analytics to `d904559` and PyUtil to `c782f63`. Preserved and restored
+local ETL/coordination documentation; resolved the log conflict with both workers'
+entries, verified stash restoration and removed the temporary preservation stash.
+Reviewed the checkpoint/quarantine/SQL-state implementation and imported three-day
+qualification. The single-authority lock design remains applicable; added active
+processing-metrics root binding, full entity → migration → checkpoint writer
+lifetime, independent migration receipts and exclusive all-phase recovery.
+
+Local probes reproduce stale-snapshot acceptance with retained checkpoints, lost
+SQL validation checks, reset bootstrap provenance, checkpoint failure after raw
+deletion, reconciliation without checkpoint publication, coverage-only completion
+statuses and unused metrics-root S3 setup. Recorded findings in
+`wiki/work/dbt-compaction-coordination/implementation-review.md`, updated the
+brief/design/handoff, canonical entity/ETL guides, qualification cross-reference
+and index. Local-shell reset now includes metrics/identity overrides. Fresh tests:
+38 standalone passed; 63 main passed, 1 skipped. Remote multi-day evidence is
+imported, not rerun. Coordination remains a development handoff.
+
+Final artifact checks pass: seven frontmatters, 100 grounding paths, 38 links/section
+targets, 19 live handoff source paths and prompt paths, six shell examples, JSON,
+diagram XML/geometry and three rendered diagram pages with fitting vertex labels.
+Cleaned up ETL edge-label collisions; reviewed complete changed content for privacy
+and whitespace. Both repositories match their pulled upstream heads with no staged
+or unmerged files. At review completion, documentation was uncommitted; PyUtil
+retained only its two pre-existing untracked environment files.
+
+## [2026-11-13] handoff | publish coordination plan and implementation review
+
+Human requested committing and pushing the completed coordination handoff, source
+review, updated ETL/sequence diagrams and canonical guidance. The handoff includes
+specific fixes with reproduced evidence, five coordination implementation units
+and worker validation gates. Recorded review-time repository status as historical
+context for publication.

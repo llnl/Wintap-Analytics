@@ -72,9 +72,26 @@ and output file-byte-row totals, and deletion outcome. The root defaults from th
 compactor's source-root sibling and can be overridden explicitly; it must not
 overlap raw, compacted or entity roots. DBT treats this as coverage evidence, not
 telemetry: selected `raw_process` hours without exactly one successful compatible
-checkpoint fail preflight, preventing stale state after a failed entity update and
-raw-only continuation from being consumed silently.
+checkpoint fail preflight. This catches uncheckpointed hours after failed entity
+maintenance/raw-only continuation. It does not bind current snapshots to the
+recorded hashes: replacement/rollback with old compatible checkpoints can still
+pass. DBT accepts both `completed` and `completed_with_deletion_errors` as coverage
+statuses; these are not raw-migration or deletion-success certificates.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows/ProcessingMetricsStore; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
+
+Combined commands publish checkpoints **after** raw compaction/deletion. Final
+publication failure can therefore follow successful source deletion. Entity-only
+replay overwrites fixed-hour checkpoints and reports raw processing `not_run`;
+retain migration evidence separately. Current entity-enabled `reconcile-delete`
+can update snapshots but does not publish checkpoints. Recovery must reconcile
+entity state, raw migration and checkpoint coverage independently.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py §run/publish_metrics -->
+
+Follow-up review of `c782f63` reproduces two SQL-migration defects: active snapshot
+verification misses duplicate keys and non-parent scalar/evidence disagreement;
+incremental updates reset `bootstrap_start` to the update window. These remain
+open implementation findings, with evidence and recovery implications in
+[[wiki/work/dbt-compaction-coordination/implementation-review]].
 
 ## Evidence, conflicts and limits
 
@@ -111,9 +128,12 @@ The declared bootstrap start and first/last publication partitions do not prove
 gap-free collection or automatically discover missed scheduler windows.
 
 **Required exclusion:** one writer per dataset; pause entity updates through the
-entire DBT build. Fixed object replacement has no global snapshot generations or
+entire DBT preflight/build. The writer interval includes final processing-checkpoint
+publication/verification; init/replay/rebuild and reconciliation are writers too.
+Fixed object replacement has no global snapshot generations or
 reader/writer coordination service. Production-scale staging/rewrite budgets and
 external schedule exclusion still require operator review.
+Planned implementation: [[wiki/work/dbt-compaction-coordination/dev_handoff]].
 
 Actual-data qualification exposed these limits: historical bootstrap initially
 rejected unknown identities (negative-PID Refresh and sentinel-key Stop evidence).

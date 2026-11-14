@@ -235,7 +235,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 
 | Page | Confidence | Summary |
 |------|------------|---------|
-| [[wiki/workflow/wintap-etl-data-flow]] | high | Editable data ETL diagram: Wintap/Lintap host-local raw Parquet → S3 → Wintap-PyUtil `make dbt-build` → bronze/silver/gold in local DuckDB, with core Makefile validation targets and scope limits. |
+| [[wiki/workflow/wintap-etl-data-flow]] | high | Local-only raw Parquet → DBT quick start, plus editable shared-S3 ETL diagram: optional compaction, raw_sensor + compacted UNION ALL, separate durable process entities, bronze/silver/gold and Makefile targets. |
 | [[wiki/workflow/future-experiment-analysis-workflows]] | high | Tracks first-class analytics topics including ACME4 Explore, DuckDB view construction, process trees/paths, process-centric SQL, and network joins. |
 | [[wiki/workflow/process-ancestry-completeness-qa]] | medium | First-round DBT terminal/context QA implemented; broader root fraction, concentration/K95 and independent validity-audit guidance remains separate. |
 | [[wiki/workflow/lintap-dev-field-workflow]] | high | The Lintap dev/field split: field-host clones are read-only by policy (reviews transcribed dev-side), diagnostics bundles must be self-sufficient, deploys pull and rebuild tracers on-host, pushes require the human's credentials, and agent memory must mirror into the wiki. |
@@ -289,6 +289,21 @@ The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
 UTC partition contract.
 
 ## Work
+
+Scheduled DBT/compaction coordination:
+[[wiki/work/dbt-compaction-coordination/brief]],
+[[wiki/work/dbt-compaction-coordination/design]] and
+[[wiki/work/dbt-compaction-coordination/dev_handoff]] — proposed once-per-minute Python
+coordinator, local DuckDB ledger and S3 request/grant/release messages; S3-backed
+DBT builds yield to an exclusive hourly writer. Local-only builds retain direct
+execution with compaction and durable entity state optional. Companion design
+includes an editable two-page draw.io sequence, cron/config, proposed code/runtime
+artifacts, client wrapper and restart/recovery behavior. Developer handoff adds
+five implementation units and acceptance checks, including the nominal 70-second
+startup / 60-second release-observation polling budget.
+Post-pull [[wiki/work/dbt-compaction-coordination/implementation-review]] records
+four-root/checkpoint recovery requirements, snapshot validation/provenance findings,
+and fresh focused regressions (38 standalone; 63 main passed, 1 skipped).
 
 Historical PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
 [[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],
