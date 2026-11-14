@@ -25,7 +25,7 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_process_entities.py
   - ../Wintap-PyUtil/tests/test_process_entities_s3.py
 policy: agent-editable
-last_validated: 2026-11-13
+last_validated: 2026-11-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -45,6 +45,12 @@ regressions pass, while local probes reproduce snapshot/checkpoint freshness,
 SQL integrity-validation and incremental bootstrap-provenance gaps. The imported
 qualification below remains evidence for its executed scenarios; it does not
 qualify those additional recovery/corruption cases.
+
+Subsequent coordination-safety work repairs R2/R3 in PyUtil `7d2b7f8` and implements
+R1 current-state authority/receipt lineage in PyUtil `fe7fcb5`. Current evidence:
+[[wiki/work/dbt-compaction-coordination/verification]]. The version-3 schema/results
+below are historical qualification evidence, not the current version-4 coverage or
+a claim that raw-deletion/final-checkpoint recovery is now certified.
 
 ### Durable processing checkpoint coverage — 2026-11-13
 

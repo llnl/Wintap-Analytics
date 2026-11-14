@@ -19,6 +19,9 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
+  - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
+  - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
   - wiki/tool/durable-process-entity-manager.md
   - wiki/tool/raw-sensor-compaction.md
   - wiki/work/raw-sensor-file-aggregation/implementation_plan.md
@@ -72,9 +75,10 @@ unset WINTAP_DBT_DATABASE WINTAP_DBT_START_DAY WINTAP_DBT_END_DAY
 unset WINTAP_DBT_START_HOUR WINTAP_DBT_END_HOUR
 ```
 
-The current S3 setup macro also reacts to an inherited remote processing-metrics
-override when entities are disabled, so include that variable in the reset.
-With overrides cleared, the local-only path needs no metrics directory.
+S3 setup now considers only active roots. An inherited remote processing-metrics
+override is ignored when entities are disabled; the local-only path needs no metrics
+directory or credentials even with that unused override. Resetting it remains useful
+to avoid unintended configuration when later enabling entity mode.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/s3.sql §configure_raw_sensor_access; ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_processing_metrics.sql -->
 
 Without durable enrichment, process context comes from the selected raw event
@@ -131,15 +135,24 @@ dataset, entity or metrics root. `protoPK` appears where protocol partitioning a
   Each fixed-hour checkpoint carries namespace, snapshot/input identities,
   identity-policy/quarantine evidence and operation status. A final checkpoint
   failure may occur after raw deletion; recovery must reconcile entity state,
-  raw migration and checkpoint coverage.
+  raw migration and checkpoint coverage. The optional server-local run archive
+  preserves immutable migration/deletion evidence and original candidates separately
+  from coverage. Explicit exclusive checkpoint repair validates surviving data and
+  historical entity lineage before republishing original candidates; it neither
+  replays entities nor automatically reopens a ledger. Missing/uncertain evidence
+  stays blocked. See [[wiki/tool/durable-process-entity-manager]].
 - When enabled, DBT reads the **Process Entity Snapshot Store** separately into
   process-entity/context relations and uses that context to enrich process/path
   models. It does not add old snapshot rows to raw bronze or count them as
   in-window lifecycle events.
-  It also validates compatible version-3 checkpoints for every selected
+  It also validates version-4 checkpoints against their own committed generation
+  receipts for every selected
   process-bearing hour and materializes `stg_processing_metrics` for QA. Active or
   unprocessed hours without checkpoints fail preflight. Checkpoints do not certify
-  complete historical ancestry or bind a restored snapshot to current coverage.
+  complete historical ancestry or raw migration success. The entity authority
+  journal binds current snapshots and preserves historical receipt lineage; pending
+  intent and snapshot rollback with retained authority fail. Legacy state requires
+  an explicit fresh entity/metrics root rebuild and cutover.
   Entity enrichment is opt-in; production bootstrap, capacity qualification and
   scheduling/cutover remain deferred. See
   [[wiki/tool/durable-process-entity-manager]].
@@ -176,6 +189,15 @@ semantic quality. These dependencies and limits are reflected in the diagram.
 The proposed lock covers all active input roots and the writer's final checkpoint
 publication; a read grant does not guarantee that its requested window is covered.
 Implementation review: [[wiki/work/dbt-compaction-coordination/implementation-review]].
+
+PyUtil's protocol/ledger, evolving-clock admission/draining tick and Linux command-
+tree supervision are currently library prototypes, not integrated into these
+Makefile targets. Writer callbacks remain blocked without cursor advancement;
+DBT client, verified completion/recovery and production scheduling are not yet
+implemented. Current
+regression evidence and remaining gates:
+[[wiki/work/dbt-compaction-coordination/verification]].
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py; ../Wintap-PyUtil/wintappy/coordination/supervisor.py; ../Wintap-PyUtil/Makefile -->
 
 Related: [[wiki/repo/wintap-primary-sensor-repo]],
 [[wiki/repo/lintap-supporting-repo]],

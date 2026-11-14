@@ -5443,3 +5443,194 @@ the verified R2/R3 code/tests/README in PyUtil as `7d2b7f8`; this wiki milestone
 records the red/green and full regression evidence. Unrelated local artifacts remain
 untouched. Continue with formal freshness rollback/forward regressions and a selected
 receipt/publication-intent contract. No push or production scheduling.
+
+## [2026-11-13] code | receipt-backed entity freshness and historical lineage
+
+After milestone commits PyUtil `7d2b7f8` and Analytics `739e64f`, added formal R1
+regressions before implementation: ten standalone and eight real-DBT failures,
+with valid forward-evolution controls passing. Implemented a SQL-owned Parquet
+generation journal, recorded before/after publication intent, retained original
+bootstrap/binding evidence and version-4 coverage naming its own committed receipt.
+Rollback/replacement and receipt corruption fail without comparing historical
+hashes to today's aggregate. Expanded focused suites pass 164 standalone and 14
+real-DBT tests. Three additional null/window checkpoint cases failed before repair;
+full regressions and fresh entity/metrics root cutover checks are running.
+
+Named-struct batched hashing fixes the two DuckDB pins' incompatible unnamed-row
+JSON. Preserved existing empty-parent/no-op and snapshot lost-ack semantics with
+properly scoped fixtures; added independent authority failure points. Updated
+canonical entity/ETL guidance, handoff/design source map, both READMEs and work
+artifacts. R4/R5 and real writer/coordinator qualification remain open. Whole-store
+rollback still needs an independent high-water mark. No push, production scheduler
+or real-dataset mutation; unrelated local artifacts remain untouched.
+
+## [2026-11-13] verification | freshness accepted; phase-evidence regressions recorded
+
+R1 full standalone gate passes 266 tests with two opt-in skips. The isolated main
+acceptance rerun passes 335 with three skips after preserving the existing metrics
+policy-mismatch diagnostic; the initial main diagnostic-only failure and targeted
+pass remain in verification history. Checked off R1, not the combined safety gate.
+R4's five active-CLI behavioral tests failed before integration, including a genuine
+checkpoint failure after successful source deletion. Selected an independent local
+immutable run archive and explicit original-generation checkpoint repair; integration
+and failure-point hardening are in progress. No push, scheduler or real-data mutation.
+
+## [2026-11-13] verification | phase evidence and active-root prerequisites accepted
+
+R4 captured additional failure batches of four, two, two and two before repairs,
+including same-metadata byte mutation, duplicate JSON and unflushed directory links.
+Final standalone passes 307 tests with two skips, including 41 archive/phase cases.
+Real two-runtime repair preserves the original generation and entity/archive bytes
+after deletion failure and later entity evolution; real DBT full build passes.
+R5's two real behavioral failures and missing-resolver failure precede seven passing
+routing cases; corrected fixture-only failures retain four active-remote controls.
+Combined isolated main passes 343 tests with three skips; final affected-main passes
+51 with one skip and includes the directory-link fix. Scoped lint/format, whitespace,
+seven page frontmatters, 117 source anchors, 354 links and privacy scans pass.
+Checked off R4/R5/dcc-00 as prerequisite regression gates, not endpoint or coordinated
+writer certification. Updated verification, plan, index and canonical guidance.
+
+Started dcc-01 tests: 26 missing-module failures are implementation-baseline evidence,
+not behavioral regressions. Initial protocol passes 16 tests; real-DuckDB ledger and
+failure-point hardening remain in progress. No push, scheduler installation, real
+dataset mutation or new commit; unrelated local artifacts remain untouched.
+
+## [2026-11-13] code | transactional coordination protocol and ledger
+
+Implemented dcc-01's strict-message/S3 library and main-runtime local DuckDB ledger.
+Captured six protocol and six ledger hardening failures before fixes: bounded/error
+handling and cyclic pagination, orphan/overlapping writer intent, stored identity
+and schema corruption, nonlocal state and transport/data-root overlap. Initial
+16 protocol/10 ledger passes expand to 47 combined after repair, then 54 with real
+abrupt-process COMMIT/WAL recovery and additional retention/stream controls.
+Reservations/outbox commit before grant PUT; terminal tombstones are retained and
+unresolved writer intent blocks restart. No expiry or automatic reopening exists.
+Full isolated main acceptance is running; dcc-01 remains unchecked until review.
+Updated work artifacts, source README and source map. No scheduler/client, actual
+endpoint test, destructive coordinated writer, new commit or push; unrelated local
+artifacts remain untouched.
+
+## [2026-11-13] verification | protocol/ledger final focus and artifact review
+
+Final dcc-01 focus passes 54 tests in 6.03 seconds, including abrupt process death
+and actual local DuckDB WAL recovery around reader/writer COMMIT. Combined scoped
+lint and 20-file format check pass; both whitespace checks and 14 new feature-file
+newline scans pass. Seven wiki frontmatters, 127 source anchors, 354 links and
+persistent-content privacy review pass. Full isolated main results remain pending;
+no scheduler/client, writer-success/reopening API or production operation is claimed.
+
+## [2026-11-13] verification | protocol/ledger full-main acceptance
+
+Full isolated main passes 397 tests with three skips in 414.36 seconds, including
+all 54 protocol/ledger cases and the R4 directory-link repair. Checked off dcc-01
+after the recorded artifact/privacy review; scheduling, DBT lifetime and actual
+writer/endpoint/resource qualification remain open. Continue controlled-clock
+scheduling with fake writers, without treating exit zero as migration certification.
+No new commit, push or production scheduling.
+
+## [2026-11-13] verification | controlled-clock scheduling baseline
+
+Started dcc-02 with 20 tick tests failing solely because the coordinator module is
+absent, in 1.05 seconds. This is implementation-baseline evidence, not behavioral
+regression evidence. Admission/draining and persisted-hour selection come next;
+unverified writer callbacks must stay blocked without advancing the cursor.
+Supervision, verified empty-hour/backlog completion and real CLI integration remain
+open. No new commit, push, production scheduling or real-dataset mutation.
+
+## [2026-11-13] code | locked admission/draining tick and atomic input hardening
+
+Implemented dcc-02's controlled-clock tick: oldest-hour/grace selection, overlapping
+readers, due-writer draining, exact grant retries and locked committed callback
+intent. Captured five behavioral failures before atomic message ingestion, early
+command validation and bounded observational diagnostics. Two further missing/
+mismatched blocked-reason failures preceded strict reopen checks; one accidental
+test placement failure was corrected with the original open-ledger control intact.
+Final focus passes 100 tests in 12.35 seconds, including real abrupt tick death,
+WAL recovery and a surviving synthetic child without replacement launch/admission.
+All callback results remain blocked and the cursor is unchanged. Updated source
+README, feature artifacts/index and canonical entity wording. Full main is running;
+dcc-02 remains unchecked pending supervision, verified completion/empty hours,
+cursor/backlog/reopening and status integration. No real compactor, production
+scheduler, new commit or push; unrelated data/environment/settings remain untouched.
+
+## [2026-11-13] verification | admission/draining full regression and supervisor baseline
+
+Full isolated main passes 443 tests with three skips in 558.24 seconds, qualifying
+the 100-test admission/draining revision. Scoped lint and 22-file format checks,
+both whitespace checks, 16 feature-owned new-file scans, seven wiki frontmatters,
+135 source anchors, 355 links and complete-diff privacy review pass. Recorded 16
+missing-module failures before Linux isolated-subreaper supervision; the first
+implementation passes 16 tests in 2.93 seconds. Further supervision error probes
+are in progress and not covered by the earlier full regression. dcc-02 stays open;
+no verified completion/reopening, real compactor, scheduling deployment, commit or push.
+
+## [2026-11-13] code | Linux tree supervision and evolving-clock failure probes
+
+Added a Linux/main-thread isolated-subreaper supervisor with bounded sealed-memory
+control, private immutable run directories, captured stdout/stderr and exact bounded
+JSON report reads. Nine active-path failures precede cleanup/capture/parser/budget/
+control/exit-observation repairs; four missing-clock-interface baseline failures
+precede evolving UTC refresh checks. Final combined focus passes 142 tests in
+23.13 seconds: detached/nested descendants, caller interruption/death, logging/setup
+failure, unrelated-child isolation, killed supervisor with surviving workload and
+a real locked supervised tick callback. All callback outcomes stay blocked; no
+cursor/reopening API is added. Full main for this revision is running, separate
+from the earlier 443-pass admission/draining gate. Updated source README, feature
+artifacts/index and canonical entity/ETL wording. External-service/non-Linux,
+verified completion/high-water, status and real-compactor qualification remain
+open. No production scheduler, real-data mutation, new commit or push.
+
+## [2026-11-13] verification | supervisor revision artifact and privacy review
+
+The 142-test supervision/evolving-clock revision passes scoped lint and 24-file
+format checks. Both whitespace checks and 18 feature-owned new-file scans pass.
+Nine changed wiki files pass seven frontmatters, 145 live source anchors, 355 links
+and added-content privacy scans; the complete 1,331-line wiki diff was reviewed.
+Full main remains running; no result inferred from focus. dcc-02 is still unchecked,
+with verified completion/cursor/backlog/reopening and advisory status outstanding.
+Unrelated settings/data and both local milestone commit anchors remain untouched.
+
+## [2026-11-13] verification | supervision and evolving-clock full regression
+
+Full isolated main passes 485 tests with three skips in 609.86 seconds
+(`dcc-02-supervision-main-regression.txt`), including the final 142 coordination
+cases. Recorded the result in verification, plan, design and index. Linux supervision
+and evolving-clock primitives are regression accepted; dcc-02 remains unchecked
+until independently verified completion/empty hours, transactional cursor/backlog
+advancement, admission reopening and advisory status are integrated. No real
+compactor/endpoint or production scheduler, new commit or push.
+
+## [2026-11-14] review | dcc-02 grace boundary and atomic completion
+
+Collaborative review reproduces a writer-priority defect with real local DuckDB
+and synthetic S3: ingestion crossing grace still admits a new reader before the
+next clock refresh. The control passes; the crossing assertion fails, captured
+in `dcc-02-review-ingestion-clock-red.txt`. No reader/writer overlap is demonstrated.
+The human confirms queued-at-deadline admission and independent completion/shutdown
+verification followed by one atomic completion-evidence/run/cursor/mode COMMIT.
+Updated verification, plan, design and index; code repair/success APIs remain
+pending and dcc-02 stays unchecked. No code changes, production writer/endpoint,
+commit or push; unrelated work is preserved.
+
+## [2026-11-14] requirement | non-secret writer execution/configuration receipt
+
+The human explicitly requires a durable, allowlisted, non-secret receipt binding
+the actual writer invocation and resolved effective settings to committed intent
+before launch. Missing/mismatched settings refuse launch; post-launch uncertainty
+stays blocked. Whole-environment/credential capture and the current partial command
+manifest cannot satisfy the requirement. Added the requirement and pending
+identity/integrity/budget/secret-exclusion gates to brief, design, handoff, plan,
+verification and index. Documentation only; no code/test changes, dcc-02 acceptance,
+production operation, commit or push.
+
+## [2026-11-14] commit | entity recovery and coordination prototype snapshot
+
+Committed 32 feature-owned PyUtil code/test/README files as `fe7fcb5` on
+`work/raw-sensor-compacted-union`; the paired Analytics wiki snapshot retains all
+regression history, the known ingestion/grace defect and human-required execution
+receipt/atomic-completion contracts. Fresh isolated coordination focus passes
+142 tests in 25.04 seconds. Scoped lint/format passes 23 Python files; the broader
+lint's 53 findings match unchanged HEAD findings in two legacy test files.
+Staged scope/whitespace and complete wiki privacy/artifact checks pass. dcc-02–05
+stay unchecked; no code repair, production operation or fresh full-suite claim.
+Unrelated data/environment/settings remain excluded. No pushes; the human will push.

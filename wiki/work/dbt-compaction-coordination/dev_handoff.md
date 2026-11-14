@@ -17,9 +17,14 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
   - wiki/work/dbt-compaction-coordination/implementation-review.md
+  - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
+  - ../Wintap-PyUtil/wintappy/coordination/ledger.py
+  - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
+  - ../Wintap-PyUtil/tests/test_coordination_supervisor.py
 policy: agent-editable
-last_validated: 2026-11-13
+last_validated: 2026-11-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -38,16 +43,22 @@ messages, and a persistent server-local DuckDB ledger**, coordinating hourly
 compaction with three to five researchers' occasional local DBT builds over S3.
 Preserve the ordinary single-user local-raw workflow as a first-class path.
 
-This document prepares the next development task. The coordinator/client are
-proposed; current local DBT, dual-root reads, compaction and optional durable
-entities already exist. Wintap-PyUtil owns implementation; Wintap-Analytics owns
+This document specifies the full integration task. Protocol/ledger and the first
+controlled-clock tick and Linux supervision libraries exist; integrated completion,
+client and production scheduling remain proposed. Current local DBT, dual-root
+reads, compaction and optional durable entities already exist. Wintap-PyUtil owns
+implementation; Wintap-Analytics owns
 the shared wiki and this feature folder. Independent deeper compactor qualification
 continues separately; integrate against its latest qualified CLI/report contract.
 
 **Reviewed baseline:** PyUtil `c782f63`, Analytics `d904559`. Read
 [[wiki/work/dbt-compaction-coordination/implementation-review]] for reproduced
 snapshot-validation/provenance gaps and required checkpoint/recovery integration.
-The basic lock architecture remains applicable.
+The basic lock architecture remains applicable. Subsequent R1–R5 safety work and
+current acceptance results are tracked in
+[[wiki/work/dbt-compaction-coordination/implementation_plan]] and
+[[wiki/work/dbt-compaction-coordination/verification]]; review-time findings below
+are not claims that the same defects remain in the working tree.
 
 Detailed specification: [[wiki/work/dbt-compaction-coordination/design]].
 Requirements: [[wiki/work/dbt-compaction-coordination/brief]].
@@ -78,8 +89,8 @@ entirely local builds keep the direct make dbt-build workflow.
 
 Inspect both working trees and read the live sources listed in the handoff.
 Start with dcc-01: the durable ledger/protocol and failure-point tests using
-fake storage/children. Create implementation_plan.md and verification.md in
-this feature folder from the handoff units and acceptance matrix; track commands
+fake storage/children. Maintain implementation_plan.md and verification.md in
+this feature folder against the handoff units and acceptance matrix; track commands
 and results there as implementation proceeds. Follow through the remaining units.
 Preserve transaction-before-grant/launch ordering, all-input-root classification,
 the complete DBT preflight/build/child-shutdown grant lifetime, manual abandoned
@@ -92,8 +103,8 @@ checkpoints. Apply the implementation review's recovery and regression requireme
 ```
 
 From the PyUtil checkout, the same wiki files are under
-`../Wintap-Analytics/wiki/`. The tracking files named above are to be created at
-the first implementation slice; this handoff supplies their initial work units.
+`../Wintap-Analytics/wiki/`. The tracking files named above already exist; this
+handoff supplies the coordination implementation units.
 
 ## Behavior and defaults to implement
 
@@ -152,9 +163,9 @@ The new routing must bypass coordination initialization, grants, polling and job
 records for this path. It needs neither compactor installation nor entity
 bootstrap. Check effective **raw, compacted, entity and active processing-metrics**
 roots after defaults and overrides; any S3 input selects coordinated access.
-The current S3 macro also reacts to an unused remote metrics override with entities
-disabled. Make routing and S3 setup consistently ignore that unused override during
-integration; until then, clear it when switching shells to local mode.
+R5 now makes offline root resolution and S3 setup consistently ignore unused remote
+metrics overrides with entities disabled. Keep that behavior in client routing;
+entity-enabled remote metrics must remain an active input.
 Existing AWS/coordination
 settings alone cannot activate coordination for local inputs. Shell-reset guidance:
 [[wiki/workflow/wintap-etl-data-flow#Local-only single-user workflow]].
@@ -190,6 +201,15 @@ settings alone cannot activate coordination for local inputs. Shell-reset guidan
 10. A reader grant does not guarantee entity coverage for an unfinished process
     hour. Fail preflight clearly and release after children stop; do not hold a
     read grant waiting for the writer, trim the window or silently disable entities.
+11. Bind the actual writer invocation to a durable, allowlisted, non-secret
+    effective execution/configuration receipt and checksum it in the committed
+    intent before launch. Resolve defaults/overrides/environment inputs once;
+    record roots, hour/run IDs, events, entity policy, deletion options and budgets
+    with executable/runtime identity. Missing/mismatched settings refuse launch;
+    post-launch uncertainty blocks completion. Never dump the whole environment,
+    persist credentials or accept the current environment-omitting command manifest
+    as a complete receipt. The human expressly requires this gate; it is not yet
+    implemented. See [[wiki/work/dbt-compaction-coordination/design#Required execution and configuration receipt]].
 
 The design specifies ledger tables, JSON identity fields, outbox ordering and
 recovery commands. The single-authority protocol is grounded in the endpoint's
@@ -207,9 +227,14 @@ Paths below are relative to **Wintap-PyUtil**; read them live.
 | `wintap_dbt/macros/process_entities.sql`, `wintap_dbt/models/silver/process.sql` | Optional entity reads and the disabled local baseline. |
 | `wintap_dbt/dbt_project.yml`, `wintap_dbt/profiles.yml` | Hooks, model materialization and local DuckDB output. |
 | `pyproject.toml`, `extras/raw-sensor-compact/pyproject.toml` | Main Python/DBT runtime uses DuckDB 1.5.6; isolated compactor uses 2.0.0. Only the main runtime opens the coordination ledger. |
+| `wintappy/coordination/{protocol,ledger}.py`, `wintappy/coordination/README.md` | Implemented dcc-01 library: strict messages, locked local reservations/outbox and blocked writer-intent restart. No installed scheduler/client, success/cursor advance or reopening API yet. |
+| `wintappy/coordination/coordinator.py`, `tests/test_coordination_tick.py` | First dcc-02 admission/draining slice: bounded complete listings, atomic terminal-first ingestion, oldest-hour priority and blocked callback outcomes. Not a supervisor, full scheduler or completion verifier. |
+| `wintappy/coordination/supervisor.py`, `tests/test_coordination_supervisor.py` | Linux/main-thread isolated-subreaper command trees, bounded private logs/control/report parsing and interruption/error cleanup. Tested in a locked tick callback, but never independent completion/reopening authority; non-Linux/external-service containment is unqualified. |
 | `extras/raw-sensor-compact/src/raw_sensor_compact/cli.py`, `extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py` | One-hour CLI arguments, report fields, optional entity phase, deletion and reconciliation outcomes. |
-| `extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py` | Version-3 fixed-hour checkpoint schema, final publication and verification; coverage is separate from migration success. |
-| `extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py`, `extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py` | SQL working state, per-host publication, incremental metadata and active verification gaps. |
+| `extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py` | Version-4 fixed-hour coverage names its committed entity generation; final publication remains separate from migration success. |
+| `extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py`, `wintap_dbt/macros/entity_authority.sql` | R1 current-state authority, historical receipt lineage and recorded before/after publication-intent recovery. Legacy upgrade uses fresh entity/metrics roots and explicit cutover. |
+| `extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py`, `extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py` | SQL working state, per-host publication, preserved bootstrap metadata and bounded active integrity validation. |
+| `extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py`, `tests/test_checkpoint_repair.py` | Immutable local run archive; original-generation checkpoint repair after deletion without entity replay or original-history replacement. |
 | `tests/test_dbt_source_validation.py`, `tests/test_compacted_inputs.py`, `tests/test_process_entities.py` | Existing local/S3 configuration, dual-root and optional-entity regression fixtures. |
 
 **Root-shape boundary:** `WINTAP_DBT_RAW_SENSOR_DATASET` is the parent containing
@@ -229,12 +254,15 @@ stderr. Integrate `reconcile-delete` through exclusive recovery.
 
 **Checkpoint/recovery boundary:** entity-only replay can publish `completed` with
 raw processing `not_run`, and DBT accepts `completed_with_deletion_errors`.
-Neither is writer-success evidence. Current `reconcile-delete` can update entities
-but publishes no checkpoints; use explicit exclusive recovery for all three phases.
+Neither is writer-success evidence. Entity-enabled `reconcile-delete` now publishes
+checkpoints; use explicit exclusive recovery for all three phases.
 Fixed-hour metrics can be overwritten by replay, so retain the migration receipt
-and coordinator-to-CLI run-ID mapping independently. Review R1–R3 documents
-freshness, SQL-validator and bootstrap-provenance defects: resolve those contracts
-with regression evidence before using them as recovery certification. Current
+and coordinator-to-CLI run-ID mapping independently using the R4 local archive.
+`checkpoints-repair` validates original evidence and current/historical authority
+before republishing original rows; missing evidence stays blocked. It acquires no
+grant and cannot reopen a ledger. R1–R3 now have regression evidence for freshness,
+SQL validation and provenance; those passes alone are not recovery certification.
+Current
 `entities-verify` success or checkpoint presence alone is insufficient.
 <!-- GROUND_TRUTH: wiki/work/dbt-compaction-coordination/implementation-review.md; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows -->
 
@@ -251,12 +279,15 @@ and pending terminal-message JSON. Local-only builds create ordinary DBT outputs
 
 ## Implementation units and done checklist
 
-- [ ] **dcc-01 — Protocol and durable ledger (first slice).** Implement message
-  identity/binding, schema/init, all state transitions, outbox and terminal records.
+- [x] **dcc-01 — Protocol and durable ledger (first slice).** Implement message
+  identity/binding, schema/init, reservations, writer intent, outbox and terminal
+  records. Verified completion/cursor/reopening remain later integration.
   Prove transaction ordering/restart behavior with real local DuckDB and fake S3.
 - [ ] **dcc-02 — Tick and scheduling.** Implement local lock, message ingestion,
   shared admission, writer priority, UTC cursor/grace/catch-up and advisory status.
   Use supervised fake children to prove reader/writer exclusion and crash handling.
+  Require execution/configuration-receipt binding and secret-exclusion checks
+  before accepting the service-level launch/completion path.
 - [ ] **dcc-03 — DBT wrapper and local compatibility.** Integrate root-aware routing
   into build/source/test/docs targets; span preflight through child shutdown;
   implement polling, cancellation and durable release retry. Prove the local-only
@@ -279,6 +310,7 @@ and pending terminal-message JSON. Local-only builds create ordinary DBT outputs
 | Grant durability | Crash before/after COMMIT and lost PUT acknowledgment; pending grants survive and are republished with identical identities. |
 | Message ordering | Duplicates, cancellation before request, delayed grant after cancellation, early terminal delivery and conflicting content preserve ownership correctly. |
 | Writer durability | Duplicate ticks exit busy; crashes around launch, surviving children and partial migration leave unresolved writes blocked; missing ledger refuses operation. No duplicate launch. |
+| Execution/configuration receipt | Resolve defaults/overrides/allowed environment once; bind actual executable/runtime/arguments, roots, hour/run IDs, events, entity policy, deletion and budgets to the pre-launch intent. Missing/changed/oversized receipts or scope/command mismatches cannot authorize launch/completion. Synthetic secrets never appear in persisted receipt/intent/diagnostics; an environment-omitting manifest or exit zero cannot satisfy the gate. |
 | DBT lifetime | Preflight failure, build/test failure, Ctrl-C, child-tree termination and release upload failure exercise the complete reservation lifetime. |
 | Local baseline | Full raw-only build without AWS/coordination/entity settings, compacted directory or installed compactor; existing local model/schema/results contract and zero coordination calls/state. |
 | Routing | Unused AWS/coordination settings keep local mode; each active S3 raw/compacted/entity/metrics override selects coordination. An unused remote metrics override with entities disabled causes neither coordination nor S3 setup. |

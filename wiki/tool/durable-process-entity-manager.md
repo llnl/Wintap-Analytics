@@ -6,10 +6,15 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
+  - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
+  - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
   - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
+  - ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql
   - ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_processing_metrics.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_entities.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
@@ -17,7 +22,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql
   - wiki/work/durable-process-entity-manager/verification.md
 policy: agent-editable
-last_validated: 2026-11-13
+last_validated: 2026-11-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -63,7 +68,8 @@ its entity evidence. Existing raw-hour skips never authorize source deletion.
 Partial host advancement is reported and replay-safe, not a multi-host transaction.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py §process_inventory -->
 
-Every entity-enabled `entities-init`, `entities-replay` and `compact` run also
+Every entity-enabled `entities-init`, `entities-replay`, `compact` and
+`reconcile-delete` run reaching checkpoint publication also
 publishes one verified checkpoint per requested UTC hour under the sibling
 `<dataset>/processing_metrics/dayPK=YYYYMMDD/hourPK=HH/metrics.parquet` prefix.
 The operational row records the run/operation status, entity namespace and
@@ -73,17 +79,19 @@ compactor's source-root sibling and can be overridden explicitly; it must not
 overlap raw, compacted or entity roots. DBT treats this as coverage evidence, not
 telemetry: selected `raw_process` hours without exactly one successful compatible
 checkpoint fail preflight. This catches uncheckpointed hours after failed entity
-maintenance/raw-only continuation. It does not bind current snapshots to the
-recorded hashes: replacement/rollback with old compatible checkpoints can still
-pass. DBT accepts both `completed` and `completed_with_deletion_errors` as coverage
+maintenance/raw-only continuation. Version-4 coverage names its own committed
+generation and binds the original snapshot/input identities, expected hosts and
+bootstrap summary. Historical hashes are validated against their own receipt,
+not against today's evolving aggregate. DBT accepts both `completed` and
+`completed_with_deletion_errors` as coverage
 statuses; these are not raw-migration or deletion-success certificates.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows/ProcessingMetricsStore; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
 
 Combined commands publish checkpoints **after** raw compaction/deletion. Final
 publication failure can therefore follow successful source deletion. Entity-only
 replay overwrites fixed-hour checkpoints and reports raw processing `not_run`;
-retain migration evidence separately. Current entity-enabled `reconcile-delete`
-can update snapshots but does not publish checkpoints. Recovery must reconcile
+retain migration evidence separately. Entity-enabled `reconcile-delete` now
+publishes coverage after its explicit deletion phase. Recovery must reconcile
 entity state, raw migration and checkpoint coverage independently.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py §run/publish_metrics -->
 
@@ -94,10 +102,76 @@ hour bounds, and all derived scalars and lifecycle flags. Validation reuses the 
 reducer in separate spillable temporary relations, never a per-process Python cache.
 Validated original bootstrap metadata is preserved for changed/unchanged updates,
 replay and resumed initialization, including report/file agreement. This does **not**
-repair the separate current-state freshness or post-deletion checkpoint boundaries.
+by itself repair the separate freshness or post-deletion checkpoint boundaries.
 Red/green evidence and remaining gates:
 [[wiki/work/dbt-compaction-coordination/verification]].
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py §validate_state/_validate_evidence/_reduce_state; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities -->
+
+### Current-state authority and explicit recovery
+
+The subsequent authorized R1 implementation adds a version-1 Parquet journal at
+`<entity-root>/_authority/authority.parquet`. DuckDB retains all historical receipt
+rows. Each generation's content-derived identity binds its predecessor, canonical
+raw/compacted/entity/metrics roots, namespace, expected hosts, identity policy and
+ceiling, original per-host bootstraps, before/after snapshot byte identities, after
+semantic identities, update window and original process input fingerprint.
+Semantic hashing uses named-struct JSON row digests and 1,024-row digest batches;
+unnamed row JSON differs between DuckDB 1.5.6 and 2.0.0.
+
+The writer publishes and GET-verifies `pending` intent before any host replacement;
+it commits only after all recorded after candidates and input rechecks pass.
+DBT and ordinary verification reject unresolved intent. Exclusive replay/resumed
+init can accept only each intent's exact recorded before/after candidate, with
+unchanged binding/window/input evidence and reproducible after candidates. It
+cannot bless an arbitrary self-consistent replacement. Current snapshots must
+match the latest committed state; a snapshot rollback retaining the journal fails.
+New producer evidence within an already covered hour remains queryable before
+maintenance; freshness does not equate coverage to today's raw inventory.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
+
+Legacy state without authority/version-4 coverage is rejected. Under explicit
+operator exclusion, rebuild into fresh entity **and metrics** roots from a
+sufficiently retained archive, verify both roots, then cut over reader/worker
+configuration together. Preserve old snapshots/checkpoints. Missing archive history
+precludes claiming equivalent ancestry recovery. Rollback of the entire journal
+and snapshots still needs an independent ledger/operator high-water mark to detect.
+Journal rewrite and large retained-state budgets remain unqualified; these receipts
+do not close the raw migration/final-checkpoint recovery boundary.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/README.md §Bootstrap and hourly operation; ../Wintap-PyUtil/wintap_dbt/README.md §Durable process context -->
+
+### Independent migration evidence and explicit checkpoint repair
+
+The authorized R4 implementation, included in PyUtil `fe7fcb5`, adds opt-in `--run-id`,
+`--coordinator-run-id` and `--run-evidence-directory` CLI flags. The archive is
+server-local, separate from raw/compacted/entity/metrics roots and the independent
+coordination ledger (protocol/ledger, admission/draining tick and Linux supervision
+libraries, not an installed or writer-qualified runtime service).
+Immutable, checksummed predecessor-linked JSON records retain
+the original run binding, entity generation, original per-file identities and
+per-protocol SQL counts/schemas, migration and deletion intent/outcome, and original
+checkpoint candidates. Publication fsyncs files, new directory links and directory
+entries before advancing; reuse/budget exhaustion fails without overwriting history.
+Limits: 64 MiB/record, 256 MiB/run, 10,000 records; hashes stream in 1 MiB chunks.
+
+`checkpoints-repair --confirm-repair --repair-run-id <original-id>` requires external
+exclusion and matching original roots/window/hosts/namespace/policy/event selection.
+It validates the archive, surviving output byte identities/counts/schemas, source
+absence or unchanged retained source, current SQL-validated entity authority and
+the original candidates' committed historical receipts. Forward evolution is valid;
+repair republishes original rows/generation, never replays/publishes entities or
+rewrites the original archive. A new repair archive records the operation. Conflicting
+coverage needs explicit `--confirm-replace-checkpoints` disposition, retaining prior
+rows. Missing candidate/migration evidence, partial deletion, skips and uncertain
+state stay blocked; an early crash before candidate intent can require separately
+audited reconciliation or rebuild/cutover.
+
+The reported `phase_evidence.migration_complete` is raw-phase evidence only, not
+ledger permission. Empty event-hours may accompany verified migrations; skipped,
+mixed skipped/processed and already-deleted outcomes cannot certify migration.
+No repair command automatically recreates/reopens the ledger. Linux synthetic
+archive/repair and cross-runtime DBT tests pass; actual endpoint/power-loss recovery,
+non-Linux durability and accumulated-state I/O/RSS remain unqualified.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py §RunEvidence/verify_migrations/repair_checkpoints; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py §parser/run; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §validate_checkpoint_receipts -->
 
 ## Evidence, conflicts and limits
 
@@ -138,7 +212,7 @@ gap-free collection or automatically discover missed scheduler windows.
 **Required exclusion:** one writer per dataset; pause entity updates through the
 entire DBT preflight/build. The writer interval includes final processing-checkpoint
 publication/verification; init/replay/rebuild and reconciliation are writers too.
-Fixed object replacement has no global snapshot generations or
+The generation journal does not supply a multi-host storage transaction or
 reader/writer coordination service. Production-scale staging/rewrite budgets and
 external schedule exclusion still require operator review.
 Planned implementation: [[wiki/work/dbt-compaction-coordination/dev_handoff]].

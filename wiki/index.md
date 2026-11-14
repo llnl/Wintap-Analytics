@@ -310,8 +310,30 @@ prerequisites before real writer integration, followed by the five handoff units
 baseline reruns from imported probes and future concurrency evidence. Authorized
 integrity/provenance work now repairs active SQL validation and original bootstrap
 retention: 75 pre-fix regression failures, then 94 new tests pass; full suites pass
-234 standalone and 315 main tests with opt-in skips. Receipt-backed
-freshness, phase-safe recovery and coordination implementation remain open.
+234 standalone and 315 main tests with opt-in skips. Local milestone commits are
+PyUtil `7d2b7f8` and Analytics `739e64f`. Subsequent receipt-backed freshness is
+implemented with rollback/forward-lineage and publication-intent regressions;
+full R1 gates pass 266 standalone and 335 main tests. R4 adds immutable local phase
+archives and original-generation exclusive checkpoint repair; 307 standalone tests
+pass (two skips) and real cross-runtime repair passes DBT. R5's active-root routing
+passes seven cases including direct full local `make dbt-build` with an unused remote
+metrics override. Combined main passes 343 tests (three skips); final affected
+cross-runtime checks pass 51 tests (one skip) including the directory-link durability
+fix. R1–R5/dcc-00 prerequisites are regression accepted. Protocol/ledger library
+passes 54 tests including abrupt-process WAL recovery; full main passes 397
+(three skips), accepting dcc-01. The first controlled-clock tick slice passes
+100 focused tests, including atomic message conflict handling and a child surviving
+abrupt tick death; full main passes 443 tests (three skips). The subsequent Linux
+supervision/evolving-clock focus passes 142 tests; full main passes 485 (three skips). dcc-02
+remains open: integrated verified completion/cursor advancement, advisory status,
+client and real-writer/runtime gates remain. Collaborative review reproduces a
+grace-boundary admission defect during ingestion; repair is pending. The human
+confirms atomic completion-evidence/run/cursor/admission-state COMMIT before grants.
+The review also requires an allowlisted, non-secret effective execution/configuration
+receipt bound to writer intent; implementation and identity/privacy gates are pending.
+Current implementation snapshot is PyUtil `fe7fcb5`; a fresh coordination-only
+rerun passes 142 tests, without covering the known ingestion/grace defect. Both
+repository snapshots are committed locally; pushing remains the human's task.
 
 Historical PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
 [[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],

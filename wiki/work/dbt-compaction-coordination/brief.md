@@ -11,7 +11,7 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py
   - wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint.md
 policy: agent-editable
-last_validated: 2026-11-13
+last_validated: 2026-11-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -102,6 +102,18 @@ See [[wiki/workflow/wintap-etl-data-flow#Local-only single-user workflow]].
     checkpoints; recovery reconciles all three phases before reopening.
 12. Missing entity-hour coverage fails preflight clearly and releases the reader;
     a grant must not be held while waiting for the writer to create that coverage.
+13. Before writer launch, durably retain an allowlisted, non-secret execution and
+    effective-configuration receipt bound to the committed intent. Bind the actual
+    executable/arguments, roots, UTC hour, run identities, events, entity policy,
+    deletion options and budgets after resolving defaults/overrides. Missing or
+    mismatched settings refuse launch; later uncertainty remains blocked. Never
+    capture the whole environment or credentials, or treat an environment-omitting
+    command manifest as sufficient configuration evidence.
+
+Criterion 13 was expressly requested by the human during the November 14 dcc-02
+review. It is an unimplemented requirement, not a property of the current
+supervisor manifest. Details and acceptance checks:
+[[wiki/work/dbt-compaction-coordination/design#Required execution and configuration receipt]].
 
 ## Ownership and boundaries
 

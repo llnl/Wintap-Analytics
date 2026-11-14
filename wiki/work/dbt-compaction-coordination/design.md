@@ -15,10 +15,15 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
   - wiki/work/dbt-compaction-coordination/implementation-review.md
   - wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint.md
+  - ../Wintap-PyUtil/wintappy/coordination/protocol.py
+  - ../Wintap-PyUtil/wintappy/coordination/ledger.py
+  - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
+  - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
 policy: agent-editable
-last_validated: 2026-11-13
+last_validated: 2026-11-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -32,8 +37,10 @@ tags: [feature-work, design, dbt, compaction, coordination, cron, duckdb, s3, dr
 
 **Selected architecture:** one scheduled coordinator on the compaction server,
 S3 messages for clients, and a **local DuckDB coordination ledger**. Coordinator
-paths, commands and schemas proposed below are implementation specifications;
-the coordinator and DBT wrapper are not implemented yet.
+paths, commands and schemas proposed below describe the complete intended service.
+Protocol/ledger, evolving-clock admission/draining and Linux command-tree supervision
+libraries exist; production scheduler/CLI, qualified compactor adapter and DBT
+wrapper are not implemented yet.
 
 **Local-only compatibility:** single-user builds over local raw Parquet retain
 the direct `make dbt-build` path. Compaction, durable entity state and this
@@ -175,8 +182,10 @@ with the default grace period.
 | `/var/lib/wintap-coordination/coordinator.duckdb` | Authoritative local DuckDB database. |
 | `/var/lib/wintap-coordination/coordinator.duckdb.wal` | DuckDB-managed WAL when present; retain with the database for crash recovery. |
 | `/var/lib/wintap-coordination/runs/<run-id>/command.json` | Selected hour, executable/arguments and configuration identity. |
+| `/var/lib/wintap-coordination/runs/<run-id>/execution.json` | Required non-secret effective execution/configuration receipt, retained immutably and checksummed in the committed writer intent; not implemented. |
 | `/var/lib/wintap-coordination/runs/<run-id>/result.json` | CLI report, return code, timing and coordinator disposition. |
 | `/var/lib/wintap-coordination/runs/<run-id>/stdout.log`, `stderr.log` | Captured child output; available even if report parsing fails. |
+| `/var/lib/wintap-coordination/phase-evidence/<cli-run-id>/*.json` | Independent immutable worker phase archive, separate from ledger and all data roots; original migration/checkpoint candidates retained. |
 | `/var/log/wintap/coordination.log` | Append-only structured tick/activity log; ordinary log rotation. |
 
 DuckDB stays on persistent **local disk**, outside S3 and network-shared folders.
@@ -190,7 +199,82 @@ Lost/corrupt state requires recovery with clients stopped, not automatic empty
 state creation or promotion of an old backup. State is recorded before external
 effects, so uncertainty remains visible after restart.
 
+### Required execution and configuration receipt
+
+**Human-required on November 14; not implemented.** Before launch, the service
+adapter must resolve defaults, overrides and allowed environment settings once,
+then durably retain a versioned, canonical, bounded, immutable receipt. Bind its
+checksum to the writer intent before launch. The actual supervised invocation and
+subsequent completion verification must match that receipt, not merely the
+callback's declared command or result.
+
+The explicit allowlist must cover the qualified executable/runtime and arguments,
+working directory, dataset/active roots, effective non-secret storage endpoint and
+region selection, selected UTC hour, coordinator/CLI run IDs, events, enabled entity
+namespace/hosts/identity policy/ceiling, deletion options and applicable processing,
+capture, timeout and storage budgets. Disabled settings are explicitly inactive;
+unrecorded inherited settings must not silently change the effective data scope.
+
+Only resolved, non-secret settings may be persisted. Do not dump the environment,
+record credentials/tokens, or substitute secret hashes for a non-secret configuration
+receipt. Keep secret material out of persisted arguments and diagnostic capture;
+credential delivery remains separate from the receipt. Apply the root AGENTS.md
+privacy rule to any wiki examples or copied qualification evidence.
+
+Missing, malformed, oversized, changed or mismatched receipts/settings refuse
+launch. A mismatch or uncertainty discovered after launch remains `BLOCKED`, with
+no cursor advancement or admission reopening. Test actual-command/scope mismatch,
+default/override/environment resolution, receipt integrity/budgets and synthetic
+secret exclusion through active launch/completion paths. Exit zero cannot bypass
+these checks. The receipt is necessary execution/configuration evidence, not an
+independent raw/entity/checkpoint completion certificate.
+
+The current supervisor manifest deliberately omits environment values, so its
+digest alone cannot satisfy this requirement; retain that observation separately
+from the proposed receipt.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_manifest/run_supervised -->
+<!-- SYNTHESIS: explicit human requirement on 2026-11-14; integrates execution binding with the intended writer-intent/completion sequence -->
+
 ## 4. DuckDB ledger model
+
+**Implementation status:** dcc-01 now supplies the protocol/ledger library, not a
+running service. Its v1 ledger implements reservations/outbox, terminal tombstones,
+draining and checksummed writer intent under one lock. Current run states are only
+`INTENT`/`BLOCKED`; completion evidence, cursor advance, entity high-water enforcement
+and audited reopening remain future integration. All retained runs are therefore
+unresolved in this slice. Focused tests pass 54 cases and full main passes 397
+(three skips). The table model below describes the full planned service, not installed
+runtime behavior.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py; wiki/work/dbt-compaction-coordination/verification.md -->
+
+The first dcc-02 slice now supplies locked `writer_due`/`tick`, with all bounded
+listings completed before atomic terminal-first ingestion. A later batch conflict
+cannot retire an earlier reservation. Due observations drain before admission and all
+reservations exclude the callback, delivered or not. Any callback result/failure
+becomes `BLOCKED`; bounded scalar observations are diagnostics, not completion
+evidence. There is no cursor advancement, reopening or integrated writer supervisor. The
+admission/draining focus passes 100 tests; its full main passes 443 (three skips).
+The subsequent Linux-supervision/evolving-clock focus passes 142 cases and full
+main passes 485 (three skips). dcc-02 remains open.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py; wiki/work/dbt-compaction-coordination/verification.md -->
+
+Collaborative review on November 14 confirms an uncovered timing defect: ingestion
+can cross grace after the clock observation, allowing a new reservation before
+the post-publication refresh enters `DRAINING`. A real-ledger/synthetic-S3 probe
+is red; repair is pending. The human confirms that requests not yet reserved at
+the deadline must remain queued, while existing reservations are preserved.
+See [[wiki/work/dbt-compaction-coordination/verification]].
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py §tick -->
+
+The Linux-only supervisor library uses a fresh isolated subreaper to adopt/reap
+detached and nested command descendants; root exit alone is not shutdown. It
+captures bounded local logs/reports, stops trees on interruption and setup/capture
+failure, and refuses uncertain worker outcomes. Evolving UTC observations now
+refresh after listings/grant delivery/callback, rejecting backwards/broken clocks.
+These primitives are not integrated completion authority: all tick callbacks still
+block. External services, non-Linux clients and power-loss/resource budgets remain
+unqualified. There is no production service adapter or installed scheduler.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py; ../Wintap-PyUtil/wintappy/coordination/coordinator.py; wiki/work/dbt-compaction-coordination/verification.md -->
 
 The schema is small and independent of DBT analytics models:
 
@@ -220,6 +304,14 @@ retries do not create a new reader or repeat a completed job.
 ## 5. S3 artifacts and protocol
 
 Keep coordination outside every telemetry, entity and processing-metrics scan root:
+
+The implemented v1 protocol uses 32 lowercase hexadecimal identities, strict
+message shapes and canonical dataset/active-root/entity-policy binding. Transport
+reads cap each message at 1 MiB and each listing at 64 MiB of original bytes,
+10,000 records and 10,000 pages; cyclic pagination/errors/budget exhaustion fail,
+never return truncated permission inputs. These are library tests with fake S3,
+not endpoint qualification or a terminal-history pruning policy.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/protocol.py -->
 
 ```text
 s3://<bucket>/coordination/<dataset-id>/
@@ -303,10 +395,10 @@ installation or entity bootstrap. Apply the same routing to standalone source,
 test and docs targets. Existing AWS/coordination settings alone must not activate
 the protocol. Local analysis DuckDB output remains part of the ordinary workflow.
 
-The current S3 macro consults an explicit metrics override even with entities
-disabled. Integration must consistently ignore that unused override in both routing
-and S3 setup; entity-enabled remote metrics remain a coordinated input. This is
-a required compatibility adjustment, not current behavior.
+R5 now ignores explicit metrics overrides in offline root resolution and S3 setup
+with entities disabled. Preserve this behavior in client routing; entity-enabled
+remote metrics remain a coordinated input. Empty active overrides use the sibling
+default. Real local `make dbt-build` and active-remote controls pass.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/s3.sql §configure_raw_sensor_access -->
 
 When switching an existing shell from S3 to local, clear previous dataset, raw,
@@ -341,12 +433,15 @@ leave only offline configuration checks outside the wrapper; move the remote
 source preflight **inside the same grant as the build**.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile §dbt-check-source/dbt-build; ../Wintap-PyUtil/scripts/check_dbt_config.py §validate -->
 
-Entity-enabled preflight requires a compatible version-3 checkpoint for every
+Entity-enabled preflight now requires a version-4 checkpoint and its committed
+generation receipt for every
 selected process-bearing hour. A grant conveys exclusion, not coverage: active or
 unprocessed hours can still fail preflight. Report missing coverage and release;
 never hold a reader grant waiting for the excluded writer to catch up, silently
 trim the requested window or switch off entities. Checkpoint presence alone does
-not prove that a restored snapshot is current (review R1).
+not prove that a restored snapshot is current. The R1 safety implementation also
+requires current-state authority and receipt lineage; see
+[[wiki/work/dbt-compaction-coordination/implementation_plan]].
 
 ```text
 make dbt-build
@@ -387,6 +482,11 @@ JSON to S3. One job ID belongs to exactly one invocation and is never reused.
 
 ## 7. Tick sequence, hourly selection and writer result
 
+The following is the **full intended sequence**, not the current callback-only
+service slice. Linux supervision and evolving-clock library primitives exist;
+independently verified completion, integrated service binding and cursor/admission
+reopening are not yet implemented. Production-clock/CLI wiring remains open.
+
 1. Acquire the local process lock; load config; open/validate the ledger.
 2. Recover pending messages and ingest terminal messages. Unresolved `WRITING`
    becomes `BLOCKED`; active reader reservations survive restart. In `BLOCKED`,
@@ -400,8 +500,10 @@ JSON to S3. One job ID belongs to exactly one invocation and is never reused.
    the existing locked compactor for `[next_hour, next_hour + one hour)` with
    explicit roots, events, limits, target size and validated source deletion.
    Include entity/metrics/policy settings only when that mode is selected and
-   initialized. The exclusive interval spans entity publication, raw migration,
-   final checkpoint publication/verification, child shutdown and receipt COMMIT.
+    initialized. The exclusive interval spans entity publication, raw migration,
+    final checkpoint publication/verification, child shutdown and receipt COMMIT.
+    Before launch, durably retain and bind the required non-secret execution receipt
+    to that intent; verify the actual invocation uses its resolved settings.
 6. Capture the report, exit status and elapsed time. Reopen admissions only after
    the selected hour has a recorded successful migration disposition: validations
    succeeded and expected source deletion completed, plus verified entity and
@@ -412,6 +514,14 @@ JSON to S3. One job ID belongs to exactly one invocation and is never reused.
    if backlog remains; otherwise enter `OPEN` and grant queued readers. On failure,
    partial/ambiguous completion, failed deletion or missing report, enter `BLOCKED`
    and retain the cursor and diagnostic evidence.
+
+The human-confirmed November 14 review contract makes step 7 one indivisible
+ledger COMMIT: retain the verified completion evidence, complete the run, advance
+the cursor and select the backlog/admission mode together. Queued grants follow
+that COMMIT, never a merely successful callback or parsed report. Execution and
+effective-configuration binding, independent data/authority/high-water verification
+when enabled, and supervised shutdown remain prerequisites, not implemented APIs.
+<!-- SYNTHESIS: human-confirmed review contract on 2026-11-14, consistent with the full intended sequence above -->
 
 The coordinator must inspect both exit status and structured report. The current
 CLI can report `completed_with_deletion_errors` and has a separate reconciliation
@@ -466,15 +576,21 @@ alone does not revoke a cached permission. Hour resolution records either verifi
 completion or a reconciled state ready for an intentional retry. It does not
 blindly mark every nonzero compactor exit successful.
 
-Current `reconcile-delete` does not publish checkpoints, even when its entity
-update path runs. Recovery may need explicit entity replay/checkpoint repair after
-raw reconciliation, under the same exclusive maintenance state; replay alone does
-not certify deletion. Preserve the migration evidence before that replay replaces
-metrics. Restore the SQL validator's integrity checks and bootstrap-provenance
-handling identified in review R2/R3 before relying on them for recovery. Snapshot
-restoration/cutover must also resolve R1's freshness gap; historical checkpoint
-hashes cannot simply be equated to the latest evolving snapshot.
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py §reconcile-delete; wiki/work/dbt-compaction-coordination/implementation-review.md -->
+Entity-enabled `reconcile-delete` now publishes checkpoints. R4's independent local
+archive retains original migration/deletion evidence and candidates before coverage
+can be overwritten. Exclusive `checkpoints-repair` validates that archive, surviving
+data and current/historical entity authority, then republishes original-generation
+rows without entity replay or replacing original history. Conflicting coverage
+requires explicit disposition and is retained in the new repair archive. Missing
+original candidates/migration evidence or uncertain/partial deletion stays blocked.
+The command does not acquire coordination permission or reopen a ledger; future
+operator integration must retain exclusivity through independently verified ledger
+receipt/cursor commit. R2/R3 integrity/provenance are repaired in `7d2b7f8`; R1's
+authority journal binds current snapshots and historical receipt lineage, but whole
+authority rollback still needs an independent ledger/operator high-water mark.
+Historical checkpoint hashes cannot be equated to the latest evolving snapshot.
+Actual coordinated recovery and endpoint/power-loss behavior remain unqualified.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py §reconcile-delete; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py §repair_checkpoints; wiki/work/dbt-compaction-coordination/verification.md -->
 
 Manual abandoned-job recovery is the proposed simple v1 policy. Automatic stale
 grant expiry remains unselected: a suspended/disconnected DBT process can still be
