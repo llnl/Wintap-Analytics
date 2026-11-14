@@ -5277,3 +5277,14 @@ seeds, zero cycles and zero resolved parent-PID mismatches, but the selected win
 still lacks historical ancestors; ancestry completeness and production rollout
 remain unqualified.
 <!-- EVIDENCE: ../Wintap-PyUtil/.opencode-work/dpe-3day-sql/reports/post-cache-qa.json -->
+
+## [2026-11-13] verification | repeat SQL cache qualification
+
+A fresh isolated three-day round reproduced the first result: 27,402 source files
+became 752 row-preserving compacted outputs; seven entity snapshots and 71
+processing checkpoints verified; both entity-enabled DBT (146/146) and the
+non-entity baseline (140/140) passed. Process key/row counts matched again, and
+ancestry QA repeated two root-reached seeds, zero cycles and zero resolved
+parent-PID mismatches. The selected-window ancestry-completeness limitation is
+unchanged.
+<!-- EVIDENCE: ../Wintap-PyUtil/.opencode-work/dpe-3day-round2/reports/post-cache-qa.json -->

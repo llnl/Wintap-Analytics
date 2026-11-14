@@ -219,6 +219,28 @@ is retained outside the wiki; no raw telemetry or actual host identifiers are
 copied into persistent documentation.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_path.sql; ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql -->
 
+### Repeat three-day round — completed, 2026-11-13
+
+One additional isolated round reproduced the durable-cache result from a fresh
+S3 prefix. Raw compaction merged **27,402** source files into **752** outputs,
+preserved **151,733,675** rows with zero row delta across **752/752** partition
+checks, and performed no source deletion. SQL entity initialization then
+published and verified **7** snapshots containing **2,613,678** entities and
+**280,529,605** bytes of Parquet, plus **71** processing-metrics checkpoints.
+The identity result repeated exactly: **28** quarantined rows at
+`2.1742408676836212e-06`, below the **0.05** hourly ceiling.
+
+The fresh entity-enabled DBT build completed **146/146 PASS**; the matching
+non-entity baseline completed **140/140 PASS**. Process, process-summary and
+process-path row counts and key sets again matched exactly. The ancestry QA
+distribution also repeated: **2 root-reached**, **2,569,888 missing-ancestor**,
+**23,726 missing-parent**, **8,583 parent-conflict**, **11,479 sentinel** and
+**2 missing-entity** terminal verdicts, with **0 cycles**, **0 unresolved
+verdicts** and **0 resolved-parent PID mismatches**. This confirms reproducible
+SQL-state construction and DBT behavior; it does not change the limitation that
+the selected three-day bootstrap lacks earlier history and is not ancestry-complete.
+<!-- EVIDENCE: ../Wintap-PyUtil/.opencode-work/dpe-3day-round2/reports/compact.json; ../Wintap-PyUtil/.opencode-work/dpe-3day-round2/reports/entities-init.json; ../Wintap-PyUtil/.opencode-work/dpe-3day-round2/reports/entities-verify.json; ../Wintap-PyUtil/.opencode-work/dpe-3day-round2/reports/post-cache-qa.json -->
+
 The preserved compacted process files were also audited read-only for per-hour
 identity denominator/numerator evidence; that evidence is recorded below. The
 later SQL-backed bootstrap and DBT run supersede the earlier no-publication
