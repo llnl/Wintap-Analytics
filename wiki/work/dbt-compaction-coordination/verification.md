@@ -42,6 +42,8 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/dcc_macos_baseline.py
   - ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json
   - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
+  - ../Wintap-PyUtil/.gitignore
+  - ../Wintap-PyUtil/uv.lock
 policy: agent-editable
 last_validated: 2026-11-14
 repo_scope: cross-repo
@@ -1195,6 +1197,81 @@ Next task and exact Mac commands:
 reader backend/shutdown, service/client/audited recovery and S3/representative
 resources remain unqualified; dcc-02–05 stay unchecked.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/scripts/dcc_macos_baseline.py; ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json; ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py -->
+
+### Mac packaging correction — original blocked result retained
+
+The Mac worker reports that **dcc-mac-baseline-01 at PyUtil
+`8ee714c0c58e9781a29b0cdc488e3aaf6ebea181` was blocked before either test stage ran**:
+the clean checkout did not contain main `uv.lock`. Preserve the original private
+blocked record; no main/standalone test counts or Mac pass are inferred.
+<!-- SOURCE: Mac worker blocked-result report and human-authorized correction, conversation 2026-11-14. -->
+
+Independent `git ls-tree -r --name-only 8ee714c0c58e9781a29b0cdc488e3aaf6ebea181`
+inspection confirms 21 of 22 manifest files, with only main `uv.lock` missing.
+The prior post-commit `validate_checkout` pass above checked local hashes, not
+committed coverage: an ignored matching lockfile concealed the omission. That
+historical check remains recorded with this explicit limitation; it was not
+fresh-checkout proof. The standalone lock was already committed.
+
+The human authorized a corrective follow-up, committed as PyUtil
+`fab647f900196b0bc473fe7977b7dadcf7f4ce52`. Exactly five files changed:
+`.gitignore`, main `uv.lock`, the two harness scripts and coordination README.
+The lock is the original **593,615 bytes**, SHA-256
+`61912ee3abb9e095b46e03fba4a021272d77bed9f1235a8901e92a92a5d9d367`;
+it was not regenerated. Complete structured review of local and staged bytes
+covers 191 packages and 1,940 public HTTPS registry/artifact URLs, with only
+checkout-relative local project paths. The root-only ignore exception leaves
+unrelated local lockfiles ignored. No runtime code, feature test or manifest hash
+changed; all 22 original identities and the manifest SHA-256 above are retained.
+
+The validator additionally uses `git cat-file blob <full-commit>:<manifest-path>`
+to require each committed file's bytes to match its manifest hash. Local matching
+files no longer conceal missing or different committed content. Three controls
+were recorded before the guard: missing committed file, different committed bytes,
+and a real synthetic clean Git repository with an ignored matching lockfile.
+From PyUtil, before/after implementation respectively:
+
+```sh
+TMPDIR=/tmp/opencode .venv/bin/python -B scripts/test_dcc_macos_baseline.py > /tmp/opencode/dcc-lockfile-commit-coverage-red.txt 2>&1
+TMPDIR=/tmp/opencode .venv/bin/python -B scripts/test_dcc_macos_baseline.py > /tmp/opencode/dcc-lockfile-commit-coverage-green.txt 2>&1
+```
+
+Inspected red result: **18 tests, exactly the three new failures, zero errors**;
+the other 15 controls pass. Final green result: **18 pass in 0.213 s**. Initial
+format-only cleanup is separate from the three behavioral red/green controls.
+Pinned Ruff **0.17.5** `check --no-cache` and `format --check --no-cache` both pass
+all 20 Python files: the unchanged 18 manifest Python files and two harness scripts,
+using `uv tool run --cache-dir /tmp/opencode/dcc-ruff-cache --from ruff==0.17.5 ruff`.
+Both harness scripts compile; an actual Linux CLI invocation exits 2 before output
+or platform test access. Staged five-file allowlist, exact index/local identities,
+structured lock review and `git diff --cached --check` pass before commit.
+
+After committing, a new disposable clone was populated only from Git using
+`git clone --quiet --no-local --no-hardlinks --no-checkout <local-repo> <new-checkout>`
+and `git checkout --quiet --detach fab647f900196b0bc473fe7977b7dadcf7f4ce52`.
+No ignored files, credentials, datasets or virtual environments were copied from
+the working tree. In that clean clone, all **22 local file and committed blob
+hashes** plus the unchanged manifest hash pass, and the updated identity-only
+`validate_checkout` returns the full corrective commit. All **18 harness controls
+pass again in 0.196 s**, using the existing external main interpreter without
+provisioning environments in the clone. Git status remains empty. Inspected report:
+`/tmp/opencode/dcc-lockfile-fresh-git-checkout.txt`. Neither actual-Mac test stage ran.
+
+The complete six-file wiki diff is inspected for persistent-content privacy.
+`git diff --check` and the scoped read-only artifact/privacy audit pass:
+**6 files, 4 frontmatters, 115 grounding paths, 129 inline sources, 352 wikilinks
+and 2 diagram pages**. Index/log frontmatter omissions remain baseline exceptions,
+not whole-wiki lint acceptance.
+
+Corrected full-revision commands and continuation prompt:
+[[wiki/work/dbt-compaction-coordination/macos-qualification]]. The Mac worker must
+use a fresh checkout and a **new private report directory**, preserving the original
+blocked result. Existing 641-main/439-standalone Linux results retain their original
+unchanged-runtime scope; they are not corrective Mac qualification. Mac baseline/
+reader shutdown, service/client/audited recovery, actual-S3/representative-resource
+gates and dcc-02–05 remain open. No push, remote access, production mutation,
+scheduler installation or unrelated-artifact cleanup occurred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/.gitignore; ../Wintap-PyUtil/uv.lock; ../Wintap-PyUtil/scripts/dcc_macos_baseline.py §validate_checkout; ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json; ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py -->
 
 ### Baseline review regressions
 

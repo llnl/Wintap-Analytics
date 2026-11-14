@@ -374,8 +374,11 @@ repairs. Full standalone passes 439 tests (two skips) on that final revision;
 combined main focus passes 298 tests; full main passes 641 (three skips). Both full
 regressions completed on the unchanged revision. This does not accept the service.
 dcc-02–05 stay open.
-Next task **dcc-mac-baseline-01** (PyUtil `8ee714c`): human-run exact-commit Mac
-offline baseline with committed harness; later reader-backend acceptance is separate:
+Next task **dcc-mac-baseline-01** (corrective PyUtil `fab647f`): human-run exact-commit
+Mac offline rerun with a new report directory. Original `8ee714c` was blocked before
+both stages by the omitted main lockfile. Exact original lock and committed-byte
+guard now pass all 22 identities and 18 controls in a fresh Git-only clone;
+manifest/runtime hashes are unchanged. Later reader-backend acceptance is separate:
 [[wiki/work/dbt-compaction-coordination/macos-qualification]].
 Injected SDK scope/secret-exclusion tests make no endpoint requests; actual macOS,
 S3, representative resource and integrated completion/service gates remain open.

@@ -13,6 +13,8 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/dcc_macos_baseline.py
   - ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json
   - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
+  - ../Wintap-PyUtil/.gitignore
+  - ../Wintap-PyUtil/uv.lock
 policy: agent-editable
 last_validated: 2026-11-14
 repo_scope: Wintappy
@@ -36,12 +38,29 @@ machine access. This is a runner choice, **not macOS support or acceptance**.
 sanitized evidence. Do not implement a backend or qualify real S3 in this task.**
 
 Qualification revision in **Wintap-PyUtil**:
-`8ee714c0c58e9781a29b0cdc488e3aaf6ebea181`
-on `work/raw-sensor-compacted-union`. The commit includes the feature code, README,
-harness, public source manifest and harness controls. The original 18 feature Python
+`fab647f900196b0bc473fe7977b7dadcf7f4ce52`
+on `work/raw-sensor-compacted-union`. This corrective follow-up includes the exact
+original main `uv.lock`, a root-only tracking exception and committed-file coverage
+checks/controls. It retains the prior feature code, README, harness and public
+source manifest. The original 18 feature Python
 files and four runtime/lock files retain the hashes used for the completed Linux
 641-main/439-standalone regressions. The committed manifest's SHA-256 is
 `c37247ac1962cb6a259e5387d1c9177a37f82a5ff78f913382b293770d2bf3b7`.
+
+**Original result: blocked.** The Mac worker reports that the original
+`8ee714c0c58e9781a29b0cdc488e3aaf6ebea181` attempt stopped before either test stage
+because the main lockfile was absent. Git inspection independently confirms that
+only 21 of the 22 manifest files were committed; the previous local-only identity
+check was satisfied by an ignored `uv.lock`. Preserve the worker's original blocked
+record; this is a packaging correction, not a retroactive pass or Mac execution.
+<!-- SOURCE: Mac worker blocked-result report and human-authorized correction, conversation 2026-11-14. -->
+
+The corrected revision passes all 22 committed/local manifest hashes and the
+identity-only validator from a fresh Git-only clone without copied ignored files
+or virtual environments. Eighteen local harness controls pass, including three
+new committed-coverage regressions. Actual Mac provisioning/tests still require
+a new run and a **new private output directory**.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/.gitignore; ../Wintap-PyUtil/uv.lock; ../Wintap-PyUtil/scripts/dcc_macos_baseline.py §validate_checkout; ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py -->
 
 The scratch `fe7fcb5` plus uncommitted-overlay procedure is **superseded**. Both
 repositories' new commits are local, not pushed by the assistant. Make this exact
@@ -57,7 +76,7 @@ Linux virtual environments.
 2. From that disposable checkout, run:
 
    ```sh
-   git switch --detach 8ee714c0c58e9781a29b0cdc488e3aaf6ebea181
+   git switch --detach fab647f900196b0bc473fe7977b7dadcf7f4ce52
    uv sync --locked --dev --python 3.12
    uv sync --locked --dev --python 3.12 --project extras/raw-sensor-compact
    .venv/bin/python -B -c 'import sys, duckdb; print("main", sys.version.split()[0], duckdb.__version__); assert duckdb.__version__ == "1.5.6"'
@@ -65,7 +84,7 @@ Linux virtual environments.
    .venv/bin/python -B scripts/dcc_macos_baseline.py \
      --root . \
      --manifest scripts/dcc_macos_source_manifest.json \
-     --commit 8ee714c0c58e9781a29b0cdc488e3aaf6ebea181 \
+     --commit fab647f900196b0bc473fe7977b7dadcf7f4ce52 \
      --output '<new-private-output-directory>'
    ```
 
@@ -77,7 +96,9 @@ Linux virtual environments.
    offline and uses no telemetry endpoint.
 
 The harness refuses non-macOS execution, wrong full HEAD, tracked modifications,
-missing reviewed ancestry and source/lock mismatches before testing. It runs **nine
+missing reviewed ancestry and source/lock mismatches before testing. Every manifest
+file must exist with matching bytes both locally and in the specified Git commit;
+an ignored local file cannot satisfy committed coverage. It runs **nine
 main coordination modules and three standalone completion/integrity/phase-evidence
 modules**, not the full suites. Each stage has a 1,200-second ceiling, disposable
 CWD/HOME/temp paths and no inherited AWS credentials/profiles. An ordinary failure
@@ -133,9 +154,11 @@ separate gates in [[wiki/work/dbt-compaction-coordination/implementation_plan]].
 ```text
 Run dcc-mac-baseline-01 from the committed Mac qualification runbook in
 Wintap-Analytics/wiki/work/dbt-compaction-coordination/macos-qualification.md.
-Test PyUtil commit 8ee714c0c58e9781a29b0cdc488e3aaf6ebea181 unchanged on this actual Mac.
+Test PyUtil commit fab647f900196b0bc473fe7977b7dadcf7f4ce52 unchanged on this actual Mac.
 Use a fresh disposable checkout, separate locked native Python 3.12 environments,
 the committed harness/manifest and new private reports outside the checkout.
+Preserve the original 8ee714c blocked result: neither test stage ran because the
+main committed lockfile was missing. This rerun must use a new output directory.
 Do not modify runtime code or lockfiles, use real S3/datasets, install scheduling,
 push, or claim reader-shutdown support. Preserve failures and Linux-only skips.
 Return the sanitized summary, runtime versions and necessary failure/skip details;

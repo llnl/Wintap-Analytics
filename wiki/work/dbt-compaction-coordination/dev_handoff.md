@@ -30,6 +30,9 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/completion.py
   - ../Wintap-PyUtil/tests/test_coordination_authority.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
+  - wiki/work/dbt-compaction-coordination/macos-qualification.md
+  - ../Wintap-PyUtil/scripts/dcc_macos_baseline.py
+  - ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json
 policy: agent-editable
 last_validated: 2026-11-14
 repo_scope: cross-repo
@@ -46,9 +49,13 @@ tags: [feature-work, dev-handoff, dbt, compaction, coordination, cron, duckdb, s
 ## Handoff summary
 
 **Current snapshot / next task:** local PyUtil commit
-`8ee714c0c58e9781a29b0cdc488e3aaf6ebea181` contains the receipt-bound launch,
+`fab647f900196b0bc473fe7977b7dadcf7f4ce52` contains the receipt-bound launch,
 independent verification and ledger-v3 completion/history work plus the durable
-Mac harness. Run **dcc-mac-baseline-01** unchanged on the human's actual Mac using
+Mac harness and exact original main lockfile. All 22 manifest files pass committed/
+local identity checks in a fresh Git-only clone; 18 harness controls pass. The original
+`8ee714c` Mac attempt was blocked before either test stage by the omitted lockfile;
+preserve that result. Rerun **dcc-mac-baseline-01** unchanged with a new private
+output directory on the human's actual Mac using
 [[wiki/work/dbt-compaction-coordination/macos-qualification]]; return sanitized
 summary/runtime/failure/skip evidence. The uncommitted-overlay procedure is
 superseded. No assistant push; reader-backend/service/recovery/S3/resource gates
@@ -442,8 +449,9 @@ Actual macOS reader shutdown must be qualified before broad client integration; 
 and injected remote sessions are not actual-platform/endpoint evidence.
 The human selected a human-run Mac harness. Its prepared exact-revision offline
 baseline and later backend gate are in
-[[wiki/work/dbt-compaction-coordination/macos-qualification]]. No actual Mac run
-or supported reader-shutdown result is inferred from harness preparation.
+[[wiki/work/dbt-compaction-coordination/macos-qualification]]. The original Mac
+attempt was blocked before tests by packaging; the corrective-revision rerun remains
+pending. No supported reader-shutdown result is inferred from harness preparation.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/writer.py; ../Wintap-PyUtil/tests/test_coordination_execution.py -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py; ../Wintap-PyUtil/wintappy/coordination/verification.py -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py §upgrade/_validate_authority_checks/_require_entity_authority; ../Wintap-PyUtil/wintappy/coordination/authority.py; ../Wintap-PyUtil/tests/test_coordination_authority.py -->

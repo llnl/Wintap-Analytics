@@ -32,6 +32,9 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/completion.py
   - ../Wintap-PyUtil/tests/test_coordination_authority.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
+  - ../Wintap-PyUtil/scripts/dcc_macos_baseline.py
+  - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
+  - ../Wintap-PyUtil/uv.lock
 policy: agent-editable
 last_validated: 2026-11-14
 repo_scope: cross-repo
@@ -592,8 +595,12 @@ Before actual-endpoint runs, confirm a fresh exact test prefix, approved access 
 existing credential configuration, fixture manifest, event scope, first UTC hour,
 optional freshly initialized entity roots and a representative retained workload.
 The human selects a human-run actual-Mac harness. The prepared offline baseline is
-in [[wiki/work/dbt-compaction-coordination/macos-qualification]]; actual execution
-and the future reader-backend shutdown acceptance remain pending. Never copy access
+in [[wiki/work/dbt-compaction-coordination/macos-qualification]]. The original
+`8ee714c` attempt was blocked before both test stages by the missing main lockfile;
+preserve that result. Corrective commit `fab647f900196b0bc473fe7977b7dadcf7f4ce52`
+tracks the exact original lock and checks committed/local bytes; all 22 identities
+and 18 harness controls pass from a fresh Git-only clone. The human's new-directory
+Mac rerun and future reader-backend shutdown acceptance remain pending. Never copy access
 secrets or actual host/account/IP identifiers into this wiki.
 
 First run the combined lifecycle with synthetic local fixtures, then the approved
@@ -690,7 +697,8 @@ macOS commands/results in [[wiki/work/dbt-compaction-coordination/verification]]
 - [x] Completion slice C: full main regression of the frozen v3 completion revision (641 passes, three skips; unchanged source/runtime-lock identities confirmed).
 - [ ] Completion slice B/D: Linux and macOS reader supervision and actual-platform qualification.
 - [x] Completion slice B: human-run Mac harness selected and committed with public source manifest/15 local harness controls in PyUtil `8ee714c`; exact-revision task dcc-mac-baseline-01 defined (not actual-Mac execution or reader-shutdown acceptance).
-- [ ] dcc-mac-baseline-01: human-run actual-Mac offline baseline with separate locked runtimes and retained sanitized pass/failure/skip evidence; follow [[wiki/work/dbt-compaction-coordination/macos-qualification]].
+- [x] Mac qualification packaging correction: exact original main lock tracked in PyUtil `fab647f`; all 22 committed/local identities verified from a fresh Git-only clone; three pre-fix coverage failures become 18 passing harness controls. Manifest/runtime hashes unchanged; original blocked Mac result retained.
+- [ ] dcc-mac-baseline-01: rerun corrective PyUtil `fab647f` on an actual Mac with a new report directory and separate locked runtimes; original `8ee714c` attempt was blocked before both stages. Retain sanitized pass/failure/skip evidence per [[wiki/work/dbt-compaction-coordination/macos-qualification]].
 - [x] Completion slice C local library: independent verifier, entity high-water enforcement and atomic retained-history/cursor transaction, with red/green and full main/standalone evidence; not service/platform/endpoint acceptance.
 - [ ] dcc-02: scheduling/exclusion with controlled-clock and child-failure evidence.
 - [ ] dcc-03: DBT lifetime, terminal-message retry and local compatibility.

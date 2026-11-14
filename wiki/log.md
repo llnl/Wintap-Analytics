@@ -5970,3 +5970,29 @@ identity checks pass. Final scoped wiki audit passes 11 files, 9 frontmatters,
 217 grounding paths, 250 inline sources, 391 links and 7 diagram pages; baseline
 index/log exceptions preserved. Feature-only wiki snapshot prepared. No push,
 endpoint/production operation, scheduling or cleanup; dcc-02–05 remain open.
+
+## [2026-11-14] fix | committed Mac lockfile coverage and corrected handoff
+
+The Mac worker reports the original `8ee714c` attempt blocked before either stage
+because main `uv.lock` was absent from the clean checkout. Independent Git inspection
+confirms 21/22 manifest files; the previous local-only post-commit check passed using
+an ignored matching lock. Preserve that historical check with its limitation and the
+worker's original blocked result; never relabel it as a pass.
+
+Human-authorized corrective PyUtil commit
+`fab647f900196b0bc473fe7977b7dadcf7f4ce52` tracks the exact original 593,615-byte main
+lock and adds a root-only ignore exception plus committed-byte validation. Three
+new controls fail before the guard; all 18 pass after it. Pinned 20-file Ruff lint/
+format, syntax, actual Linux refusal and staged allowlist/identity/whitespace checks
+pass. A fresh Git-only clone verifies all 22 committed/local manifest hashes and
+the identity validator; all 18 controls pass again without copied ignored files or
+virtual environments. Manifest and runtime hashes are unchanged.
+
+Updated Mac runbook/prompt, handoff, plan, verification and index to the exact
+corrective revision. The actual-Mac rerun requires a new private report directory;
+neither Mac stage was run here. Original 641/439 Linux runtime results remain distinct.
+No push, S3/production operation, scheduler installation or unrelated cleanup;
+reader-backend/service/client/recovery/resource gates and dcc-02–05 stay open.
+Complete six-file wiki diff/privacy review, whitespace and scoped artifact checks
+pass: four frontmatters, 115 grounding paths, 129 inline sources, 352 links and two
+diagram pages. Index/log frontmatter exceptions remain baseline, not whole-wiki lint.
