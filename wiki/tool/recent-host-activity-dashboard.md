@@ -189,3 +189,18 @@ unsupported timestamp encodings, and hostless rows can reduce chart coverage.
 Run tests and launch instructions are maintained in the app's README and the
 feature record:
 [[wiki/work/recent-host-activity-dashboard/verification]].
+
+## Planned compaction/status follow-on
+
+[[wiki/work/compaction-status-utility/brief]] proposes extending this same app,
+on the compaction server, with all/subset partition status, lock/admission state,
+a run timeline, compacted event reads and optional retained entity inspection.
+This is a draft, not implemented behavior. Its
+[[wiki/work/compaction-status-utility/design]] separates advisory local status,
+default live diagnostic reads without reservations and optional coordinated
+refresh. The human approved the two modes and scoped diagnostic exception on
+November 14; live observations must always warn about partial/overlapping or
+mixed-generation data and cannot certify integrity, completion or safe recovery.
+DBT, authoritative verification, ledger locking and maintenance retain their
+protections. Raw filename metadata cannot stand in for compacted row-level host/time,
+and entity context is not extra event history. No new mode is implemented yet.

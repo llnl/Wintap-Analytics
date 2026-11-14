@@ -650,7 +650,13 @@ passes distinct from corruption probes and new concurrency qualification.
   freshness/schema change needs an explicit upgrade/rebootstrap plan, not automatic
   acceptance of old compatible-looking state.
 - Coordination is cooperative, dataset-wide and not a freeze of sensor uploads.
-  Ad-hoc queries/dashboards over raw-backed views must participate too.
+  Ad-hoc queries/dashboards over raw-backed views must participate, except the
+  human-approved same-server utility's explicit live diagnostic observation path.
+  That exception does not weaken DBT, authoritative verification, ledger locking
+  or exclusive maintenance/recovery. It cannot provide completion evidence or
+  satisfy dcc-02–05 gates. See
+  [[wiki/work/dbt-compaction-coordination/design#Diagnostic observation exception]]
+  and [[wiki/work/compaction-status-utility/implementation_plan]].
 - Confirm supported client platforms/process-tree supervision, deployment roots,
   endpoint configuration, first unfinished hour, event allowlist, entity identity
   policy and measured budgets before rollout. No secrets in persisted examples.

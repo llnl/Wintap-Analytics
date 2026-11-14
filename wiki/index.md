@@ -290,6 +290,22 @@ UTC partition contract.
 
 ## Work
 
+Compaction status utility follow-on:
+[[wiki/work/compaction-status-utility/brief]],
+[[wiki/work/compaction-status-utility/design]],
+[[wiki/work/compaction-status-utility/implementation_plan]] and
+[[wiki/work/compaction-status-utility/verification]] — draft extension of the
+same-server HostActivity app with Status, Partitions, run timeline and raw/compacted
+Activity plus optional entity inspection. Advisory local exports remain readable
+during writers. Human-approved default live diagnostics need no reservation and
+always warn about incomplete/overlapping/mixed-generation observations; optional
+coordinated refresh uses bounded reader grants. The scoped exception does not
+relax DBT, authoritative verification, ledger locking or maintenance. Separate
+inventory, migration/deletion evidence and entity coverage; all-partition catalog
+is resumable with explicit unknown scope. Worker interfaces, remaining defaults
+and implementation approval are pending. Unchanged offline raw-viewer baseline
+passes 27 tests; no code/deployment.
+
 Scheduled DBT/compaction coordination:
 [[wiki/work/dbt-compaction-coordination/brief]],
 [[wiki/work/dbt-compaction-coordination/design]] and

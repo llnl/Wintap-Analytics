@@ -98,6 +98,16 @@ Requirements: [[wiki/work/dbt-compaction-coordination/brief]].
 [Editable sequence diagram](sequence.drawio): shared reader lifecycle and hourly
 writer handoff.
 
+**Approved diagnostic exception, November 14:** the follow-on same-server
+HostActivity utility defaults to uncoordinated live observation with persistent
+warnings and inconclusive race failures; coordinated refresh is optional. Do not
+apply its bypass to DBT, authoritative verification, ledger access or recovery, and
+do not count diagnostic observations as reserved readers or completion evidence.
+The utility is separate planning work, not added implementation scope here. Read
+[[wiki/work/dbt-compaction-coordination/design#Diagnostic observation exception]]
+before documenting that all dashboards must acquire grants. The worker-owned
+local status/run-summary export agreement remains a follow-on dependency.
+
 ## Copy/paste prompt
 
 Use this prompt to start the implementation task from Wintap-Analytics:
@@ -344,6 +354,7 @@ and pending terminal-message JSON. Local-only builds create ordinary DBT outputs
 | Gate | Required evidence |
 |---|---|
 | Concurrency | Two shared readers overlap; due writer waits for both; a later reader remains queued; no writer interval overlaps any outstanding reservation. |
+| Diagnostic boundary | Preserve the explicit utility exception without weakening DBT/shared-command grant assertions or ledger/maintenance protections. Live overlap, warning/race and load qualification belongs to the utility plan, not dcc-02 acceptance. |
 | Grant durability | Crash before/after COMMIT and lost PUT acknowledgment; pending grants survive and are republished with identical identities. |
 | Message ordering | Duplicates, cancellation before request, delayed grant after cancellation, early terminal delivery and conflicting content preserve ownership correctly. |
 | Writer durability | Duplicate ticks exit busy; crashes around launch, surviving children and partial migration leave unresolved writes blocked; missing ledger refuses operation. No duplicate launch. |

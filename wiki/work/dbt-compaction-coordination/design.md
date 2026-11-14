@@ -92,13 +92,45 @@ endpoint probes accepted a conflicting `If-None-Match: *` PUT and overwrote the
 object; this design avoids depending on that primitive.
 <!-- GROUND_TRUTH: wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint.md §Conflict -->
 
-This is cooperative coordination: all tools that read or modify these roots must
-participate. Ordinary S3 permissions do not enforce the protocol. Direct ad-hoc
-queries and read-only verification need shared access; entity initialization,
-replay, rebuild/cutover and manual reconciliation need exclusive maintenance
+This is cooperative coordination: tools that read or modify these roots must
+participate, except existing sensor uploads and the explicitly approved diagnostic
+observation path below. Ordinary S3 permissions do not enforce the protocol. Direct
+ad-hoc queries and authoritative read-only verification need shared access; entity
+initialization, replay, rebuild/cutover and manual reconciliation need exclusive maintenance
 access through the same authority, including while resolving `BLOCKED` state.
 Sensor uploads continue under the existing collection
 contract; a read grant stabilizes compaction activity, not incoming collection.
+
+### Diagnostic observation exception
+
+**Human-approved on November 14; utility implementation not authorized here.** The
+same-server HostActivity compaction/status utility may use a default **Live
+diagnostic** mode for bounded, read-only LIST/schema/row/entity/checkpoint observation
+without requesting or holding a reader reservation. It may intentionally overlap
+compaction/entity publication or maintenance, including reported `WRITING`/`BLOCKED`.
+An optional, explicitly selected **Coordinated refresh** uses the ordinary matching
+grant and managed-client lifecycle for comparisons/validation.
+
+Live diagnostics always disclose possible partial reads, raw/compacted duplication
+and mixed generations, even when status reports `OPEN`. Missing/stale writer status
+is unknown, not inactivity. Incomplete or conflicting live reads are inconclusive;
+they cannot certify corruption, zero activity, migration failure, deletion, coverage
+or safe reopening. Diagnostic observations cannot supply authoritative verification
+or completion evidence, advance the cursor or alter ledger/run/authority state.
+
+This exception is limited to that utility's explicit observation path, not unlocked
+DBT, ordinary ad-hoc queries, authoritative verification or recovery. Every live
+ledger access still takes the process lock; the app uses published summaries, not
+unlocked DuckDB inspection. Maintenance remains exclusive with coordinated readers
+and other writers; live diagnostic observers intentionally remain outside that
+exclusion. Bound their load and stop/reap reading children without acquiring a
+reservation or blocking writer admission. A failed coordinated refresh must never
+silently fall back to live diagnostics.
+
+Consumer warning, mode/provenance handling and race/resource gates:
+[[wiki/work/compaction-status-utility/design#Approved read modes and diagnostic exception]]
+and [[wiki/work/compaction-status-utility/implementation_plan]]. The two sequence
+diagram pages still describe coordinated DBT/writer handoff, not diagnostic reads.
 
 ## 2. Source artifacts to create or change
 
@@ -682,7 +714,7 @@ one-hour bound.
 | DBT exits unsuccessfully | Release after children stop; return the DBT failure. It has not mutated the source dataset. |
 | Client machine disappears or release PUT fails | Keep its reservation; display job age/status; retry release or manually resolve. |
 | Writer/host crashes | Persistent `WRITING` becomes blocked/uncertain. Confirm old child stopped and reconcile data before reopening. |
-| Partial compaction or raw/compacted overlap | Keep the dataset blocked until reconciliation; a stopped writer alone does not make the dataset readable. |
+| Partial compaction or raw/compacted overlap | Keep the dataset blocked until reconciliation; a stopped writer alone does not permit coordinated reads. Live diagnostic observations remain inconclusive and cannot reopen admissions. |
 | Entity or checkpoint publication fails, including after raw deletion | Keep `BLOCKED`; reconcile all configured hosts and selected-hour checkpoints as well as raw migration. Old compatible checkpoints are not a freshness guarantee. |
 | Missing/corrupt ledger | Refuse ordinary operation; recover under an explicit maintenance procedure with all outstanding clients stopped. |
 | Operator restores an older ledger backup | Use the same maintenance recovery procedure. A valid but stale backup cannot be assumed to contain every issued grant. |
@@ -734,7 +766,9 @@ delayed grant after cancellation; release before request visibility; duplicate
 messages; crash after writer launch; child surviving parent termination; missing
 ledger refusal; misleading success/skip/partial reports; midnight and grace
 boundaries; missed ticks and multi-hour backlog. Assertion: no writer interval
-overlaps a granted reader interval, and no S3 reader starts without its own grant.
+overlaps a granted reader interval, and no coordinated S3 reader starts without
+its own grant. The diagnostic exception is separately qualified by the utility's
+live-overlap/warning/resource gates; it cannot relax these coordinated assertions.
 
 Local compatibility gate: a full raw-only `make dbt-build` with no compacted
 directory, no entity store, no AWS/coordination settings and no installed compactor

@@ -45,13 +45,24 @@ endpoint/resource qualification remain open.
 - Three to five researchers run occasional time-ranged DBT builds locally,
   reading the shared S3 raw/compacted dataset and writing local results.
 - DBT readers may overlap each other. Compaction and readers must exclude each
-  other for the entire operation.
+  other for the entire operation, except the approved diagnostic observation path
+  described below; that path is not a coordinated DBT reader.
 - Existing S3 access can carry coordination messages. Minute-scale waiting is
   acceptable; an always-running coordinator service is unnecessary.
 - Keep the compaction engine behind a scheduling/coordination wrapper while its
   independent deeper qualification continues.
 - Preserve the easy single-user, local-raw-data workflow. S3, coordination,
   compaction and durable process-entity state are optional deployment features.
+
+On November 14, the human approved a narrow follow-on exception for the same-server
+HostActivity status utility: **Live diagnostic** reads have no reader reservation
+and may overlap compaction/entity writes, with always-visible inconsistency warnings
+and non-authoritative results. **Coordinated refresh** remains an explicit option
+for comparisons/validation. DBT, ordinary ad-hoc queries, authoritative verification,
+live-ledger access and maintenance/recovery retain their protections. This approves
+the planning contract, not utility implementation or runtime qualification. See
+[[wiki/work/dbt-compaction-coordination/design#Diagnostic observation exception]] and
+[[wiki/work/compaction-status-utility/brief]].
 
 ## Proposed user-facing behavior
 

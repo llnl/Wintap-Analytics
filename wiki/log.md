@@ -5996,3 +5996,50 @@ reader-backend/service/client/recovery/resource gates and dcc-02–05 stay open.
 Complete six-file wiki diff/privacy review, whitespace and scoped artifact checks
 pass: four frontmatters, 115 grounding paths, 129 inline sources, 352 links and two
 diagram pages. Index/log frontmatter exceptions remain baseline, not whole-wiki lint.
+
+## [2026-11-14] plan | same-server compaction status utility
+
+Created brief, design, phased implementation plan and verification baseline under
+`wiki/work/compaction-status-utility/`; linked the draft from index and canonical
+HostActivity page. Human requirements: extend the existing S3 app with compacted
+events/optional entity context, all/subset partition compaction, lock state and a
+simple run timeline on the compaction server. Proposed four views and bounded
+coordinated refreshes, independently available advisory local status, resumable
+partition catalog and separate inventory/migration/deletion/coverage evidence.
+Added backlog, overlap/late-arrival, storage-benefit and read-only recovery diagnostics.
+
+Live grounding confirms raw filename charts cannot represent compacted host/time,
+ordinary ledger open can mutate unresolved-writer recovery, and existing phase
+sequences do not uniformly timestamp phases. Status/export/client/completion
+interfaces and defaults await worker/human agreement; no new implementation or
+review of worker progress beyond PyUtil `fe7fcb5`. Existing offline HostActivity
+baseline passes 27 tests in 1.306 seconds on macOS, with non-failing Streamlit
+warnings. Documentation checks pass five required-field frontmatters, 86 grounding
+path references, 20 added wikilinks, whitespace and complete added-content privacy
+review. Documentation only; no live S3, sibling edits, deployment, commit or push.
+
+## [2026-11-14] requirement | live diagnostic observation and optional coordinated refresh
+
+Human approved default uncoordinated Live diagnostic reads and optional Coordinated
+refresh for the same-server compaction/status utility, plus an explicit exception
+to the coordination contract. Revised utility brief/design/plan/verification and
+coordination brief/design/handoff/plan; updated index and the canonical dashboard's
+explicitly planned follow-on section. Live diagnostics may intentionally overlap
+compaction/entity publication or maintenance, but always disclose partial/duplicate/
+mixed-generation observations and unknown/stale writer status. Failed/incomplete
+reads stay inconclusive, not zero activity, corruption or migration failure.
+Cached/exported results and catalog pages retain mode/time/warnings; coordinated
+failure cannot silently fall back. Both modes retain bounded supervised cleanup.
+
+DBT, ordinary ad-hoc queries, authoritative verification, locked ledger access and
+exclusive maintenance/recovery remain protected. Diagnostic reads cannot publish
+completion evidence, advance the cursor or reopen admissions. The exception is
+planning approval, not utility code authorization, a new worker review or dcc-02–05
+acceptance. Existing 27-test HostActivity evidence is unchanged; no new app/runtime
+tests, live S3, source/sibling changes, deployment, commit or push.
+
+Scoped documentation checks pass 11 changed/new wiki files, nine required-field
+frontmatters, 213 grounding path references and 28 added wikilinks/five section
+targets, whitespace and added-content privacy-pattern scans. Complete additions
+were reviewed for privacy and mode-contract consistency. All utility/runtime gates
+remain pending; documentation is uncommitted/unpushed.
