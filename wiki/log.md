@@ -5676,3 +5676,297 @@ Human requested committing and pushing the five review documents for worker
 follow-through. The handoff records R6–R8, independent probes, fresh macOS suite
 results and open implementation checklist items. Publication includes the preserved
 initial worker-feedback notes and current R1–R5 dispositions.
+
+## [2026-11-14] planning | coordination completion scope and dependency slices
+
+Reviewed the pulled milestone comments and live coordinator/ledger/supervisor,
+DBT routing, CLI/storage resolution and phase/authority verification sources.
+Recorded missing completion/history/client/service APIs and the dcc-02 dependency
+on dcc-04's independent verifier/high-water integration. Added six bounded slices
+to the implementation plan, including R6–R8 red/green repairs, execution receipts,
+macOS supervision feasibility, atomic completion, client and audited recovery.
+
+The human selected Linux coordinator/writer, Linux/macOS readers and actual-endpoint
+qualification using fresh feature-owned fixtures with exact roots/access confirmed
+before writes. Initial resource qualification uses 32 GB RAM / 64 GB disk with
+aggregate usage monitoring, prioritizing lifecycle completion before recommending
+lower limits; a recommendation is not a qualified reduced-limit pass. Updated
+design/handoff links, verification and index. R6–R8/dcc-02–05 remain open. No source
+changes, runtime tests, remote operation, deployment or push during this planning.
+Scoped checks pass four feature-page frontmatters, 85 grounding paths, 344 links,
+whitespace and complete-diff privacy. Existing index/log frontmatter omissions
+remain a separately identified baseline exception, not a whole-wiki lint pass.
+
+## [2026-11-14] code | coordination slice A review repairs and execution baseline
+
+R6's six formal controls reproduce four pre-repair failures; post-ingestion clock
+refresh now preserves reservations and queues requests crossing grace or clock
+failure. R7 retains freshness negatives and adds 80 SQL-specific direct/candidate
+negatives; all fail under an in-memory validator no-op and pass normally. R8's two
+procfs-denied failures precede portable fstat observations; three actual Linux-only
+tick cases are guarded and two unsupported-platform refusal controls added.
+
+Affected suites pass 150 main and 215 standalone; full standalone passes 387 with
+two opt-in skips. Full main was launched but its completion is not yet recorded.
+Documented fixture/harness corrections separately from behavioral defects. The new
+local receipt/launch module begins with 23 missing-API failures; no implementation
+or macOS support is inferred. Plan/review/verification/index updated. dcc-02–05,
+actual-platform/endpoint/resource gates stay open; no remote operation, production
+scheduling, commit or push. Unrelated artifacts remain untouched.
+
+## [2026-11-14] verification | coordination slice A full main regression
+
+The full main slice A run completes with 493 passes and three skips in 616.08 s,
+before execution test/module additions. Together with 387 standalone passes/two
+skips, this qualifies the repaired baseline, not slice B or integrated completion.
+Five new execution hardening failures record over-envelope settings, archive/ledger
+overlap, lost intent-COMMIT acknowledgment and secret-bearing launch exceptions;
+three injected remote-resolution controls pass without endpoint access. Repairs
+are in progress; no macOS, endpoint, production operation, commit or push claim.
+
+## [2026-11-14] code | coordination receipt-bound local launch hardening
+
+Implemented bounded immutable effective receipts, standalone runtime/code identity,
+explicit CLI scope/budgets and same-COMMIT intent binding before launch. Eight
+recorded active-path failures precede ceiling/archive, lost-COMMIT-acknowledgment,
+secret-exception, nonregular-file and argument-budget repairs. Final combined
+coordination focus passes 194 tests in 51.80 s (44 receipt/launch cases), including
+real local empty/destructive synthetic migrations with original phase evidence.
+
+Injected SDK scope resolution freezes non-secret endpoint/region selection and
+ephemeral credentials; no secret values/hashes persist and no endpoint requests
+occur. All launches still block without cursor advance; completion/high-water/
+history and actual macOS/S3/resource/service gates remain open. Eight-file scoped
+lint/format and both whitespace checks pass; full main is running. Updated plan,
+design, handoff, verification, canonical ETL/entity pages and index. No production
+operation, fixture deletion, commit or push; unrelated work remains untouched.
+
+## [2026-11-14] code | separate completion verifier foundation
+
+The full receipt revision passes 537 main tests (three skips) in 683.54 s, with
+tested runtime sources unchanged until notification. Slice C begins with 33
+standalone and nine main missing-API failures; an injected scratch prototype's
+nine failures are separately attributed, not active-path evidence.
+
+Implemented separate read-only archive/data/current-authority/historical-checkpoint
+verification and main committed-receipt/intent/shutdown authentication. Eight
+recorded active-path failures precede regular single-link archive reads, exact
+boolean/integer checks, live-intent blocking, initialization-candidate rechecks and
+sanitized request parsing. Final affected suites pass 259 standalone and 204 main;
+six-file scoped Ruff lint/format passes. Original bootstraps, history and candidates
+remain retained; forward evolution never compares historical hashes to today's
+aggregate.
+
+Success confers no permission transition. Main entity mode refuses until ledger
+high-water initialization/enforcement is integrated; the standalone candidate is
+evidence only. Ledger upgrade/history/atomic completion, full verifier regressions,
+actual macOS reader shutdown, service/client/recovery and actual-S3/resource gates
+remain open. README, design, handoff, plan, verification and index synchronized;
+dcc-02–05 stay unchecked. No endpoint operation, production scheduling, cleanup,
+commit or push; unrelated data/environment/settings remain untouched.
+
+## [2026-11-14] verification | verifier full standalone and high-water baseline
+
+The frozen verifier revision's full standalone run passes 431 tests (two skips)
+in 172.52 s; full main remains running. Separately, two disposable active-path
+pre-integration negatives fail in 1.19 s: entity reader admission and direct writer
+intent creation currently lack independently initialized high-water prerequisites.
+No launch occurs in these controls; repair and formal test promotion remain next.
+
+Corrected stale Known Gaps, index identity wording, brief requirement status and
+handoff source-map claims; updated plan/design and evidence scope. Fresh 13-file
+scoped lint/format and both whitespace checks pass. The final wiki artifact/privacy
+audit passes ten changed files, eight frontmatters, 179 grounding paths, 191 inline
+sources, 377 links and seven diagram pages; baseline index/log frontmatter exceptions
+remain explicit. New source/test files and tracked runtime diffs were reviewed.
+Runtime sources stay frozen pending main notification. No endpoint, production scheduling, cleanup,
+commit or push; dcc-02–05 remain unchecked.
+
+## [2026-11-14] code | ledger-v2 verified entity authority integration
+
+Frozen verifier-foundation full regressions pass 547 main tests (three skips) in
+695.09 s and 431 standalone tests (two skips) in 172.52 s, before ledger integration.
+Promoted the two active entity-admission/writer high-water failures into repository
+tests; two absent-upgrade and six absent-verifier-interface failures are separately
+attributed. Three active rehashed-observation failures precede command/capture/path
+authentication repairs; one corrupt-upgrade diagnostic failure and one expected
+entity-adapter integration-gate failure precede their respective repairs.
+
+Ledger v2 retains bounded predecessor-linked authority proofs/audits and explicitly
+upgrades compatible v1 state without replacing permissions, identities or uncertain
+intents. Separately supervised receipt/ledger/dataset-bound initialization requires
+confirmation/reason, no prior baseline and zero readers. Entity admission/intent
+requires fresh same-locked-session verification; reopen/failure clears freshness and
+successful intent consumes it. Main entity verification now passes local migration/
+checkpoint checks without changing high-water, cursor or permissions. Forward lineage
+passes while whole-journal/snapshot rollback with a retained ledger and a valid-in-
+isolation same-ordinal fork refuse. Complete history/budget validation includes a
+metadata-only synthetic 257-row batching control, not manufactured data/recovery proof.
+
+Latest focus passes 236 main tests in 204.99 s and 299 standalone tests in 139.30 s;
+two fork/history cases pass again after test-only cleanup. Six-file Ruff lint/format
+passes. Fixture/selection errors are recorded separately from behavioral defects.
+New full authority regressions are running; runtime sources/tests remain frozen until
+both notifications. README, design, handoff, plan, verification, brief, canonical
+ETL/entity pages and index synchronized. Completed-run history/atomic completion,
+service/client/recovery, macOS reader shutdown and actual-S3/representative resource
+qualification remain open. No endpoint/production operation, cleanup, commit or push;
+dcc-02–05 stay unchecked and unrelated data/environment/settings remain untouched.
+
+## [2026-11-14] verification | authority full standalone regression
+
+The ledger-v2 authority revision's full standalone suite completes with 439 passes
+and two skips in 173.60 s. Full main is still pending; runtime sources/tests remain
+frozen. Updated current README/plan/handoff/design/index/verification status without
+conflating these results with the earlier 547/431 verifier-foundation passes.
+Completed-history/atomic completion, macOS/S3/resource and service/client/recovery
+gates remain open; no endpoint/production operation, cleanup, commit or push.
+
+## [2026-11-14] review | authority synchronization and completion safety boundary
+
+Finished fresh feature-source review and complete wiki-diff privacy inspection.
+The scoped audit passes ten changed wiki files, eight frontmatters, 195 grounding
+paths, 214 inline sources, 379 links and seven diagram pages; index/log frontmatter
+exceptions remain baseline, not a whole-wiki lint pass. Both whitespace checks and
+15-file pinned Ruff lint/format checks pass. Unrelated data/environment/settings
+remain excluded and untouched.
+
+Clarified plan/design/handoff: the existing launch API deliberately blocks even
+clean success. Normal completion needs its own uninterrupted same-lock live-intent
+path with fresh independent verification and atomic evidence/history/high-water/
+cursor/backlog COMMIT. Previously blocked/restart-blocked runs still require explicit
+audited recovery; passing reports cannot erase uncertainty. No success API is added.
+The authority full-main notification remains pending and runtime sources/tests stay
+frozen without polling. No endpoint, production operation, cleanup, commit or push;
+dcc-02–05 remain open.
+
+## [2026-11-14] verification | authority full main regression and completion continuation
+
+The frozen ledger-v2 authority revision's full main suite completes with 579 passes
+and three skips in 791.61 s. Together with 439 standalone passes/two skips, this
+closes that revision's full-regression checklist without accepting completion/history,
+service/client/recovery, macOS/S3 or representative-resource gates. Both notifications
+arrived before the runtime freeze is lifted. Updated current README/plan/handoff/
+design/index/verification status; begin retained-history/atomic-completion red tests
+next, preserving the conservative blocked-run API and explicit recovery boundary.
+No endpoint, production operation, cleanup, commit or push; dcc-02–05 remain open.
+
+## [2026-11-14] code | initial ledger-v3 retained completion prototype
+
+Ten formal completion tests first fail at the missing entrypoint, then pass against
+the initial v3 prototype in 66.90 s after syntax/import/format cleanup. This is an
+implementation baseline, not active-path hardening or final acceptance. The new
+normal-success API obtains fresh independent evidence under the uninterrupted lock;
+existing conservative launch and blocked/restart recovery boundaries remain intact.
+Retained evidence, run, optional authority, exact-hour cursor and backlog mode share
+one transaction. Existing regressions and additional corruption/entity/crash/budget
+controls are running; no pending outcome is claimed. dcc-02–05, full regressions and
+service/client/recovery/macOS/S3/resource gates remain open. No endpoint operation,
+production scheduling, cleanup, commit or push; unrelated artifacts remain untouched.
+
+## [2026-11-14] code | completion-history active hardening repairs
+
+Existing regressions complete with 126 passes and one stale v2-target assertion;
+update that assertion without weakening atomic schema/identity checks. Separate
+hardening reports retain seven active failures before repairs: inactive checkpoint
+values, inconsistent erased audits/history, joint origin/cursor rebasing, same-session
+prior-history corruption and missing fresh authority/original archive evidence.
+Real local entity advancement and raw abrupt-completion-death controls already pass.
+
+The repaired v3 prototype ties local origin/proof/run/audit/cursor integrity together,
+revalidates prior history and rechecks fresh authority captures and original archive
+byte identities before the atomic completion transaction. Added entity crash,
+genuine-proof v2 compatibility, audit-independent semantic/secret negatives and
+three-real-hour instrumented paging controls. Repaired focus is running; no pending
+pass or full-regression acceptance is inferred. Two earlier 120-second outer-shell
+timeouts are incomplete harness runs, not test outcomes. dcc-02–05 and platform/
+endpoint/resource/service/recovery gates remain open. No production operation,
+cleanup, commit or push; unrelated artifacts remain untouched.
+
+## [2026-11-14] verification | completion hardening focus and full standalone
+
+Repaired completion/upgrade focus passes 46 tests and independent retained-proof,
+genuine-proof v2 compatibility, real paging and secret controls pass 24, before the
+final three active budget/clock failures. Those failures are recorded before repairs
+and then pass: receipt capture ceilings and the retained prior-completion clock floor.
+Completion now has ten active red/green controls, separate from missing-API failures.
+
+Full standalone of the final revision passes 439 tests (two skips) in 170.76 s.
+Combined main coordination focus is still pending; runtime sources/tests remain
+frozen without polling. Full main and fresh complete feature-source/wiki-diff reviews
+remain next. README, canonical ETL/entity guidance, design, handoff, plan, index and
+verification reflect local v3 completion scope without accepting dcc-02–05. Service/
+client/audited recovery, actual macOS/S3 and representative resource qualification
+remain open. No endpoint/production operation, cleanup, commit or push.
+
+## [2026-11-14] verification | v3 combined focus and final source/privacy review
+
+The frozen budget/clock revision's combined main coordination focus passes
+298 tests in 517.39 s. Its report is inspected before launching full main through
+the disposable-CWD harness (`dcc-completion-v3-full-main.txt`); no full-main result
+is recorded yet. Runtime sources/tests remain frozen without polling. Full standalone
+already passes 439 tests (two skips) on this revision.
+
+Completed fresh tracked/new feature-source review and the entire wiki-diff privacy
+inspection. Corrected stale source-map/design wording about absent local completion;
+service/client/audited recovery and actual macOS/S3/resource gates remain open.
+Fresh pinned Ruff lint/format passes all 18 feature Python files; both whitespace
+checks pass. Scoped artifact/privacy audit passes ten changed wiki files, eight
+frontmatters, 204 grounding paths, 238 inline sources, 381 links and seven diagram
+pages; index/log omissions remain baseline exceptions, not whole-wiki acceptance.
+No endpoint/production operation, cleanup, commit or push; dcc-02–05 stay unchecked
+and unrelated data/environment/settings remain untouched.
+
+## [2026-11-14] planning | human-run Mac baseline harness prepared
+
+The human selects a human-run actual-Mac harness. Added the linked Mac qualification
+runbook and prepared a private scratch harness/source manifest/feature-only overlay
+bundle. Exact public source/lockfile identities and neutral archive metadata pass;
+no datasets, credentials, virtual environments or unrelated settings are included.
+Harness syntax, final pinned lint/format and actual Linux refusal before tests/output
+pass; initial style cleanup is not runtime hardening evidence.
+
+Actual Mac execution and supported reader-backend shutdown remain unqualified;
+baseline passes/skips cannot close that gate. Plan/handoff/index/verification record
+the selection and separate later backend acceptance. Linux full main is still running
+without polling; its runtime/tests stay frozen. No endpoint operation, production
+scheduling, external transfer, commit or push; dcc-02–05 stay open.
+Final tracked/new wiki artifact/privacy checks pass eleven pages, nine frontmatters,
+211 grounding paths, 243 inline sources, 387 links and seven diagram pages, with
+index/log baseline exceptions retained. Both whitespace checks pass.
+
+## [2026-11-14] verification | v3 full main regression complete
+
+The unchanged v3 budget/clock revision's full main suite passes 641 tests with
+three skips in 1055.19 s. The completed report and notification are inspected;
+all feature Python/runtime-lock identities still match the prepared source manifest.
+Together with 439 full-standalone passes/two skips and 298 combined main focus passes,
+this closes the local completion/history/high-water regression gate. Both full
+notifications arrived before lifting the runtime/test freeze; no source/test edits
+occur during the run.
+
+README, plan, handoff, design, brief, index, verification and Mac runbook now reflect
+the completed gate. Conservative launch, blocked/restart recovery boundaries and
+the original evidence/history remain intact. Actual Mac baseline/reader shutdown,
+service/client/audited recovery and isolated S3/representative resources remain open;
+dcc-02–05 stay unchecked. No endpoint/production operation, cleanup, commit or push.
+
+## [2026-11-14] commit | verified completion snapshot and exact Mac next task
+
+Human authorized feature-only commits and will test on another system. Committed
+PyUtil `8ee714c0c58e9781a29b0cdc488e3aaf6ebea181`: 19 receipt/verification/authority/
+completion feature files plus durable Mac harness, public manifest and harness
+controls (22 files). Unrelated data/environment/settings/virtual environments remain
+excluded. All 22 recorded source/runtime-lock identities are unchanged; prior
+641-main/439-standalone full regressions remain distinct from harness checks.
+
+Defined **dcc-mac-baseline-01** in
+`wiki/work/dbt-compaction-coordination/macos-qualification.md`: actual Mac, exact
+committed revision, separate locked native runtimes, private reports and sanitized
+summary/runtime/failure/skip evidence. Supersedes the uncommitted overlay; no Mac
+reader backend or shutdown acceptance is claimed. Fifteen local harness controls,
+20-file pinned Ruff lint/format, syntax, actual Linux refusal and post-commit source
+identity checks pass. Final scoped wiki audit passes 11 files, 9 frontmatters,
+217 grounding paths, 250 inline sources, 391 links and 7 diagram pages; baseline
+index/log exceptions preserved. Feature-only wiki snapshot prepared. No push,
+endpoint/production operation, scheduling or cleanup; dcc-02–05 remain open.

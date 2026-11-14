@@ -13,6 +13,13 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
   - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
   - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/execution.py
+  - ../Wintap-PyUtil/wintappy/coordination/writer.py
+  - ../Wintap-PyUtil/wintappy/coordination/ledger.py
+  - ../Wintap-PyUtil/wintappy/coordination/authority.py
+  - ../Wintap-PyUtil/wintappy/coordination/verification.py
+  - ../Wintap-PyUtil/wintappy/coordination/completion.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
   - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql
   - ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_processing_metrics.sql
@@ -133,8 +140,10 @@ Legacy state without authority/version-4 coverage is rejected. Under explicit
 operator exclusion, rebuild into fresh entity **and metrics** roots from a
 sufficiently retained archive, verify both roots, then cut over reader/worker
 configuration together. Preserve old snapshots/checkpoints. Missing archive history
-precludes claiming equivalent ancestry recovery. Rollback of the entire journal
-and snapshots still needs an independent ledger/operator high-water mark to detect.
+precludes claiming equivalent ancestry recovery. The coordination library's ledger-v2
+anchor now rejects whole-journal/snapshot rollback when that ledger is retained.
+Rollback of both ledger and authority still needs independent external retained
+operator evidence and exclusion; ordinary DBT is not yet integrated with this gate.
 Journal rewrite and large retained-state budgets remain unqualified; these receipts
 do not close the raw migration/final-checkpoint recovery boundary.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/README.md §Bootstrap and hourly operation; ../Wintap-PyUtil/wintap_dbt/README.md §Durable process context -->
@@ -145,7 +154,8 @@ The authorized R4 implementation, included in PyUtil `fe7fcb5`, adds opt-in `--r
 `--coordinator-run-id` and `--run-evidence-directory` CLI flags. The archive is
 server-local, separate from raw/compacted/entity/metrics roots and the independent
 coordination ledger (protocol/ledger, admission/draining tick and Linux supervision
-libraries, not an installed or writer-qualified runtime service).
+libraries plus receipt-bound synthetic local launch, not an installed or
+actual-endpoint-qualified runtime service).
 Immutable, checksummed predecessor-linked JSON records retain
 the original run binding, entity generation, original per-file identities and
 per-protocol SQL counts/schemas, migration and deletion intent/outcome, and original
@@ -172,6 +182,40 @@ No repair command automatically recreates/reopens the ledger. Linux synthetic
 archive/repair and cross-runtime DBT tests pass; actual endpoint/power-loss recovery,
 non-Linux durability and accumulated-state I/O/RSS remain unqualified.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py §RunEvidence/verify_migrations/repair_checkpoints; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py §parser/run; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §validate_checkpoint_receipts -->
+
+The separate execution receipt now binds effective roots, entity identity policy,
+runtime/arguments and budgets to committed writer intent before standalone launch.
+It never replaces original migration/candidate records or authority history.
+Conservative `execute_prepared` launches still leave the cursor blocked. Separate
+read-only verification now checks original archive/data, current SQL authority and
+the exact historical checkpoint without comparing its hashes to today's aggregate.
+Main entity verification now uses an independently initialized ledger-v2 high-water
+anchor and returns candidate evidence without advancing it. The separate v3 normal-
+success path obtains fresh independent evidence internally, then retains completion
+history, run, optional authority, exact-hour cursor and backlog mode in one COMMIT.
+It requires an uninterrupted clean live intent under the same lock. Blocked/restarted
+intents cannot use it; audited recovery commands and service integration remain absent.
+Frozen credentials remain ephemeral and outside all receipt/intent
+hashes; the scope tests use injected SDK sessions without endpoint access.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/writer.py; ../Wintap-PyUtil/tests/test_coordination_execution.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py; ../Wintap-PyUtil/wintappy/coordination/verification.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py §_complete_writer/_validate_completion_history; ../Wintap-PyUtil/wintappy/coordination/writer.py §execute_and_complete_prepared -->
+
+Explicit verified ledger authority initialization requires confirmation/reason,
+no prior baseline and zero readers under the same local lock. Separate standalone
+authority checks bind execution, ledger/dataset and the retained exact generation;
+forward evolution passes while rollback/forks refuse. Entity admission and writer
+intent require a fresh same-session check. Reopen/failure clears freshness and
+successful intent consumes it, without revoking reservations. Complete predecessor-
+linked proof history is validated in 256-row batches; the 64 KiB/check and 10,000-check
+budgets fail rather than prune. This is tested local library behavior, not an installed
+coordination service or actual-endpoint recovery qualification.
+Completion history separately uses 128 KiB/proof and 10,000-run ceilings without
+pruning. Its committed local origin, proof/run/audit/cursor consistency and retained
+prior-completion clock floor do not prove coherent whole-ledger/store rollback
+freshness. Real three-hour instrumented paging and small synthetic entity/crash
+controls do not qualify representative accumulated-state resources.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py §upgrade/_validate_authority_checks/_require_entity_authority; ../Wintap-PyUtil/wintappy/coordination/authority.py; ../Wintap-PyUtil/wintappy/coordination/verification.py §verify_authority_prepared -->
 
 ## Evidence, conflicts and limits
 

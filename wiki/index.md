@@ -329,11 +329,13 @@ abrupt tick death; full main passes 443 tests (three skips). The subsequent Linu
 supervision/evolving-clock focus passes 142 tests; full main passes 485 (three skips). dcc-02
 remains open: integrated verified completion/cursor advancement, advisory status,
 client and real-writer/runtime gates remain. Collaborative review reproduces a
-grace-boundary admission defect during ingestion; repair is pending. The human
+grace-boundary admission defect during ingestion; slice A subsequently repairs it. The human
 confirms atomic completion-evidence/run/cursor/admission-state COMMIT before grants.
 The review also requires an allowlisted, non-secret effective execution/configuration
-receipt bound to writer intent; implementation and identity/privacy gates are pending.
-Current implementation snapshot is PyUtil `fe7fcb5`; a fresh coordination-only
+receipt bound to writer intent; local launch and separate verification now enforce
+identity/privacy checks; local v3 normal completion exists, with service integration
+still pending.
+The earlier committed implementation snapshot is PyUtil `fe7fcb5`; its coordination-only
 rerun passes 142 tests, without covering the known ingestion/grace defect. Both
 repository snapshots were subsequently pushed and pulled for maintainer review
 (Analytics `660b5a8`, PyUtil `fe7fcb5`). The updated implementation review confirms
@@ -342,6 +344,41 @@ admission, authority-masked SQL regression tests and unguarded Linux assumptions
 Fresh macOS results: standalone 305 passed/2 failed/2 skipped; focused main
 196 passed/3 failed/35 skipped. All five suite failures are platform-specific tests;
 dcc-02–05 remain open in the plan.
+November 14 completion planning selects Linux/macOS readers, a Linux writer,
+fresh isolated actual-endpoint fixtures and initial 32 GB RAM / 64 GB disk sizing.
+The [[wiki/work/dbt-compaction-coordination/implementation_plan#Completion plan — November 14]]
+orders review repairs, receipts/platform feasibility, independent completion,
+service/client, audited recovery and qualification; reduced budgets require a
+separate measured rerun, and implementation/acceptance remains pending.
+Slice A's review follow-through passes 150 affected main and 215 affected standalone
+tests; all 80 new SQL negatives fail when validation is disabled. Full standalone
+passes 387 tests (two skips); full main passes 493 (three skips), before receipt implementation. Portable fsync
+observations/platform guards do not establish macOS reader support. Slice B starts
+with 23 missing-execution-API failures and eight active-path hardening failures.
+The repaired receipt-bound revision passes 194 coordination tests, including real
+local empty/destructive synthetic runs; all still block. Full main passes 537
+tests (three skips). Partial slice C supplies separate read-only verification and
+receipt/intent/shutdown authentication: 259 standalone and 204 main affected tests
+pass after eight active-path repairs. Frozen verifier-foundation full regressions
+pass 547 main tests (three skips) and 431 standalone tests (two skips), before ledger
+integration. Ledger v2 now retains authority proofs, explicitly upgrades compatible
+v1 state and requires verified initialization/fresh same-session checks before entity
+admission or writer intent. Main entity verification uses the retained anchor without
+changing it or permissions. Latest focus passes 236 main / 299 standalone tests;
+frozen full authority regressions pass 579 main tests (three skips) and 439 standalone
+tests (two skips), before completion/history work.
+The ledger-v3 retained-history/normal-completion prototype passes 46 repaired
+completion/upgrade and 24 additional semantic/compatibility/paging/secret controls,
+before three final budget/clock red/green controls. Ten active failures precede
+repairs. Full standalone passes 439 tests (two skips) on that final revision;
+combined main focus passes 298 tests; full main passes 641 (three skips). Both full
+regressions completed on the unchanged revision. This does not accept the service.
+dcc-02–05 stay open.
+Next task **dcc-mac-baseline-01** (PyUtil `8ee714c`): human-run exact-commit Mac
+offline baseline with committed harness; later reader-backend acceptance is separate:
+[[wiki/work/dbt-compaction-coordination/macos-qualification]].
+Injected SDK scope/secret-exclusion tests make no endpoint requests; actual macOS,
+S3, representative resource and integrated completion/service gates remain open.
 
 Historical PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
 [[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],

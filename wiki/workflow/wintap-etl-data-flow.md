@@ -22,12 +22,19 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
   - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
   - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/execution.py
+  - ../Wintap-PyUtil/wintappy/coordination/writer.py
+  - ../Wintap-PyUtil/wintappy/coordination/ledger.py
+  - ../Wintap-PyUtil/wintappy/coordination/authority.py
+  - ../Wintap-PyUtil/wintappy/coordination/verification.py
+  - ../Wintap-PyUtil/wintappy/coordination/completion.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
   - wiki/tool/durable-process-entity-manager.md
   - wiki/tool/raw-sensor-compaction.md
   - wiki/work/raw-sensor-file-aggregation/implementation_plan.md
   - ../Lintap/teletap/README.md
 policy: agent-editable
-last_validated: 2026-11-13
+last_validated: 2026-11-14
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -190,14 +197,32 @@ The proposed lock covers all active input roots and the writer's final checkpoin
 publication; a read grant does not guarantee that its requested window is covered.
 Implementation review: [[wiki/work/dbt-compaction-coordination/implementation-review]].
 
-PyUtil's protocol/ledger, evolving-clock admission/draining tick and Linux command-
-tree supervision are currently library prototypes, not integrated into these
-Makefile targets. Writer callbacks remain blocked without cursor advancement;
-DBT client, verified completion/recovery and production scheduling are not yet
-implemented. Current
+PyUtil's protocol/ledger, evolving-clock admission/draining tick, Linux command-tree
+supervision and receipt-bound standalone launch are currently libraries, not
+integrated into these Makefile targets or installed scheduling. The receipt binds
+effective non-secret settings to committed writer intent; local synthetic empty
+and destructive migrations pass through conservative `execute_prepared`, which
+still blocks. Separate read-only verification
+authenticates receipt/intent/shutdown and original data evidence without reopening;
+ledger v2 now requires independently verified authority initialization and fresh
+same-locked-session entity admission/writer checks. Main entity verification uses
+the retained anchor without advancing it. The separate ledger-v3 normal-success
+path now obtains fresh verification internally and atomically retains completion/run/
+optional high-water/exact-hour cursor/backlog mode under the uninterrupted lock.
+Previously blocked/restarted intents cannot use it; audited recovery and integrated
+service/client remain absent. Local origin/history/audit/cursor and prior-completion
+clock checks do not establish coherent whole-ledger/store rollback freshness.
+Rollback/forks reject with a retained
+ledger; restoring that ledger too still needs external evidence/exclusion.
+Injected SDK tests are not actual
+S3 qualification, and macOS reader shutdown remains open. Current
 regression evidence and remaining gates:
 [[wiki/work/dbt-compaction-coordination/verification]].
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py; ../Wintap-PyUtil/wintappy/coordination/supervisor.py; ../Wintap-PyUtil/Makefile -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/writer.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/verification.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py; ../Wintap-PyUtil/wintappy/coordination/authority.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/writer.py §execute_and_complete_prepared -->
 
 Related: [[wiki/repo/wintap-primary-sensor-repo]],
 [[wiki/repo/lintap-supporting-repo]],

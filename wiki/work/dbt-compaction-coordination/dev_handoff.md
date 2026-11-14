@@ -22,7 +22,14 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
   - ../Wintap-PyUtil/wintappy/coordination/ledger.py
   - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/execution.py
+  - ../Wintap-PyUtil/wintappy/coordination/writer.py
   - ../Wintap-PyUtil/tests/test_coordination_supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/verification.py
+  - ../Wintap-PyUtil/wintappy/coordination/authority.py
+  - ../Wintap-PyUtil/wintappy/coordination/completion.py
+  - ../Wintap-PyUtil/tests/test_coordination_authority.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
 policy: agent-editable
 last_validated: 2026-11-14
 repo_scope: cross-repo
@@ -38,6 +45,15 @@ tags: [feature-work, dev-handoff, dbt, compaction, coordination, cron, duckdb, s
 
 ## Handoff summary
 
+**Current snapshot / next task:** local PyUtil commit
+`8ee714c0c58e9781a29b0cdc488e3aaf6ebea181` contains the receipt-bound launch,
+independent verification and ledger-v3 completion/history work plus the durable
+Mac harness. Run **dcc-mac-baseline-01** unchanged on the human's actual Mac using
+[[wiki/work/dbt-compaction-coordination/macos-qualification]]; return sanitized
+summary/runtime/failure/skip evidence. The uncommitted-overlay procedure is
+superseded. No assistant push; reader-backend/service/recovery/S3/resource gates
+and dcc-02–05 remain open.
+
 Implement the accepted basic plan: **one cron-driven Python coordinator, S3
 messages, and a persistent server-local DuckDB ledger**, coordinating hourly
 compaction with three to five researchers' occasional local DBT builds over S3.
@@ -50,6 +66,16 @@ reads, compaction and optional durable entities already exist. Wintap-PyUtil own
 implementation; Wintap-Analytics owns
 the shared wiki and this feature folder. Independent deeper compactor qualification
 continues separately; integrate against its latest qualified CLI/report contract.
+
+**November 14 completion planning:** the human selected Linux coordinator/writer,
+Linux/macOS readers, actual-endpoint qualification on fresh feature-owned fixtures,
+and initial 32 GB RAM / 64 GB disk sizing with monitored usage before recommending
+lower limits. Read the dependency-ordered completion slices in
+[[wiki/work/dbt-compaction-coordination/implementation_plan#Completion plan — November 14]]:
+review repairs, execution/platform gates, independent completion, service/client,
+audited recovery and integrated qualification. dcc-02's real completion depends
+on dcc-04's verifier/high-water evidence; no unit is accepted by this plan alone.
+<!-- SOURCE: Human planning decisions, conversation 2026-11-14. -->
 
 **Reviewed baseline:** PyUtil `c782f63`, Analytics `d904559`. Read
 [[wiki/work/dbt-compaction-coordination/implementation-review]] for reproduced
@@ -208,8 +234,9 @@ settings alone cannot activate coordination for local inputs. Shell-reset guidan
     with executable/runtime identity. Missing/mismatched settings refuse launch;
     post-launch uncertainty blocks completion. Never dump the whole environment,
     persist credentials or accept the current environment-omitting command manifest
-    as a complete receipt. The human expressly requires this gate; it is not yet
-    implemented. See [[wiki/work/dbt-compaction-coordination/design#Required execution and configuration receipt]].
+    as a complete receipt. The local launch, verification and normal-success
+    libraries implement this gate; service integration remains pending. See
+    [[wiki/work/dbt-compaction-coordination/design#Required execution and configuration receipt]].
 
 The design specifies ledger tables, JSON identity fields, outbox ordering and
 recovery commands. The single-authority protocol is grounded in the endpoint's
@@ -227,9 +254,12 @@ Paths below are relative to **Wintap-PyUtil**; read them live.
 | `wintap_dbt/macros/process_entities.sql`, `wintap_dbt/models/silver/process.sql` | Optional entity reads and the disabled local baseline. |
 | `wintap_dbt/dbt_project.yml`, `wintap_dbt/profiles.yml` | Hooks, model materialization and local DuckDB output. |
 | `pyproject.toml`, `extras/raw-sensor-compact/pyproject.toml` | Main Python/DBT runtime uses DuckDB 1.5.6; isolated compactor uses 2.0.0. Only the main runtime opens the coordination ledger. |
-| `wintappy/coordination/{protocol,ledger}.py`, `wintappy/coordination/README.md` | Implemented dcc-01 library: strict messages, locked local reservations/outbox and blocked writer-intent restart. No installed scheduler/client, success/cursor advance or reopening API yet. |
+| `wintappy/coordination/{protocol,ledger}.py`, `wintappy/coordination/README.md` | Strict v1 messages and locked v3 ledger: reservations/outbox, compatible v1/v2 upgrade, retained authority/completion proofs and internal atomic normal-success transition. Restart/blocked intents still require audited recovery; no installed scheduler/client or recovery command. |
 | `wintappy/coordination/coordinator.py`, `tests/test_coordination_tick.py` | First dcc-02 admission/draining slice: bounded complete listings, atomic terminal-first ingestion, oldest-hour priority and blocked callback outcomes. Not a supervisor, full scheduler or completion verifier. |
 | `wintappy/coordination/supervisor.py`, `tests/test_coordination_supervisor.py` | Linux/main-thread isolated-subreaper command trees, bounded private logs/control/report parsing and interruption/error cleanup. Tested in a locked tick callback, but never independent completion/reopening authority; non-Linux/external-service containment is unqualified. |
+| `wintappy/coordination/{execution,writer}.py`, `tests/test_coordination_execution.py` | Immutable bounded effective receipt and qualified standalone launch bound inside intent. Conservative `execute_prepared` blocks; separate normal-success execution obtains fresh verification internally. No actual-S3 service or macOS qualification. |
+| `wintappy/coordination/completion.py`, `tests/test_coordination_completion.py`, `tests/test_coordination_completion_controls.py` | Internal normal-success proof/orchestration, bounded original-archive rechecks and retained history/compatibility/budget/clock/crash controls. Frozen full regressions pass 641 main/439 standalone tests (three/two skips); caller-provided reports cannot complete. |
+| `wintappy/coordination/{verification,authority}.py`, `extras/raw-sensor-compact/src/raw_sensor_compact/completion.py`, `tests/test_coordination_authority.py` | Separate receipt/intent/shutdown-authenticated data verification plus explicit ledger high-water initialization and same-session freshness checks. Main entity verification uses the retained anchor without advancing it; no completion/cursor transition. |
 | `extras/raw-sensor-compact/src/raw_sensor_compact/cli.py`, `extras/raw-sensor-compact/src/raw_sensor_compact/compaction.py` | One-hour CLI arguments, report fields, optional entity phase, deletion and reconciliation outcomes. |
 | `extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py` | Version-4 fixed-hour coverage names its committed entity generation; final publication remains separate from migration success. |
 | `extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py`, `wintap_dbt/macros/entity_authority.sql` | R1 current-state authority, historical receipt lineage and recorded before/after publication-intent recovery. Legacy upgrade uses fresh entity/metrics roots and explicit cutover. |
@@ -352,3 +382,69 @@ progress to `wiki/log.md`. Keep the diagram/design synchronized with implemented
 behavior; promote stable facts into [[wiki/workflow/wintap-etl-data-flow]]. Apply
 the root AGENTS.md privacy rule to persisted evidence. Final closeout should name
 the owning code/wiki commits, runtime qualification and deployment status.
+
+### November 14 continuation: local normal completion, service remains open
+
+Review repairs pass 493 full-main/387 full-standalone tests before receipt changes.
+The later receipt revision passes 194 combined coordination tests, including
+44 receipt/launch cases; eight recorded hardening failures precede repairs. Its
+full-main regression passes 537 tests (three skips). Use `execution.prepare_execution` and
+`writer.execute_prepared`, not the synthetic tick callback seam, for qualified
+local launch. Immutable receipts live in `<state>/executions/<coordinator-run-id>/`;
+the phase archive remains separate and original records are never overwritten.
+
+Missing/mismatched pre-intent evidence refuses launch. After-intent uncertainty,
+including lost COMMIT acknowledgment, remains blocked. Individual engine ceilings
+do not establish total RSS/disk acceptance. The standalone process never opens the
+ledger. Separate read-only data/authority verification and receipt/intent/shutdown
+authentication pass 259 standalone and 204 main affected tests, after eight
+additional active-path repairs. The frozen verifier-foundation revision passes
+547 full-main tests (three skips) and 431 full-standalone tests (two skips), before
+ledger integration. Verification success does not reopen.
+
+Ledger v2 now implements explicit confirmed compatible upgrade, retained
+authority-check proofs/audits and separately supervised verified initialization.
+Initialization requires a reason, no baseline and zero readers. Entity admission
+and writer intent require a fresh check in the same locked session; reopen/failure
+clears freshness and successful intent consumes it. Upgrades preserve reservations,
+outbox, tombstones, ledger/run identities and audits; unresolved intents stay blocked
+without fabricated receipts. Main entity verification now passes real local
+migration/checkpoint checks against the retained anchor but leaves high-water,
+cursor and permissions unchanged. Forward lineage passes; rollback/forks refuse.
+The latest focus passes 236 main and 299 standalone tests. Frozen full authority
+regressions pass 579 main tests (three skips) and 439 standalone tests (two skips).
+Both notifications arrived before completion/history work; the runtime freeze is
+lifted for that next slice, which these results do not cover.
+
+The v3 retained-history/normal-completion prototype passes 46 repaired completion/
+upgrade and 24 independent semantic/compatibility/paging/secret controls, before
+three final budget/clock red/green controls. Ten active failures precede repairs.
+Full standalone of the final revision passes 439 tests (two skips); combined main
+focus passes 298 tests. Full main passes 641 tests (three skips) in 1055.19 s on
+the unchanged revision; source/runtime-lock hashes match the prepared manifest.
+Both full notifications arrived before lifting the runtime/test freeze. The local
+independently verified completion-evidence/run/high-water/exact-hour-cursor/backlog-
+mode transaction now has complete regression evidence, not service acceptance.
+Preserve `execute_prepared`'s conservative
+blocking semantics: normal completion needs a same-lock clean-live-intent path that
+obtains fresh verification internally. Previously blocked/restart-blocked runs require
+explicit audited recovery; passing caller-supplied reports cannot reopen them.
+Proof budgets refuse rather than prune;
+whole-ledger-plus-authority rollback still requires independently retained external
+evidence/exclusion. Commands and red/green attribution:
+[[wiki/work/dbt-compaction-coordination/verification#Completion slice C — ledger-v2 authority integration]].
+[[wiki/work/dbt-compaction-coordination/verification#Completion slice C — initial ledger-v3 history and atomic completion]]
+records v3 scope and all ten active repair controls; it does not accept dcc-02–05.
+Origin/proof/run/audit/cursor integrity and the prior-completion clock floor are
+local checks, not coherent restored-store/global-clock freshness. Genuine three-hour
+instrumented paging does not qualify representative retained-state sizing.
+Actual macOS reader shutdown must be qualified before broad client integration; platform skips
+and injected remote sessions are not actual-platform/endpoint evidence.
+The human selected a human-run Mac harness. Its prepared exact-revision offline
+baseline and later backend gate are in
+[[wiki/work/dbt-compaction-coordination/macos-qualification]]. No actual Mac run
+or supported reader-shutdown result is inferred from harness preparation.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/writer.py; ../Wintap-PyUtil/tests/test_coordination_execution.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py; ../Wintap-PyUtil/wintappy/coordination/verification.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py §upgrade/_validate_authority_checks/_require_entity_authority; ../Wintap-PyUtil/wintappy/coordination/authority.py; ../Wintap-PyUtil/tests/test_coordination_authority.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/writer.py §execute_and_complete_prepared; ../Wintap-PyUtil/tests/test_coordination_completion.py; ../Wintap-PyUtil/tests/test_coordination_completion_controls.py -->

@@ -26,7 +26,22 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
   - ../Wintap-PyUtil/tests/test_coordination_tick.py
   - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/execution.py
+  - ../Wintap-PyUtil/wintappy/coordination/writer.py
+  - ../Wintap-PyUtil/tests/test_coordination_execution.py
   - ../Wintap-PyUtil/tests/test_coordination_supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/verification.py
+  - ../Wintap-PyUtil/wintappy/coordination/authority.py
+  - ../Wintap-PyUtil/wintappy/coordination/completion.py
+  - ../Wintap-PyUtil/tests/test_coordination_completion.py
+  - ../Wintap-PyUtil/tests/test_coordination_completion_controls.py
+  - ../Wintap-PyUtil/tests/test_coordination_authority.py
+  - ../Wintap-PyUtil/tests/test_coordination_verification.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_completion_verifier.py
+  - ../Wintap-PyUtil/scripts/dcc_macos_baseline.py
+  - ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json
+  - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
 policy: agent-editable
 last_validated: 2026-11-14
 repo_scope: cross-repo
@@ -497,7 +512,8 @@ refresh happens after grant publication. This is a writer-priority defect, not
 demonstrated reader/writer overlap: the new reservation still excludes the writer.
 The human confirms that requests not yet reserved when grace expires must remain
 queued. Refresh after ingestion before deciding admission; preserve existing
-reservations. Formal regression and repair remain pending. The earlier 142/485
+reservations. Formal regression and repair were pending at this review; slice A
+subsequently records their red/green implementation below. The earlier 142/485
 passes did not cover this boundary and are retained as historical run evidence.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py §tick; ../Wintap-PyUtil/wintappy/coordination/ledger.py §ingest_many/admit -->
 
@@ -520,14 +536,15 @@ configuration receipt after reviewing the supervisor manifest's omission of
 environment values. Requirement added to the brief, design, handoff and plan:
 [[wiki/work/dbt-compaction-coordination/design#Required execution and configuration receipt]].
 
-Pending acceptance evidence: bind the actual qualified executable/runtime/arguments
+Acceptance evidence requested at this review: bind the actual qualified executable/runtime/arguments
 and resolved roots/hour/run IDs/events/entity policy/deletion/budgets to durable
 writer intent before launch; prove default/override/allowed-environment resolution,
 receipt integrity and bounds, mismatched scope/command refusal and synthetic secret
 exclusion from persisted artifacts/diagnostics. Post-launch uncertainty cannot
 advance the cursor or reopen admission. A partial command manifest or exit-zero
 report is insufficient. No implementation or behavioral test result is claimed
-for this new requirement; dcc-02 remains unchecked.
+by this historical review. Slices B/C subsequently implement and verify the
+receipt/separate-verification libraries below; dcc-02 remains unchecked.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_manifest -->
 <!-- SYNTHESIS: explicit human requirement on 2026-11-14, recorded before implementation -->
 
@@ -536,7 +553,7 @@ for this new requirement; dcc-02 remains unchecked.
 Committed the 32 feature-owned PyUtil files as `fe7fcb5` on
 `work/raw-sensor-compacted-union`: R1/R4/R5, protocol/ledger and tick/supervision
 prototypes, tests and READMEs. Preserved unrelated data, environment files and
-ignored settings. The source coordination README now explicitly records the
+ignored settings. The source coordination README at that commit explicitly records the
 unrepaired ingestion/grace defect and pending execution-receipt requirement.
 
 Fresh isolated main-runtime rerun of the four coordination test modules passes
@@ -634,6 +651,551 @@ home-path/IP scans pass; the complete diff was reviewed for privacy. PyUtil reta
 only its pre-existing untracked environment artifacts. Review additions were
 uncommitted at review completion; the human subsequently requested publication.
 
+### Completion planning — November 14
+
+Reviewed the current brief/design/handoff/plan, R6–R8 findings and live coordinator,
+ledger, supervisor, Makefile, root resolver, CLI, storage resolution, authority and
+phase-verification sources. Confirmed the missing success/history/cursor API,
+service/client integration and real-writer completion dependencies. This was a
+source/planning review, not a new runtime acceptance run.
+
+Human-selected scope: Linux coordinator/writer, Linux/macOS readers; actual existing
+S3 endpoint with fresh feature-owned fixtures, exact roots/access confirmed before
+writes; initial 32 GB RAM / 64 GB disk qualification with aggregate usage monitoring,
+then a reduced-limit recommendation. Reduced-limit acceptance requires its own
+representative rerun. No low-budget pass, macOS support or endpoint qualification
+is claimed. See the dependency slices and remaining inputs in
+[[wiki/work/dbt-compaction-coordination/implementation_plan#Completion plan — November 14]].
+<!-- SOURCE: Human planning decisions, conversation 2026-11-14. -->
+
+No source changes, runtime tests, remote writes, fixture deletion, deployment or
+push were performed during planning. All R6–R8 and dcc-02–05 implementation gates
+remain open.
+
+Scoped documentation checks: `git diff --check` passes. A read-only main-runtime
+Python/YAML check validates six changed wiki files, four feature-page frontmatters,
+85 grounding paths and 344 wikilinks/section targets. Added-content home-path/IP
+scan and complete-diff privacy review pass. The initial strict check identified
+pre-existing missing frontmatter in `wiki/index.md` and `wiki/log.md`, confirmed
+against HEAD and left unchanged; this is not a whole-wiki lint pass.
+
+### Completion slice A — review repairs
+
+All runs use `/tmp/opencode/dcc-run-tests.py` with the main interpreter for the
+wrapper, absolute runtime/test paths, disposable working directory, isolated
+`TMPDIR`/`--basetemp`, `PYTHONDONTWRITEBYTECODE=1`, `PYTHONPATH` and
+`-p no:cacheprovider`. Standalone and mutation runs use the standalone interpreter.
+Reports are local evidence, not copied source or remote telemetry.
+
+| Run / report under `/tmp/opencode/` | Selection | Result |
+|---|---|---|
+| `dcc-r6-formal-red.txt` | main tick: `-k 'ingestion_clock_is_refreshed or clock_failure_after_ingestion'` | 4 failed, 2 passed before post-ingestion clock repair |
+| `dcc-r8-procfs-red.txt` | standalone phase tests: `-k new_publication_directory_links` | 2 failed with `/proc` denied before portable observer repair |
+| `dcc-r7-independent-sql-mutation-red.txt` | standalone integrity: `-k sql_integrity_rejects`, in-memory `_validate_evidence` no-op | 80 failed, 94 deselected (expected mutation rejection) |
+| `dcc-r6-r8-main-green-final.txt` | protocol, ledger, tick and supervisor modules | 150 passed, 24.45 s |
+| `dcc-r7-r8-standalone-green.txt` | integrity and phase-evidence modules | 215 passed, 102.29 s |
+| `dcc-r7-r8-full-standalone.txt` | complete standalone `tests` | 387 passed, 2 opt-in S3 skips, 153.13 s |
+| `dcc-r6-r8-full-main.txt` | complete main `tests`, before slice B additions | 493 passed, 3 skips, 616.08 s |
+
+R6 refreshes immediately after the original atomic ingestion, before admission.
+Exact grace and post-ingestion rollback/unreadable clocks preserve prior reservations
+and leave unreserved requests queued. The admission-focused fixture omits the
+writer adapter: an eligible hour with zero readers may legitimately launch when
+an adapter is supplied; the intermediate contrary expectation was corrected.
+
+R7 adds 40 corruption classes at each of two authority-independent entrypoints:
+direct `validate_sql` and the next publication candidate during active update.
+SQL-specific diagnostics and unchanged committed authority/publication bytes are
+required; the original 80 freshness negatives remain. Two initial candidate tests
+accidentally made the corrupted STOP-derived fields valid by adding a STOP; using
+an unchanged observation in the later hour fixes that fixture collision. The
+80-case no-op mutation now fails every new negative without modifying source.
+
+R8 uses portable descriptor device/inode observations while actively denying
+`/proc`, and guards the three actual Linux-dependent tick cases. Two synthetic
+`darwin`/`win32` controls require refusal before `Popen` and retained blocked intent.
+Linux durability/tree coverage remains exercised. No actual macOS rerun or reader
+backend has been qualified by this slice.
+
+The full main A-slice run was launched before slice B's new module; its subsequent
+completion notification reports 493 passes/three skips. It does not cover the
+later execution implementation. Initial wrappers
+using system Python failed before tests because of its unsupported `text=` option;
+the main interpreter fixes that harness issue. Initial full-suite runs also failed
+before tests because bare `tests` was not absolutized; corrected runs were launched.
+Neither harness failure is a behavior regression. No endpoint access, deployment,
+commit or push occurred. dcc-02–05 remain open.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py §tick; ../Wintap-PyUtil/tests/test_coordination_tick.py; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entity_integrity.py; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_phase_evidence.py -->
+
+### Completion slice B — execution baseline
+
+The new entirely local `tests/test_coordination_execution.py` was run before any
+execution/writer implementation: **23 failed in 0.34 s**, all missing-module/API
+failures. Report: `/tmp/opencode/dcc-execution-missing-api-red.txt`. This is an
+implementation baseline, not active-path hardening evidence. The first implementation
+passes 22/23 initial cases; the real-empty fixture needed an existing compacted
+destination for the CLI's read-only migration check. That fixture is corrected,
+not treated as a receipt defect. Further active-path probes record five failures
+before budget-ceiling/archive-separation, lost-COMMIT-ack blocking and secret-bearing
+exception repairs; three injected remote-resolution controls pass. Report:
+`/tmp/opencode/dcc-execution-hardening-red.txt` (23 deselected). Post-repair and
+broader launch/configuration/secret-exclusion results are recorded below; macOS is open.
+
+| Report under `/tmp/opencode/` | Selection / result |
+|---|---|
+| `dcc-execution-initial.txt` | 22 passed, one failed: missing compacted root in real-empty fixture; corrected separately from behavioral defects |
+| `dcc-execution-hardening-red.txt` | 5 active-path failures, 3 injected SDK passes, 23 deselected: memory/spill ceilings, archive/ledger overlap, lost COMMIT acknowledgment and secret-bearing exception |
+| `dcc-execution-file-arg-red.txt` | 3 active-path failures: FIFO/hardlink receipt refusal before read and compiled argument budget before publication |
+| `dcc-execution-expanded-green.txt` | 37 passed, 22.73 s after eight hardening repairs |
+| `dcc-execution-coordination-green.txt` | 194 passed, 51.80 s: execution, protocol, ledger, tick and supervisor modules (44 receipt/launch cases) |
+
+The final focus includes real local empty and one-row synthetic migration/source
+deletion with original phase records retained. Both leave `BLOCKED` and retain the
+cursor. Tests cover strict matching-checksum malformed receipts, run/root/command/
+runtime identity, argument/capture/time/storage budgets, nonregular files and
+pre/post-intent changes. Injected SDK/default/environment/profile resolution freezes
+the selected endpoint/region and credentials before later environment changes;
+synthetic secret values and their hashes are absent from receipts/intents/audits,
+and credential repr is excluded. No actual endpoint request occurs.
+
+Receipt preparation fixes this checkout's standalone `-I -B` CLI and public code/
+native-engine identity, explicit active scope and inactive entity/S3 fields. Remote
+extension-cache default is `<state>/extensions`; spill and retained phase archive
+are separate from ledger/runtime/data roots. Individual 32 GB memory/64 GB spill
+ceilings are not aggregate RSS/disk or representative sizing qualification.
+Lost intent-COMMIT acknowledgment cannot launch and blocks in the same session.
+Secret-bearing provider/launch exceptions are sanitized, not retained as diagnostics.
+
+Scoped Ruff lint and format checks pass eight changed/new Python files; both
+repositories' `git diff --check` pass. The full-main receipt-revision run completes:
+`dcc-run-tests.py main /tmp/opencode/dcc-execution-full-main.txt tests` reports
+**537 passed, 3 skipped in 683.54 s**. Tested runtime sources remained unchanged
+until its completion notification. Completion-side high-water/history,
+service/client/audited recovery, actual macOS/S3 and resource gates remain open.
+No production scheduler, endpoint operation, fixture cleanup, commit or push.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/writer.py; ../Wintap-PyUtil/tests/test_coordination_execution.py -->
+
+### Completion slice C — separate verification, ledger integration pending
+
+All commands below use the disposable-CWD `dcc-run-tests.py` harness described
+above, with explicit main/standalone environments, no checkout cache writes and
+qualification-owned synthetic local fixtures. Reports remain under `/tmp/opencode/`;
+no actual endpoint access or production scheduling occurs.
+
+| Report | Selection / result |
+|---|---|
+| `dcc-completion-verifier-missing-api-red.txt` | 33 missing standalone API failures before implementation |
+| `dcc-completion-prototype-initial.txt` | 9 failed, 24 passed from an injected scratch prototype; not active-path implementation evidence |
+| `dcc-completion-verifier-initial.txt` | 33 passed, 14.64 s after promotion into the real module |
+| `dcc-completion-archive-hardening-red.txt` | 2 active-path failures: FIFO and hardlinked archive records read before refusal |
+| `dcc-verification-missing-api-red.txt` | 9 missing main adapter API failures |
+| `dcc-completion-types-hardening-red.txt` | 3 active-path failures: terminal boolean, validation integer and boolean row counts |
+| `dcc-verification-live-intent-red.txt` | 1 active-path failure: failed verification left committed intent `WRITING` |
+| `dcc-authority-baseline-recheck-red.txt` | 1 active-path failure: stale initialization-candidate snapshot accepted |
+| `dcc-verifier-request-red.txt` | 1 active-path argument-parser failure, 3 refusal controls passed |
+| `dcc-completion-final-focus.txt` | **259 passed, 118.44 s**: completion (44 cases), phase archive and SQL integrity modules |
+| `dcc-verification-final-focus.txt` | **204 passed, 87.56 s**: verification (10 cases), execution, ledger, protocol, tick and supervisor modules |
+
+The eight active-path failures precede repairs. Positive valid-before-corruption
+controls distinguish evidence rejection from a broken success fixture. Archive
+reads now require bounded single-link regular files before opening. Exact JSON
+types reject boolean/integer substitutions. Request parsing refuses checksum,
+shape, argument and byte-budget violations without echoing synthetic sensitive
+values. Initialization evidence rechecks current snapshots; failed verification
+blocks a matching live intent without moving the cursor.
+
+Standalone `completion.verify_completion` independently reopens original archive
+and surviving data: exact run/hour/root/event scope, chain/order, original migration
+and deletion evidence, hashes/counts/schemas, source absence and complete bounded
+empty-hour discovery. Entity-mode local controls verify current SQL state/authority,
+original bootstraps, retained exact ordinal/ID anchors and original historical
+checkpoint candidates. Forward evolution is permitted without comparing historical
+hashes to today's aggregate; rollback/forks/pending state/corruption refuse.
+`verify_authority` returns rechecked candidate evidence only.
+
+Main `verification.verify_prepared` authenticates committed receipt/intent and
+writer shutdown/captures, publishes an immutable request and separately supervises
+the standalone read-only verifier, authenticating its shutdown/captures too. It
+rechecks receipt/runtime/request/intent and original observations after verification.
+**Success confers no completion permission.** At this foundation revision, entity
+mode explicitly refuses until
+independently initialized ledger high-water authority is integrated; caller-supplied
+anchors do not bypass this main-runtime gate. Ledger remains v1 with one unresolved
+run, no retained completed history and no completion/cursor/reopening API.
+
+Fresh scoped Ruff 0.17.5 lint and formatting pass all 13 changed/new Python files.
+The full standalone verifier revision completes with **431 passed, 2 skipped in
+172.52 s** (`dcc-completion-full-standalone.txt`); full main completes with
+**547 passed, 3 skipped in 695.09 s** (`dcc-completion-full-main.txt`). Runtime sources
+remained frozen until both notifications arrived. These results precede and do not
+cover the subsequent ledger-v2 authority work below. Atomic history/completion integration,
+actual macOS reader shutdown, service/client/recovery, actual S3 and representative
+32 GB RAM / 64 GB disk qualification remain open; dcc-02–05 stay unchecked.
+
+Post-cleanup artifact/privacy audit passes **10 changed wiki files, 8 frontmatters,
+179 grounded paths, 191 inline sources, 377 links and 7 diagram pages**. Existing
+index/log frontmatter omissions remain baseline exceptions, not a whole-wiki lint
+pass. Both repositories' whitespace checks pass. Complete new source/test files
+and tracked runtime diffs were reviewed; unrelated data/environment/settings stay
+excluded. No new commit or push is made.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py §read_local_record/load_archive; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_completion_verifier.py; ../Wintap-PyUtil/wintappy/coordination/verification.py; ../Wintap-PyUtil/tests/test_coordination_verification.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py -->
+
+### Ledger integration baseline — high-water prerequisites fail before repair
+
+Before changing runtime sources, the disposable-CWD main harness runs
+`dcc-run-tests.py main /tmp/opencode/dcc-high-water-baseline-red.txt
+/tmp/opencode/dcc-high-water-baseline-tests.py`: **2 failed in 1.19 s**. These scratch
+tests call the real ledger with synthetic entity-enabled local bindings. A queued
+reader receives a reservation without an independently initialized authority
+baseline, and direct `begin_writer` also succeeds without that prerequisite. No
+writer subprocess, production dataset or endpoint is involved. The negatives were
+subsequently promoted into `tests/test_coordination_authority.py`; their recorded
+pre-repair failures and latest passes are attributed below.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py §initialize/admit/begin_writer -->
+
+### Completion slice C — ledger-v2 authority integration
+
+The earlier verifier-foundation full passes are **547 main / 431 standalone**, not
+authority-revision regression results. All following runs use the same disposable-CWD
+harness and synthetic local fixtures; no endpoint request or production operation.
+
+| Report | Result / attribution |
+|---|---|
+| `dcc-authority-ledger-api-red.txt` | **4 failed, 1.73 s**: two active entity admission/intent prerequisite failures plus two missing upgrade-interface failures |
+| `dcc-authority-adapter-missing-api-red.txt` | **6 failed, 4 passed, 2.15 s** before the supervised initialization API existed |
+| `dcc-authority-observation-hardening-red.txt` | **3 active failures, 13.63 s**: rehashed command digest, captured result and observations path accepted before authentication repairs |
+| `dcc-entity-adapter-integration-red.txt` | **1 expected active integration-gate failure**: real local entity writer passes, but the main adapter still unconditionally refused entity verification |
+| `dcc-authority-upgrade-invalid-red.txt` | **1 active diagnostic failure, 3 passed, 1.82 s**: corrupt source exposed a raw DuckDB exception; repair returns sanitized `CoordinationError` without replacement |
+| `dcc-authority-upgrade-crash-green-2.txt` | **12 passed, 18 deselected, 20.38 s**: upgrade/abrupt-death controls |
+| `dcc-authority-request-green-2.txt` | **8 passed, 44 deselected, 2.15 s**: strict bound authority requests, sensitive-input refusal and changed-request detection |
+| `dcc-authority-final-main-green.txt` | **236 passed, 204.99 s**: authority, ledger, execution, verification, tick, protocol and supervisor modules |
+| `dcc-authority-final-standalone-green-2.txt` | **299 passed, 139.30 s**: completion, entity freshness/integrity and phase archive modules |
+| `dcc-authority-fork-history-final-green.txt` | **2 passed, 30 deselected, 22.58 s** after test-only inline-command cleanup |
+
+Latest main and standalone focus commands:
+
+```sh
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py main \
+  /tmp/opencode/dcc-authority-final-main-green.txt \
+  tests/test_coordination_authority.py tests/test_coordination_ledger.py \
+  tests/test_coordination_execution.py tests/test_coordination_verification.py \
+  tests/test_coordination_tick.py tests/test_coordination_protocol.py \
+  tests/test_coordination_supervisor.py
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py standalone \
+  /tmp/opencode/dcc-authority-final-standalone-green-2.txt \
+  tests/test_completion_verifier.py tests/test_entity_freshness.py \
+  tests/test_entity_integrity.py tests/test_phase_evidence.py
+```
+
+Ledger schema v2 adds canonical predecessor-linked `authority_checks`; explicit
+confirmed `Ledger.upgrade` preserves ledger/dataset identity, cursor, reservations,
+outbox, tombstones, existing audits and writer identities. The schema transaction
+is atomic; unresolved-writer blocking may commit before it. Old intents stay blocked
+and gain no manufactured execution/completion evidence. Missing/corrupt/mismatched
+sources refuse replacement; ordinary open never upgrades or silently initializes.
+
+`verify_authority_prepared` separately supervises a read-only standalone
+`--authority-only` version-2 request bound to execution, ledger/dataset identities
+and prior anchor. Initialization requires explicit confirmation/reason, no prior
+baseline and zero readers in `OPEN`/`DRAINING`. Command/manifest, path, captured bytes,
+shutdown, receipt/runtime, request and current evidence are authenticated/rechecked
+before proof/audit retention in one transaction. The standalone never opens the
+ledger; its candidate alone cannot initialize or authorize admission.
+
+Entity admission and writer intent require the initialized exact generation plus
+a fresh check in the same locked session. Reopen resets freshness, failed checks
+clear it and successful intent consumes it. Existing reservations are retained.
+Forward evolution passes; whole-journal/snapshot rollback with a retained ledger
+and a same-ordinal fork valid in isolation refuse without rebasing. The main entity
+`verify_prepared` now verifies real local entity migration/deletion and its original
+historical checkpoint, leaving high-water/cursor/permissions unchanged. That candidate
+still needs the atomic completion transaction.
+
+Authority history is bounded at **64 KiB/check / 10,000 checks**, entirely validated
+in **256-row batches**; corruption or exhaustion refuses, never truncates. The
+257-row control synthetically extends authenticated repeat-check metadata and
+corrupts the final row; it proves validation beyond the first batch, not 257 actual
+verifier runs, retained-state sizing or manufactured authority/data/recovery evidence.
+Abrupt death and lost acknowledgments around authority/upgrade COMMIT preserve
+old/new atomic schema or retained anchor without fresh admission/relaunch permission.
+
+Harness/fixture failures are retained separately: `dcc-authority-final-focus.txt`
+records 225 passes/one fixture failure from an extra `make_release` argument;
+initial crash fixtures treated `load_execution`'s receipt dictionary as a
+`PreparedExecution`, request fixtures omitted required arguments/event selection,
+and the initial fork fixture re-created an existing directory. Corrections change
+fixtures, not behavior. `dcc-authority-final-standalone-green.txt` selected nonexistent
+standalone paths (no tests, exit 4); the corrected 299-pass selection is above.
+
+Latest scoped Ruff **0.17.5** lint and format checks pass six authority/verification
+source/test files. Full authority standalone completes with **439 passed, 2 skipped
+in 173.60 s** (`dcc-authority-full-standalone.txt`). Full main completes with
+**579 passed, 3 skipped in 791.61 s** (`dcc-authority-full-main.txt`):
+
+```sh
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py main \
+  /tmp/opencode/dcc-authority-full-main.txt tests
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py standalone \
+  /tmp/opencode/dcc-authority-full-standalone.txt tests
+```
+
+Runtime sources/tests remained frozen until both automatic completion notifications.
+The freeze is now lifted for the next completion/history slice; the full passes
+above qualify only the earlier authority revision.
+Ledger v2 still retains only one unresolved writer record: completed-run history,
+atomic completion-evidence/run/high-water/exact-hour-cursor/backlog-mode COMMIT,
+fresh clock/admission integration and audited recovery remain absent. Actual macOS
+reader shutdown, exact isolated S3 access/roots and representative 32 GB RAM / 64 GB
+disk qualification are open. Whole-ledger-plus-authority rollback freshness and
+physical power-loss behavior are not established by these tests. dcc-02–05 remain
+unchecked; no production operation, new commit or push occurred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py §upgrade/_validate_authority_checks/_require_entity_authority; ../Wintap-PyUtil/wintappy/coordination/authority.py; ../Wintap-PyUtil/wintappy/coordination/verification.py §verify_authority_prepared/verify_prepared; ../Wintap-PyUtil/tests/test_coordination_authority.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_completion_verifier.py -->
+
+**Post-synchronization source/artifact review:** fresh tracked runtime diffs and
+feature-owned new source/test files are reviewed without modifying the frozen
+runtime. The complete wiki diff is inspected for unauthorized host/account/IP values;
+none are added. `../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-check-wiki.py`
+passes **10 changed wiki files, 8 frontmatters, 195 grounded paths, 214 inline sources,
+379 links and 7 diagram pages**. Index/log frontmatter omissions remain preserved
+baseline exceptions, not a whole-wiki lint pass. Both repositories' `git diff --check`
+pass. Pinned Ruff **0.17.5** `check` and `format --check`, run through
+`uv tool run --cache-dir /tmp/opencode/dcc-ruff-cache --from ruff==0.17.5`, pass all
+**15 changed/new feature Python files** (six main coordination sources, four main
+test modules, two standalone sources and three standalone test modules).
+
+The continuation plan now explicitly preserves the current launch API's conservative
+blocking behavior. Normal success must obtain fresh independent verification inside
+a new uninterrupted same-lock live-intent path; previously blocked/restart-blocked
+runs remain behind explicit audited recovery. No parsed or caller-supplied report
+may clear uncertainty. This is a documented implementation boundary, not a new
+success API or runtime test. Full main was still pending during that review; no
+polling, source/test changes, endpoint operation, deployment, commit or push occurred.
+
+### Completion slice C — initial ledger-v3 history and atomic completion
+
+The authority full regressions above completed before these edits. Ten formal
+completion controls first produced **10 missing-API failures in 11.33 s** in
+`dcc-completion-ledger-api-red.txt`; all are missing-entrypoint ImportErrors, not
+active behavioral hardening evidence. The first implementation adds schema v3,
+retained predecessor-linked completion proofs and an uninterrupted same-lock
+writer→fresh independent verifier→completion transaction path. Existing
+`execute_prepared` remains conservative; blocked/restarted intents cannot use the
+new normal-success entrypoint.
+
+The initial five-file syntax checks pass after import/unused-variable cleanup and
+formatting. `dcc-completion-initial.txt` records **10 passed in 66.90 s**:
+
+```sh
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py main \
+  /tmp/opencode/dcc-completion-initial.txt tests/test_coordination_completion.py
+```
+
+This initial focus covers real local empty completion, two sequential hours,
+retained prior evidence, verification crossing grace, old/restarted blocking,
+before/after-COMMIT lost acknowledgments and archive/shutdown/clock uncertainty.
+It is not final completion acceptance. Existing ledger/authority/execution/verifier
+regressions and additional real entity, abrupt-death, rehashed/missing-history and
+budget controls are running against the prototype; no outcomes are inferred before
+notifications. Schema v1/v2 compatibility, complete history validation and atomic
+entity high-water advancement still need their resulting evidence. Full regressions,
+service/client, audited recovery, actual macOS/S3 and resource gates remain open.
+No endpoint operation, production scheduling, cleanup, commit or push.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py §_complete_writer/_validate_completion_history/upgrade; ../Wintap-PyUtil/wintappy/coordination/writer.py §execute_and_complete_prepared; ../Wintap-PyUtil/tests/test_coordination_completion.py -->
+
+The first existing-regression and additional-hardening invocations hit the harness's
+**120-second shell timeout**, with no completed runner report or retained test
+outcome. These are incomplete harness runs, not passes or behavioral failures.
+Both selections were relaunched with no outer shell timeout (the disposable runner
+retains its 1,200-second subprocess ceiling). Runtime sources remained unchanged
+until both resulting notifications.
+
+Recorded implementation/hardening results before repairs:
+
+| Report under `/tmp/opencode/` | Result and attribution |
+|---|---|
+| `dcc-completion-regressions-initial.txt` | **126 passed, 1 failed in 178.98 s**; the only failure is a historical upgrade test expecting target v2 instead of v3, not a failed atomic upgrade. Its identity/schema all-or-none assertions are preserved with the current explicit target and both authority/completion-table checks. |
+| `dcc-completion-hardening-red.txt` | **13 passed, 3 failed, 10 deselected in 135.90 s**; active failures accept inactive checkpoint values, erase completion evidence/run/cursor while leaving its audit, and accept removed fresh authority captures. Real local entity advancement, budget refusals and abrupt raw completion-death controls pass. |
+| `dcc-completion-hardening-red-2.txt` | **4 failed, 26 deselected in 28.64 s**; active failures accept removed completion audits, joint origin/cursor rebasing, same-session prior-history corruption and original archive removal after verifier return. |
+
+All **seven active failures** are retained before source repairs. The repaired
+prototype makes inactive checkpoint fields explicitly null; ties origin, proofs,
+completed runs, audits and cursor together; validates prior history again before
+completion; and rechecks fresh authority captures/requests plus the bounded original
+JSON archive chain before COMMIT. Main archive rechecks inspect byte identities
+only, never compactor SQL/data in the main runtime. All actual data verification
+remains in the separately supervised standalone DuckDB 2.0.0 runtime.
+
+The origin audit commits with explicit initialization/compatible v1/v2 upgrade,
+retaining the original ledger ID, old permissions and proof bytes. It is local
+integrity evidence, not protection against coherent whole-ledger-plus-store rollback.
+Completion proofs remain capped at **128 KiB/proof / 10,000 completed runs**, with
+256-row history pages; authority ceilings remain **64 KiB/check / 10,000 checks**.
+No history is pruned. Added genuine entity before/after-completion-COMMIT and
+external-success-before-COMMIT death controls, v2 compatibility with genuine authority
+proof bytes, audit-independent retained-proof semantic negatives, synthetic-secret
+exclusion and three real hours through instrumented two-row pages. The latter tests
+multiple pages without manufacturing completions; it is not a 257-real-run or
+representative retained-state sizing qualification.
+
+Those repaired runs subsequently complete:
+
+| Report under `/tmp/opencode/` | Result and revision scope |
+|---|---|
+| `dcc-completion-hardening-green.txt` | **46 passed, 21 deselected in 287.77 s**: completion/history/entity/crash controls and compatible-upgrade focus, before the final budget/clock repair. |
+| `dcc-completion-controls-initial.txt` | **24 passed in 44.96 s**: independent retained-proof semantics, genuine-proof v2 compatibility, three-real-hour paging and synthetic-secret controls, before the final budget/clock repair. |
+| `dcc-completion-budget-clock-red.txt` | **3 active failures, 24 deselected in 20.91 s**: consistently rebound stdout/stderr capture metadata can exceed the effective receipt ceiling; a later invocation can predate the prior completion and reopen backlog. |
+| `dcc-completion-budget-clock-green.txt` | **3 passed, 24 deselected in 16.58 s** after effective capture/report ceiling checks and retained prior-completion clock-floor enforcement. |
+
+These bring completion hardening to **ten recorded active failures before repairs**,
+separate from the ten initial missing-API failures and the stale target assertion.
+The final clock repair compares a new normal-success invocation to the prior
+retained completion before intent/launch, and validates monotonic completed-history
+start times. This is not a persistent global clock attestation or coherent rollback
+freshness guarantee. Receipt-bound stream/report limits also apply when validating
+retained proofs, independently of audit/hash rejection.
+
+Repaired-focus and final-target commands:
+
+```sh
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py main \
+  /tmp/opencode/dcc-completion-hardening-green.txt \
+  tests/test_coordination_completion.py tests/test_coordination_authority.py \
+  -k 'completion or history_origin or same_session_history or original_archive_removed or upgrade'
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py main \
+  /tmp/opencode/dcc-completion-controls-initial.txt tests/test_coordination_completion_controls.py
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py main \
+  /tmp/opencode/dcc-completion-budget-clock-red.txt \
+  tests/test_coordination_completion_controls.py -k 'retained_writer_capture or clock_before_prior'
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py main \
+  /tmp/opencode/dcc-completion-budget-clock-green.txt \
+  tests/test_coordination_completion_controls.py -k 'retained_writer_capture or clock_before_prior'
+```
+
+Final combined main coordination focus and full standalone regression were launched
+against the frozen budget/clock revision. Full standalone subsequently passes
+**439 tests, two skips in 170.76 s**. Combined main focus then completes with
+**298 passed in 517.39 s**; its completed report is inspected before full main launch:
+
+```sh
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py main \
+  /tmp/opencode/dcc-completion-final-main-focus.txt \
+  tests/test_coordination_authority.py tests/test_coordination_completion.py \
+  tests/test_coordination_completion_controls.py tests/test_coordination_ledger.py \
+  tests/test_coordination_execution.py tests/test_coordination_verification.py \
+  tests/test_coordination_tick.py tests/test_coordination_protocol.py tests/test_coordination_supervisor.py
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py standalone \
+  /tmp/opencode/dcc-completion-full-standalone.txt tests
+```
+
+Full main was launched against the unchanged revision and subsequently completes
+with **641 passed, 3 skipped in 1055.19 s**. Its completed report and automatic
+notification are inspected; source/runtime-lock identities still match the prepared
+manifest. Together with 439 standalone passes/two skips, this closes the local v3
+full-regression gate, not dcc-02–05:
+
+```sh
+../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-run-tests.py main \
+  /tmp/opencode/dcc-completion-v3-full-main.txt tests
+```
+
+No outer shell timeout is used; the disposable-CWD runner retains its 1,200-second
+subprocess ceiling. Runtime sources/tests remained frozen until both full automatic
+notifications, without polling; the freeze is now lifted for the next dependency
+slice. Result-only synchronization passes the complete documentation/privacy
+inspection; the scoped audit again passes 11 wiki files,
+9 frontmatters, 211 grounding paths, 243 inline sources, 387 links and 7 diagram pages.
+Both whitespace checks pass. Pinned Ruff **0.17.5** lint/format results cover all
+18 unchanged feature Python files after the final budget/clock repairs. Complete
+tracked/new feature-source review and full wiki-diff privacy inspection are completed;
+stale source-map/design statements about the absent local success API are corrected.
+Unrelated data/environment/settings remain excluded and untouched.
+Before the Mac runbook addition, the refreshed read-only scoped audit command
+`../Wintap-PyUtil/.venv/bin/python -B /tmp/opencode/dcc-check-wiki.py` passed
+**10 changed wiki files, 8 frontmatters, 204 grounding paths, 238 inline sources,
+381 wikilinks and 7 diagram pages**. Index/log frontmatter omissions remain
+preserved baseline exceptions, not a whole-wiki lint pass. The complete 1,787-line
+pre-synchronization wiki diff and subsequent documentation edits are inspected;
+no actual host/account/IP identifiers are added. Ruff `check` and `format --check`
+run through the pinned command above over seven main coordination sources, six
+main coordination test files, two standalone sources and three standalone test
+files. Both commands pass all 18 files; neither reformats the frozen revision.
+dcc-02–05, service/client/audited recovery and actual
+macOS/S3/representative-resource gates stay open. No endpoint operation, production
+scheduling, cleanup, commit or push.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/completion.py §validate_completion_proof/_recheck_archive/_complete_live_prepared; ../Wintap-PyUtil/wintappy/coordination/ledger.py §_validate_completion_history/_complete_writer/upgrade; ../Wintap-PyUtil/tests/test_coordination_completion.py; ../Wintap-PyUtil/tests/test_coordination_completion_controls.py; ../Wintap-PyUtil/tests/test_coordination_authority.py -->
+
+### Human-run macOS baseline prepared — execution remains pending
+
+The human selected an actual-Mac human-run harness. Instructions and the later
+reader-backend acceptance boundary are in
+[[wiki/work/dbt-compaction-coordination/macos-qualification]]. Prepared scratch
+artifacts are `dcc-macos-baseline.py`, `dcc-macos-source-manifest.json` and
+`dcc-macos-baseline-bundle.tar.gz` under `/tmp/opencode/`. The bundle contains only
+the 18 feature Python files, coordination README, harness and source manifest;
+no data, credential files, virtual environments or unrelated settings are copied.
+Tar owner/group metadata is neutralized. The manifest checks the exact baseline
+commit and public source/runtime lock files, not secrets or environment hashes.
+
+Harness syntax, all bundle member identities/neutral metadata and an actual Linux
+refusal-before-output/pytest control pass. Pinned Ruff **0.17.5** lint/format passes
+the separate scratch harness after initial style cleanup. This is harness preparation
+and a non-Mac refusal control, **not actual macOS execution, qualified reader shutdown
+or representative resource evidence**. Current Linux-only test skips remain explicit.
+No runtime source/test file changes occurred during harness preparation or the Linux
+full-main freeze. Full main subsequently passes 641 tests/three skips on the unchanged
+revision; the freeze is lifted. Human transfer/execution is next;
+the future macOS backend remains required before broad reader integration.
+The final scoped audit includes the new untracked runbook and passes **11 wiki
+files, 9 frontmatters, 211 grounding paths, 243 inline sources, 387 wikilinks and
+7 diagram pages**. Complete new runbook/subsequent edits and both whitespace
+checks pass; preserved index/log exceptions are not whole-wiki acceptance.
+
+### Committed Mac handoff — dcc-mac-baseline-01 pending
+
+The human authorized feature-only commits and will run the Mac tests on another
+system. PyUtil commit `8ee714c0c58e9781a29b0cdc488e3aaf6ebea181` contains 19 prior
+feature files plus the durable harness, source manifest and separate harness test
+script (22 files total). Unrelated data/environment/settings/venvs are excluded;
+no push occurred. The runbook now names this exact commit instead of the obsolete
+`fe7fcb5` plus uncommitted-overlay workflow.
+
+The manifest retains all 22 prior public identities: 18 feature Python files and
+four runtime/lock files. Its version-two envelope names the reviewed parent and
+accepts the explicit full qualification commit; SHA-256:
+`c37247ac1962cb6a259e5387d1c9177a37f82a5ff78f913382b293770d2bf3b7`.
+No runtime source/test or lockfile bytes changed while making the harness durable.
+The 641-main/439-standalone full results above remain runtime evidence, not new
+harness results or actual-Mac evidence.
+
+From PyUtil:
+
+```sh
+TMPDIR=/tmp/opencode .venv/bin/python -B scripts/test_dcc_macos_baseline.py
+```
+
+Result: **15 local harness controls pass**. They cover exact commit versus obsolete
+parent, clean tracked state, ancestry, source missing/change/symlink/path rejection,
+obsolete manifest, non-Mac refusal, retained failure/skip counts, isolated synthetic
+credential exclusion/private sanitized summary, timeout stop and missing interpreter
+evidence. Simulated platform/subprocess unit controls are explicitly not Mac runs.
+Durable script syntax and an actual Linux CLI refusal before testing/output pass.
+Pinned Ruff **0.17.5** `check` and `format --check` pass all 20 Python files (the
+unchanged 18 feature files plus two harness scripts). Staged allowlist/exact-byte
+inspection and `git diff --cached --check` pass; all 22 original manifest hashes
+still match. The identity-only `validate_checkout` check also passes against actual
+committed HEAD `8ee714c` after commit; no platform tests run in that check.
+
+Final scoped wiki artifact/privacy audit passes **11 changed files, 9 frontmatters,
+217 grounding paths, 250 inline sources, 391 wikilinks and 7 diagram pages**;
+index/log frontmatter omissions remain baseline exceptions. Whitespace checks
+pass. Complete new runbook and feature diff inspection preserves the privacy rule.
+
+Next task and exact Mac commands:
+[[wiki/work/dbt-compaction-coordination/macos-qualification]]. Actual Mac baseline,
+reader backend/shutdown, service/client/audited recovery and S3/representative
+resources remain unqualified; dcc-02–05 stay unchecked.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/scripts/dcc_macos_baseline.py; ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json; ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py -->
+
 ### Baseline review regressions
 
 Independent focused rerun before implementation, November 13, in the standalone
@@ -707,10 +1269,10 @@ units. Ledger/protocol tests may use fake children independently of writer fixes
 
 ## Known Gaps
 
-- Maintainer R6–R8 follow-through: the ingestion/grace defect is independently
-  reproduced, 80 integrity negatives are masked by authority rejection, and five
-  unguarded Linux test cases fail on macOS. See the fresh milestone review above;
-  these results do not replace the historical Linux suite records.
+- R6–R8 are addressed by slice A's formal clock repair, authority-independent SQL
+  negatives/mutation evidence and portable observers/platform guards. Actual macOS
+  rerun and supported reader shutdown remain open; historical review results retain
+  their original scope.
 - Protocol/ledger library is regression accepted with 54 focused and 397 full-main
   passes. The admission/draining tick focus passes 100 cases; its full-main
   regression passes 443 tests (three skips), before supervisor implementation.
@@ -718,10 +1280,25 @@ units. Ledger/protocol tests may use fake children independently of writer fixes
   tests (three skips). This accepts those library primitives, not the full dcc-02 gate.
   No production scheduler/client or coordinated runtime
   qualification exists yet; dcc-02 remains unchecked.
-- Collaborative review confirms a pre-admission grace-boundary defect when
-  ingestion crosses the deadline. The active-path probe is red; formal regression
-  and repair are pending. Completion/cursor/admission atomicity is human-confirmed,
-  but the success/reopening API remains unimplemented.
+- Completion/cursor/admission atomicity is human-confirmed. The ledger-v3 local
+  normal-success prototype now retains completed history and atomically advances
+  evidence/run/optional high-water/exact-hour cursor/backlog mode. Its hardened
+  local controls pass 46 plus 24 cases before the final three budget/clock red/green
+  controls; final combined main focus passes 298 tests and full standalone passes
+  439 (two skips). Full main passes 641 (three skips) on the unchanged revision.
+  These close local v3 regression, not integrated service acceptance. Receipt-bound
+  launch passes 194 combined cases and 537 full-main tests (three skips). Separate
+  receipt/intent/shutdown-authenticated verification passes 204 main focus cases;
+  standalone data/authority verification passes 259 focus and 431 full tests (two
+  skips); full verifier foundation main passes 547 tests (three skips). Ledger v2
+  now implements verified authority initialization/freshness, explicit compatible
+  upgrade and main entity-verifier integration, with 236 main/299 standalone focus
+  passes after recorded prerequisite/authentication/integration repairs. Full authority
+  standalone passes 439 tests (two skips); full main passes 579 (three skips), before
+  completion/history implementation. No caller-supplied report or receipt is
+  completion authority. Conservative launch and blocked/restart recovery boundaries
+  remain intact; audited recovery commands and integrated service/client are absent.
+  This is not an actual-S3 service adapter or macOS gate.
 - R2 SQL integrity and R3 provenance are repaired in `7d2b7f8` with red/green
   evidence; DBT's separate integrity macro remains narrower than CLI SQL validation.
 - R1–R5/dcc-00 are prerequisite regression accepted. Do not certify coordinated
@@ -734,6 +1311,8 @@ units. Ledger/protocol tests may use fake children independently of writer fixes
 
 ## Follow-Ups
 
-Continue dcc-02 scheduling and DBT lifetime integration before
-real destructive writer qualification. Add commands, negative regressions and runtime
+Local v3 high-water/history/atomic-completion full regressions now pass. Obtain the
+human-run actual-Mac baseline and qualify reader-shutdown feasibility before broad
+client integration; continue service and audited operations before real destructive qualification.
+Add commands, negative regressions and runtime
 qualification results as each planned unit is implemented.

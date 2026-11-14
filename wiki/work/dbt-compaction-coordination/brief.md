@@ -10,6 +10,10 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/macros/s3.sql
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py
   - wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint.md
+  - ../Wintap-PyUtil/wintappy/coordination/execution.py
+  - ../Wintap-PyUtil/wintappy/coordination/verification.py
+  - ../Wintap-PyUtil/wintappy/coordination/ledger.py
+  - ../Wintap-PyUtil/wintappy/coordination/completion.py
 policy: agent-editable
 last_validated: 2026-11-14
 repo_scope: cross-repo
@@ -28,7 +32,14 @@ tags: [feature-work, dbt, compaction, coordination, cron, duckdb, s3]
 The human accepted a cron-driven coordinator with S3 request/grant/release
 messages and explicitly selected **DuckDB for its local ledger**. The requested
 deliverables are an editable sequence diagram and a companion artifact/design
-document. This is next-phase planning; the implementation is proposed.
+document. Implementation is now authorized: protocol/admission, Linux supervision,
+receipt-bound launch, separate verification and ledger-v2 high-water initialization/
+freshness checks exist as libraries. The local v3 normal-success prototype retains
+completed history and atomically advances verified evidence/run/optional high-water/
+exact-hour cursor/backlog mode. Local full regressions pass 641 main tests (three
+skips) and 439 standalone tests (two skips). Service/client and actual-platform/
+endpoint/resource qualification remain open.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py §_complete_writer -->
 
 - One controlled server performs hourly compaction of eligible prior UTC hours.
 - Three to five researchers run occasional time-ranged DBT builds locally,
@@ -111,9 +122,12 @@ See [[wiki/workflow/wintap-etl-data-flow#Local-only single-user workflow]].
     command manifest as sufficient configuration evidence.
 
 Criterion 13 was expressly requested by the human during the November 14 dcc-02
-review. It is an unimplemented requirement, not a property of the current
-supervisor manifest. Details and acceptance checks:
+review. Receipt-bound launch and separate verification now implement identity,
+budget and secret-exclusion checks; the supervisor manifest alone remains
+insufficient. Atomic completion/service and platform/runtime gates are not accepted
+by these library results. Details and acceptance checks:
 [[wiki/work/dbt-compaction-coordination/design#Required execution and configuration receipt]].
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/verification.py -->
 
 ## Ownership and boundaries
 

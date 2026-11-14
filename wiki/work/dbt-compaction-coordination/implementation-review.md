@@ -92,6 +92,11 @@ Refresh after ingestion before admission, add the formal failing/passing boundar
 test, and retain already committed reader reservations.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py §tick, lines 87–103 -->
 
+**Worker follow-through:** post-ingestion clock refresh is implemented. Six formal
+controls produced four failures/two passes before repair; the final affected
+coordination focus passes 150 cases. Clock failures cannot admit a queued reader
+or revoke an existing reservation. See the slice A verification record below.
+
 ### R7 — Medium: authority rejection masks SQL-integrity regression tests
 
 **New test-isolation finding.** The 80 parameterized corruption tests rewrite a
@@ -113,6 +118,11 @@ regressions fail. Require SQL-specific diagnostics where appropriate; do not see
 new trust from an arbitrary edited committed snapshot.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_entity_integrity.py §test_corrupt_snapshot_rejected_by_verify_and_update; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §validate_sql/update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_sql.py §_validate_evidence -->
 
+**Worker follow-through:** retain the 80 original freshness negatives and add
+80 SQL-specific direct/pre-publication-candidate negatives. All new cases pass
+normally and fail under the in-memory validator no-op mutation (94 deselected).
+No validator source repair was necessary; this closes the test-isolation gap.
+
 ### R8 — Medium: Linux-only test assumptions escape platform guards
 
 The standalone directory-fsync test resolves descriptors through `/proc/self/fd`
@@ -130,6 +140,15 @@ integration tests explicitly. Retain Linux execution of these durability/tree te
 and add a separate non-Linux refusal control; skipping unsupported execution is
 not evidence of successful supervision on other client platforms.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_phase_evidence.py §test_new_publication_directory_links_are_fsynced_before_success; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_abrupt_tick_death_never_launches_replacement_even_when_child_survives/test_real_supervised_callback_holds_ledger_lock_and_still_cannot_certify_empty_hour/test_supervisor_death_with_surviving_workload_remains_blocked; ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_config -->
+
+**Worker follow-through:** directory-fsync observations now compare `os.fstat`
+device/inode identities, with `/proc` explicitly denied. Both cases failed before
+that test repair and pass afterward. The three actual Linux-dependent tick cases
+are guarded; two synthetic non-Linux controls prove refusal without launch.
+Linux affected suites pass 150 main/215 standalone cases; full standalone passes
+387 (two skips). This repairs attribution, not macOS reader support. Actual macOS
+rerun/supervision qualification remains open. Full commands and fixture corrections:
+[[wiki/work/dbt-compaction-coordination/verification#Completion slice A — review repairs]].
 
 ## Baseline integrated revisions — 2026-11-13
 
