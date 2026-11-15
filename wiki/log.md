@@ -16,6 +16,16 @@ AWS configuration/opt-ins disabled. No source, original user data, or original
 environment files were modified; only the isolated standalone runtime was provisioned.
 Endpoint/data/resource and deployment gates remain unapproved.
 
+## [2026-11-15] verification | full-main candidate regression found
+
+The full main suite on unchanged `c549424` finishes 1519 passed, 15 skipped and one
+failed. An unchanged Darwin refusal control detects generic `run_supervised` reaching
+the new macOS worker path; the parent rejected non-Linux. A Darwin-only rerun confirms
+the mismatch. This is a genuine candidate regression against the intended reader-only
+Mac scope; no PyUtil source was changed. The initial standalone attempt used the wrong
+working directory and is retained as invalid; a correctly rooted standalone run is
+active. Candidate acceptance remains blocked; no PR, endpoint/data access or deployment.
+
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 
 The Wintap-PyUtil entity update path now uses DuckDB 2.0.0 relations and SQL

@@ -1568,10 +1568,14 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   15-module report passes 341 with 12 declared native-Mac skips in 1807.15 s; the full
   report and clean candidate/whitespace state were reviewed. The earlier missing-runtime
   attempt remains retained but invalid, not regression evidence.
-- [ ] Complete full main then standalone Linux regressions at `c549424`, with fresh
-  isolated directories and disabled AWS configuration; the sequential full-suite run
-  is active. Review both complete reports and candidate identities after notification.
-  The 90-control focused pass and parent's 307-control result do not substitute.
+- [ ] Complete current-revision full regression. Main finished 1519 passed/15 skipped/
+  one failed in 6421.87 s: an unchanged Darwin refusal control now reaches the generic
+  macOS supervisor launch path. Parent source rejected non-Linux; candidate source
+  broadens generic `run_supervised` beyond the coordinated-reader scope. A Darwin-only
+  rerun confirms the failure. The first standalone invocation used the wrong working
+  directory and is invalid; the corrected standalone run from its project directory is
+  active. Preserve all reports and do not accept `c549424` until the scope regression is
+  resolved and the required affected/full gates pass on an authorized successor.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean

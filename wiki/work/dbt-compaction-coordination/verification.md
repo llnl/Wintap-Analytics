@@ -5051,7 +5051,7 @@ The separate Analytics advisory status utility retains its existing scoped verif
 record and was not changed or re-run by this Mac supervision pass.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_mac_worker; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader/main; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/wintappy/coordination/MACOS.md -->
 
-## Current-revision Linux candidate baseline — affected scope passed; full suites active
+## Current-revision Linux candidate baseline — affected passed; main red, standalone active
 
 The detached PyUtil checkout is fixed at `c549424b6cf507f33dee301d85bd9e0aeb082e1b`
 and remained clean. Its 15-module affected scope passes **341 tests** with **12
@@ -5072,8 +5072,26 @@ evidence; it is not combined with the corrected report. The corrected affected r
 candidate status/whitespace check, and Black check on all four changed Python files are
 clean. Ruff passes on the changed runtime modules; no candidate source was edited.
 
-The full main and standalone suites were launched sequentially on the unchanged
-candidate and are still pending. This affected result is local synthetic regression
-evidence only; it does not qualify real data/S3, production DBT, representative
-resources, service deployment, native-Mac backend acceptance or rollout.
+The full main suite completed in **6421.87 s** with **1519 passed, 15 skipped and one
+failed**. The failure is
+`test_unsupported_writer_supervision_refuses_launch_and_tick_stays_blocked[darwin]`.
+Its unchanged control requires unsupported generic/writer supervision to refuse Darwin
+before launch. In `c549424`, `_config` now accepts Darwin and `run_supervised` dispatches
+every caller to `_run_macos_supervised`; the test's `Popen` sentinel confirms the
+worker launch is attempted. The same test is unchanged from the parent, whose
+`_config` rejects non-Linux platforms. A separate Darwin-only rerun reproduces the
+failure (one failed, 51 deselected). This exposes scope leakage: the candidate's native
+Mac contract is coordinated-reader supervision, while the generic library remains
+documented as Linux-only. It is a candidate regression requiring correction and a new
+affected/full gate, not a Mac-only skip or evidence of real writer execution.
+
+The first standalone full-suite invocation used the repository-root working directory,
+so Python 3.13 collected main-suite modules and reported 15 missing-dependency import
+errors. That report is runner-invalid and preserved separately. The standalone suite is
+being rerun from `extras/raw-sensor-compact/` with its offline-locked runtime and a new
+report/temp directory; its result is pending. No source was changed in response to the
+main-suite failure. This local synthetic evidence does not qualify real data/S3,
+production DBT, representative resources, service deployment, native-Mac backend
+acceptance or rollout.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_service.py; ../Wintap-PyUtil/tests/test_coordination_client.py; ../Wintap-PyUtil/tests/test_coordination_linux_lifecycle.py; ../Wintap-PyUtil/tests/test_coordination_local_route.py; ../Wintap-PyUtil/tests/test_coordination_recovery.py; ../Wintap-PyUtil/tests/test_coordination_maintenance.py; ../Wintap-PyUtil/tests/test_coordination_deletion_recovery.py; ../Wintap-PyUtil/tests/test_coordination_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_controls.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_history.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_credentials.py; ../Wintap-PyUtil/tests/test_coordination_entity_service.py; ../Wintap-PyUtil/tests/test_coordination_supervisor.py; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_config/run_supervised; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_unsupported_writer_supervision_refuses_launch_and_tick_stays_blocked; ../Wintap-PyUtil/wintappy/coordination/README.md §Linux command-tree supervision -->
