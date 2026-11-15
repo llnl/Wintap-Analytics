@@ -8469,3 +8469,12 @@ descendant shutdowns. This is limited lifecycle qualification, not real DBT/data
 service, representative-resource or backend/platform acceptance. Local-only DBT and
 Linux supervision remain unchanged; source stays uncommitted and no deployment or
 producer changes occurred.
+
+## [2026-11-15] code | commit native-Mac coordinated reader overlay
+
+Human authorization followed the scoped review: PyUtil native macOS supervision and
+its 12-control synthetic suite are committed locally as `c549424` on the isolated
+branch, based on `1f4897a`; the Analytics coordination evidence is committed locally
+as well. Handoff notes now identify the exact source baseline and clarify that neither
+commit was pushed. Both worktrees are clean. Linux runtime, real DBT/data, S3, service
+and representative-resource gates remain open; no deployment or producer changes.

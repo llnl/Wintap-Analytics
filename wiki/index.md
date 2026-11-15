@@ -322,7 +322,8 @@ skips and a separately provisioned five-module rerun passes 169/25 reviewed Linu
 skips with 83 unchanged identities. Native kqueue `NOTE_TRACK` returns `ENOTSUP`; the
 restriction probe's prestarted helper enables a tiny genuine build/test but does not
 qualify the client launcher. Separately, an isolated native process-group candidate is
-wired to the coordinated client; 12 actual-Mac synthetic lifecycle controls pass, as
+wired to the coordinated client in local commit `c549424` (based on `1f4897a`);
+12 actual-Mac synthetic lifecycle controls pass, as
 do bounded 50-normal-exit and 20-same-group-child stress runs. This remains limited
 lifecycle evidence, not real DBT/data, actual S3, service, representative-resource or
 platform acceptance. Pending publication stays producer-worker-owned; no new full

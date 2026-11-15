@@ -163,7 +163,8 @@ S3 or the production service. Historical full-main 641 (three skips) and the sco
 baseline predate later Linux entity/service work; newer submitted 307 Linux passes are
 service-affected, not full latest-HEAD acceptance.
 
-Current actual-Mac evidence, on the isolated uncommitted PyUtil source overlay:
+Current actual-Mac evidence, on PyUtil commit `c549424`, based on `1f4897a` in the
+isolated feature branch (committed locally, not pushed):
 
 ```sh
 uv run --locked --python 3.12 --group dev pytest -q tests/test_coordination_macos_supervisor.py

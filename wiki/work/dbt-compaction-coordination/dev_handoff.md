@@ -75,9 +75,9 @@ five-module rerun passes 169/25 reviewed Linux-only skips with 83 identities int
 Native restriction/bootstrap permits a tiny genuine DBT build/test, but uses
 deprecated/private dependencies and qualifies no complete shutdown. The probe uses
 in-process `dbtRunner`, unlike the client's `subprocess.call` path. Separately, the
-isolated PyUtil overlay now wires a process-group candidate into the native coordinated
-reader and passes 12 actual-Mac synthetic lifecycle controls, plus final bounded stress
-of 50 normal exits and 20 same-group-child shutdowns. This is limited lifecycle
+PyUtil commit `c549424` (based on `1f4897a`) wires a process-group candidate into the
+native coordinated reader and passes 12 actual-Mac synthetic lifecycle controls, plus
+final bounded stress of 50 normal exits and 20 same-group-child shutdowns. This is limited lifecycle
 qualification, not broad backend/service/DBT acceptance. Current evidence:
 [[wiki/work/dbt-compaction-coordination/verification#Native macOS process-group prototype — actual-Mac synthetic lifecycle]].
 
@@ -86,13 +86,14 @@ best-effort process-group shutdown rule: normal release may follow wrapper compl
 and observation of no live members in the dedicated reader group, accepting the
 residual possibility of an escaped descendant. Timeout, supervisor death or uncertain
 group state retains the reservation for manual verification. No Linux VM or Docker is
-required; no helper/service API or
-dependency is selected, and broader actual-Mac platform acceptance remains open.
-Analytics utility implementation remains authorized in its isolated worktree; the
-busy producer retains interrupted-publication recovery.
+required. No helper/service API or dependency is selected, and broader actual-Mac
+platform acceptance remains open.
+Analytics utility implementation remains separately authorized in its isolated
+worktree; the busy producer retains interrupted-publication recovery.
 The utility implements advisory v1 Status/raw intent Runs only, not catalog,
 compacted/entity reads or managed live/coordinated lifecycles. No deployment,
-scheduling, real-dataset mutation, commit or push is authorized by this pass.
+scheduling, real-dataset mutation or push occurred. The local commits below are
+explicitly authorized wrap-up commits; no deployment or production acceptance follows.
 <!-- SOURCE: Human implementation approval, conversation 2026-11-15. -->
 
 **Historical accepted packaging baseline:** PyUtil commit
@@ -218,8 +219,13 @@ remain follow-on dependencies.
 Historically the human finalized the packaging review for commit/push and returned the remaining
 implementation to the PyUtil worker. Resume the existing completion plan; do not
 restart the accepted baseline or interpret its Linux-only skips as Mac support.
-The November 15 isolated implementation pass has no commit/push permission; use
-the submitted snapshot and current authorization in the handoff summary above.
+The November 15 implementation initially had no commit/push permission; the human
+subsequently authorized local commits. The native-Mac source is PyUtil `c549424` on
+the isolated branch, based on `1f4897a`; the Analytics evidence is committed locally
+as well. Neither commit was pushed. The Linux worker has no shared filesystem with
+this worktree, so transfer the PyUtil commit through the approved channel before
+testing/integration; the hash alone is not present on that worker. Use the transferred
+commit and verification record above as the continuation baseline.
 
 1. **Reader platform gate:** implement and qualify Linux/macOS reader lifetime and
    shutdown under their respective contracts. For native macOS, normal release may

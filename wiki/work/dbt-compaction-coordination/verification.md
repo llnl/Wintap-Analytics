@@ -4982,8 +4982,9 @@ is implemented.
 
 ## Native macOS process-group prototype — actual-Mac synthetic lifecycle
 
-An isolated, uncommitted Wintap-PyUtil worktree implements a native macOS coordinated
-reader path and wires it through the existing client. The accepted risk contract is
+PyUtil commit `c549424`, based on `1f4897a` in the isolated feature branch, implements
+a native macOS coordinated reader path and wires it through the existing client. It is
+committed locally and not pushed. The accepted risk contract is
 unchanged: a normal release may follow wrapper completion and no live member remaining
 in the dedicated process group; descendants escaping into another session/group remain
 an accepted residual risk. Timeout, interruption, supervisor death, uncertain shutdown
@@ -5012,8 +5013,8 @@ cooperative best-effort supervision, not hostile-process containment.
 
 The suite uses synthetic commands and fake coordination transport. It does not qualify
 production DBT/preflight/data behavior, actual S3, Linux runtime, production service
-installation, representative resources, or deployment. The source changes remain
-uncommitted in the isolated PyUtil worktree; producer recovery files were not edited.
+installation, representative resources, or deployment. Producer recovery files were
+not edited.
 The separate Analytics advisory status utility retains its existing scoped verification
 record and was not changed or re-run by this Mac supervision pass.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_mac_worker; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader/main; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/wintappy/coordination/MACOS.md -->
