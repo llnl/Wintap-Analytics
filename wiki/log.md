@@ -26,7 +26,9 @@ Mac scope; no PyUtil source was changed. The initial standalone attempt used the
 working directory and is retained as invalid. The correctly rooted standalone run has
 694 passed/two expected skips and one `TemporaryDirectory` cleanup error after the
 expected byte-budget refusal; a fresh single-test rerun passes, and a fresh full rerun
-is active. Candidate acceptance remains blocked; no PR, endpoint/data access or deployment.
+passes 695/two expected opt-in S3 skips. The complete second full report is reviewed;
+the original cleanup failure remains preserved. Candidate acceptance remains blocked
+by the main-suite Darwin scope regression; no PR, endpoint/data access or deployment.
 
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 

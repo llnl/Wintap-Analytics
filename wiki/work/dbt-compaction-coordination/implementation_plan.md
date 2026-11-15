@@ -1568,17 +1568,20 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   15-module report passes 341 with 12 declared native-Mac skips in 1807.15 s; the full
   report and clean candidate/whitespace state were reviewed. The earlier missing-runtime
   attempt remains retained but invalid, not regression evidence.
-- [ ] Complete current-revision full regression. Main finished 1519 passed/15 skipped/
-  one failed in 6421.87 s: an unchanged Darwin refusal control now reaches the generic
+- [x] Complete the candidate's standalone full local regression from
+  `extras/raw-sensor-compact/`. The first correct-root run retains one temporary-directory
+  cleanup error after the expected byte-budget refusal (694 passed/two skipped); that
+  control passes alone. A second fresh full run passes 695/two opt-in S3 skips in 435.41 s;
+  the complete report is reviewed. The wrong-root attempt and initial cleanup failure
+  remain preserved and are not counted as the accepted green report.
+- [ ] Resolve the current-revision main regression and rerun main gates. Main finished
+  1519 passed/15 skipped/one failed in 6421.87 s: an unchanged Darwin refusal control now reaches the generic
   macOS supervisor launch path. Parent source rejected non-Linux; candidate source
   broadens generic `run_supervised` beyond the coordinated-reader scope. A Darwin-only
-  rerun confirms the failure. The first standalone invocation used the wrong working
-  directory and is invalid. The correctly rooted standalone run has one cleanup failure
-  after the expected byte-budget refusal (694 passed/two skipped); that control passes
-  alone in a fresh directory, but the full report is not accepted. A second full
-  standalone rerun is active. Preserve all reports and do not accept `c549424` until the
-  scope regression is resolved and required affected/full gates pass on an authorized
-  successor.
+  rerun confirms the failure. Keep the generic API Linux-only and make Darwin support
+  explicitly reader-scoped; preserve the no-launch/no-artifact refusal control. No
+  PyUtil source change was made in this pass. Do not accept `c549424` until an authorized
+  fix preserves the scoped contract and affected/full main gates pass on its successor.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean

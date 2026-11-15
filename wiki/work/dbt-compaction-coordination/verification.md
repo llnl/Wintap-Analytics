@@ -5087,17 +5087,20 @@ affected/full gate, not a Mac-only skip or evidence of real writer execution.
 
 The first standalone full-suite invocation used the repository-root working directory,
 so Python 3.13 collected main-suite modules and reported 15 missing-dependency import
-errors. That report is runner-invalid and preserved separately. The corrected run from
-`extras/raw-sensor-compact/` finishes **694 passed, two expected opt-in S3 skips and one
-failure** in **438.44 s**. Its sole failure is
+errors. That report is runner-invalid and preserved separately. The first corrected run
+from `extras/raw-sensor-compact/` finishes **694 passed, two expected opt-in S3 skips
+and one failure** in **438.44 s**. Its sole failure is
 `test_byte_budget_failure_before_publication`: the expected byte-budget exception is
 raised, then Python `TemporaryDirectory` cleanup encounters `OSError: [Errno 39]
 Directory not empty` for its isolated `process-entities-*` directory. A fresh isolated
 single-test rerun passes (one passed in 0.59 s); the retained failure directory is empty
-on subsequent inspection. This makes cleanup-race/environment interference plausible,
-but does not yet qualify the full suite. A second complete standalone run is active with
-fresh home/temp/base directories. No source was changed in response to either full-run
-result. This local synthetic evidence does not qualify real data/S3, production DBT,
-representative resources, service deployment, native-Mac backend acceptance or rollout.
+on subsequent inspection. A second complete standalone run, from the same correct
+project directory but with fresh home/temp/base directories, passes **695 tests and two
+expected opt-in S3 skips** in **435.41 s**; its complete 14-line report was reviewed.
+The one cleanup failure did not recur, so the candidate's standalone full local gate is
+green while the original failure remains retained. No source was changed in response to
+either full-run result. This local synthetic evidence does not qualify real data/S3,
+production DBT, representative resources, service deployment, native-Mac backend
+acceptance or rollout.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_service.py; ../Wintap-PyUtil/tests/test_coordination_client.py; ../Wintap-PyUtil/tests/test_coordination_linux_lifecycle.py; ../Wintap-PyUtil/tests/test_coordination_local_route.py; ../Wintap-PyUtil/tests/test_coordination_recovery.py; ../Wintap-PyUtil/tests/test_coordination_maintenance.py; ../Wintap-PyUtil/tests/test_coordination_deletion_recovery.py; ../Wintap-PyUtil/tests/test_coordination_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_controls.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_history.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_credentials.py; ../Wintap-PyUtil/tests/test_coordination_entity_service.py; ../Wintap-PyUtil/tests/test_coordination_supervisor.py; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_config/run_supervised; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_unsupported_writer_supervision_refuses_launch_and_tick_stays_blocked; ../Wintap-PyUtil/wintappy/coordination/README.md §Linux command-tree supervision -->
