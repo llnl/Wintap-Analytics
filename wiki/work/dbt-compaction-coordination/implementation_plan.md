@@ -1546,3 +1546,114 @@ macOS commands/results in [[wiki/work/dbt-compaction-coordination/verification]]
 - [ ] dcc-04: qualified CLI integration and audited recovery operations.
 - [ ] dcc-05: isolated runtime, incremental resource and regression qualification.
 - [ ] Human rollout approval; production deployment recorded separately.
+
+## Next phases — PR deferred, qualification sequence
+
+**Current checkpoint:** PyUtil candidate `c549424` is based on `1f4897a`; the
+focused Linux supervisor/client/lifecycle/local-route regression passes 90 with 12
+native-Mac-only skips and observed no Linux behavior change. This is not a full
+latest-HEAD regression or operational acceptance. The human has deferred PR work;
+do not open or prepare a PR as the next action. The approved best-effort native-Mac
+process-group rule remains the selected risk boundary, not broad Mac acceptance.
+<!-- SOURCE: Human direction in conversation, 2026-11-15. -->
+
+### Phase 1 — Freeze the candidate and close local implementation gaps
+
+- [ ] Use a clean, isolated PyUtil checkout at the exact candidate revision; record
+  source, lock, test-runner and fixture identities before changing code. Keep local
+  DuckDB data and environment files out of the checkout/review scope.
+- [ ] Implement and independently qualify the still-open original-bound
+  pending-publication repair/retry and missing-original migration/deletion cases.
+  Never synthesize missing original evidence or convert partial history into clean
+  resolution; preserve blocked ownership on missing, damaged or mismatched evidence.
+- [ ] Complete exclusive entity maintenance and its completion/high-water/history
+  contract. Add the remaining multi-hour/forward-evolution, corruption/non-mutation,
+  budget/paging, compatible-upgrade, crash/lost-ack and service-flag controls before
+  declaring local entity-operation acceptance.
+- [ ] For each narrow source slice, retain its red first, freeze a distinct identity
+  set, inspect complete reports/diagnostics and run the corresponding focused and
+  affected regressions in both locked runtimes. Do not advance on a masked failure.
+
+**Exit:** the open local recovery and entity-maintenance controls pass with original
+bindings intact; no item is accepted from source review or a synthetic receipt alone.
+
+### Phase 2 — Close service semantics in dependency order
+
+1. **dcc-04 evidence and operation core:** qualify actual CLI/archive inputs,
+   independent completion and shutdown verification, entity authority high-water,
+   atomic completion/history/cursor evidence, and only the audited repair/disposition
+   operations established in Phase 1. Real-compactor verification is a prerequisite
+   to a service success claim.
+2. **dcc-02 tick/service completion:** connect supervised writer execution to
+   verified empty-hour and completion evidence; prove one atomic terminal/completion/
+   cursor/mode transition, backlog priority, admission reopening and queued-grant
+   ordering under controlled clocks, process death and lost acknowledgments. Keep
+   uncertainty blocked; the current callback/exit status is not proof of success.
+3. **dcc-03 client and compatibility:** qualify reader lifetime, message/terminal
+   retry and effective-root routing through the real client. Prove ordinary local-only
+   DBT stays direct and state-free, while remote routes use coordination and fail
+   closed on uncertain shutdown or mismatched configuration.
+4. **dcc-04 recovery completion:** qualify each supported checkpoint, deletion,
+   retry and entity-maintenance disposition against its exact original evidence and
+   separate new operation identity; unsupported partials remain blocked.
+
+**Exit:** the service and client satisfy their individual contracts and the combined
+focused/affected gates pass in both runtimes. Do not treat the prior 307-control
+service-affected result or the recent 90-control Mac-candidate Linux check as this
+exit evidence.
+
+### Phase 3 — Frozen latest-revision platform regression
+
+- [ ] Freeze the integrated source, both lockfiles, runner, scope and fixture identities.
+- [ ] Run and review focused, affected and full main/standalone regressions on Linux;
+  run the corresponding supported current-revision suite on an actual Mac, including
+  native lifecycle controls and reviewed platform skips. Preserve prior reports and
+  forward-history fixtures rather than overwriting or silently rerunning them.
+- [ ] Recheck ordinary local-only DBT routing, native-Mac fail-closed reservation
+  retention and Linux subreaper shutdown on the frozen integrated revision.
+
+**Exit:** reports, skips, child diagnostics, source identities and retained-state
+checks are reviewed for the exact revision. This is still not S3, representative
+resource or rollout acceptance.
+
+### Phase 4 — Approved isolated real-data qualification
+
+No endpoint or data run is authorized until the worksheet in
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]] is concretely
+approved. Select a disposable Linux environment, exact revision, private fixture/root
+manifest, approved endpoint/access, immutable input provenance, retention/cleanup
+authority, qualified runner and explicit time/resource/log ceilings. Begin with
+synthetic lifecycle controls; then use only fresh disjoint test prefixes and generated
+fixtures or expressly approved read-only copies. Do not point at production-owned
+prefixes, install cron, or mutate source data.
+
+- [ ] Prove reader/writer exclusion, queued readers, empty/sequential hours, grace and
+  backlog behavior against the isolated fixture; verify outputs and unchanged inputs
+  independently rather than trusting grants/status.
+- [ ] Exercise the specifically approved DBT/data paths (including entities disabled
+  and enabled where selected), actual S3 transport, failure/restart/recovery and
+  original-data non-mutation. Stop on any ambiguous completion, identity mismatch or
+  shutdown uncertainty; retain fixtures and evidence pending explicit cleanup approval.
+- [ ] Measure retained-state CPU, aggregate descendant RSS, spill/temp, database/WAL,
+  archives, logs and I/O against the approved envelope; qualify representative scale
+  before recommending reduced limits.
+
+**Exit:** human-reviewed isolated endpoint/data and resource evidence. This does not
+authorize production scheduling or rollout.
+
+### Phase 5 — Native-Mac backend acceptance and final decision
+
+- [ ] Separately qualify the frozen integrated client on an actual Mac with the real
+  subprocess DBT/preflight path, approved representative data and resource bounds;
+  the in-process feasibility probe and existing synthetic lifecycle suite do not
+  substitute. Preserve the accepted escaped-descendant residual risk and fail closed
+  on uncertain shutdown.
+- [ ] Reconcile Linux and Mac evidence, remaining risks, supported-platform boundary
+  and operator recovery/rollback. Only then decide whether to prepare a PR and what
+  exact implementation/qualification claims it may make.
+- [ ] Obtain separate human rollout approval before any production service, cron,
+  production dataset or deployment action.
+
+This sequence is a plan, not authorization to access real endpoints/data or deploy.
+Human approval of each environment, fixture, access scope and destructive action is
+still required.

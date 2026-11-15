@@ -8488,3 +8488,13 @@ native-Mac-only controls (23.43 s). No Linux behavior change was observed. Black
 module check and candidate whitespace check pass; the console launcher has a stale
 interpreter reference. The 307-control service-affected gate and broader latest-HEAD,
 actual-S3, DBT/data, resource and deployment gates were not rerun or qualified.
+
+## [2026-11-15] planning | next coordination phases; PR deferred
+
+Per human direction, added an ordered continuation plan without opening or preparing
+a PR: close original-bound recovery/entity-maintenance gaps; finish dcc-04 evidence,
+dcc-02 service completion and dcc-03 client semantics in dependency order; run frozen
+latest-revision platform regressions; then proceed only with a concretely approved,
+isolated real-data/S3/resource qualification. Native-Mac backend acceptance and rollout
+remain separate final decisions. The plan grants no endpoint, data, production or
+deployment authorization.
