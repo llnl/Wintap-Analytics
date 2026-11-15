@@ -326,8 +326,10 @@ wired to the coordinated client in local commit `c549424` (based on `1f4897a`);
 12 actual-Mac synthetic lifecycle controls pass, as
 do bounded 50-normal-exit and 20-same-group-child stress runs. This remains limited
 lifecycle evidence, not real DBT/data, actual S3, service, representative-resource or
-platform acceptance. Pending publication stays producer-worker-owned; no new full
-latest-HEAD/S3/resource/dcc-02–05 acceptance.
+platform acceptance. Its focused Linux supervisor/client/lifecycle/local-route
+cross-check passes 90 with 12 native-Mac-only skips and observes no Linux behavior
+change; the prior service-affected gate was not rerun. Pending publication stays
+producer-worker-owned; no new full latest-HEAD/S3/resource/dcc-02–05 acceptance.
 [[wiki/work/dbt-compaction-coordination/verification#Native macOS process-group prototype — actual-Mac synthetic lifecycle]] and
 [[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
 Prepared gated Linux/S3/resource procedure:

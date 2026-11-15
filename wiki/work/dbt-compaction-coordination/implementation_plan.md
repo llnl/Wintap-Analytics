@@ -1525,6 +1525,10 @@ macOS commands/results in [[wiki/work/dbt-compaction-coordination/verification]]
   additional ephemeral stress driver passes 50 normal exits and 20 same-group child
   shutdowns. Real DBT/data, S3/service, representative resources and native backend
   acceptance remain open; no helper/service API or dependency is selected.
+- [x] Compare native candidate parent `1f4897a` with Linux target `123b9d3`; focused
+  Linux supervisor/client/lifecycle/local-route regression passes 90 with 12
+  native-Mac-only skips. No Linux behavior change observed; this does not rerun the
+  service-affected or broader latest-HEAD gates.
 - [x] Prepare gated isolated Linux/S3/retained-state procedure and approval worksheet;
   concrete environment/fixture/root/access/runner/ceiling selection and execution remain open.
 - [x] Complete scoped tracked/untracked source/wiki/privacy review; separate cosmetic

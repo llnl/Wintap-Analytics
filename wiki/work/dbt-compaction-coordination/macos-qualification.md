@@ -163,6 +163,11 @@ S3 or the production service. Historical full-main 641 (three skips) and the sco
 baseline predate later Linux entity/service work; newer submitted 307 Linux passes are
 service-affected, not full latest-HEAD acceptance.
 
+After transfer to the Linux target, the focused supervisor/client/Linux-lifecycle/local-
+route regression passes **90** with **12 native-Mac-only skips**. No Linux behavior change
+was observed; the existing service-affected result was not rerun. Details and exact scope:
+[[wiki/work/dbt-compaction-coordination/verification#Linux regression after candidate handoff — focused, no behavior change observed]].
+
 Current actual-Mac evidence, on PyUtil commit `c549424`, based on `1f4897a` in the
 isolated feature branch (committed locally, not pushed):
 

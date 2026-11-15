@@ -8478,3 +8478,13 @@ branch, based on `1f4897a`; the Analytics coordination evidence is committed loc
 as well. Handoff notes now identify the exact source baseline and clarify that neither
 commit was pushed. Both worktrees are clean. Linux runtime, real DBT/data, S3, service
 and representative-resource gates remain open; no deployment or producer changes.
+
+## [2026-11-15] verification | Linux cross-check of native reader candidate
+
+Compared PyUtil `c549424`'s `1f4897a` parent with the prior Linux target `123b9d3`;
+the intervening parent adds the feasibility probe and coordination README notes.
+The focused Linux supervisor/client/lifecycle/local-route run passes 90 and skips 12
+native-Mac-only controls (23.43 s). No Linux behavior change was observed. Black
+module check and candidate whitespace check pass; the console launcher has a stale
+interpreter reference. The 307-control service-affected gate and broader latest-HEAD,
+actual-S3, DBT/data, resource and deployment gates were not rerun or qualified.

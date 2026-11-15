@@ -128,6 +128,14 @@ focused/affected gates close; pending-publication/missing-original repair and br
 integration remain next. S3, resources, native-Mac shutdown and dcc-02–05 remain open:
 [[wiki/work/dbt-compaction-coordination/verification#Service-affected Linux result — 307-control affected gate closed]].
 
+**Native-candidate Linux cross-check:** the transferred PyUtil `c549424` has the
+reported `1f4897a` parent, directly above the prior `123b9d3` Linux target. Its
+focused supervisor/client/Linux-lifecycle/local-route suite passes **90** with
+**12 native-Mac-only skips**; no Linux behavior change was observed. The earlier
+307-control service-affected gate was not rerun, and broad latest-HEAD, endpoint,
+resource and deployment qualification remain open:
+[[wiki/work/dbt-compaction-coordination/verification#Linux regression after candidate handoff — focused, no behavior change observed]].
+
 The selected narrow successor first adds strict init/replay/clean-original resolution service
 dispatch and explicit v5 upgrade selection, with separate entity configuration and genuine
 controls before coding. The first frozen service red finishes with 71 failures in 135.78 s:

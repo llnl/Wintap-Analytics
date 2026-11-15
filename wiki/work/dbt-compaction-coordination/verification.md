@@ -5011,6 +5011,38 @@ cooperative best-effort supervision, not hostile-process containment.
 - Final ephemeral stress driver — **50 normal exits and 20 same-group descendant shutdowns passed**. It was not added as a checked-in test.
 - Black `--check` on the supervisor, client and Mac test, plus `git diff --check`, passed.
 
+### Linux regression after candidate handoff — focused, no behavior change observed
+
+The transferred PyUtil candidate is available as `c549424`, parent `1f4897a`. Its
+parent is directly above the previous Linux target `123b9d3`; that intervening
+commit adds the native feasibility probe and coordination README notes. Candidate
+changes add Darwin dispatch/result-scope handling while retaining the Linux
+subreaper worker and Linux client observation contract.
+
+On Linux, the focused supervisor/client/lifecycle/local-route run passes **90** and
+skips **12** in **23.43 s**. The skipped tests are the native-Mac-only controls;
+Linux supervisor, client and lifecycle controls execute. Command, from the PyUtil
+root, with a fresh pytest base directory under `/tmp/opencode`:
+
+```sh
+run_dir=$(mktemp -d /tmp/opencode/dcc-macos-linux-focused.XXXXXX)
+TMPDIR=/tmp/opencode .venv/bin/python -B -m pytest -q --basetemp="$run_dir" \
+  tests/test_coordination_supervisor.py \
+  tests/test_coordination_client.py \
+  tests/test_coordination_linux_lifecycle.py \
+  tests/test_coordination_local_route.py \
+  tests/test_coordination_macos_supervisor.py
+```
+
+No Linux behavior change was observed in this focused run; direct local-only DBT
+and the Linux subreaper shutdown contract remain unchanged. Black check passes via
+`.venv/bin/python -m black --check` on the changed Python files, and
+`git diff 1f4897a..c549424 --check` passes. The installed Black console-script
+launcher has a stale interpreter reference, so the module invocation was used.
+This focused regression does **not** rerun the earlier 307-control service-affected
+gate or qualify full latest-HEAD integration, actual S3, production DBT/data,
+representative resources or deployment.
+
 The suite uses synthetic commands and fake coordination transport. It does not qualify
 production DBT/preflight/data behavior, actual S3, Linux runtime, production service
 installation, representative resources, or deployment. Producer recovery files were
