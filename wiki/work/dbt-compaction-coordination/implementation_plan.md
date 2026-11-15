@@ -1559,13 +1559,19 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
 
 ### Phase 1 — Freeze the candidate and close local implementation gaps
 
-- [ ] Use a clean, isolated PyUtil checkout at the exact candidate revision; record
-  source, lock, test-runner and fixture identities before changing code. Keep local
-  DuckDB data and environment files out of the checkout/review scope.
-- [ ] Before further source edits, run candidate-specific affected and full main/
-  standalone Linux regressions at `c549424`, retaining reports and identity checks.
-  The 90-control focused pass and the parent's 307-control service-affected result
-  are not substitutes for this current-revision baseline.
+- [x] Use a clean, isolated PyUtil checkout at the exact candidate revision; preserve
+  source state and keep local DuckDB data/environment files out of the checkout. The
+  detached checkout remains at `c549424b6cf507f33dee301d85bd9e0aeb082e1b`, with no
+  source edits; the standalone lock was provisioned offline. Main/standalone collection
+  is 1535/697.
+- [x] Run the candidate-specific affected Linux scope before full suites. The corrected
+  15-module report passes 341 with 12 declared native-Mac skips in 1807.15 s; the full
+  report and clean candidate/whitespace state were reviewed. The earlier missing-runtime
+  attempt remains retained but invalid, not regression evidence.
+- [ ] Complete full main then standalone Linux regressions at `c549424`, with fresh
+  isolated directories and disabled AWS configuration; the sequential full-suite run
+  is active. Review both complete reports and candidate identities after notification.
+  The 90-control focused pass and parent's 307-control result do not substitute.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean

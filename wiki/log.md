@@ -5,6 +5,17 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-15] verification | current-revision candidate affected scope
+
+On the unchanged detached PyUtil candidate `c549424`, the corrected 15-module Linux
+affected scope passes 341 tests with 12 expected native-Mac skips; the complete report
+was inspected. Main/standalone collection is 1535/697. The earlier run without the
+checkout-local standalone runtime remains retained as invalid evidence. Full main and
+standalone suites are now running sequentially with isolated temporary/home paths and
+AWS configuration/opt-ins disabled. No source, original user data, or original
+environment files were modified; only the isolated standalone runtime was provisioned.
+Endpoint/data/resource and deployment gates remain unapproved.
+
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 
 The Wintap-PyUtil entity update path now uses DuckDB 2.0.0 relations and SQL

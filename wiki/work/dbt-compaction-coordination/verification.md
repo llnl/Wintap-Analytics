@@ -5050,3 +5050,30 @@ not edited.
 The separate Analytics advisory status utility retains its existing scoped verification
 record and was not changed or re-run by this Mac supervision pass.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_mac_worker; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader/main; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/wintappy/coordination/MACOS.md -->
+
+## Current-revision Linux candidate baseline — affected scope passed; full suites active
+
+The detached PyUtil checkout is fixed at `c549424b6cf507f33dee301d85bd9e0aeb082e1b`
+and remained clean. Its 15-module affected scope passes **341 tests** with **12
+expected native-macOS skips** in **1807.15 s**; the complete 19-line report was reviewed
+after completion and contains no failure or error. The executed scope comprises the
+service, client, Linux lifecycle, local route, recovery, maintenance, deletion recovery,
+retry and intentional-retry modules, entity service, supervisor, and native-Mac
+supervisor controls. The 12 skips are only the declared Darwin-specific controls.
+
+Both suites collect successfully at this revision: **1535 main** and **697 standalone**
+tests. Test processes use isolated home/temp/base directories, an empty AWS config and
+credentials file, disabled EC2 metadata, and an environment stripped of opt-in S3
+approval variables. The existing main test driver is Python 3.11; the candidate's
+standalone environment was provisioned offline with its lock at Python 3.13. The
+earlier attempt without that checkout-local standalone runtime (183 failures, 141
+passes, 12 skips and 17 errors before timeout) is retained but invalid as regression
+evidence; it is not combined with the corrected report. The corrected affected run,
+candidate status/whitespace check, and Black check on all four changed Python files are
+clean. Ruff passes on the changed runtime modules; no candidate source was edited.
+
+The full main and standalone suites were launched sequentially on the unchanged
+candidate and are still pending. This affected result is local synthetic regression
+evidence only; it does not qualify real data/S3, production DBT, representative
+resources, service deployment, native-Mac backend acceptance or rollout.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_service.py; ../Wintap-PyUtil/tests/test_coordination_client.py; ../Wintap-PyUtil/tests/test_coordination_linux_lifecycle.py; ../Wintap-PyUtil/tests/test_coordination_local_route.py; ../Wintap-PyUtil/tests/test_coordination_recovery.py; ../Wintap-PyUtil/tests/test_coordination_maintenance.py; ../Wintap-PyUtil/tests/test_coordination_deletion_recovery.py; ../Wintap-PyUtil/tests/test_coordination_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_controls.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_history.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_credentials.py; ../Wintap-PyUtil/tests/test_coordination_entity_service.py; ../Wintap-PyUtil/tests/test_coordination_supervisor.py; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->
