@@ -166,6 +166,23 @@ Results belong in [[wiki/work/dbt-compaction-coordination/verification]].
 Service, audited recovery, isolated S3 and representative resource acceptance remain
 separate gates in [[wiki/work/dbt-compaction-coordination/implementation_plan]].
 
+### Native reader feasibility checkpoint — human review required
+
+The next source/dependency investigation establishes **no safe native-Mac backend**
+from the investigated candidates. Apple published source rejects automatic kqueue
+descendant tracking; DBT's installed spawn-context locks/manifest start a Python
+helper. Linux dependency probes and 34 Linux supervision tests do not qualify Mac
+shutdown. No process-group fallback, blanket no-fork restriction, sandbox dependency
+or eventual platform removal has been selected. Subsequent human direction authorizes
+Linux-first completion and assigns the native solution to the Mac worker. This Mac
+gate no longer blocks Linux integration; accepted Stage 1 need not be repeated.
+
+Sources, candidate limits and choices:
+[[wiki/tension/native-macos-readers-vs-descendant-shutdown]]. Exact new evidence:
+[[wiki/work/dbt-compaction-coordination/verification#Reader-supervision feasibility checkpoint — human review required]].
+Any subsequent approved native probe needs its own exact-revision task and private
+reports; the historical Stage 1 prompt below is not a Stage 2 command.
+
 ### Copy/paste continuation prompt for the Mac
 
 ```text

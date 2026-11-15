@@ -5971,6 +5971,23 @@ identity checks pass. Final scoped wiki audit passes 11 files, 9 frontmatters,
 index/log exceptions preserved. Feature-only wiki snapshot prepared. No push,
 endpoint/production operation, scheduling or cleanup; dcc-02–05 remain open.
 
+## [2026-11-14] docs | ETL CONOPS infographic
+
+Added `wiki/workflow/wintap-etl-conops-infographic.drawio` and its PNG preview,
+grounded in the canonical ETL workflow and compaction/entity tool pages. The
+local-first happy path, optional S3/compaction/context branches, four storage
+concepts and bronze/silver/gold progression use 22–56-pixel type and 5–6-pixel
+connectors. Overlap double-counting, bounded QA, entity-before-delete ordering,
+checkpoint recovery and deferred production operation remain explicit.
+
+Validation: XML parses with 79 native editable cells, 17 connectors, unique IDs
+and valid references; the diagrams.net renderer reports no label overflow.
+The 2422 × 1747 PNG was generated from that render and visually inspected.
+Scoped geometry/font/connector/link/privacy checks and `git diff --check` pass.
+Linked both artifacts from the workflow and updated the index. The existing
+detailed diagram and all runtime/source code remain unchanged; this is a
+presentation companion, not new implementation or production qualification.
+
 ## [2026-11-14] fix | committed Mac lockfile coverage and corrected handoff
 
 The Mac worker reports the original `8ee714c` attempt blocked before either stage
@@ -6125,3 +6142,2226 @@ paths, 208 inline sources and 401 wikilinks/37 section targets with no new error
 Complete diff/privacy and whitespace inspection pass; the existing broken log link
 and index/log frontmatter exceptions remain baseline. Pending commit/push scope is
 wiki-only; existing log history is preserved.
+
+## [2026-11-14] feasibility | native-Mac reader shutdown needs human review
+
+Pulled the finalized successful Mac review; Analytics is `65bff3d`, PyUtil already
+`fab647f`. Scoped infographic edits reapplied without conflicts; preservation stash
+and unrelated artifacts remain. Accepted Mac baseline and original failed attempt
+are unchanged; no repeat baseline or status-utility implementation.
+
+Pinned Apple source rejects automatic kqueue descendant tracking; historical
+launchd cleanup covers a process group only. Installed DBT dependency inspection
+and three bounded Linux controls confirm a spawned resource-tracker helper and
+expected manifest-construction failure on synthetic helper-launch denial. Existing
+Linux supervision rerun passes 34 tests, zero skips, in 5.82 seconds. Runner/system
+Python mismatch occurred before pytest and was corrected by explicit main-runtime
+invocation; no dependencies changed. This is not actual-Mac backend evidence.
+
+Created [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] and updated
+coordination verification/plan/handoff/Mac runbook/index. No safe native backend is
+established from investigated candidates; pause broad integration for the existing
+human checkpoint. Linux/macOS scope and uncertain-reservation retention remain;
+dcc-02–05 stay unchecked. No source edits, endpoint/production operations, scheduling,
+commit or push; no sandbox dependency, weaker release or platform deferral selected.
+
+Closure: 22 committed/local source-manifest identities unchanged; scoped eight-page
+wiki artifact/privacy audit and both new section targets pass, as does whitespace.
+Complete diff/new-page privacy review and preservation checks pass: original
+infographic workflow bytes, index/log additions, diagram artifacts and retained
+stash remain. Index/log frontmatter exceptions are preserved; no whole-wiki lint.
+
+## [2026-11-14] direction | Linux-first coordination completion
+
+Human directs finishing Linux while the native Mac worker finds its shutdown solution.
+Updated coordination handoff/plan/Mac runbook/index and the open native-Mac tension:
+the prior broad integration hold no longer blocks Linux. Native-Mac qualification,
+uncertain-reservation retention and eventual platform scope remain separate; no weaker
+release, runtime restriction or sandbox is selected. Actual-S3 roots/access and
+representative sizing still require their existing inputs; no production operations,
+utility implementation, commit or push is authorized by this direction.
+
+## [2026-11-14] code | Linux coordination service and durable readers
+
+Implemented an uncommitted PyUtil Linux service/client/root-router/advisory export and
+initial audited recovery overlay. Same lock spans receipt-bound writer, independent
+verification and completion COMMIT; queued admission refreshes UTC afterward. Local
+Makefile preflight/build remain ordinary DBT without AWS/client state. Durable jobs
+retain exact transport/request/grant/launch/terminal identities; SIGINT/SIGTERM release
+only after exact shutdown evidence, preserving 130/143. Abrupt death stays reserved.
+
+Recorded 13 missing-API failures, five hardening failures, the real SIGTERM failure,
+six signal failures, four bounded state/transport/diagnostic failures and four reader
+audit-retention failures before repairs. Earlier combined run: 337 passes/one stale
+Make-echo assertion failure; actual local build succeeded. Later reader/lifecycle
+passes 29 tests; real active-root/Makefile checks pass seven. Final combined/full
+full regressions are running on a 34-identity source/runtime-lock freeze, not yet accepted.
+Plan/handoff/verification retain complete attribution and preliminary probe timeout.
+
+The combined new-path run finishes with 103 passes/one failure in 178.46 seconds:
+overlapping-reader lifecycle timed out before both requests arrived. Subprocess
+diagnostics were discarded by cleanup; cause remains unestablished, not attributed
+to concurrent load or formatting. Five local import-isolation and four reader-audit
+controls pass in that run. Full suites remain separately pending on frozen source.
+
+Standalone full notification passes 439 tests/two skips in 167.93 seconds, exit 0;
+all 34 source/runtime-lock identities remain unchanged. Twelve ordinary bounded
+two-reader startup probes pass; forced first-start interleaving reproduces a shared
+parent `FileExistsError` before one request. This is not proven historical-timeout
+attribution. Further active-path probes reproduce cached DBT worker replay, changed
+request-window dispatch and terminal retries after missing/changed shutdown or launch
+evidence. These newly found gaps remain red pending main completion/source unfreeze;
+no timeout extension or safety acceptance is claimed.
+
+Main full notification finishes with 697 passes/three skips/one failure in 828.44
+seconds, exit 1: the same two-request startup timeout. All 34 frozen identities
+still match. Both suites are complete; source freeze released for the confirmed
+reader repairs, with no historical-timeout attribution or green-main claim.
+
+Partial/failed archives cannot reopen; broader checkpoint/deletion recovery, verified
+retry and exclusive entity maintenance are unfinished. dcc-02–05, actual isolated S3,
+representative sizing and native-Mac shutdown remain open. No utility implementation,
+production dataset operation, scheduling installation, commit/push or unrelated cleanup.
+
+## [2026-11-14] repair | Linux reader evidence and transport binding
+
+Recorded 12 formal reader failures before repairing shared-parent creation, cached
+DBT-worker replay, changed commands/windows and terminal launch/shutdown/outcome
+authentication. Affected client/lifecycle/local-route run passes 49 tests in 15.37 s.
+Invocation precedes request PUT; launch binds the manifest; original canonical
+single-link records are mandatory. Fixed supervised DBT batching replaces reusable
+worker dispatch. Cancellation requires retained signal outcome and no launch.
+Lifecycle failure diagnostics retain bounded child exits/stdout/stderr without
+changing its ten-second wait or attributing the historical timeout.
+
+Follow-up has three active failures before resolved endpoint/region binding and
+contradictory shutdown repair; four cancellation-corruption negatives already pass.
+Client/lifecycle/local-route/supervisor/tick run passes 142 tests in 29.32 s before
+format cleanup. Historical frozen 697/439 results do not cover repairs; combined/full
+reruns and audits remain required. Broader recovery, actual-S3 and representative
+resources remain open; native-Mac shutdown stays with its worker. No remote or
+production operation, utility implementation, scheduling installation, commit/push.
+
+## [2026-11-14] code | Linux checkpoint maintenance with original failure evidence
+
+Implemented exact already-blocked entity/deletion-writer checkpoint maintenance in
+the uncommitted PyUtil overlay. Durable separate receipt/intent precedes supervised
+repair; success leaves the original block/cursor. Independent repaired resolution
+retains actual original exit 2 and separate authenticated repair/archive evidence,
+never rewriting original success. Pending failed/crashed maintenance needs audited
+cannot-resume abandonment; explicit replacement retains prior checkpoint rows.
+Maintenance history is bounded without pruning and rechecked on reopen.
+
+Preserved formal evidence for missing original pre-launch observations, absent
+aggregate-history ceiling, historical-proof/pending-operation conflict and future
+terminal-audit acceptance. Intermediate recovery controls pass 32 main tests,
+standalone repaired/verifier controls pass 66 and nine extended CLI/crash/replacement/
+history controls pass. Initial repair-grammar mismatch is distinguished from fixture
+argument errors. Latest scoped Ruff lint/26-file format checks pass.
+
+Full standalone notification passes 460 tests/two skips in 191.79 s, exit 0, with
+all 261 frozen source/test/DBT/runtime-lock identities unchanged. Combined affected
+main remains pending; full main is not yet launched. Latest main-side timing/count/
+abandonment/retained-runtime changes are not regression accepted. Source remains
+frozen; historical failed fixtures and original 697/439 pre-repair results are retained.
+
+Updated Linux runbook, README, verification, plan, handoff/index and canonical ETL
+guidance with the narrow implemented scope, without full acceptance. Broader incomplete
+deletion disposition, verified intentional retry and general exclusive entity
+maintenance remain unfinished; dcc-02–05 stay unchecked. Actual isolated S3/access,
+representative sizing and native-Mac shutdown remain separate gates. No endpoint or
+production operations, installed scheduling, utility implementation, commit/push or
+unrelated artifact cleanup. Complete source/wiki diff/privacy audits remain pending.
+
+## [2026-11-14] repair | checkpoint regression paging-wrapper compatibility
+
+Affected-main completion notification records 303 passes/one failure in 723.91 s,
+exit 1. Inspected the complete report and retained fixtures/child diagnostics; all
+261 original frozen identities still match. Failure is the real three-hour paging
+control's connection wrapper lacking the independent cursor used by maintenance
+history, not evidence for a runtime safety failure or load attribution.
+
+Released the freeze only for that demonstrated test defect. Added cursor delegation
+without changing page/corruption assertions, production validation or the ten-second
+lifecycle wait. Focused control passes one test/26 deselected in 14.12 s; fresh
+single-file Ruff lint/format checks pass. New 261-identity paging-repair manifest
+differs only in that main test; source, standalone tests, DBT and runtime locks are
+unchanged. Combined affected-main rerun is running with a separate report; full main
+awaits successful affected results and post-notification identity checks. Standalone's
+460-pass/two-skip result applies to its unchanged files.
+
+Reconciled stale handoff source-map/service/clean-only recovery descriptions with
+the implemented narrow checkpoint path. Broader recovery, endpoint/resource and
+native-Mac gates remain open; dcc-02–05 stay unchecked. No remote/production operation,
+installed scheduling, utility implementation, commit/push or unrelated cleanup.
+
+## [2026-11-14] audit | Linux overlay source, wiki and privacy closure
+
+Complete tracked feature diffs and new source/tests/configuration inspected;
+scoped 30-file source/config/doc audit passes (15 tracked / 15 new), with fresh
+Ruff lint/format passing 23 Python targets. Preserved pre-existing source-validation
+test formatting; reviewed its complete necessary expectation diff separately.
+Complete changed-wiki diff/new-page privacy review and infographic XML/image
+inspection pass; user infographic artifacts remain unchanged. Scoped wiki audit
+passes nine Markdown files/seven required frontmatters, 207 grounding paths,
+257 inline sources, 416 wikilinks and 40 section targets. Zero new broken-link/
+section exceptions; index/log frontmatter omissions preserved, no whole-wiki lint.
+Both repositories' whitespace checks pass; unrelated data/environment work remains.
+
+Recorded audit closure separately from pending affected-main/full-main regression
+acceptance. Source freeze, original failure evidence and all broader recovery,
+isolated-S3, resource and native-Mac gates remain; dcc-02–05 stay unchecked.
+No runtime/source changes, endpoint/production operations, scheduling installation,
+utility implementation, commit or push in this closure.
+
+## [2026-11-14] regression | affected Linux overlay green, full main running
+
+Paging-fixed affected-main notification passes 304 tests in 715.34 s, exit 0.
+Inspected the complete report; all 261 paging-repair source/test/DBT/runtime-lock
+identities still match. Retained the original 303-pass/one-wrapper-failure report
+and fixtures; no historical failure is relabeled. Launched full main on unchanged
+source with a separate retained report only after the green result and identity
+check. Its final result remains pending; full standalone's 460-pass/two-skip result
+covers its unchanged files.
+
+Updated verification, plan, handoff, index and coordination README. Audit closure
+remains separate from full regression and Linux acceptance; source stays frozen.
+Broader recovery, exact isolated-S3/access, resources and native-Mac shutdown remain
+open; dcc-02–05 stay unchecked. No source/runtime changes, remote/production operation,
+installed scheduling, utility implementation, commit, push or unrelated cleanup.
+
+Frozen-wait source review records the next recovery boundaries in the implementation
+plan/handoff: generic reconciliation compares surviving data and can replay entities;
+partial original-run disposition must authenticate retained migration evidence,
+while retry/general maintenance must preserve original failures and cursor history.
+No new runtime test, recovery operation, schema selection or acceptance is claimed.
+Follow-up scoped wiki audit passes nine Markdown/seven frontmatters, 209 grounding
+paths, 263 inline sources, 417 wikilinks and 41 section targets; both whitespace
+checks pass. New documentation diff inspected for privacy; no source-freeze changes.
+
+## [2026-11-14] regression | full Linux reader/checkpoint overlay green
+
+Full-main completion notification passes 755 tests/three skips in 1156.34 s, exit 0.
+Complete report inspected; all 261 paging-repair identities match. Together with
+304 affected-main passes and 460 full-standalone passes/two skips on unchanged
+standalone files, this closes local regression for the reader/checkpoint revision.
+Original 303-pass/one-wrapper-failure and historical startup-failure evidence remain
+unchanged and separate; no causal attribution is added.
+
+Verification/plan/handoff/index and README updated. Retained baseline freeze and
+reports; released source only for the next original-bound deletion recovery slice,
+which requires its own red/green controls and regressions. Broader recovery/retry/
+entity maintenance, isolated S3/access, resources and native-Mac shutdown remain
+open; dcc-02–05 stay unchecked. No remote/production operation, scheduling installation,
+utility implementation, commit, push or unrelated cleanup.
+
+## [2026-11-14] repair | original-bound Linux deletion disposition controls
+
+Provisional deletion-only maintenance preserves real original exit-2 failures and
+archives, validates original migrations/current survivors/outputs and creates separate
+disposition checkpoints without entity replay. Initial seven-test main integration
+passes. Expanded main controls complete with 31 passes/one missing-service-command
+failure in 322.34 s; the later capture control separately fails. Standalone red controls
+establish exact-type and multi-hour grammar defects; corrected original-link controls
+expose integer-terminal and duplicate-checkpoint acceptance. Empty-directory bounds,
+pre-discovery validation and checkpoint-interference controls are also red. All complete
+reports inspected; failed fixtures and the original masked-test report remain retained.
+
+After notifications, repaired demonstrated exact comparison/order, traversal,
+all-hour mutation revalidation and repair-archive/retained-capture binding; added narrow
+service dispatch. Two service/capture controls pass in 26.66 s; standalone green rerun,
+separate freeze, full regressions and renewed audits remain pending. Restored the
+misplaced publication-failure test's retry tail; its separate control passes.
+Verification/plan/handoff/index updated without deletion acceptance. Verified intentional
+retry, durable exclusive entity maintenance, isolated S3/access, representative resources
+and native-Mac shutdown remain open; dcc-02–05 stay unchecked. No remote/production
+operation, scheduling installation, utility implementation, commit, push or unrelated
+cleanup; existing environments, datasets, artifacts and prior evidence remain preserved.
+
+## [2026-11-14] verification | deletion scope correction and separate source freeze
+
+Initial standalone deletion rerun finishes with 47 passes/two failures in 86.45 s;
+complete report and fixtures retained. Both multi-hour repair/original-preservation
+assertions pass before the test's appended public one-hour verification tail fails.
+Corrected only the test scope: both public multi-hour refusals remain asserted;
+lower-level read-only disposition follows independent current-authority setup.
+Focused corrected controls pass two tests/30 deselected in 4.33 s, complete report
+inspected. No public scope or runtime safety boundary widened.
+
+Scoped 11-target Ruff lint/format passes after formatting/import cleanup. Created
+separate 265-identity deletion source/test/DBT/runtime-lock freeze; main and standalone
+focused runs are running with distinct retained reports. Updated Linux runbook,
+README, canonical ETL guidance, verification and plan with provisional disposition,
+separate resolution and retained original failure. Full regressions and renewed
+source/wiki/privacy closure remain required; no deletion or dcc-02–05 acceptance.
+Broader retry/entity maintenance, isolated S3/access, resources and native-Mac
+shutdown remain open. No remote/production operations, scheduling installation,
+utility implementation, commit/push or unrelated cleanup.
+
+## [2026-11-14] verification | frozen standalone deletion focus green
+
+Frozen standalone deletion focus passes 49 tests in 90.48 s, exit 0. Complete
+retained report inspected after notification; all 265 deletion source/test/DBT/
+runtime-lock identities still match. Main focus remains pending; source/tests stay
+frozen until its result, full-report inspection and identity check. Affected/full
+regressions and renewed source/wiki/privacy closure remain required. No deletion
+or dcc-02–05 acceptance, remote/production operation, scheduling installation,
+utility implementation, commit, push or unrelated cleanup.
+
+## [2026-11-14] verification | both frozen deletion focuses green
+
+Main deletion focus passes 33 tests in 348.84 s, exit 0; complete report inspected
+after notification and all 265 frozen identities match. Together with the 49-pass
+standalone focus, this permits separate affected-main/standalone regressions, now
+running with distinct retained reports on unchanged source. Full regressions await
+successful affected results and post-notification identity checks. Fresh 11-target
+Ruff lint/format checks pass; source/tests remain frozen.
+
+Reconciled design/handoff/index with provisional original-bound deletion disposition
+and the one-hour public completion boundary. Broader retry/entity maintenance,
+isolated S3/access, representative resources and native-Mac shutdown remain open;
+dcc-02–05 stay unchecked. No endpoint/production operations, installed scheduling,
+utility implementation, commit, push or unrelated cleanup.
+
+## [2026-11-14] audit | deletion source and wiki review closed
+
+Read all 11 deletion runtime/test targets completely and reviewed service/client,
+effective-input/configuration/operator guidance. Deletion freeze differs from the
+accepted reader/checkpoint baseline in seven existing Python files plus four new
+deletion source/test files; all other frozen identities match. Fresh scoped Ruff
+lint/format checks pass. Complete changed-wiki diff/new-page privacy inspection,
+including the earlier unread retained-diff prefix and subsequent doc updates, is
+closed. Scoped audit passes nine Markdown/seven frontmatters, 217 grounding paths,
+276 inline sources, 421 wikilinks and 45 sections; zero new errors, with index/log
+exceptions preserved. Both whitespace checks pass. Unrelated infographic, dataset,
+environment and historical failure artifacts remain untouched.
+
+Affected main/standalone regressions remain running on frozen source; full suites
+await successful notifications, complete reports and identity checks. Review closure
+does not establish deletion or dcc-02–05 acceptance. Broader retry/entity maintenance,
+isolated S3/access, resources and native-Mac shutdown remain open. No remote or
+production operations, installed scheduling, utility implementation, commit/push.
+
+## [2026-11-14] regression | deletion affected standalone green
+
+Affected standalone notification passes 203 tests in 177.37 s, exit 0. Complete
+report inspected and all 265 deletion source/test/DBT/runtime-lock identities match.
+Launched full standalone on unchanged source with its own retained report only
+after those checks. Affected main remains pending; full main has not started.
+Source/tests stay frozen, and no full-suite or deletion acceptance is inferred.
+
+Verification/plan/handoff/index and coordination README reflect this result and
+pending launches. Prior failures, original archives and unrelated artifacts remain
+preserved. Verified retry/entity maintenance, isolated S3/access, representative
+resources and native-Mac shutdown stay open; dcc-02–05 remain unchecked. No remote
+or production operations, installed scheduling, utility implementation, commit/push.
+
+Read-only next-slice review adds planned retry/COMMIT/exclusive entity controls to
+the implementation plan, without running them or selecting a new schema. Existing
+maintenance remains original-blocked-writer-only; deterministic entity pending
+recovery still rejects changed candidates/inputs/provenance. Corrected design wording
+to distinguish current verified completion from the separate unimplemented retry
+disposition. No frozen source/test identities changed.
+
+## [2026-11-14] regression | deletion full standalone green
+
+Full standalone notification passes 509 tests/two opt-in isolated-S3 skips in
+274.88 s, exit 0. Inspected the complete report and verified all 265 deletion
+source/test/DBT/runtime-lock identities after notification. The standalone affected
+and full gates now pass on the frozen revision; affected main remains pending and
+full main has not started. No main result, combined deletion acceptance or actual
+endpoint qualification is inferred; source/tests stay frozen.
+
+Verification/plan/handoff/index and coordination README updated. Original failed
+reports/archives and unrelated artifacts remain preserved. Retry/entity maintenance,
+isolated S3/access, representative resources and native-Mac shutdown remain open;
+dcc-02–05 stay unchecked. No remote/production operation, installed scheduling,
+utility implementation, commit or push.
+
+## [2026-11-14] regression | deletion affected main green, full main running
+
+Affected main notification passes 515 tests/one explicit isolated-local compactor/DBT
+migration opt-in skip in 1345.33 s, exit 0. Inspected the complete report and verified
+all 265 deletion source/test/DBT/runtime-lock identities after notification. Full main
+is now running on unchanged source with a distinct retained report, launched only
+after those checks. Full standalone's 509-pass/two-opt-in-S3-skip result remains
+separate; no full-main outcome or combined deletion acceptance is inferred.
+
+Updated verification/plan/handoff/index and coordination README. Source/tests remain
+frozen; original failures and unrelated artifacts remain preserved. The elapsed time
+does not establish load attribution or alter the lifecycle's ten-second wait. Broader
+retry/entity maintenance, exact isolated S3/access, representative resources and
+native-Mac shutdown stay open; dcc-02–05 remain unchecked. No remote/production
+operations, installed scheduling, utility implementation, commit or push.
+
+## [2026-11-14] regression | deletion combined local gate closed
+
+Full main notification passes 788 tests/three skips in 1492.66 s, exit 0. Complete
+report inspected; all 265 deletion source/test/DBT/runtime-lock identities match and
+the manifest hash is unchanged. Together with 515 affected-main passes/one opt-in
+skip, 203 affected-standalone passes and 509 full-standalone passes/two opt-in S3
+skips, this closes deletion's combined local regression gate. Each full suite began
+only after its own affected pass, complete-report inspection and identity check.
+Historical failures, original archives and elapsed-time interpretations are unchanged.
+
+Reconciled verification, plan, handoff, index, canonical ETL guide, coordination
+README and Linux runbook. Retain the accepted freeze/reports and release source for
+the separate retry/durable entity-maintenance slice with new red/green controls and
+regressions. This is not dcc-02–05 or Linux acceptance: exact isolated S3/access,
+representative sizing/reduced-budget rerun and native-Mac shutdown remain open.
+No remote/production operation, installed scheduling, utility implementation,
+commit, push or unrelated cleanup.
+
+## [2026-11-14] implementation | retry read-only prerequisite red controls
+
+After deletion's local regression closure, retained its baseline and added a narrow
+read-only retry preflight with no ledger transition/schema change. Complete red
+reports establish 18 standalone and nine main missing-module failures after actual
+synthetic merge failures; main retains exit 2 and stopped-child evidence. The first
+standalone rerun has two failures/16 scope-masked negative passes because its reused
+fixture still enables deletion. Those passes are not active corruption evidence;
+retain failures and correct the fixture scope before rerunning all controls.
+
+Verification/plan/handoff updated. Durable retry, exclusive entity maintenance,
+new focused/affected/full evidence, isolated S3/access and representative resources
+remain open. Native-Mac shutdown stays with its worker; dcc-02–05 stay unchecked.
+No remote/production operation, installed scheduling, commit, push or unrelated cleanup.
+
+## [2026-11-14] verification | retry fixture correction exposes late-prefix gaps
+
+Inspected main's complete first-rerun report and retained original receipt: one
+failure/eight passes in 27.09 s, with inherited deletion enabled and no verifier
+launch. Like standalone's first rerun, these negatives are scope-masked, not active
+corruption coverage. Both helpers now disable deletion before the original merge;
+runtime deletion/entity/scope refusal remains unchanged and prior evidence retained.
+
+Corrected standalone rerun finishes with 19 passes/two failures in 2.36 s, exit 1;
+complete report inspected. Previously masked controls now pass, but late marker and
+empty output changes after the second data recheck are wrongly accepted. Retain the
+failed fixtures and repair the final-prefix gap before freeze/regression claims.
+Corrected main result remains separate. Updated verification/plan/handoff; durable
+retry/entity operations, endpoint/resource gates and dcc-02–05 remain open. No
+remote/production operation, installed scheduling, commit/push or unrelated cleanup.
+
+## [2026-11-14] implementation | retry late-prefix repair and extended controls
+
+Corrected main preflight passes nine controls in 30.17 s, exit 0; complete report
+inspected. Repaired standalone's demonstrated late-marker/output gaps with content
+and both-prefix checks after each data observation. Expanded standalone passes
+45 controls in 4.34 s, exit 0; complete report inspected. New controls cover strict
+request/checksum/regular-file refusal, original archive/context binding, late input/
+archive changes and request/result budgets. Main's extended controls remain separate.
+
+All 265 accepted deletion baseline identities still match. Updated source guidance,
+design/index/verification/plan; scoped wiki audit passes nine Markdown/seven
+frontmatters, 221 grounding paths, 288 inline sources, 423 links and 47 sections;
+both whitespace checks pass. Four-target Ruff identifies an import-order issue in
+the extended main test, deferred until its run finishes; no fresh lint pass is claimed.
+Separate retry freeze/regressions and durable retry/entity operations remain open,
+as do isolated S3/resources/native-Mac gates and dcc-02–05. No remote/production
+operation, installed scheduling, commit/push or unrelated cleanup.
+
+## [2026-11-14] repair | retry original-intent source-count binding
+
+Extended main report finishes with three failures/30 passes in 112.87 s, exit 1;
+complete report inspected. Changed source rows/files/bytes are accepted despite
+valid shutdown and consistently rehashed verifier captures; all controls reach
+actual independent launch. Preserve these failures/fixtures, without reinterpreting
+the earlier nine-control pass or standalone's 45-control result.
+
+Main now reads bounded original migration-intent JSON, authenticates its link to
+the captured blocked terminal, bounds individual/aggregate totals and requires exact
+independently reported rows/files/bytes. No main data SQL, ledger schema, retry
+permission or cursor mutation. Combined the main test's duplicate protocol import;
+four-target Ruff lint passes. New 33-main/45-standalone retained reruns are running;
+two format-only changes are deferred until their notifications. Separate review,
+freeze/focused/affected/full gates remain open. All 265 deletion identities still
+match before repair. Updated verification/plan/handoff/index and runtime guidance;
+dcc-02–05 and durable retry/entity/S3/resources/native-Mac gates remain open. No
+remote/production operation, installed scheduling, commit/push or unrelated cleanup.
+
+## [2026-11-14] verification | retry controls green and separate frozen focuses
+
+Repaired retry preflight passes 33 main controls in 113.08 s and 45 standalone in
+4.19 s, exit 0; complete reports inspected after notifications. Main's three changed
+rows/files/bytes controls now refuse while retaining the original failed run,
+archive, cursor and admission block. Prior failures/fixtures remain unchanged.
+
+After both notifications, applied two format-only changes; fresh four-target Ruff
+lint/format checks pass. Read all four new source/test files completely and reviewed
+their JSON-only count authentication, request-before-launch, independent data/
+capture/recheck and budget/refusal boundaries. Complete changed-wiki diff and new
+native-Mac tension page inspected for privacy; scoped audit passes nine Markdown/
+seven frontmatters, 221 grounding paths, 289 inline sources, 423 links and 47 sections;
+both whitespace checks pass. No whole-wiki lint claim or unrelated cleanup.
+
+Created the separate 269-identity retry freeze; comparison adds only the four retry
+files and retains all 265 accepted deletion identities. Frozen standalone focus
+passes 45 controls in 4.18 s; frozen main passes 33 in 112.95 s, exit 0. Complete
+reports inspected and all identities match after each notification. Launched each
+affected regression only after those checks; both affected suites are running and
+neither full suite has started. Reconciled stale verification/plan/handoff/index
+after two failed documentation patch attempts; historical evidence remains intact.
+Source/tests/DBT/runtime locks stay frozen, and each full launch requires its own
+affected notification, complete-report inspection and unchanged-identity check.
+Preflight grants no retry permission. Durable retry/entity operations, isolated
+S3/access, resources and native-Mac shutdown remain open; dcc-02–05 stay unchecked.
+No remote/production operation, installed scheduling, utility implementation,
+commit or push.
+
+## [2026-11-14] regression | retry affected standalone green
+
+Affected standalone notification passes 248 tests in 179.13 s, exit 0. Complete
+report inspected and all 269 retry source/test/DBT/runtime-lock identities match.
+Launched full standalone on unchanged source with its own retained report only
+after those checks. Affected main remains running; full main has not started.
+Source/tests stay frozen; no full-suite or retry permission is inferred.
+
+Verification/plan/handoff/index reflect the result and pending gates. Renewed
+scoped wiki and both whitespace checks pass; complete previously reviewed diff
+plus documentation-only delta inspected for privacy. Original failures/archives
+and unrelated artifacts remain preserved. Durable retry/entity integration,
+isolated S3/access, resources and native-Mac shutdown remain open; dcc-02–05 stay
+unchecked. No remote/production operation, installed scheduling, utility
+implementation, commit or push.
+
+Read-only next-slice review adds explicit ordering to the plan/handoff: v3's single
+unresolved owner and genuine completion history preclude fake completion or deletion
+of the failed original to enable retry. Entity-only operations need distinct bounded
+receipts/verification/ownership, without widening public one-hour `compact` validators.
+Existing `init-authority` verifies committed snapshots rather than creating them;
+pending entity recovery must retain original candidates/input/window/bootstrap.
+No schema version is selected, no new retry/entity result is claimed, and frozen
+source/tests remain unchanged. The follow-up scoped audit found one newly added
+handoff section-link typo; corrected it to the existing operator-recovery heading.
+Rerun passes nine Markdown/seven frontmatters, 221 grounding paths, 294 inline
+sources, 424 links and 48 sections. The complete previously reviewed diff plus
+all new documentation deltas is privacy-reviewed; fresh four-target Ruff lint/
+format and the unchanged 269-identity check pass.
+
+## [2026-11-14] regression | retry full standalone green
+
+Full standalone notification passes 554 tests/two opt-in isolated-S3 skips in
+287.54 s, exit 0. Complete report inspected and all 269 retry source/test/DBT/runtime-
+lock identities match; manifest hash unchanged. Its full suite began only after the
+248-pass affected notification, complete-report inspection and unchanged-identity
+check. Both standalone regression gates pass; affected main remains running and
+full main has not started. No combined closure, retry permission or endpoint pass
+is inferred, and source/tests/DBT/runtime locks stay frozen.
+
+Updated verification/plan/handoff/index. Original failures/archives and unrelated
+artifacts remain preserved. Durable retry/entity integration, isolated S3/access,
+representative sizing/reduced-budget rerun and native-Mac shutdown remain open;
+dcc-02–05 stay unchecked. No remote/production operation, installed scheduling,
+utility implementation, commit or push.
+
+## [2026-11-14] regression | retry affected main green, full main running
+
+Affected main notification passes 548 tests/one approval-gated isolated-local
+compactor/DBT migration skip in 1446.75 s, exit 0. Complete report inspected and all
+269 retry source/test/DBT/runtime-lock identities match; manifest hash unchanged.
+Launched full main on unchanged source with its own retained report only after
+those checks. Full standalone's 554-pass/two-opt-in-S3-skip result stays separate;
+no full-main, combined retry-preflight closure or Linux acceptance is inferred.
+Source/tests/DBT/runtime locks remain frozen; elapsed time does not establish load
+attribution or change the lifecycle's ten-second wait.
+
+Updated verification/plan/handoff/index, coordination README and Linux runbook.
+Original failed reports/archives and unrelated artifacts remain preserved. Durable
+retry/entity integration, isolated S3/access, representative sizing/reduced-budget
+rerun and native-Mac shutdown remain open; dcc-02–05 stay unchecked. No remote/
+production operation, installed scheduling, utility implementation, commit or push.
+
+## [2026-11-14] regression | retry preflight combined local gate closed
+
+Full main notification passes 821 tests/three approval-gated skips in 1602.08 s,
+exit 0. Complete report inspected and all 269 retry source/test/DBT/runtime-lock
+identities match; manifest hash unchanged. Combined with 548 affected-main passes/
+one opt-in skip, 248 affected-standalone passes and 554 full-standalone passes/two
+opt-in S3 skips, this closes the read-only preflight local regression gate. Each full
+suite began only after its own affected notification, complete-report inspection and
+unchanged-identity check. Fresh four-target Ruff lint/format pass; no regression
+remains running. Historical failures, scope-masked disclaimers and original archives
+stay intact; elapsed time establishes no load attribution or lifecycle wait change.
+
+Reconciled verification/plan/handoff/index, coordination README and Linux runbook;
+promoted stabilized read-only semantics to the canonical ETL guide. Retain the
+269-identity baseline and reports before new durable retry/entity slices with their
+own controls/regressions. No retry disposition, cursor/admission transition or entity
+permission is supplied by preflight. Exact isolated S3/access, representative sizing/
+reduced-budget rerun, native-Mac shutdown and dcc-02–05 remain open. No remote/
+production operation, installed scheduling, utility implementation, commit or push.
+
+Closure review inspected the complete changed-wiki diff and new native-Mac tension
+page for privacy. Renewed scoped audit passes nine Markdown/seven frontmatters,
+223 grounding paths, 297 inline sources, 425 links and 49 sections; both whitespace
+checks pass. Index/log exceptions, unrelated infographic/data/environment artifacts
+and retained historical reports remain unchanged; no whole-wiki lint claim.
+
+## [2026-11-14] implementation | intentional-retry ownership red controls started
+
+Final documentation closure delta inspected; renewed scoped audit and both
+whitespace checks pass, with all 269 accepted preflight identities unchanged.
+Retain that baseline and reports. New genuine failed-merge controls target fresh
+receipt/intent ownership, exact original preservation/cursor, actual COMMIT/launch
+crashes, lost acknowledgment, evidence refusal and v3-compatible upgrade. First
+retained red run is pending; runtime implementation has not changed. Selected design
+adds explicit v4 bounded retry dispositions without completing or deleting failed
+originals or temporarily reopening admission. Entity-only ownership remains separate;
+dcc-02–05 and actual endpoint/resource/native-Mac gates stay open. No remote or
+production operation, scheduling installation, utility implementation, commit/push.
+
+First red notification finishes with 11 failures in 28.20 s; complete report
+inspected, failed fixtures retained and all 269 baseline identities rechecked before
+runtime edits. Initial implementation adds explicit v4 compatible upgrade/bounded
+dispositions and fresh receipt-bound retry intent, preserving failed originals and
+cursor without reopening. Private launch refactoring preserves conservative and
+normal-success APIs. Four-target Ruff lint/format pass; first 11-control rerun is
+running. No new retry/service/Linux acceptance is inferred.
+
+First rerun finishes with six failures/five passes in 56.13 s, exit 1; complete
+report inspected and failures retained. Fresh synthetic diagnosis finds incorrect
+pretty-print reconstruction of actual CLI errors; repair retains/authenticates
+their exact original bytes separately from parsed JSON. Extended controls add
+late-input and same-count changed-content refusal, including audited recovery.
+The first extended run is interrupted, not passed; its report/fixtures remain
+intact. Human reports the connection fixed; process inventory shows no surviving
+test/compactor from that run. Launched a fresh 13-control rerun on unchanged
+source/tests with a distinct report. No service, full-suite or Linux acceptance.
+
+## [2026-11-14] repair | intentional-retry late-input and original-identity gaps
+
+Fresh resumed extended report finishes with two failures/11 passes in 83.33 s,
+exit 1; all 68 lines inspected and fixtures retained. The original 11 controls
+pass, but post-COMMIT input arrival and same-schema/same-count changed content at
+launch wrongly complete. Neither is dismissed as a fixture/connectivity failure.
+Reconciled verification/plan/handoff/index. Repair now targets fresh independent
+post-COMMIT/pre-launch disposition and exact original/new migration-intent identity
+checks shared by normal completion and audited recovery. No successor freeze,
+affected/full/service gate, Linux acceptance, remote operation or commit/push.
+
+Distinct independent post-COMMIT/pre-launch observation and exact authenticated
+original/new migration-intent identities are implemented. Completion and audited
+resolution share the source hash/partition/schema/count checks; the failed original
+and exact cursor remain preserved on uncertainty. Repaired 13-control rerun passes
+13 in 89.68 s, exit 0; complete report inspected. Five-target Ruff lint/format pass.
+Follow-up removes ambient credential re-resolution from completion in favor of
+already frozen ephemeral credentials and unchanged storage scope. New retained
+history/compatibility/budget/evidence/service controls precede another rerun; no
+successor freeze or affected/full gate exists, and Linux/dcc-02–05 remain open.
+
+Extended 41-control run remains pending. Separate existing v2 compatibility control
+retains one failure in 3.80 s: the synthetic legacy fixture wrongly includes v4's
+retry-history origin. Complete 157-line report inspected. Corrected only its
+version-specific event selection; genuine authority/reservation/outbox preservation
+and runtime upgrade validation stay intact. Fresh focus passes one in 3.99 s,
+exit 0, complete report inspected. Four intended source deltas left 265 of 269
+accepted identities unchanged before that fixture correction; no successor freeze
+or actual legacy-upgrade defect is inferred.
+
+## [2026-11-14] verification | intentional-retry extended service failures retained
+
+Extended 41-control report finishes with four failures/37 passes in 233.40 s,
+exit 1; all 493 lines inspected. All failures reach missing argparse `retry-hour`
+dispatch, not accepted service refusal. The 37 passes cover credential reuse,
+retained semantics/history/budgets, audited clean-retry resolution and genuine v3
+completion/readers/outbox/tombstones. Original report/failed fixtures stay unchanged.
+Reconciled verification/plan/handoff/index. Next repair is strict Linux-only
+original-receipt dispatch, confirmed/reasoned under uninterrupted exclusion and an
+evolving clock, without transport/grants or permissive maintenance flags. No successor
+freeze, affected/full gate, Linux acceptance, remote operation, cron install or push.
+
+## [2026-11-14] implementation | Linux intentional-retry service controls green
+
+Linux-only `retry-hour` loads the original receipt and uses the intentional-retry
+adapter under one uninterrupted ledger lock with an evolving clock. Confirmation/
+reason and early unrelated-flag refusal are mandatory; no transport/grants. Fresh
+nine-target Ruff lint/format passes. Repaired original/extended/v2 combined run passes
+42 controls in 244.42 s, exit 0; complete report inspected. Prior failures remain
+retained. New genuine three-hour history/read-budget/paging/competing-process and
+original-settings/clock service controls are lint/format-clean; their separate first
+run is pending. Reconciled verification/plan/handoff/index and coordination guides.
+No successor freeze or affected/full gate, entity-only ownership, Linux acceptance,
+remote/production operation, installed scheduling, commit or push.
+
+## [2026-11-14] verification | retry history restoration ordering failure retained
+
+First genuine three-hour history/exclusion report finishes with one failure/12
+passes in 60.14 s, exit 1; all 69 lines inspected and failed fixtures retained.
+The late-page missing-audit refusal executes; restoration equality uses unordered
+SQL rows after reinserting the original audit, with only the events list differing.
+Correct deterministic complete-row test comparison, retaining all columns and runtime
+validation/corruption assertions, before a distinct rerun. Other controls cover
+read-budget non-pruning, historical-runtime non-reading, actual competing-process
+exclusion, early flags and original-settings/evolving-clock behavior. Reconciled work
+artifacts/index; no successor freeze/regression or Linux acceptance, remote mutation,
+cron installation, commit or push.
+
+## [2026-11-14] verification | retry history and v3 upgrade controls green
+
+Deterministic complete-row comparison changes only the history test helper; runtime
+validation/corruption assertions stay unchanged. Distinct history rerun passes 13 in
+60.10 s, exit 0, complete report inspected. Actual v3 upgrade before/after-COMMIT
+crashes and lost-ack controls pass three in 17.99 s; complete report inspected.
+Genuine completion bytes/readers/outbox/tombstones survive, with no manufactured
+history. New normal/recovery frozen-credential controls are running on local fixtures,
+not S3. Fresh accepted-baseline comparison finds 263/269 identities unchanged; six
+intended source/v2-fixture deltas, unchanged standalone/DBT/runtime locks and original
+manifest hash verified. New files still need a successor freeze. Reconciled work
+artifacts/index/design/ETL pointers and coordination guides. No successor regression,
+entity-only permission, Linux/endpoint/resource/native-Mac acceptance, production
+operation, installed scheduling, commit or push.
+
+Credential-reuse notification passes two controls in 24.88 s, exit 0; complete report
+inspected. Genuine local normal completion and audited resolution reuse the exact
+frozen object without another storage resolver call; no S3/provider qualification is
+inferred. Complete 14-target successor source/test review and fresh Ruff lint/format
+pass, including original receipt/environment, private launch/preflight/history,
+completion/recovery identities, legacy completed history and strict service dispatch.
+No test run remains pending before successor freeze; affected/full gates are still
+unstarted. Historical failures and unrelated artifacts remain untouched.
+
+## [2026-11-14] regression | intentional-retry successor freeze and standalone focus
+
+Separate 275-identity successor freeze created/checked with SHA-256
+`01dc68118b911479d666c38d7495ccf6e1493bcc4c36441e0705ae9a21093f95`; accepted
+269-identity preflight manifest retained unchanged. Pre-freeze scoped audit passes
+nine Markdown/seven frontmatters, 223 grounding paths, 318 inline sources, 430 links
+and 54 sections. Both whitespace checks pass; complete 2,600-line tracked wiki diff
+privacy scan has zero findings, native-Mac tension page read. Initial scan's system-
+Python subprocess incompatibility is corrected by using the explicit main runtime;
+no source defect or whole-wiki lint claim.
+
+Frozen standalone focused notification passes 45 tests in 4.20 s, exit 0; complete
+report inspected and all 275 identities match. Only then launched its affected suite
+with a distinct retained report. Main focus remains pending; no main affected or full
+suite launched. Reconciled verification/plan/handoff/index/design and coordination
+guides. Source/tests/DBT/runtime locks stay frozen; next stages require each runtime's
+own notification, complete report and unchanged identities. Historical failures and
+unrelated artifacts preserved. Entity-only ownership, exact isolated S3/access,
+representative/reduced-budget resources, native-Mac shutdown and dcc-02–05 remain open.
+No remote/production operation, installed scheduling, utility implementation, commit
+or push; lifecycle ten-second wait remains unchanged, with no load attribution.
+
+## [2026-11-14] regression | intentional-retry standalone affected green
+
+Frozen standalone affected notification passes 248 tests in 180.48 s, exit 0;
+complete report inspected and all 275 successor identities match, manifest hash
+unchanged. Only then launched full standalone with its distinct retained report.
+Main focus remains pending; no main affected/full suite launched. Earlier post-freeze
+reconciliation audit passes nine Markdown/seven frontmatters with unchanged scoped
+counts and both whitespace checks; complete 2,685-line tracked wiki diff privacy scan
+has zero findings. Updated verification/plan/handoff/index/design and coordination
+guides. Source/tests/DBT/runtime locks stay frozen. Historical failures and unrelated
+artifacts preserved; elapsed time gives no load attribution or ten-second wait change.
+Entity-only ownership, actual isolated S3/access, resources, native-Mac shutdown and
+dcc-02–05 remain open. No remote/production operation, cron install, commit or push.
+
+## [2026-11-14] regression | intentional-retry main focused green
+
+Frozen main focused notification passes 119 tests in 512.18 s, exit 0; complete
+report inspected and all 275 successor identities match, manifest hash unchanged.
+Only then launched main affected with a distinct retained report. Standalone full
+remains running; main full has not launched. Updated verification/plan/handoff/index/
+design and coordination guides. Source/tests/DBT/runtime locks stay frozen; each full
+requires its own affected notification, complete report and unchanged identities.
+No Linux/entity-only/endpoint/resource/native-Mac acceptance or dcc-02–05 closure is
+inferred. Historical failures and unrelated artifacts remain untouched, with no
+ten-second wait change or load attribution. No remote/production operation, scheduling
+installation, utility implementation, commit or push.
+
+## [2026-11-14] regression | intentional-retry standalone full green
+
+Frozen full standalone notification passes 554 tests/two opt-in S3 skips in 290.13 s,
+exit 0; complete report inspected and all 275 successor identities match, manifest
+hash unchanged. Its full launch followed its own affected notification/report/identity
+checks. The live S3 approval guards were reread; skips are isolated read-only and
+destination-write gates, not endpoint passes. No remote operation attempted.
+Standalone successor gates are green; main affected remains running and main full
+has not launched, so combined intentional-retry regression stays open. Reconciled
+verification/plan/handoff/index/design and coordination guides. Keep source/tests/DBT/
+runtime locks frozen. Historical failures and unrelated artifacts remain untouched;
+elapsed time establishes no load attribution or ten-second wait change. Entity-only
+ownership, Linux/dcc-02–05, isolated S3/access, resources and native-Mac remain open.
+No production operation, scheduling installation, utility implementation, commit or push.
+
+## [2026-11-14] regression | intentional-retry main affected green
+
+Frozen main affected notification passes 607 tests/one isolated-local migration
+opt-in skip in 1843.36 s, exit 0; complete report inspected and all 275 successor
+identities match, manifest hash unchanged. Live migration approval guard reread;
+the skip is not an integration or endpoint pass. Only then launched full main with
+its distinct retained report. Standalone full remains green at 554/two opt-in S3
+skips; full-main result and combined intentional-retry closure are not inferred.
+Updated verification/plan/handoff/index/design and coordination guides. Source/tests/
+DBT/runtime locks remain frozen; await full-main notification then inspect its complete
+report and all identities. Historical failures and unrelated artifacts stay untouched,
+with no ten-second wait change or load attribution. Linux/dcc-02–05, entity-only
+ownership, exact isolated S3/access, resources and native-Mac shutdown remain open.
+No remote/production operation, scheduling installation, utility implementation,
+commit or push.
+
+## [2026-11-14] regression | intentional-retry combined local gate closed
+
+Frozen full main notification passes 880 tests/three opt-in skips in 2013.77 s,
+exit 0; complete report inspected and all 275 successor identities match, manifest
+hash unchanged. Combined with 119 main focus, 607 affected/one opt-in skip, 45
+standalone focus, 248 affected and 554 full/two S3 opt-in skips, this closes the
+intentional-retry local regression gate. Each full followed its own affected
+notification/report/identity checks. Main skip guards reread: copied-S3 migration,
+synthetic-S3 entities and isolated-local full migration remain unqualified. Fresh
+14-target Ruff lint/format passes; no regression remains running. Retain the freeze/
+reports and every historical failure before a separate entity-only slice with its
+own active controls and successor gates. Updated verification/plan/handoff/index/
+design and coordination guides; promoted stabilized facts to canonical ETL guidance.
+Local closure does not qualify Linux/dcc-02–05, entity-only ownership, exact isolated
+S3/access, representative/reduced-budget resources or native-Mac shutdown. Original
+datasets/configuration/environment and unrelated work remain untouched. No remote/
+production operation, scheduling installation, utility implementation, commit or push;
+no ten-second wait change, manufactured evidence or unsupported load attribution.
+
+Closure scoped audit passes nine Markdown/seven frontmatters, 223 grounding paths,
+328 inline sources, 432 links and 56 sections; both whitespace checks pass. Complete
+2,857-line tracked wiki diff privacy scan has zero findings; native-Mac tension page
+reread. Initially misplaced closure entry moved to log tail, preserving history.
+
+## [2026-11-14] verification | entity-only first red result retained
+
+First entity-only run finishes with 22 failures in 35.05 s, exit 1. All 749 report
+lines inspected; report `/tmp/opencode/dcc-linux-entity-operations-first-red.txt`
+and failed fixtures `/tmp/opencode/dcc-retained-8kaw1iqo` retained. Missing entity
+execution API causes every failure; four child controls exit 1 instead of 87, so no
+entity crash boundary executes. The 22 lint/format-clean controls establish genuine
+genesis/replay inputs and actual reader/raw-owner fixtures, not accepted refusal or
+entity completion. All 275 intentional-retry accepted identities match afterward;
+runtime, standalone verifier, DBT and locks remain unchanged. No test remains pending.
+The first documentation patch failed before applying; this reconciliation records
+the actual red result rather than a pending run. Updated verification/plan/handoff/
+index and coordination guides. Next add standalone verifier red controls and distinct
+bounded receipts/compatible ownership; public one-hour validators remain strict.
+Linux/dcc-02–05, original-bound publication recovery, isolated S3/access, resources
+and native-Mac shutdown remain open. No remote/production operation, installed
+scheduling, utility implementation, commit or push.
+
+## [2026-11-14] verification | entity-verifier red report fully reviewed
+
+Standalone first run retains 64 failures in 29.53 s, exit 1. All 2,972 retained
+report lines inspected; notification's extra two lines are its fixture-retention
+footer. Every failure reaches the missing entity verifier after genuine prelaunch
+original fixtures, not an accepted refusal or fixture defect. Preserve report
+`/tmp/opencode/dcc-linux-entity-verifier-first-red.txt` and failed fixtures
+`/tmp/opencode/dcc-retained-2qrtl4sg`. All 275 accepted retry identities match after
+notification. New distinct-receipt controls are lint/format-clean and their separate
+first red run is pending. Reconciled verification/plan/handoff/index and coordination
+guides. Runtime/standalone implementation/DBT/locks unchanged; public one-hour validators
+remain strict. No Linux/dcc-02–05, S3/resource/native-Mac acceptance, remote/production
+operation, scheduling installation, utility implementation, commit or push.
+
+## [2026-11-14] implementation | distinct entity receipts initial focused green
+
+Receipt first red retains 26 missing-module failures in 0.51 s, exit 1; all 523
+lines inspected and failed fixtures `/tmp/opencode/dcc-retained-_mrkbegp` preserved.
+Added separate bounded entity receipt preparation/validation/loading/prelaunch recheck;
+no ledger open/upgrade, dataset operation or launch permission. Fresh two-target Ruff
+lint/format passes. Distinct first rerun passes 26 controls in 6.16 s, exit 0;
+complete report `/tmp/opencode/dcc-linux-entity-execution-first-rerun.txt` inspected
+and all 275 accepted retry identities unchanged afterward. No test remains pending.
+Reconciled verification/plan/handoff/index and coordination guides. Standalone verifier
+and restart-visible entity ownership remain missing; public one-hour validators,
+DBT and runtime locks unchanged. Linux/dcc-02–05, original-bound publication recovery,
+isolated S3/access, representative/reduced-limit resources and native-Mac shutdown
+remain open. No remote/production operation, installed scheduling, utility implementation,
+commit or push; no manufactured evidence or ten-second lifecycle change.
+
+## [2026-11-14] verification | entity verifier initial green, review still open
+
+Separate standalone verifier implementation's first rerun passes 64 controls in
+36.47 s, exit 0; complete report `/tmp/opencode/dcc-linux-entity-verifier-first-rerun.txt`
+inspected and all 275 accepted retry identities unchanged. Retain all first-red evidence.
+Review identifies Python invalid-row collection, insufficient original-hour validation,
+missing early resource/storage/work-path checks and unauthenticated historical
+publication statistics; Ruff import/line-length and formatting are unfinished. Added
+genuine review controls before repairs; distinct report
+`/tmp/opencode/dcc-linux-entity-verifier-review-red.txt` is running. Keep active source/
+controls unchanged until notification/report review. Reconciled verification/plan/
+handoff/index and coordination guides. No verifier, ownership, Linux/dcc-02–05,
+S3/resource/native-Mac acceptance; public one-hour validators/DBT/runtime locks unchanged.
+No remote/production operation, scheduling installation, utility implementation, commit
+or push; lifecycle wait and unrelated data/configuration remain untouched.
+
+## [2026-11-14] verification | entity review red retained, fixture corrected
+
+First review finishes with 21 failures/two passes in 5.74 s, exit 1; complete
+955-line report inspected and failed fixtures `/tmp/opencode/dcc-retained-edpxkmjv`
+preserved. Eighteen failures exercise loader/validation/historical-observation gaps;
+three historical-statistic attacks stop at the fixture's nonexistent checkpoint
+`write` method. Corrected only that call to the live `publish` API and launched
+distinct `/tmp/opencode/dcc-linux-entity-verifier-review-corrected-red.txt`; source
+unchanged. All 275 accepted identities rechecked unchanged. No verifier qualification
+or historical corruption refusal is inferred; retain both reports before repairs.
+Public one-hour validators, DBT/locks, production data, lifecycle wait, S3/resource/
+native-Mac gates unchanged; no scheduling installation, utility, commit or push.
+
+## [2026-11-14] implementation | entity verifier repairs awaiting distinct rerun
+
+Corrected review red finishes with 21 failures/two passes in 6.94 s, exit 1; complete
+901-line report reviewed and failed fixtures preserved. Genuine rehashed historical
+rows/bytes/conflicts are wrongly accepted; no corruption refusal is inferred. All
+275 accepted retry identities match. Added verifier-only SQL input projection/counts/
+sorting, streaming compatible exclusion fingerprints and bounded diagnostics without
+Python invalid-row collections. Existing writer loader/public one-hour validators
+remain unchanged. Added exact original hours, early budget/storage/work-path checks,
+current parent-conflict validation and separate caller-authenticated historical
+publication evidence; never reconstruct history from current snapshots or archives.
+Fresh four-target Ruff lint/format passes after patch-only formatting. Distinct
+combined `/tmp/opencode/dcc-linux-entity-verifier-repairs-first-rerun.txt` is active;
+preserve active source/controls until notification/report/identity review. Reconciled
+verification/plan/handoff/index and coordination guides. Verifier, entity ownership,
+Linux/dcc-02–05, S3/resource/native-Mac gates remain open. No remote/production operation,
+scheduling installation, utility implementation, commit or push; lifecycle unchanged.
+
+## [2026-11-14] verification | failed verifier repairs reviewed, UDF dependency removed
+
+Combined repair and registration reruns each retain 12 failures/75 passes (35.57 s /
+35.77 s), exit 1; both complete 1,609-line reports reviewed and failed fixtures
+preserved. All 275 accepted retry identities match after latest report review. Valid
+input/completion, forward evolution and quarantine fail, so negative passes are not
+semantic qualification. Direct diagnostics retain the unfinished-result error and
+then missing optional NumPy dependency at DuckDB UDF registration. Replaced only the
+verifier UDF path with ephemeral SQL staging and one-record canonical insertion,
+keeping SQL projection/sorting/counts and streamed compatible fingerprints; separate
+bounded record/report limits, no pruning or runtime-lock change. Direct three-call
+loader diagnostic succeeds, not qualification. Expanded compatibility/quarantine/
+budgets/publication/request controls pass fresh five-target Ruff lint/format after
+patch-only cleanup. Distinct first qualification run is active; combined three-module
+rerun still required. Reconciled verification/plan/handoff/index and coordination
+guides. Entity ownership, Linux/dcc-02–05, isolated S3/resources and native-Mac remain
+open. No remote/production operation, scheduling installation, utility, commit or push;
+accepted files, datasets/configuration/environment and lifecycle wait unchanged.
+
+## [2026-11-14] verification | expanded verifier first red and selected-count repair
+
+Expanded qualification first run retains 35 failures/9 passes in 20.71 s, exit 1;
+all 4,671 original report lines preserved and reviewed through exact paragraph
+deduplication with complete original-range coverage. Failed fixtures preserved and
+all 275 accepted retry identities match. Nine loader controls pass; publication/
+request positives and excluded-host/lifecycle negatives are masked by the new
+verifier's nonexistent Inventory count attribute. Retained read-only stage trace
+diagnoses the defect; replaced only that reference with bounded selected group-length
+sum. Four genuine original genesis/replay input/completion diagnostics succeed; not
+qualification. Fresh five-target Ruff lint/format passes; distinct three-module
+combined run is active. Reconciled work artifacts/index and coordination guides.
+Ownership and dcc-02–05 remain open; no remote/production operation, scheduling,
+utility, commit or push. Public suppression, accepted source identities, runtime
+locks, datasets/configuration/environment and lifecycle wait unchanged.
+
+## [2026-11-14] verification | combined entity verifier green and expanded fixture controls
+
+Combined verifier run passes 131 controls in 91.07 s, exit 0; complete report inspected
+and all 275 accepted retry identities match. Ten expanded Unicode/quarantine,
+SQL-owned single-row materialization, shared-file-budget and genuine nonzero-parent-
+conflict controls retain five fixture failures/five passes (8.31 s). Complete 184-line
+report and accepted identities reviewed; failed fixtures preserved. Four fixtures
+assume Python-derived sentinel selection under legacy SQL with valid PID; one uses
+invalid SQL modifier ordering. Fixture-only corrections preserve legacy SQL projection
+and lower-level scope, force quarantine with missing PID and fix modifier order.
+Distinct corrected run passes ten/44 deselected (8.49 s); complete report and all 275
+identities reviewed. Fresh five-target Ruff lint/format passes. Separate expanded
+141-control combined rerun is active; source/controls remain fixed pending review.
+Completed all 3,417 lines of the retained tracked/new-Markdown privacy review snapshot;
+subsequent documentation deltas require separate inspection. Reconciled work artifacts,
+index and coordination guides; corrected stale canonical retry-status wording.
+Durable main-side publication authentication/entity ownership, Linux/dcc-02–05, isolated
+S3/resources and native-Mac shutdown remain open. No remote/production operation,
+installed scheduling, utility, commit or push; accepted source/runtime locks, lifecycle
+wait and unrelated artifacts remain unchanged.
+
+## [2026-11-14] verification | expanded standalone entity verifier focus closed
+
+Distinct expanded three-module rerun passes 141 controls in 97.91 s, exit 0;
+complete four-line report inspected and all 275 accepted retry identities unchanged.
+Standalone focused evidence is closed, not durable publication authentication,
+ownership or successor-regression acceptance. Complete 317-line documentation delta
+review passes privacy inspection; scoped audit passes nine Markdown/seven frontmatters,
+223 grounding paths, 341 inline sources, 435 wikilinks and 59 sections. Reconciled
+verification/plan/handoff/index and guides. Next ownership design keeps existing v4
+initialization/upgrade behavior, adding explicit confirmed opt-in v5; ordinary open
+never upgrades. No coordinated entity operation, endpoint/production mutation,
+installed scheduling, utility, commit or push. Linux/dcc-02–05, isolated S3/resources,
+native-Mac shutdown and whole-ledger rollback freshness remain open.
+
+## [2026-11-14] verification | opt-in v5 and post-verifier ownership red reviewed
+
+Opt-in upgrade first run retains seven failures (35.10 s), exit 1; all 295 report
+lines inspected. Unsupported `target_version` masks every upgrade/refusal/crash
+control; no boundary executes. Post-verifier ownership rerun retains 22 failures
+(44.08 s), exit 1; all 960 report lines inspected, all reaching missing `entity_writer`.
+Four child crash boundaries remain unexecuted. Both failed fixture directories and
+historical reports preserved. All 275 accepted retry identities match after complete
+report reviews, before source changes. Reconciled stale active statuses. Next implement
+explicit opt-in v5 schema compatibility before entity permission, keeping default v4
+and ordinary-open refusal. No production/remote operation, scheduling installation,
+utility, commit or push; Linux/dcc-02–05, resources and native-Mac remain open.
+
+## [2026-11-14] implementation | explicit opt-in v5 schema staging
+
+Added confirmed compatible v1–v4→v5 schema selection under the main-runtime lock and
+one actual upgrade COMMIT. Default v4 initialization/upgrade and ordinary-open refusal
+remain; existing raw proof/reader/outbox/tombstone/cursor rows are preserved. Separate
+entity-run/evidence tables deliberately reject nonempty history pending typed
+ownership/publication/completion. First seven-control repaired run passes (36.93 s),
+including actual v4 process crash/lost-ack boundaries; expanded compatibility passes
+37 (48.43 s). Both complete reports inspected; other 274 accepted identities unchanged,
+with only intentional `ledger.py` drift. Four-target Ruff lint/format passes.
+Distinct 286-identity focused snapshot retained; 43-control genuine-history and separate
+existing-ledger compatibility runs are active with source/tests fixed pending review.
+Complete 316-line intervening documentation/privacy delta reviewed; updated feature
+artifacts/index/design and operator guides. No entity permission or Linux/dcc-02–05
+acceptance, production/remote operation, scheduling installation, utility, commit or
+push. Historical failures, unrelated data/configuration, runtime locks and ten-second
+lifecycle wait remain unchanged; native-Mac shutdown/resources stay separate.
+
+## [2026-11-14] verification | opt-in v5 genuine-history focused green
+
+Combined schema/history notification passes 43 controls in 109.80 s, exit 0;
+complete three-line retained report inspected and all 286 focused identities match,
+manifest hash unchanged. Genuine original authority/completion, failed-original retry,
+post-v5 raw completion and original proof-corruption controls now have green evidence.
+Existing-ledger compatibility remains running; source/tests stay fixed pending its
+notification/report/identity review. Updated verification/plan/handoff/index/design
+and operator guides. These schema results confer no entity ownership/publication,
+service permission or Linux/dcc-02–05 acceptance. S3/access, resources and native-Mac
+shutdown remain separate; no remote/production operation, installed scheduling,
+utility implementation, commit or push. Historical failures and unrelated work retained.
+
+Complete 371-line schema/history documentation delta inspected for privacy; fresh
+scoped audit passes nine Markdown/seven frontmatters, 223 grounding paths, 350 inline
+sources, 435 wikilinks and 59 sections. Four-target Ruff lint/format and both repository
+whitespace checks pass. This remains scoped, not a whole-wiki or Linux acceptance claim.
+
+## [2026-11-14] verification | retained compatibility red and diagnostic-only repair
+
+Existing-ledger first compatibility finishes with two failures/149 passes in 401.75 s,
+exit 1; complete 271-line report inspected and all 286 schema-focused identities match
+before repair. Both failures execute actual COMMIT/lost-ack and original-row checks,
+then fail the repeat-upgrade diagnostic regex; later assertions did not execute.
+Failed fixtures and original report preserved. Restored only exact default-v4 refusal
+wording, retaining opt-in-v5 wording, semantics and all tests. Other 274 accepted-retry
+and other 285 schema-focused identities match; only ledger.py intentionally differs.
+Separate 286-identity diagnostic-repair freeze retained; fresh five-target Ruff lint/
+format passes. Repaired 46-control focus and 151-control compatibility runs are active;
+source/tests stay fixed until both notifications, complete reports and identity reviews.
+Reconciled feature verification/plan/handoff/index/design and operator guides. No entity
+ownership/publication or Linux acceptance is claimed; S3/access, resources and native-Mac
+shutdown remain separate. No remote/production operation, installed scheduling, utility,
+commit or push; historical failures, unrelated artifacts and lifecycle wait retained.
+
+## [2026-11-14] verification | diagnostic-repair focused green, compatibility pending
+
+Repaired focus notification passes 46 controls in 127.49 s, exit 0; complete three-line
+report inspected and all 286 diagnostic-repair identities match, manifest hash unchanged.
+The separate 151-control compatibility run remains active; source/tests stay fixed
+pending its notification/report/identity review. Complete 337-line post-schema-history
+documentation delta inspected for privacy. Fresh scoped audit passes nine Markdown/
+seven frontmatters, 223 grounding paths, 352 inline sources, 435 wikilinks and 59
+sections; five-target Ruff lint/format and both repository whitespace checks pass.
+Reconciled feature artifacts and operator guides. No typed entity ownership/publication,
+Linux/dcc-02–05 or broader resource/S3/native-Mac qualification is inferred. No remote/
+production operation, installed scheduling, utility, commit or push; failures preserved.
+
+## [2026-11-14] verification | diagnostic-repair schema compatibility closed
+
+Repaired compatibility notification passes 151 controls in 399.51 s, exit 0; complete
+five-line retained report inspected and all 286 repair identities match, manifest hash
+unchanged. Both frozen runs are complete; explicit opt-in-v5 schema compatibility is
+closed, not typed entity permission, successor full regressions or Linux acceptance.
+The original two-failure report and failed fixtures remain preserved. Complete 288-line
+focus-green documentation delta inspected for privacy; reconciled feature artifacts
+and operator guides. Next add separately supervised main-side entity-observation
+authentication before typed ownership/history and durable publication linkage; keep
+empty-history refusal until original-bound validation exists. S3/access, resources and
+native-Mac shutdown remain separate. No remote/production operation, installed
+scheduling, utility, commit or push; unrelated artifacts and lifecycle wait unchanged.
+
+## [2026-11-14] implementation | read-only main-side entity input authentication
+
+New 21-control first red retains 21 missing-module failures in 16.90 s, exit 1; all
+496 report lines inspected and all 286 schema-repair identities match before coding.
+Failed fixtures/report preserved. Added only a separate main-side input-observation
+adapter and controls; exact canonical receipt/request/command/capture/shutdown and
+original-input scope are authenticated under owner-free v5 exclusion. No main data
+SQL, dataset/ledger-row mutation, authority initialization, cursor/admission transition
+or entity launch. Original observations recheck actual single-link artifacts; bounded
+64 KiB result/1 MiB request/128 KiB proof overflow refuses without pruning. Empty-history
+guard unchanged; typed post-COMMIT ownership/publication/completion still missing.
+Two-target Ruff lint/format passes after patch-only formatting. Distinct first rerun
+is active; adapter/controls stay fixed pending notification/report/identity review.
+All 286 schema-repair identities remain unchanged. Reconciled feature artifacts/index/
+design and guides. Linux/dcc-02–05, S3/access/resources and native-Mac stay open; no
+remote/production operation, installed scheduling, utility, commit or push.
+
+## [2026-11-14] verification | entity-input command-byte red retained and repaired
+
+First adapter rerun retains one failure/20 passes in 65.77 s, exit 1; complete 39-line
+report inspected and all 286 schema-repair identities match before repair. Original
+command.json newline tampering is wrongly accepted through parsed JSON equality;
+the actual artifact refusal is not established. Failed fixtures/report and distinct
+288-identity first-rerun source snapshot preserved. Added exact canonical command/
+shutdown-byte rechecks without changing old controls; six further supervision/stderr
+alias/byte controls expand the next run to 27. Two-target Ruff lint/format passes.
+Separate 288-identity artifact-repair freeze retained; distinct repaired run is active,
+source/controls fixed pending notification/report/identity review. No ownership/data/
+authority/cursor/admission change, entity launch or broader acceptance is inferred.
+Reconciled feature artifacts/index/design and guides; empty-history guard remains.
+S3/access/resources and native-Mac stay separate. No remote/production operation,
+installed scheduling, utility, commit or push; historical failures preserved.
+
+## [2026-11-14] verification | entity-input artifact-repair focus green
+
+Repaired notification passes 27 controls in 83.28 s, exit 0; complete three-line report
+inspected and all 288 artifact-repair identities match, manifest hash unchanged. This
+closes the repaired artifact focus only; broader main-side input qualification remains
+next before typed ownership. Complete 526-line intervening documentation delta inspected
+for privacy; historical red reports, failed fixtures and distinct snapshots preserved.
+Successful fixtures are cleaned by the harness; reports remain the durable green evidence.
+Reconciled feature artifacts/index/design and both operator guides. No entity launch,
+permission/authority/cursor/admission change, successor full gate or Linux acceptance.
+S3/access/resources and native-Mac remain separate. No remote/production operation,
+installed scheduling, utility, commit or push; empty-history guard remains unchanged.
+
+## [2026-11-14] verification | expanded main-side entity-input controls active
+
+Added a separate 31-control module for genuine four-hour raw/compacted inputs and an
+empty hour, exact selected-hour totals/types/bounds, committed reader/live/restarted
+raw exclusion, unanchored state, actual artifacts versus rehashed dictionaries,
+duplicate JSON, independent byte budgets, receipt-clock refusal and actual competing
+process locks. Three-target Ruff lint/format passes; all original 288 identities match.
+First retained run is active on a separate 289-identity snapshot; source/controls stay
+fixed pending notification, complete report and identity review. No accepted refusal,
+typed ownership/history/publication, entity launch or successor gate is claimed.
+Reconciled feature artifacts/index/design and guides. S3/access/resources and native-Mac
+remain separate; no remote/production operation, scheduling installation, utility,
+commit or push. Historical failures and the empty-history guard remain preserved.
+
+Complete 355-line artifact-green/expanded-pending documentation delta inspected for
+privacy. Fresh scoped audit passes nine Markdown/seven frontmatters, 229 grounding
+paths, 361 inline sources, 436 wikilinks and 60 section targets; both repository
+whitespace checks pass. These remain scoped checks, not broader acceptance.
+
+## [2026-11-14] verification | entity-input exact-total and early-clock reds repaired
+
+Expanded first run retains nine failures/22 passes in 102.92 s, exit 1; complete
+245-line report inspected and all 289 identities match before repair. Eight rehashed
+contract controls wrongly accept hour/aggregate file/byte mismatches; clock refusal
+occurs after an actual read-only verifier launch, with its later row-equality assertion
+unexecuted. Neither corrupted-data acceptance nor entity launch/permission is established.
+Genuine four-hour inputs, committed exclusions and actual competing locks execute and
+pass; general qualification remains open. Failed fixtures/report and original snapshot
+preserved. Repaired only the input adapter with exact bounded total equality and
+pre-launch receipt-clock checks; all controls unchanged and other 288 identities match.
+Fresh three-target Ruff lint/format passes. Separate 289-identity contract-repair freeze
+binds an active combined 58-control rerun; source/controls fixed pending complete report
+and identity review. Updated feature artifacts/index/design and guides. No entity
+ownership/history/publication, successor full gate, Linux/S3/resource/native-Mac
+acceptance, remote/production operation, scheduling installation, utility, commit or
+push. Empty-history guard and all historical failures remain preserved.
+
+Complete 320-line contract-repair documentation delta inspected for privacy; fresh
+scoped audit and both repository whitespace checks pass with unchanged counts. The
+58-control notification/result was still pending at this audit; its later review is below.
+
+## [2026-11-15] verification | main-side entity-input authentication focus closed
+
+Combined repaired run passes 58 controls in 185.12 s, exit 0; complete three-line
+report reviewed and all 289 contract-repair identities match, manifest hash unchanged.
+Main-side read-only input-authentication focus is closed; no test remains running.
+Reconciled verification, checked only its focused plan item, handoff/index/design and
+operator guides. Preserve historical reds, failed fixtures and distinct freezes.
+Next add genuine explicit-v5 typed intent/restart-exclusion controls before source
+implementation, reviewing the retained red and identities first. Ownership/history,
+post-COMMIT binding, durable publication/completion and successor regressions remain
+separate. Linux/dcc-02–05, isolated S3/access/resources and native-Mac shutdown stay
+open. No entity operation outside isolated tests, remote/production operation,
+scheduling installation, utility implementation, commit or push.
+
+## [2026-11-15] verification | typed entity intent controls active
+
+Added a separate 34-control explicit-v5 intent/restart-exclusion module before source
+implementation. Genuine fixtures target multi-hour typed ownership and original-bound
+post-COMMIT inputs, committed reader/raw exclusion, early contracts, actual COMMIT
+crash/lost-ack, competing processes, corruption and separate read/write budgets.
+First retained run was active on a 290-identity snapshot; all prior 289 input-repair
+identities unchanged. Source/controls were fixed pending full report and identity review;
+no crash boundary/owner acceptance or entity launch is claimed. Promoted stabilized
+read-only receipt/input-authentication facts to the canonical ETL guide, preserving
+the separate ownership/launch/completion/publication gates. Historical failures,
+fixtures, unrelated artifacts and runtime locks retained. No remote/production work,
+scheduling installation, utility implementation, commit or push; native-Mac stays separate.
+
+## [2026-11-15] verification | typed intent first red reviewed
+
+First run retains 34 failures (47.41 s), exit 1; complete 1,132-line report inspected
+and all 290 first-red identities match after notification. Twenty-six controls reach
+missing-module imports after setup, two crash children exit 1 at import rather than
+87, and six budget controls fail import before setup. No semantic refusal, intent
+COMMIT or crash boundary established. Complete 442-line wiki delta privacy review
+passes. Reconciled stale active-run wording; no test remains running. Source work may
+begin for bounded typed exclusion and original-bound post-COMMIT inputs only;
+launch/completion/publication/recovery/service and broader acceptance stay separate.
+Historical reports/fixtures/freezes retained; no remote/production operation or publication.
+
+## [2026-11-15] code | exclusion-only typed entity intent prototype
+
+Added bounded original-bound explicit-v5 intent ownership/history and same-session
+post-COMMIT read-only input authentication after complete first-red/identity review.
+No entity operation is launched; restart/lost acknowledgment/failed live checks retain
+BLOCKED originals, without raw cursor/high-water advancement or reader admission.
+Unsupported completion/publication/recovery history still refuses. Distinct 34-control
+implementation rerun was active on 291 frozen identities; unchanged controls and 288 prior
+identities retained, with only input adapter/ledger changes plus the new typed module.
+Four-target Ruff lint/format and both whitespace checks pass; source/controls fixed
+pending complete report/identity review. Wider Linux/dcc/S3/resources/native-Mac gates
+remain open. No remote/production operation, scheduling installation, utility, commit or push.
+
+## [2026-11-15] repair | typed history transaction visibility
+
+Implementation rerun retains 33 fixture-upgrade failures/one v4 pass (34.61 s), exit 1;
+all 291 identities match after notification. Complete lossless 1,307-line review
+authenticates the 5,691-line report and shared 138-line body across 33 occurrences.
+Typed assertions and both crash-child launches remain masked. Retained diagnosis
+finds independent DuckDB cursor visibility failure; read-only fixture inspection
+finds expected v4 initialization shape/no v5 residue, without a pre-diagnostic hash
+or historical byte claim. Repair uses same-connection SQL-limited keyset pages and
+typed history/budgets before owner-ID/JSON reads. Only typed module/ledger change;
+other 289 identities and original 34 controls unchanged. Fresh four-target Ruff lint/
+format passes. Separate 291-identity repair freeze binds an active unchanged-control
+rerun; source/controls fixed pending notification/report/identity review. Reconciled
+status in feature artifacts/index/design/guides; newer documentation still needs
+complete privacy review. No entity launch/completion/publication/recovery acceptance,
+remote/production operation, scheduling installation, utility, commit or push.
+
+Complete 464-line successor documentation/privacy delta inspected, including retained
+new Markdown; native-Mac tension remains unchanged. Corrected full comparison is the
+review evidence, not the earlier appendix-omitting comparison. Fresh scoped audit passes
+nine Markdown/seven frontmatters, 232 grounding paths, 373 inline sources, 437 links/
+61 sections; both whitespace checks pass. Repair-result review was still pending.
+
+## [2026-11-15] verification | typed transaction-repair focus green; history controls active
+
+Unchanged repair run passes 34 controls (125.03 s), exit 0; complete three-line report
+reviewed and all 291 frozen identities match after notification. Genuine typed COMMIT,
+restart/lost-ack, post-COMMIT input/exclusion and original corruption/budget evidence is
+established, not entity launch/completion/publication/recovery, wider regressions or
+Linux acceptance. Added a separate 24-control staged visibility/corruption/rollback,
+budget-before-owner/payload, real keyset-tail and rehashed-semantic module after that
+green. Complete new source reviewed, patch-only lint/format fixes retain all intended
+controls; fresh five-target Ruff lint/format passes. All 291 repair identities remain
+unchanged; distinct 292-identity freeze binds its active first run. Source/controls
+fixed pending notification, complete report and identity review. Reconciled result in
+verification/plan/handoff/index/design/operator guides and canonical scope limits;
+expanded history and combined focus remain separate before exclusion-only closure.
+Successful fixtures are cleaned; reports remain durable green evidence. All historical
+failures/freezes/fixtures and unrelated artifacts remain preserved. No remote/production
+operation, scheduling installation, utility, commit or push; native-Mac stays separate.
+
+## [2026-11-15] verification | expanded typed-history focus green; combined focus active
+
+Separate history run passes 24 controls (79.82 s), exit 0; complete three-line report
+reviewed and all 292 first-history identities match after notification, hash unchanged.
+All staged-visibility/rollback, budget-before-fetch, real keyset-tail and rehashed-
+semantic control groups execute without setup masking. This is expanded focused
+evidence only; successful fixtures are cleaned and reports retained. Complete 428-line
+successor wiki/privacy delta (including acknowledgment edits/new Markdown) and 78-line
+operator delta reviewed. Fresh scoped audit passes nine Markdown/seven frontmatters,
+232 grounding paths, 376 inline sources, 437 links/61 sections; both whitespace checks
+pass. Separate unchanged 292-identity combined-focus freeze binds active main typed/
+input/schema/receipt/original-ledger compatibility and standalone entity-verifier runs.
+Source/controls fixed pending both notifications, complete reports and identity review;
+exclusion-only closure awaits combined evidence. Reconciled status in feature artifacts/
+index/design/operator guides; affected/full, entity execution/publication/recovery,
+Linux/dcc-02–05, isolated S3/resources and native-Mac remain separate. Historical
+failures and unrelated artifacts retained. No remote/production work, installed
+scheduling, utility implementation, commit or push.
+
+Complete 414-line history-green/combined-pending wiki/privacy delta and 84-line
+operator delta inspected. Fresh five-target Ruff lint/format, scoped wiki audit
+with unchanged counts and both whitespace checks pass. Combined-focus results
+were still pending; no broader acceptance inferred.
+
+## [2026-11-15] verification | combined standalone entity-verifier focus green
+
+Standalone notification passes 141 controls (105.56 s), exit 0; complete four-line
+report reviewed and all 292 combined-freeze identities match afterward, hash unchanged.
+Main combined focus remains active; source/controls fixed pending its notification,
+complete report and identity review. Exclusion-only combined closure and affected/full
+qualification remain separate. Retain original reports/freezes/failures; no entity
+launch/completion/recovery/service or Linux/dcc acceptance, remote/production operation,
+installed scheduling, utility implementation, commit or push is inferred.
+
+Complete 283-line standalone-green/main-pending wiki/privacy delta and 86-line operator
+delta inspected; fresh scoped wiki audit and both whitespace checks pass with unchanged
+counts. Main combined focus remains pending and all source/controls remain frozen.
+
+## [2026-11-15] verification | combined entity-exclusion focus closed
+
+Main notification passes 336 controls (884.70 s), exit 0; complete seven-line retained
+report reviewed and all 292 combined-freeze identities match, hash unchanged. Both
+main/standalone focuses are complete; standalone passes 141 (105.56 s). Exclusion-only
+typed/input/schema/receipt/original-ledger compatibility focused evidence is closed,
+not affected/full, entity launch/completion/publication/recovery or Linux acceptance.
+Checked only the focused plan items and reconciled feature artifacts/index/design/
+operator guides/canonical limits. Next add genuine main current-generation completion
+observation red controls before source work, retaining typed original inputs/intent
+and actual CLI shutdown, without ownership/authority/cursor transitions or historical
+publication fallback. Historical failures/freezes/fixtures remain preserved; no
+remote/production work, scheduling installation, utility implementation, commit or push.
+
+## [2026-11-15] verification | separate main completion-observation controls active
+
+Complete 354-line combined-main-green wiki/privacy delta and 90-line operator delta
+reviewed; fresh five-target Ruff lint/format, scoped wiki audit and both whitespace
+checks pass with unchanged counts. Added a distinct 44-control completion-observation
+module before source implementation; complete 392-line source reviewed and new-target
+Ruff lint/format passes. Genuine explicit-v5 typed fixtures retain original inputs/
+intent, perform a post-COMMIT input check and launch the supervised CLI only in isolated
+tests. These launches confer no service permission. All 292 focused identities remain
+unchanged; distinct 293-identity freeze binds the active first run. Source/controls
+fixed pending notification, complete report and identity review. No completion adapter,
+semantic refusal or green is claimed; ownership/authority/cursor transitions, durable
+publication/recovery, affected/full, Linux/S3/resources and native-Mac remain separate.
+Historical evidence and unrelated artifacts preserved; no remote/production operation,
+installed scheduling, utility implementation, commit or push.
+
+## [2026-11-15] verification | completion-observation first red fully reviewed
+
+First run retains 44 failures (342.12 s), exit 1; complete 409-line lossless exact-line
+review inspected and reconstruction matches the entire 1,783-line report. All 293 frozen
+identities match after notification. Twenty-two missing-module, 19 launch-guard and
+three budget import failures mask every completion-adapter assertion after genuine
+typed/post-COMMIT/supervised-CLI fixture execution; the forward fixture also launches
+its second isolated CLI. No adapter semantic refusal/green established. Failed report,
+fixtures and freeze retained; no test remains active. Earlier complete 244-line
+completion-pending wiki/privacy delta inspected and scoped audit/whitespace checks pass.
+Reconciled feature status; original-bound read-only completion source work may begin.
+Ownership/authority/cursor transitions, durable historical publication/recovery,
+affected/full, Linux/S3/resources and native-Mac remain separate. No remote/production
+operation, installed scheduling, utility implementation, commit or push.
+
+## [2026-11-15] code | read-only current-generation completion adapter active
+
+Added separate main completion adapter after complete first-red/identity review.
+It binds original typed/receipt and post-COMMIT prelaunch, actual CLI/archive/canonical
+command/shutdown and distinct capture bytes, plus fresh standalone completion core/
+transport evidence. Replay bootstrap provenance remains original; exact current
+genesis/immediate-successor and `publication: None` preserve historical refusal.
+No entity command is launched and no ownership/authority/cursor/acknowledgment transition
+occurs, even on refusal. Complete source reviewed; two-target Ruff lint/format and PyUtil
+whitespace check pass. All 293 first-red identities unchanged; distinct 294-identity
+implementation freeze binds the active unchanged 44-control rerun. Source/controls
+fixed pending notification, complete report and identity review before repair. Expanded
+completion, affected/full, durable publication/recovery/service, Linux/S3/resources and
+native-Mac remain separate. Historical evidence/unrelated artifacts retained; no remote/
+production operation, installed scheduling, utility implementation, commit or push.
+
+Complete 496-line red-reviewed/implementation-pending wiki/privacy successor delta
+inspected; both operator documents remain unchanged from the pre-completion baseline.
+Scoped audit passes nine Markdown/seven frontmatters, 235 grounding paths, 384 inline
+sources, 438 links/62 sections; both whitespace checks pass. Implementation result
+remains pending, and all source/controls stay fixed. Follow-up review corrected this
+acknowledgment's placement under the current entry rather than historical retry work.
+
+## [2026-11-15] verification | completion implementation result reviewed; fixture repair next
+
+Implementation run retains two failures / 42 passes (470.91 s), exit 1. Complete
+81-line report inspected and all 294 implementation identities match after notification.
+Both duplicate-`prelaunch` helper arguments fail before adapter invocation, masking
+missing-prelaunch and precommit-substitution refusals. Initial completion focus remains
+unaccepted. Reconciled feature verification/plan/handoff/design/index; no test remains
+active. Next rename only the helper positional parameter/default reference and rerun
+all 44 controls on a separate freeze, preserving runtime/assertions and historical
+reports/fixtures/freezes. Expanded completion, affected/full, durable publication/
+recovery/service, Linux/S3/resources and native-Mac remain separate. No remote/production
+operation, scheduling installation, utility implementation, commit or push.
+
+## [2026-11-15] repair | completion fixture helper only; all-control rerun active
+
+Renamed only the helper positional `prelaunch` parameter/default-value reference so
+keyword overrides reach the adapter. Exact two-line diff reviewed; every assertion,
+runtime source and other 293 implementation identities unchanged. Two-target Ruff
+lint/format and PyUtil whitespace check pass. Separate 294-identity fixture-repair
+freeze binds the active all-44-control rerun. Source/controls fixed pending notification,
+complete report and identity review before repair/acceptance. Retain import-red and
+implementation-helper reports/freezes/failed fixtures. Expanded completion and broader
+entity/service/affected/full, Linux/S3/resources/native-Mac remain separate. No remote/
+production work, scheduling installation, utility implementation, commit or push.
+
+Complete 353-line implementation-result/fixture-repair-active wiki/privacy delta
+reviewed, including retained new Markdown and prior acknowledgment relocation. Both
+operator documents unchanged; scoped audit and both whitespace checks pass. Fixture-
+repair result remains pending; no broader acceptance inferred.
+
+## [2026-11-15] verification | initial completion-observation focus closed
+
+Fixture-only rerun passes 44 controls (471.51 s), exit 0; complete three-line retained
+report reviewed and all 294 frozen identities match after notification, hash unchanged.
+Previously helper-masked missing-prelaunch/precommit refusals now execute without
+verifier launch or row/data changes. Initial focus closed, not expanded completion,
+affected/full, entity launch/publication/recovery/service or Linux acceptance. Successful
+fixtures cleaned; reports remain evidence and historical failed fixtures/freezes retained.
+Reconciled feature status and promoted scoped read-only completion facts to the canonical
+ETL guide without permission transitions or historical fallback. Next add separate
+artifact-rebinding/non-mutation, clock/count/budget and genuine data-corruption controls.
+No remote/production operation, scheduling installation, utility implementation, commit
+or push; native-Mac shutdown remains separate.
+
+## [2026-11-15] verification | separate completion artifact/data qualification active
+
+Added separate 67-control qualification after initial-green/report/identity review.
+Complete 470-line source reviewed; three-target Ruff lint/format passes. All 294 closed
+initial-focus identities unchanged; distinct 295-identity freeze binds the active first
+run. Targets actual original archive/verifier aliases and duplicate fields, rehashed CLI
+statistics/dictionaries versus unchanged original artifacts, both supervision contracts,
+shape/count/clock/hash/proof/history budgets, genuine invalid Parquet and a competing
+lock process, with unchanged rows/data/authority/live acknowledgment. Contract-only
+validation is not original-file/current-data/historical authority. Source/controls fixed
+pending notification, complete report and identity review before repair/acceptance.
+Historical failures/freezes/fixtures retained; expanded/combined/affected/full and entity
+launch/publication/recovery/service, Linux/S3/resources/native-Mac remain separate.
+No remote/production work, scheduling installation, utility implementation, commit or push.
+
+Complete 572-line initial-green/expanded-active wiki/privacy successor delta reviewed,
+including canonical promotion and retained new Markdown; earlier complete 142-line
+fixture-repair acknowledgment also inspected. Both operator documents unchanged; fresh
+scoped audit passes nine Markdown/seven frontmatters, 239 grounding paths, 388 inline
+sources, 438 links/62 sections and both whitespace checks pass. Expanded result pending.
+
+## [2026-11-15] verification | expanded completion-observation focus closed
+
+Separate expanded run passes 67 controls (353.73 s), exit 0; complete three-line retained
+report reviewed and all 295 frozen identities match after notification, hash unchanged.
+All artifact/contract/data/lock/budget groups execute without setup masking, retaining
+unchanged rows/data/high-water/live acknowledgment. Expanded read-only completion focus
+closed, not combined/affected/full or entity launch/publication/recovery/service/Linux
+acceptance. Successful fixtures cleaned; historical failed fixtures/reports/freezes and
+both operator baselines retained. Reconciled verification/plan/handoff/design/index and
+canonical scope. Next freeze a distinct unchanged successor for 447-main/141-standalone
+combined focus; keep runtime/controls fixed until both reports and identity checks.
+No remote/production operation, scheduling installation, utility implementation, commit
+or push; native-Mac shutdown remains separate.
+
+## [2026-11-15] verification | combined read-only completion/exclusion focus active
+
+Created/checked a distinct byte-identical 295-identity combined freeze. Main completion/
+input/typed/schema/receipt/original-ledger focus (447 controls) and independent standalone
+entity-verifier focus (141 controls) are active with separate retained reports. No runtime/
+control changes; fresh three-target Ruff lint/format, scoped wiki audit and both whitespace
+checks pass before launch. Keep source/controls fixed until both notifications, complete
+reports and frozen-identity checks; combined and affected/full acceptance remain separate.
+Expanded read-only evidence grants no entity launch/completion/authority transition or
+historical-publication fallback. Both operator baselines and historical failures retained.
+Linux/dcc-02–05, isolated S3/resources and native-Mac remain open; no remote/production
+operation, scheduling installation, utility implementation, commit or push.
+
+Complete 408-line expanded-green/combined-active wiki/privacy successor delta reviewed,
+including retained new Markdown and result/status reconciliation. Both operator documents
+unchanged; fresh scoped audit passes nine Markdown/seven frontmatters, 239 grounding
+paths/388 inline sources, 438 links/62 sections, and both whitespace checks pass. Both
+combined results remain pending; runtime/controls stay fixed and no wider acceptance follows.
+
+## [2026-11-15] verification | combined completion standalone focus green
+
+Standalone notification passes 141 controls (110.49 s), exit 0; complete four-line
+report reviewed and all 295 combined-freeze identities match afterward, hash unchanged.
+Successful fixtures cleaned; report retained and both operator baselines/historical
+failed fixtures preserved. Reconciled feature/index/canonical status. Main combined
+focus remains active; keep runtime/controls fixed pending its notification, complete
+report and identity check. Combined closure and affected/full, entity launch/publication/
+recovery/service, Linux/dcc-02–05, isolated S3/resources and native-Mac remain separate.
+No remote/production operation, scheduling installation, utility implementation, commit or push.
+
+Fresh scoped wiki audit and both whitespace checks pass with unchanged scope/counts;
+no combined or wider acceptance follows before the main report/identity review.
+
+## [2026-11-15] verification | combined read-only completion/exclusion focus closed
+
+Main notification passes 447 controls (1729.40 s), exit 0; complete nine-line retained
+report reviewed and all 295 combined-freeze identities match, hash unchanged. Standalone
+passes 141 (110.49 s); both focuses complete. Read-only completion/input/typed/schema/
+receipt/original-ledger compatibility focused gate closed, not affected/full or entity
+launch/publication/recovery/service/Linux acceptance. Successful fixtures cleaned; reports,
+historical failures and both operator baselines preserved. Checked only the combined
+focused plan item and reconciled feature/index/canonical status. No test remains active
+at review. Next add genuine red controls for durable original-generation publication
+retention while independently observed current under the same lock, without ownership/
+authority/cursor/launch transition. Preserve current-only completion contracts; later
+historical requests require authenticated retained evidence, never caller dictionaries
+or today's aggregate. No remote/production work, scheduling installation, utility
+implementation, commit or push; native-Mac shutdown remains separate.
+
+Complete 342-line combined-main-green wiki/privacy successor delta inspected against
+the last reviewed standalone-green snapshot; retained new Markdown and result/status
+reconciliation included. Both operator documents unchanged; fresh three-target Ruff
+lint/format, scoped wiki audit with unchanged counts, both whitespace checks and all
+295 closed-focus identities pass. No affected/full, entity service or wider acceptance.
+
+## [2026-11-15] verification | separate publication-retention red controls prepared
+
+Added a separate 46-control module before runtime implementation; complete 771-line source
+reviewed, patch-only formatting/projection fixes and fresh new-target Ruff lint/format pass.
+Isolated collection passes 46 (0.63 s), not execution or acceptance. Distinct 296-identity
+first-red freeze adds only the new module; every closed 295-focus identity and both operator
+baselines remain unchanged. Controls specify fresh original-generation retention under the
+same acknowledged typed lock, exact immutable core/observation/audit, no permission/cursor/
+authority transitions, restart without reconstruction, actual COMMIT/process death/lost-ack,
+artifact/data/clock/corruption/budget refusal and authenticated historical requests. Publication
+and entity-writer runtime modules remain absent; existing history remains fail-closed. First
+execution/report review is next; freeze runtime/controls until complete report/identity review
+before source work. Wider/affected/full, entity launch/completion/recovery/service, Linux/S3/
+resources and native-Mac remain separate. Historical failures/unrelated artifacts preserved;
+no remote/production operation, installed scheduling, utility implementation, commit or push.
+
+## [2026-11-15] verification | publication-retention first red active
+
+Complete 488-line prepared wiki/privacy successor delta inspected, including retained
+new Markdown; snapshot identity and current bytes match, both operator baselines unchanged.
+Fresh new-target Ruff lint/format, scoped audit (nine Markdown/seven frontmatters, 243
+grounding paths/391 inline sources, 439 links/63 sections), both whitespace checks and
+all 296 first-red identities pass. Launched the distinct retained 46-control first red;
+runtime/controls remain fixed until notification, complete report and identity review
+before implementation or repair. Missing-module/setup failures establish no semantic
+refusal or crash boundary. Historical failures/unrelated artifacts preserved; wider
+acceptance, affected/full, entity writer/service/recovery, S3/resources and native-Mac
+remain separate. No remote/production work, scheduling installation, utility implementation,
+commit or push.
+
+Complete 159-line prepared-to-active wiki/privacy successor delta inspected, including
+status reconciliation and retained new Markdown. Both operator documents unchanged;
+fresh scoped audit and both whitespace checks pass with unchanged scope/counts. First-red
+result remains pending; runtime/controls stay fixed and no wider acceptance follows.
+
+## [2026-11-15] verification | publication-retention first red reviewed
+
+First red retains 46 failures (402.36 s), exit 1; complete 1,772-line report inspected,
+SHA-256 `b9e200009bd50754fd980218502b349bc8c007277199d07ce6687b4082d6bc9b`.
+All 296 frozen identities match after notification, manifest unchanged. Both retained child
+diagnostics directly inspected: genuine setup prints its run identity, then each exits 1 at
+missing-module import, not 87. No publication COMMIT boundary or target semantics execute;
+the import-masked report establishes no refusal or green. Failed fixtures/report preserved;
+both operator baselines unchanged. Reconciled verification/plan/handoff/design/index; no test
+remains active and no runtime/control changed. Next implement bounded immutable original-
+publication evidence/audit and same-transaction history authentication, preserving current-
+only completion contracts, actual-original rechecks, early budgets and no-transition
+boundaries. Broader publication/affected/full, entity writer/service/recovery, Linux/S3/
+resources and native-Mac remain separate. No remote/production work, scheduling installation,
+utility implementation, commit or push.
+
+## [2026-11-15] code | bounded original-publication implementation pending verification
+
+Complete 325-line first-red-reviewed wiki/privacy successor delta inspected; scoped audit
+and both whitespace checks pass. Added separate original-publication retention/accessor
+after complete report/children/identity review. Fresh current-only completion and actual-
+original rechecks precede immutable envelope/core/observation/audit COMMIT; same-connection
+bounded typed history/accessor authenticates retained JSON only, never runtime/current-
+aggregate reconstruction. Early record/count/shared-history/audit budgets refuse without
+pruning. Success changes no ownership/authority/raw-cursor/grants/launch/live acknowledgment;
+committed lost acknowledgment retains evidence and blocks the original typed owner, not
+completion/recovery. Complete 285-line source and typed-history delta reviewed; four-target
+Ruff lint/format and PyUtil whitespace pass. Only typed history and two ledger comments
+differ among prior identities; all other 294 first-red identities and every control,
+current-only adapter, standalone runtime and both operator baselines unchanged. Distinct
+297-identity implementation freeze binds the unchanged 46-control rerun, result pending.
+Keep runtime/controls fixed until notification, complete report/children/identity review
+before repair or acceptance. Wider publication/combined/affected/full, entity writer/service/
+recovery, Linux/S3/resources/native-Mac remain separate. Historical failures/unrelated artifacts
+preserved; no remote/production operation, scheduling installation, utility implementation,
+commit or push.
+
+## [2026-11-15] verification | publication implementation rerun active
+
+Complete 514-line implementation-pending wiki/privacy successor delta inspected, including
+retained new Markdown. Both operator documents unchanged; scoped audit passes nine Markdown/
+seven frontmatters, 247 grounding paths/397 inline sources, 439 links/63 sections and both
+whitespace checks pass. All 297 implementation identities checked before launch; the distinct
+retained unchanged 46-control rerun is active, result pending. Runtime/controls stay fixed
+through notification, complete report/children/identity review; no wider acceptance follows.
+
+Complete 157-line pending-to-active wiki/privacy successor delta inspected. Both operator
+documents unchanged; fresh scoped audit and both whitespace checks pass with unchanged
+counts. Historical first-red idle wording clarified without changing runtime/controls;
+implementation result remains pending.
+
+## [2026-11-15] verification | initial original-publication focus closed
+
+Unchanged implementation rerun passes 46 controls (629.02 s), exit 0; complete three-line
+report inspected, SHA-256 `90e490a24bf6691114fcd2f66d4f071ce137f979dd516256c97749218e89e0bf`.
+All 297 frozen identities match after notification, manifest unchanged. Original artifact/
+fresh-data/clock/budget/immutable-core/restart/actual-COMMIT/lost-ack/staged-history/historical
+groups now execute without import masking. Successful fixtures cleaned by unchanged runner;
+no separately retained green child diagnostics claimed. Historical red fixtures/diagnostics/
+report and both operator baselines preserved. Checked only initial publication focus;
+reconciled verification/plan/handoff/design/index and promoted scoped immutable-original
+semantics to canonical ETL guide. No test remains active at review. Next add separate
+rehashed envelope/audit/SQL-byte/keyset-tail qualification and retain new actual crash-child
+diagnostics under unchanged runtime/controls. Expanded/combined/affected/full, entity writer/
+service/recovery, Linux/S3/resources and native-Mac remain separate. No remote/production
+work, scheduling installation, utility implementation, commit or push.
+
+## [2026-11-15] verification | initial publication wiki/privacy review closed
+
+Complete 454-line active-to-initial-green successor delta inspected, including acknowledgment
+edits and canonical immutable-original promotion. Fresh four-target Ruff lint/format,
+scoped wiki audit (nine Markdown/seven frontmatters, 248 grounding paths/399 inline sources,
+439 links/63 sections), both whitespace checks, both operator baselines and all 297 closed
+identities pass. Earlier first-red/input statements explicitly scoped to their historical
+reviews. No expanded/combined/affected/full, entity permission or wider Linux acceptance;
+separate qualification and diagnostic-retaining execution are next. Historical failures,
+unrelated artifacts and runtime/controls remain preserved; no remote/production operation,
+installed scheduling, utility implementation, commit or push.
+
+## [2026-11-15] verification | expanded publication controls and retained diagnostics prepared
+
+Added separate 651-line/77-control publication qualification and 69-line diagnostic-retaining
+runner; complete sources reviewed and six-target Ruff lint/format pass. Targets rehashed
+scope/type/core/observation/audit/canonical JSON, actual SQL UTF-8 record/audit byte caps,
+positive aggregate/count/equality boundaries before typed identifiers/payloads, same-connection
+materialized keyset tails and persisted-corruption reopen. One genuine observed publication/
+audited block anchors staged rollback-only corruption; no accepted completed history or
+historical evidence is fabricated. Runner refuses report overwrite and is designed to retain
+successful crash diagnostics as well as failed fixtures. New controls plus the two unchanged
+original process-death controls collect 79 (0.69 s); complete 82-line report inspected, not
+execution. All 297 closed identities and both operator baselines unchanged. Distinct 298-identity
+successor adds only the new module; runner separately frozen. First execution follows complete
+wiki/privacy review/fresh checks; no test is active yet. Preserve runtime/controls/runner through
+notification, complete report/actual diagnostics and identity review before repair/acceptance.
+Distinct combined 570-main/141-standalone focus follows expanded closure before entity-writer
+work; affected/full, Linux/S3/resources and native-Mac remain separate. Historical failures/
+unrelated artifacts preserved; no remote/production operation, scheduling installation,
+utility implementation, commit or push.
+
+Complete 546-line initial-green-to-qualification-prepared wiki/privacy successor delta
+inspected, including acknowledgment edits, retained new Markdown and source/test/result scope.
+The new preparation entry is placed at the log tail, preserving prior history in order;
+no successful child diagnostics are claimed before execution. Fresh scoped audit passes
+nine Markdown/seven frontmatters, 252 grounding paths/402 inline sources, 439 links/63 sections;
+both whitespace checks and all 298 successor identities pass, operator documents unchanged.
+
+## [2026-11-15] verification | expanded publication qualification active
+
+Complete 133-line prepared-to-ready wiki/privacy successor delta inspected; operator baselines
+and separately frozen runner match. Fresh scoped wiki audit and both whitespace checks pass
+with unchanged counts; all 298 successor identities checked and exact successor comparison
+confirms only the new qualification module was added. Launched the separate 79-control run
+(77 new plus two unchanged actual-COMMIT process-death controls); all fixtures/actual child
+diagnostics will be retained on either outcome. Result pending; keep runtime/controls/runner
+fixed through notification, complete report/diagnostics and identity review before repair or
+expanded acceptance. Combined/affected/full, entity writer/service/recovery, Linux/S3/resources
+and native-Mac remain separate. No remote/production work, installed scheduling, utility
+implementation, commit or push.
+
+Complete 231-line ready-to-active wiki/privacy successor delta inspected; operator baselines
+remain unchanged, fresh scoped audit and both whitespace checks pass with unchanged counts.
+Expanded result pending; no runtime/control/runner changes or wider acceptance.
+
+## [2026-11-15] verification | expanded original-publication focus closed
+
+Separate qualification passes 79 controls (100.90 s), exit 0; complete four-line report,
+29-line runner sidecar, both actual 93-byte child diagnostics and all 298 source identities/
+separate runner/operator baselines reviewed after notification. Both children exit 87 with
+empty stderr at the selected before/after publication COMMIT hooks, not import/setup failure.
+Required restart/exclusion/unchanged-cursor/absent-before/retained-after publication and
+second-reopen assertions execute. Rehashed contracts/canonical JSON/audits, actual UTF-8 SQL
+record/audit caps, positive aggregate/count/equality limits, real materialized keyset-tail and
+non-mutating corrupted-reopen controls pass. Every fixture and historical failure retained;
+no deleted initial-green diagnostics reconstructed or unsupported load attribution made.
+No runtime/control/runner repair; expanded focus closed, not permission or wider Linux.
+Reconciled verification/plan/handoff/design/index and promoted scoped qualification limits
+to canonical ETL guide. No test remains active at this result review. Review complete successor
+wiki/privacy delta and fresh scoped checks, then distinct 570-main/141-standalone focus before
+entity-writer work. Affected/full, recovery/service, S3/resources and native-Mac stay separate;
+no remote/production operation, scheduling installation, utility implementation, commit or push.
+
+Complete 429-line active-to-expanded-green successor wiki/privacy delta inspected, including
+all result/diagnostic/identity acknowledgment edits and canonical qualification limits.
+Fresh six-target Ruff lint/format, scoped audit (nine Markdown/seven frontmatters, 253 grounding
+paths/403 inline sources, 439 links/63 sections), both whitespace checks, all 298 closed source
+identities and both operator baselines pass. Scoped expanded record closed, not wider acceptance.
+
+## [2026-11-15] verification | combined publication focus prepared
+
+After expanded closure and complete wiki/privacy/fresh-check review, created distinct unchanged
+298-identity combined source freeze and separate diagnostic-retaining runner freeze. Prepared
+570-main focus is prior 447 plus original 46/separate 77 publication controls, without duplicate
+crash executions; unchanged standalone three-module focus has 141. Both use distinct reports,
+retain every fixture/actual diagnostic and preserve historical failures. No run is active yet;
+complete prepared wiki/privacy review/fresh checks precede both independent launches. Keep
+runtime/controls/runner fixed until both notifications, complete reports/actual diagnostics
+and all-identity checks. Entity-writer source work waits for combined closure; affected/full,
+Linux/service/recovery, S3/resources and native-Mac stay separate. No remote/production operation,
+installed scheduling, utility implementation, commit or push.
+
+## [2026-11-15] verification | combined publication focus active
+
+Complete 312-line green-to-combined-prepared wiki/privacy successor delta inspected; fresh
+scoped audit/whitespace checks pass with unchanged counts, all 298 combined identities
+checked and both operator baselines/separate runner unchanged. Launched independent 570-main
+and 141-standalone focuses with distinct overwrite-refusing reports/all fixtures retained.
+Results pending; runtime/controls/runner stay fixed until both notifications, complete
+reports/actual diagnostics and all-identity review. Expanded publication remains closed,
+not combined acceptance or entity launch/recovery/service permission. Affected/full,
+Linux/S3/resources and native-Mac stay separate; no remote/production operation, installed
+scheduling, utility implementation, commit or push.
+
+Complete 283-line prepared-to-active wiki/privacy successor delta inspected; both operator
+baselines/separate runner unchanged and fresh scoped audit/whitespace checks pass with
+unchanged counts. Combined results pending; no runtime/control/runner changes or wider acceptance.
+
+## [2026-11-15] verification | combined publication standalone focus passed, main pending
+
+Standalone focus passes 141 controls (109.28 s), exit 0; complete four-line report and 21-line
+runner sidecar inspected. All 298 combined source identities, separate runner and both operator
+baselines match after notification, manifest unchanged. All standalone fixtures retained;
+no publication crash-child diagnostics expected or found for this focus. Complete 80-line
+active-acknowledgment wiki/privacy delta previously inspected; current snapshot matches at
+result arrival. Reconciled scoped standalone evidence without runtime/control/runner changes.
+Main 570-control focus remains active/result pending; keep all identities fixed through its
+notification, complete report/actual diagnostics and all-identity review. No polling/source
+work or combined acceptance; affected/full, entity launch/recovery/service, Linux/S3/resources
+and native-Mac remain separate. No remote/production operation, scheduling installation,
+utility implementation, commit or push.
+
+Complete 296-line active-to-standalone-green wiki/privacy successor delta inspected;
+both operator baselines unchanged and fresh scoped audit/whitespace checks pass with
+unchanged counts. Main pending; no source/control/runner changes or combined acceptance.
+
+## [2026-11-15] verification | combined publication compatibility focus closed
+
+Main focus passes 570 controls (2430.83 s), exit 0; complete ten-line report/45-line runner
+sidecar and both actual 93-byte publication-child diagnostics inspected. Each exits 87 with
+empty stderr at its selected before/after COMMIT hook; original exclusion/raw cursor and
+absent-before/retained-after publication/second-reopen assertions execute. No physical-power-
+loss or load attribution follows from this process-death evidence/duration. All 298 frozen
+source identities, separate runner, operator baselines and reviewed standalone report remain
+unchanged after notification. Standalone previously passed 141 (109.28 s). Both focuses
+complete/all fixtures and historical failures retained; no test active or runtime/control/
+runner changes at result review. Complete 80-line standalone acknowledgment delta inspected;
+current wiki matches at main-result arrival. Reconciled verification/plan/handoff/design/
+index and canonical ETL limits; combined focused gate closed, not affected/full or permission.
+Complete successor wiki/privacy/fresh checks precede separate explicit-v5 entity-writer red
+controls and source work. Launch/atomic completion-authority linkage, dispatch and original-
+clean recovery remain separate/unimplemented; Linux/S3/resources/native-Mac remain open.
+No remote/production operation, scheduling installation, utility implementation, commit or push.
+
+## [2026-11-15] verification | combined-green review acknowledged; writer preparation
+
+Complete 383-line combined-green wiki/privacy successor review and fresh six-target Ruff
+lint/format, scoped audit and both whitespace checks passed. Complete snapshot, all 298
+source identities, separate runner and operator baselines rechecked unchanged before writer
+preparation. Original 416-line writer controls retained separately. Next add only local
+explicit-v5 fixtures and actual child-diagnostic retention, preserving assertions/shared
+helpers, then freeze and review a distinct writer red before runtime source changes.
+Combined focused closure is not entity permission/affected/full or wider Linux acceptance.
+
+## [2026-11-15] verification | explicit-v5 writer red prepared
+
+Preserved original 416-line writer controls. Local v5 upgrade wrapper and actual crash/lock
+diagnostics are the sole deliberate source-freeze delta; all assertions/parameterizations
+and shared default-v4 helpers remain unchanged. Full delta and separate 74-line diagnostic-
+retaining runner reviewed; two-target Ruff lint/format and collection of 22 controls pass.
+Distinct 298-identity writer-red freeze retains the other 297 closed identities; publication
+runner/operators and historical fixtures/failures unchanged. First execution prepared, not
+active; complete wiki/privacy/fresh scoped checks precede launch and full red/child/identity
+review precedes runtime source work. Successful typed history/completion must not overwrite
+original publication or relax intent authority/cursor binding. Wider Linux/affected/full,
+S3/resources and native-Mac remain separate; no remote/production/scheduling/commit/push.
+
+## [2026-11-15] verification | explicit-v5 writer red active
+
+Complete 252-line prepared wiki/privacy successor delta inspected; fresh scoped audit,
+both whitespace checks and all 298 writer-red identities pass. Launched distinct retained
+22-control writer red; result pending, runtime/controls/runner frozen until notification,
+complete report/actual child diagnostics and identity review. Missing imports or setup
+failures establish no launch/COMMIT/lock/refusal boundaries or entity permission. Historical
+fixtures/failures preserved; affected/full, wider Linux, S3/resources and native-Mac separate.
+
+## [2026-11-15] verification | explicit-v5 writer first red reviewed
+
+Writer red completes with 22 import-masked failures (45.76 s), exit 1. Complete 1,010-line
+report, 36-line runner sidecar and all four actual 195-byte child diagnostics directly reviewed.
+Children exit 1 at the missing writer import before hooks; no competing-lock child ran.
+No semantic refusal, launch, COMMIT, lock or recovery boundary is qualified. All 298 frozen
+source identities, separate runner and both operator baselines match after notification;
+every fixture and historical failure retained. No test active or runtime writer implemented.
+Reconciled verification/plan/handoff/design/index; complete active/result wiki/privacy review
+and fresh scoped/source/runner/operator/whitespace checks precede runtime coding. Immutable
+original publication, original intent authority/cursor binding and unresolved audit-count
+refusals must survive a distinct successful completion/history design. Linux/affected/full,
+S3/resources and native-Mac stay separate; no remote/production/scheduling/commit/push.
+
+Complete 324-line prepared-to-active/result wiki/privacy successor inspected; fresh scoped
+audit, both whitespace checks, two-target Ruff lint/format and all 298 source identities,
+both runners/operator baselines/red-evidence identities pass. Red evidence reconciliation
+closed only; successful history/completion design and genuine separate controls remain next.
+
+## [2026-11-15] design | distinct typed completion/history red prepared
+
+Selected bounded separately linked typed-event completion records/authority references,
+without changing v5 tables/columns or public one-hour validation. Original publications and
+original authority/cursor predecessors remain authenticated. Unresolved audit-count allowance
+unchanged; retained completion records may supply only their distinct capacity. Separate
+257-line/20-control genuine history/recovery module reviewed; lint/format/collection pass.
+299-identity successor adds only this module, preserving all 298 writer-red sources/runner/
+operators and historical fixtures. Complete wiki/privacy/fresh checks precede first red;
+complete report/identity review precedes runtime coding. No writer semantics or wider gate
+accepted; no remote/production/scheduling/commit/push.
+
+## [2026-11-15] verification | separate typed history red reviewed
+
+Complete 282-line selected-design/red-prepared wiki/privacy successor and fresh scoped/
+whitespace checks pass. Separate history red completes with four failures/16 setup errors
+(3.52 s), exit 1, all missing-writer/import-masked. Complete report/19-line sidecar and all
+299 unchanged source identities reviewed; every fixture retained, no child diagnostics
+produced and no test active. Neither success/corruption/budget nor recovery semantics execute.
+Preserve both reds/controls; runtime implementation follows scoped result review, not wider
+acceptance. Original publications/public validation/unresolved budgets remain unchanged.
+
+## [2026-11-15] implementation | Linux entity writer source review, unqualified
+
+Acknowledged complete 184-line history-red result successor. Reviewed the five-file runtime
+successor, retained its initial unformatted bytes and applied scoped formatting; eight-target
+Ruff lint/format pass. Repaired duplicate-completed-receipt refusal and authority SQL-size/
+count/keyset-tail validation without changing frozen 22+20 controls, runner, operator documents,
+public validators, v5 schema or standalone runtime. Typed completion/authority/history and
+supervised original-clean recovery remain unexecuted/unqualified. Retained-completion
+acknowledgment resolution explicitly refuses pending separate immutable audited evidence.
+Reconciled verification/plan/handoff/design/index; complete successor wiki/privacy/fresh
+checks and a distinct source freeze precede the first runtime run. Full evidence/identity
+review precedes repairs. No broader Linux/S3/resources/native-Mac acceptance or remote/
+production/scheduling/commit/push action.
+
+## [2026-11-15] verification | frozen Linux writer first runtime run active
+
+Distinct 301-identity successor retains both controls/runner/operators and all 296 unchanged
+history-red sources; only the reviewed five-file runtime successor differs. Complete 300-line
+runtime-prepared wiki/privacy delta inspected; scoped audit and both whitespace checks pass.
+Launched unchanged 42 writer/history controls with overwrite-refusing report and all fixtures/
+actual diagnostics retained. No result or green yet; keep runtime/controls/runner fixed until
+notification and full report/sidecar/child/identity review. Missing retained-completion
+acknowledgment resolution and wider Linux/affected/full/S3/resources/native-Mac remain open.
+
+## [2026-11-15] verification | Linux writer first runtime result reviewed
+
+First runtime run completes with 40 passes/two failures (244.11 s), exit 1. Full 245-line
+report, 49-line sidecar and seven actual diagnostics reviewed: four intent/launch crash children
+exit 87, three lock competitors exit 88, all with empty stderr. All 301 frozen sources,
+runner and operator baselines match after notification; every fixture/historical failure retained.
+One failure reaches missing immutable committed-completion acknowledgment resolution; the other
+refuses January recovery after a real November restart block. Read-only retained state confirms
+original publication/completion as applicable remain blocked, with no raw-history/cursor advance.
+Preserve both failures; correct only the scoped fixture clock, add early rollback and immutable
+resolution controls, then repair through deliberate successors after full wiki/privacy/fresh
+review. No run active/full writer-history green or broader Linux acceptance; no remote/
+production/scheduling/commit/push.
+
+## [2026-11-15] verification | immutable resolution-control successor prepared
+
+Acknowledged the completely inspected 287-line runtime-result wiki/privacy review and fresh
+scoped/whitespace checks. Preserved original history-control bytes; function-scoped synthetic
+reopen clock and import formatting leave assertions/parameterizations/shared helpers/all other
+functions unchanged by AST checks. Separate complete 407-line/29-control resolution module
+reviewed; four-target lint/format and 49-control collection pass. Selected bounded immutable
+resolution-event/audit design retains original completion/publication and blocks COMMIT uncertainty.
+Distinct 302-identity control-red freeze preserves all other 300 runtime-first identities,
+writer/runner/operators and runtime; no repair or result yet. Complete successor wiki/privacy/
+fresh checks precede red, and complete report/evidence/all identities precede runtime repair.
+Linux/affected/full/service, S3/resources and native-Mac remain open; no remote/production/
+scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | resolution-control red reviewed
+
+Separate red completes with 25 passes/nine failures/15 setup errors (343.58 s), exit 1.
+Full 1,277-line report/20-line sidecar and all 302 source/runner/operator identities reviewed;
+every fixture retained. Actual read-only failed-ledger/capture inspection confirms late
+block-clock refusal after successful verification and original-clean recovery's after-COMMIT
+DRAINING defect, with original completion/authority/raw cursor preserved. Corrected inspection
+uses real supervision fields after an initial diagnostic-only nonexistent-key error. Scoped
+fixture clock passes; artifact/budget controls remain masked, not qualified. Preserve the red
+unchanged; complete result wiki/privacy/fresh checks precede bounded immutable resolution and
+conservative uncertainty repair. No run active, runtime repair, green or wider acceptance;
+no remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] implementation | immutable resolution source successor reviewed
+
+Acknowledged complete 233-line resolution-red wiki/privacy review/fresh checks. Preserved
+original runtime bytes and initial unformatted successor; reviewed complete 343-line two-file
+delta and separate 450-line resolution module. Scoped formatting preserves AST except unused
+import removal; eight-target lint/format pass. Immutable hash-linked resolution/audit and
+uncertainty records preserve original completion/publication/block/authority; early recovery
+block-clock checks precede new verifier/artifacts. Distinct 303-identity freeze preserves all
+other 300 red-source identities and all controls/runner/operators/public/v5/standalone contracts.
+71-control run is prepared, with no result yet; complete wiki/privacy/fresh checks precede
+launch and full evidence/identity review precedes further change. Closed publication overflow
+and expanded completion-death/SQL-tail/forward-evolution remain separate. No broader Linux/
+S3/resources/native-Mac acceptance or remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | immutable resolution runtime qualification active
+
+Complete 470-line prepared wiki/privacy successor inspected; fresh scoped audit and both
+whitespace checks pass with all 303 source/runner/operator identities unchanged. Launched
+the distinct 71-control writer/history/resolution run using the frozen overwrite-refusing
+diagnostic-retaining runner. No result/green yet; keep sources/controls/runner fixed until
+notification and complete report/sidecar/actual-child/all-identity review. Every fixture and
+historical failure retained. Linux/affected/full/service, S3/resources and native-Mac remain
+separate; no remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | immutable resolution first runtime reviewed
+
+First run completes with 69 passes/two failures (516.86 s), exit 1. Full 67-line report/50-line
+sidecar/seven actual diagnostics and all 303 source/runner/operator identities reviewed;
+four crash children exit 87 and three lock competitors exit 88, all with empty stderr.
+Original 42 writer/history controls pass; two new positives fail on the test's nonexistent
+completion flag after successful disposition, so later immutable original/table/byte/reopen
+assertions remain unexecuted. Read-only failed-ledger/capture inspection authenticates the
+real direct-module command and canonical completion request/fresh observation, with no mutation.
+Preserve failed run/original controls; complete wiki/privacy/fresh checks precede a narrow
+exact-command/request control correction, not runtime changes. No run active/full 71-control
+green or wider Linux acceptance; no remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | resolution command-contract successor prepared
+
+Acknowledged complete 241-line first-runtime result wiki/privacy review and fresh scoped/
+whitespace/source/runner/operator checks. Preserved original 407-line resolution-control bytes;
+reviewed complete 31-line correction replacing only the nonexistent flag with exact standalone
+command, canonical completion request and actual manifest assertions. Text/AST restoration
+preserves all other controls; eight-target lint/format and 71-control collection pass. Distinct
+303-identity freeze changes only this test module; all 302 other sources/runner/operators and
+historical evidence remain unchanged. Prepared all-71 rerun has no result yet; complete wiki/
+privacy/fresh checks precede launch, full evidence/identity review precedes further changes.
+Closed publication overflow/process-death affected rerun and broader Linux gates stay open.
+No remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | resolution command-contract rerun active
+
+Complete 248-line prepared-final wiki/privacy successor reviewed; fresh scoped audit, both
+whitespace checks and source/runner/operator identities pass. Launched the distinct frozen
+all-71 writer/history/resolution rerun with overwrite-refusing report and diagnostic-retaining
+runner. No result yet; keep runtime/controls/runner fixed until notification and complete
+retained report/sidecar/actual-child/all-identity review. Every historical failure and fixture
+remains intact. Publication affected rerun and broader Linux gates stay open; no remote,
+production, scheduling, utility implementation, commit or push action.
+
+## [2026-11-15] verification | initial writer-history-resolution focus closed
+
+Frozen command-contract successor passes all 71 controls (521.59 s), exit 0. Full three-line
+report/50-line sidecar/seven actual diagnostics and all 303 source/runner/operator identities
+reviewed unchanged; four intent/launch crash children exit 87 and three lock competitors exit
+88, all with empty stderr. Corrected positive cases now execute and pass later immutable
+original/table/data/artifact/retry-refusal/reopen assertions. Initial focused gate closed,
+not expanded completion-death/SQL-tail/forward-evolution, affected/full/service or broader
+Linux acceptance. All fixtures/original controls/historical failures retained; no test active
+or source/control/runner change indicated. Complete wiki/privacy/fresh checks precede separate
+unchanged 123-control publication affected rerun. S3/resources/native-Mac stay separate;
+no remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | post-resolution publication affected rerun prepared
+
+Acknowledged complete 266-line all-71 green/57-line index historical-current wiki/privacy
+reviews and fresh scoped/whitespace checks. Renewed six-target lint/format pass; both unchanged
+publication modules are fully reviewed and 123 controls collected, including exact unresolved
+four-audit overflow at all five entries and both actual original publication COMMIT deaths.
+Distinct byte-identical 303-identity source freeze and separate unchanged runner freeze bind
+the prepared retained rerun; runtime/controls/operators/public contracts/locks unchanged.
+No test active/result or broader acceptance. Complete prepared wiki/privacy/fresh checks
+precede launch; full report/sidecar/actual-child/all-identity review precedes further change.
+Expanded entity/integration/S3/resources/native-Mac gates remain open; no remote/production/
+scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | post-resolution publication affected rerun active
+
+Complete 233-line prepared wiki/privacy successor reviewed; fresh scoped audit, both whitespace
+checks and all 303 source/runner/operator identities pass. Launched the separately frozen
+unchanged 123-control publication affected rerun with distinct overwrite-refusing report and
+diagnostic-retaining runner. No result yet; keep runtime/controls/runner fixed until notification
+and complete retained report/sidecar/actual-child/all-identity review. Every historical failure
+and fixture remains intact. Initial all-71 focus is closed; expanded entity/integration/S3/
+resources/native-Mac gates stay open. No remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | post-resolution publication affected follow-through closed
+
+Unchanged frozen publication rerun passes all 123 controls (708.64 s), exit 0. Complete four-line
+report/29-line sidecar/two actual 93-byte publication COMMIT diagnostics and all 303 source/
+runner/operator identities reviewed; both crash children exit 87 with empty stderr. All 46
+original/77 expanded controls, including exact unresolved four-audit overflow at all five typed
+entries, pass. Every fixture/historical report/original control retained; no run active or source
+change. Only this affected follow-through closes, not entity-wide affected/full or wider Linux.
+Complete result wiki/privacy/fresh checks precede separate completion-death/stronger SQL-tail/
+forward-evolution controls. Maintenance/service/S3/resources/native-Mac and dcc-02–05 remain
+open; no remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | genuine entity completion-death controls prepared
+
+Acknowledged complete 254-line publication-result wiki/privacy review/fresh checks. Added only
+a separate fully reviewed 345-line/12-control module for actual no-unwind process death after
+genuine independent verification and at before/after completion/resolution COMMIT hooks. Init/
+replay, original-clean recovery and immutable acknowledgment resolution bind actual hashed
+captures, precise commands/shutdown/CLI originals and all-or-none typed state without raw/
+reader release. Formatting is AST-identical; child parsing/six-target lint/format/collection
+pass. Distinct 304-identity source freeze adds only this module; all 303 prior sources/runner/
+operators unchanged. First run is prepared, not active/qualified; full wiki/privacy/fresh checks
+precede launch and full report/sidecar/actual-child/capture/all-identity review precedes further
+changes. Stronger SQL-tail/forward-evolution, maintenance/service/integration and wider Linux/
+S3/resources/native-Mac remain open; no remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | genuine entity completion-death qualification active
+
+Complete 316-line prepared wiki/privacy successor reviewed; fresh scoped audit, both whitespace
+checks and all 304 source/runner/operator identities pass. Launched the distinct frozen 12-control
+completion-process-death run with unchanged overwrite-refusing diagnostic-retaining runner.
+No result yet; runtime/controls/runner stay fixed until notification and complete retained
+report/sidecar/actual-child/boundary-capture/all-identity review. Every historical report/fixture/
+control remains intact. SQL-tail/forward-evolution/maintenance/service/integration and wider
+Linux/S3/resources/native-Mac gates stay open; no remote/production/scheduling/utility/commit/push.
+
+## [2026-11-15] verification | genuine entity completion-death focused gate closed
+
+Frozen run passes all 12 controls (283.57 s), exit 0. Complete three-line report/68-line sidecar/
+12 actual 181-byte exit-89 diagnostics and hash-bound boundary captures authenticated; stderr
+empty. Independent read-only inspection validates 48 actual observation-artifact groups and
+72 immutable CLI archive records; all 545 retained fixture files and 304 source/runner/operator
+identities unchanged. Initial diagnostic-only guessed cursor literal corrected to the actual
+original intent; complete corrected inspection passes without runtime/control/fixture changes.
+Eight uncommitted cases need fresh audited recovery; four genuine COMMITs retain atomic results.
+Raw cursor/history, queued-reader/grant and live authority boundaries hold. Every report/fixture/
+original control/freeze retained; no test active. Only this focus closes, not SQL-budget/keyset/
+forward-evolution, maintenance/service/staged integration or wider Linux acceptance. Complete
+result wiki/privacy/fresh checks precede separately reviewed/frozen controls. S3/resources/
+native-Mac and dcc-02–05 remain open; no remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | completion-resolution SQL-history controls prepared
+
+Acknowledged complete 307-line crash-result wiki/privacy review/fresh checks. Exact initial
+531-line formatting matches and AST preserves retained 329-line source. Full review detects
+only new-module fixture/guard defects before execution; complete 98-line correction preserves
+all test assertions/parameterizations/other helpers and drafts. Final 548-line/44-control
+module is reviewed; eight-target lint/format and final collection pass. Two genuine completion/
+resolution/publication originals are planned for early SQL-budget-before-fetch, exact caps,
+one-row sequence tails and full-history/audit tails; no results/observations are manufactured.
+Typed independent cursors remain rejected, unrelated reader validation/actual writer receipt
+prerequisite preserved, and guard failure cannot prevent rollback. Distinct 305-identity freeze
+adds only this module; all 304 predecessor sources and runner/operators unchanged. No run active,
+result, runtime repair or broader acceptance. Complete prepared wiki/privacy/fresh checks precede
+launch and full retained evidence/identities precede further changes. Every historical failure/
+fixture preserved; Linux/S3/resources/native-Mac remain open, no remote/production/scheduling/
+utility/commit/push action.
+
+## [2026-11-15] verification | completion-resolution SQL-history qualification active
+
+Complete 480-line prepared wiki/privacy successor reviewed; fresh scoped audit, both whitespace
+checks and all 305 source/runner/operator identities pass. Launched the distinct frozen 44-control
+history run with the unchanged overwrite-refusing diagnostic-retaining runner. No result yet;
+runtime/controls/runner remain fixed until notification and full retained report/sidecar/actual
+fixture/artifact/identity review. Every historical report/fixture remains intact. Forward-evolution/
+maintenance/service/integration and wider Linux/S3/resources/native-Mac remain open; no remote/
+production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | completion-resolution SQL-history focused gate closed
+
+Frozen history run passes all 44 controls (62.53 s), exit 0. Complete three-line report/
+19-line sidecar reviewed; no diagnostic children are expected for these ordinary genuine
+CLI/verifier captures. Independent read-only review authenticates ten verifier groups, two
+CLI completions, twelve immutable archives and original publication/completion/resolution/
+blocker/authority/raw-cursor links. Original guessed-table failure and table-corrected guessed-
+count failure remain retained; complete inspection against actual schema/14 typed events passes.
+No runtime/test/fixture change. All 84 retained files (83 fixtures plus sidecar)/one symlink
+and all 305 source/runner/operator identities unchanged. No test active; only SQL-budget/keyset/
+tail focus closes. Complete result wiki/privacy/fresh checks precede separate forward-evolution
+controls. Maintenance/service/staged integration and wider Linux/S3/resources/native-Mac/
+dcc-02–05 remain open; no remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | raw-cursor-authority forward-history controls prepared
+
+Complete closed-history result wiki/privacy/fresh checks precede the separate control-only
+successor. Retained 261-line draft receives demonstrated request-clock/anchor-shape corrections
+and actual final-CLI semantic comparison; complete 67-line correction/419-line module reviewed.
+Formatting preserves corrected AST; lint-only refusal contexts consolidated. Eight-target lint/
+format and corrected 23-control collection pass; wrong system-interpreter collection diagnostic
+retained, no semantic execution. Three positives/sixteen rollback-only damage/four old-receipt
+refusals plan genuine interleaved raw/entity evolution, never fabricated historical evidence.
+Distinct 306-identity freeze adds only this module; all 305 predecessors/runner/operators/
+closed-history fixtures unchanged. No test active or runtime change. Complete prepared wiki/
+privacy/fresh checks precede execution and full genuine retained evidence/identities precede
+closure or repair. Maintenance/service/integration and wider Linux/S3/resources/native-Mac/
+dcc-02–05 remain open; no remote/production/scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | raw-cursor-authority forward-history qualification active
+
+Complete 340-line prepared wiki/privacy successor reviewed; fresh scoped audit, both whitespace
+checks and all 306 source/runner/operator/closed-history fixture identities pass. Launched the
+distinct frozen 23-control first run with the unchanged overwrite-refusing retained runner.
+No result yet; runtime/controls/runner remain fixed until notification and complete genuine
+artifact/ledger/fixture/identity review. Every historical failure retained. Maintenance/service/
+integration and wider Linux/S3/resources/native-Mac/dcc-02–05 remain open; no remote/production/
+scheduling/utility/commit/push action.
+
+## [2026-11-15] verification | raw-cursor-authority forward-history focused gate closed
+
+Frozen run passes all 23 controls (87.45 s), exit 0. Complete three-line report/19-line sidecar
+and independent read-only inspection authenticate 16 verifier groups/four CLI completions/34
+immutable archives, original publication/completion/resolution/blocker/raw-cursor/authority links
+and generations 1,1,2,3,3,4. Original guessed-DRAINING inspection failure/source retained; separate
+read-only diagnostic establishes OPEN at the advanced fixed-hour cursor, as final raw proof
+requires. One reader stays WAITING without grants/live authority. Complete diagnostic-only
+21-line correction and 12-line final inspection reviewed; no runtime/control/fixture change.
+All 150 retained files/one symlink and 306 source/runner/operator/predecessor-fixture identities
+unchanged. No test active; only this focused gate closes. Complete result wiki/privacy/fresh
+checks precede separate original-bound recovery/maintenance and strict Linux entity dispatch.
+Staged both-runtime integration, wider Linux/S3/resources/native-Mac and dcc-02–05 remain open;
+no remote/production/scheduling/utility/automatic-expiry/commit/push action.
+
+## [2026-11-15] design | strict Linux entity service controls prepared
+
+Selected existing-library init/replay/clean-original and immutable-ack resolution dispatch,
+with separate bounded entity configuration and explicit v5 upgrade selection. Raw tick/v4
+defaults and original receipt/storage scope remain unchanged; unrelated flags/confirmation/
+platform/scope checks precede configuration. Complete 447-line/71-control module and genuine
+child reviewed; lint/collection pass. Separate 307-identity red freeze adds only controls,
+preserving all 306 closed-forward sources and unchanged retained runner. Scoped wiki/privacy
+and whitespace checks pass; no runtime change or semantic result at preparation. Complete
+retained red/evidence/identities precede coding. Pending-publication repair, missing original
+migration/deletion coverage, staged both-runtime integration and wider Linux/S3/resources/
+native-Mac remain separate; no remote/production/scheduling/utility/expiry/commit/push action.
+
+## [2026-11-15] verification | first frozen Linux entity service red awaiting completion
+
+The distinct 71-control first red was launched with the unchanged retained runner; no
+completion notification/result has yet been received or inspected. Runtime/controls/runner
+remain fixed pending full report/sidecar/actual diagnostic and identity review. Resumed
+read-only checks confirm all 307 identities; complete corrected 297-line preparation delta
+reviewed for scope/privacy, preserving the separate omitted-untracked-page diagnostic.
+Fresh scoped nine-page wiki audit and both whitespace checks pass. Handoff now distinguishes
+the closed forward focus from the pending service red. No runtime repair or broader
+acceptance; pending-publication recovery, staged integration, S3/resources/native-Mac and
+dcc-02–05 remain separate. No remote/production/scheduling/utility/expiry/commit/push action.
+
+## [2026-11-15] verification | first Linux entity service red reviewed
+
+Frozen first red completes with 71 failures (135.78 s), exit 1. Full lossless 3,052-line
+report/607-line review, 28-line sidecar, two actual 719-byte diagnostics and all 307 source/
+runner identities authenticate. One unsupported config/64 parser-masked/four absent-loader/
+two parser-stopped-child failures demonstrate missing seams, not successful semantic refusals
+or service COMMIT boundaries. Read-only snapshot preserves 302 files/eight symlinks and actual
+receipt damage without reconstruction. No run active/runtime repair yet. Next narrowly
+implement strict dispatch/separate configuration/explicit-v5/original-loader, preserving all
+controls/prior evidence; distinct successor review/freeze/rerun required. Pending-publication,
+integration/Linux/S3/resources/native-Mac/dcc-02–05 stay open; no remote/production/scheduling/
+utility/expiry/commit/push action.
+
+## [2026-11-15] implementation | strict Linux entity service runtime successor prepared
+
+Complete 306-line red-result wiki/privacy review and fresh checks precede the two-file
+source successor. Original runtime retained; complete formatted 303-line delta reviewed.
+Only service configuration/early flag dispatch/explicit-v5 selection and exact blocked typed
+original loader change. Existing library/schema/standalone/public/raw-reader contracts remain
+fixed. Distinct 307-identity freeze preserves all 305 other identities, all controls/runtime
+locks/runner and 310 retained red-evidence entries. Three-target lint/format and unchanged
+71-control collection pass. Runtime rerun prepared, no result yet; full prepared wiki/privacy/
+fresh checks precede launch and actual retained evidence/identity review precedes closure or
+repair. Pending-publication/integration/Linux/S3/resources/native-Mac/dcc-02–05 stay open;
+no remote/production/scheduling/utility/expiry/commit/push action.
+
+## [2026-11-15] verification | strict Linux entity service runtime qualification active
+
+Complete 319-line prepared wiki/privacy successor reviewed; fresh scoped audit, both
+whitespace checks and all 307 runtime/runner identities pass. Accepted forward-history
+150-file/one-symlink evidence rechecks unchanged without rerun. Launched the distinct
+unchanged 71-control runtime qualification with the overwrite-refusing retained runner.
+No result yet; runtime/controls/runner stay fixed until completion and full retained report/
+sidecar/actual diagnostic/artifact/identity review. Every red/prior fixture remains intact.
+Service/maintenance/integration/Linux/S3/resources/native-Mac/dcc-02–05 remain open;
+no remote/production/scheduling/utility/expiry/commit/push action.
+
+## [2026-11-15] verification | strict Linux entity service focused gate closed
+
+Unchanged frozen run passes all 71 (251.19 s), exit 0. Full three-line report/28-line sidecar/
+two actual exit-91 diagnostics and independent read-only inspection authenticate 23 ledgers,
+32 verifier groups/ten clean CLI captures/60 immutable archives, nine atomic typed completions
+and one immutable acknowledgment resolution. Before-COMMIT death stays blocked without
+completion/authority; after-COMMIT retains both without raw advancement. Actual receipts bind
+the diagnostics' null identities; real restart block clock and damaged originals remain intact.
+Prepared-only retry receipt has no intent/verifier/launch/archive. Both inspector directory/
+configuration-assumption failures and sources retained; reviewed diagnostic-only corrections
+pass without runtime/control/fixture changes. All 439 green files/eight symlinks, 310 red entries,
+accepted forward 150 files/one symlink and 307 runtime/control/lock/runner identities unchanged.
+No test active; only strict-service focus closes after complete result wiki/privacy/fresh checks.
+Pending-publication/original-bound maintenance, staged service-affected/both-runtime integration
+and wider Linux/S3/resources/native-Mac/dcc-02–05 stay open; no remote/production/scheduling/
+utility/automatic-expiry/commit/push action.
+
+## [2026-11-15] verification | unchanged Linux service-affected scope prepared
+
+Acknowledged complete 396-line strict-service result wiki/privacy review; fresh scoped audit,
+both whitespace checks, all 307 source/lock identities, original runner and green/red/accepted-
+forward evidence pass. Distinct byte-identical freeze and hash-bound scope select 13 existing
+service/client/lifecycle/local-route/raw-recovery/maintenance/retry/entity-service modules.
+All 307 controls collect (1.48 s); complete collection/32-line sidecar authenticate. No runtime/
+control changes or semantic launch/result. Accepted forward module/fixture excluded, ten-second
+lifecycle wait unchanged. Prepared review/fresh checks precede distinct retained run; actual
+report/diagnostic/artifact/ledger/identity review precedes closure or repair. Pending-publication,
+broader both-runtime integration and Linux/S3/resources/native-Mac/dcc-02–05 remain open; no
+remote/production/scheduling/utility/expiry/commit/push action.
+
+## [2026-11-15] verification | unchanged Linux service-affected qualification active
+
+Complete 318-line prepared wiki/privacy review and fresh scoped/whitespace/source/runner/
+collection/prior-evidence checks precede the distinct 307-control launch. The unchanged
+diagnostic-retaining runner uses new fixtures/report and exact frozen 13-module scope.
+No completion/result yet; runtime/controls/runner remain fixed until full actual report,
+sidecar, diagnostics, artifacts, ledger dispositions and all identities authenticate.
+Accepted forward/history and all prior failures remain preserved, not rerun/overwritten.
+Only service-affected qualification is active; pending-publication and broader both-runtime/
+Linux/S3/resources/native-Mac/dcc-02–05 remain open. No remote/production/scheduling/utility/
+expiry/commit/push action.
+
+## [2026-11-15] design | original-bound pending-publication control matrix
+
+Read-only review while service-affected sources remain frozen separates standalone matching-
+candidate update from coordinated original-bound maintenance. Partial host publication lacks
+successful publication/checkpoint archives; pending journal candidates alone carry no original
+coordinator/CLI identities. Planned genuine two-host genesis/replay failures, clean-resolution
+refusals, exact candidate/input/original damage, receipt/intent-before-launch, real death/lost-
+acknowledgment/clock-floor, repair-versus-resolution and missing migration/deletion coverage
+require separate independent evidence. API/representation/original eligibility and pending-
+recovery controls remain unselected/unexecuted; no manufactured history or relaxed validators.
+Active service-affected runtime/controls/runner and all accepted originals stay unchanged;
+broader both-runtime/Linux/S3/resources/native-Mac/dcc-02–05 remain open. No remote/production/
+scheduling/utility/expiry/commit/push action.
+
+## [2026-11-15] verification | pending-publication source-planning review closed
+
+Complete 327-line successor/privacy review covers all five planning pages against the retained
+active-state baseline; distinct full snapshot/delta retained. Source claims rechecked live;
+fresh scoped audit passes nine Markdown files/seven frontmatters, 263 grounding paths,
+493 inline sources and 458 wikilinks/82 sections. Both whitespace checks and all 307 frozen
+source/control/lock identities pass; prepared/active/planning log placement verified. Historical
+strict-focus idle statements now explicitly describe that closure, not the subsequent active
+service-affected run. No completion notification/result inspected, runtime/control/API change,
+new recovery execution or original eligibility claimed. Service-affected result review and
+broader Linux/both-runtime/S3/resources/native-Mac gates remain open; no remote/production/
+scheduling/utility/expiry/commit/push action.
+
+## [2026-11-15] verification | Linux service-affected 307-control gate reviewed
+
+The unchanged 13-module service-affected run passes 307 controls in 2,036.10 s, exit 0.
+Report/sidecar, all 307 frozen identities, both actual exit-91 child diagnostics, the 5,982-entry
+fixture snapshot, prior green/red evidence and accepted forward-history fixture authenticate;
+the forward fixture remains unchanged and was not rerun. Read-only ledger review validates 170
+of 188 ledgers and maps the 18 expected reopen refusals to explicit corruption controls. The
+pre-COMMIT death remains blocked with no typed completion/authority; the post-COMMIT death
+retains typed completion/authority through the supported history accessor in `DRAINING`, with
+no raw-cursor advance. This closes only the service-affected gate. Pending-publication/missing-
+original recovery, broader both-runtime integration, S3, representative resources, native-Mac
+shutdown and dcc-02–05 remain open; no runtime changes, remote/production operation, scheduling,
+utility, expiry, commit or push.
+After updating the status pages, the fresh scoped changed-wiki/privacy audit passes nine Markdown
+files/seven frontmatters, 263 grounded paths, 493 inline sources and 458 wikilinks; six linked
+diagrams validate. The complete changed-text privacy scan and both repositories' whitespace
+checks pass. Index/log frontmatter exceptions remain preserved; no whole-wiki lint is implied.

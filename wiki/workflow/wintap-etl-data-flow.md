@@ -28,13 +28,27 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/authority.py
   - ../Wintap-PyUtil/wintappy/coordination/verification.py
   - ../Wintap-PyUtil/wintappy/coordination/completion.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_completion.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_publication.py
+  - ../Wintap-PyUtil/tests/test_coordination_entity_publication_qualification.py
+  - ../Wintap-PyUtil/wintappy/coordination/service.py
+  - ../Wintap-PyUtil/wintappy/coordination/client.py
+  - ../Wintap-PyUtil/wintappy/coordination/inputs.py
+  - ../Wintap-PyUtil/wintappy/coordination/recovery.py
+  - ../Wintap-PyUtil/wintappy/coordination/maintenance.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py
+  - ../Wintap-PyUtil/wintappy/coordination/retry.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_execution.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_verification.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_operation_verifier.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/retry_verifier.py
   - wiki/tool/durable-process-entity-manager.md
   - wiki/tool/raw-sensor-compaction.md
   - wiki/work/raw-sensor-file-aggregation/implementation_plan.md
   - ../Lintap/teletap/README.md
 policy: agent-editable
-last_validated: 2026-11-14
+last_validated: 2026-11-15
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -50,6 +64,14 @@ The editable [draw.io diagram](wintap-etl-data-flow.drawio) follows host-local
 sensor Parquet through S3, optional hourly compaction, dual-root DBT input and
 bronze → silver → gold. It also breaks out the separate durable process-entity
 snapshot store, processing-checkpoint store and principal Makefile validation targets.
+
+For presentations, the editable [CONOPS infographic](wintap-etl-conops-infographic.drawio)
+([PNG preview](wintap-etl-conops-infographic.png)) uses larger type, heavy connectors
+and a local-first happy path with optional S3, compaction and durable-context
+branches. It distinguishes the four storage concepts and keeps overlap, bounded-QA
+and operational caveats visible. The detailed diagram above remains unchanged;
+this infographic is a presentation companion, not an expanded implementation or
+production-readiness claim.
 
 ## Local-only single-user workflow
 
@@ -68,7 +90,8 @@ automatically; output defaults to `$WINTAP_DATA_ROOT/duckdb/wintap.duckdb`.
 A `compacted/` directory is optional, and an unset/empty
 `WINTAP_DBT_PROCESS_ENTITY_ROOT` disables durable enrichment. S3 credentials,
 compactor installation and entity initialization are unnecessary for this path.
-The proposed coordinator likewise preserves direct local execution.
+The Linux input router preserves direct local execution without initializing
+coordination or its SDK/ledger state.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile §defaults/dbt-build; ../Wintap-PyUtil/scripts/check_dbt_config.py §validate; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql §matching_raw_sensor_partition_globs; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_process_entities; ../Wintap-PyUtil/wintap_dbt/macros/s3.sql §configure_raw_sensor_access -->
 
 When reusing a shell previously configured for remote builds, reset its DBT
@@ -193,36 +216,266 @@ enrichment is enabled, configured entity snapshots and processing checkpoints ar
 additional DBT inputs with schema/coverage checks. A passing raw source preflight
 proves only bounded access/schema evidence, not complete dataset integrity or
 semantic quality. These dependencies and limits are reflected in the diagram.
-The proposed lock covers all active input roots and the writer's final checkpoint
+The Linux coordination binding covers all active input roots and the writer's final checkpoint
 publication; a read grant does not guarantee that its requested window is covered.
 Implementation review: [[wiki/work/dbt-compaction-coordination/implementation-review]].
 
-PyUtil's protocol/ledger, evolving-clock admission/draining tick, Linux command-tree
-supervision and receipt-bound standalone launch are currently libraries, not
-integrated into these Makefile targets or installed scheduling. The receipt binds
-effective non-secret settings to committed writer intent; local synthetic empty
-and destructive migrations pass through conservative `execute_prepared`, which
-still blocks. Separate read-only verification
-authenticates receipt/intent/shutdown and original data evidence without reopening;
-ledger v2 now requires independently verified authority initialization and fresh
-same-locked-session entity admission/writer checks. Main entity verification uses
-the retained anchor without advancing it. The separate ledger-v3 normal-success
-path now obtains fresh verification internally and atomically retains completion/run/
-optional high-water/exact-hour cursor/backlog mode under the uninterrupted lock.
-Previously blocked/restarted intents cannot use it; audited recovery and integrated
-service/client remain absent. Local origin/history/audit/cursor and prior-completion
-clock checks do not establish coherent whole-ledger/store rollback freshness.
-Rollback/forks reject with a retained
-ledger; restoring that ledger too still needs external evidence/exclusion.
-Injected SDK tests are not actual
-S3 qualification, and macOS reader shutdown remains open. Current
-regression evidence and remaining gates:
-[[wiki/work/dbt-compaction-coordination/verification]].
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/coordinator.py; ../Wintap-PyUtil/wintappy/coordination/supervisor.py; ../Wintap-PyUtil/Makefile -->
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/writer.py -->
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/verification.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py -->
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py; ../Wintap-PyUtil/wintappy/coordination/authority.py -->
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/writer.py §execute_and_complete_prepared -->
+## Linux shared-reader and hourly-writer integration
+
+Wintap-PyUtil owns the current **uncommitted Linux integration**; this Analytics
+wiki records its semantics and qualification limits. It is not production rollout
+or dcc-02–05 acceptance. The Linux runbook is
+`../Wintap-PyUtil/wintappy/coordination/LINUX.md`; current results and remaining gates
+are in [[wiki/work/dbt-compaction-coordination/verification]]. Native-Mac shutdown
+remains a separate worker-owned gate; Windows coordination is outside this milestone.
+
+- **Local-first routing:** Make's source/build/test/docs/debug targets classify
+  active raw/compacted/entity/metrics roots offline. Entirely local inputs invoke
+  ordinary DBT without AWS, coordination state, compactor installation or entity
+  bootstrap. Inactive remote metrics do not activate coordination.
+- **Remote reader lifetime:** matching dataset/transport/client-state configuration
+  is required when an active root is S3. One reservation spans build preflight,
+  DBT execution and descendant shutdown. Immutable invocation precedes request PUT;
+  exact request, command manifest, grant, launch and resolved non-secret transport
+  scope remain bound. Canonical single-link original shutdown/outcome evidence is
+  required for terminal retries; retries do not relaunch DBT. SIGINT/SIGTERM preserve
+  130/143; uncertain shutdown or wrapper death retains the reservation. Grants do
+  not expire automatically. Native-Mac coordinated execution currently refuses,
+  while local DBT remains available.
+- **Exclusive writer:** the main DuckDB 1.5.6 runtime alone opens the local ledger.
+  The service processes bounded terminal-first messages, refreshes UTC and drains
+  due work. With zero readers, it commits receipt-bound intent before supervising
+  standalone DuckDB 2.0.0 compaction and independent read-only data/authority
+  verification. The same ledger lock spans launch, verification and atomic
+  completion/run/high-water/exact-hour cursor/backlog COMMIT. Only afterward, with
+  a fresh clock check, may queued readers receive grants. At most one hour launches
+  per tick; due backlog retains priority. Conservative `coordinator.tick` and
+  `execute_prepared` still block and are not completion bypasses.
+- **Advisory status:** private atomically replaced `<state>/status.json` carries
+  explicit observation time and bounded job/run/maintenance summaries, not access
+  permission or partition/completion certificates. Missing/stale status means
+  unknown; export failure cannot undo completion or authorize reads. The separately
+  planned status utility is not implemented by this integration.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintappy/coordination/inputs.py; ../Wintap-PyUtil/wintappy/coordination/client.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/wintappy/coordination/writer.py; ../Wintap-PyUtil/wintappy/coordination/supervisor.py -->
+
+**Audited recovery is narrower than general data repair.** Explicitly confirmed
+cannot-resume operator reader cancellation retains its own terminal-bound audit,
+not an invented DBT exit. Original clean blocked writers resolve through fresh
+receipt/archive/data/current-authority/historical-checkpoint/shutdown checks under
+the same lock. The added checkpoint-only path targets an already blocked
+entity-enabled/deletion-enabled original exit-2 publication failure with complete
+migration/deletion evidence. It commits a separate maintenance receipt/intent before
+supervised repair; repair alone preserves the original block and cursor. Exact
+`resolve-hour --maintenance-id` requires independent original/repair evidence before
+atomic completion, retaining actual original failure and separate repair success.
+Conflicting checkpoint replacement needs separate confirmation and retains prior
+rows. Failed/crashed maintenance stays pending until audited cannot-resume
+abandonment, which also preserves the original block. Missing original phases,
+unqualified incomplete deletion and unresolved entity publication remain blocked.
+Raw-only intentional retry has separate closed local regressions; general exclusive
+entity init/replay and endpoint/resource qualification remain unfinished. The retry slice is described in
+[[wiki/work/dbt-compaction-coordination/verification#Intentional-retry ownership — active, not accepted]],
+not accepted by the earlier repair regressions.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/recovery.py; ../Wintap-PyUtil/wintappy/coordination/maintenance.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py -->
+
+**Original-bound deletion disposition (local regressions closed):** `repair-deletions` adds a narrow
+path for an already blocked original exit-2 deletion failure with complete retained
+migrations for every selected event/protocol. It authenticates unchanged surviving
+inputs and exact outputs, rejecting extras/markers/count/schema conflicts before
+deletion. Aggregate object/directory-node bounds precede Parquet discovery; all-hour
+survivor/checkpoint/current-authority revalidation continues during repair. It never
+replays entities or edits original failed archives. Separate disposition checkpoints
+retain historical entity provenance but use repair run/operation and actual new
+status/time; conflicting coverage needs explicit replacement with retained prior rows.
+Repair leaves the block/cursor; independent resolution binds both archives to retained
+captures before atomic completion, preserving original exit 2 and repair exit 0.
+Public completion/authority verification still accepts only one hour. This slice's
+separate full regressions pass 788 main tests/three skips and 509 standalone tests/
+two opt-in S3 skips, exit 0; complete reports inspected and all 265 frozen identities
+unchanged after notifications. Local regression closure does not qualify dcc-02–05,
+actual S3 or representative resources; new retry/entity changes need separate
+evidence. Details and retained failures are in
+[[wiki/work/dbt-compaction-coordination/verification#Original-bound deletion recovery]].
+Generic survivor-row reconciliation cannot certify partial originals and can replay
+entities; it is not a substitute. Missing original coverage stays blocked.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py; ../Wintap-PyUtil/wintappy/coordination/maintenance.py; ../Wintap-PyUtil/wintappy/coordination/completion.py -->
+
+### Read-only failed-merge retry preflight
+
+`retry.verify_retry_prepared()` is an internal independent observation, **not a
+retry command, completion proof or admission permission**. It supports exactly one
+raw-only failed-merge event/hour, deletion disabled, unchanged original inputs and
+absent selected output. It authenticates the blocked original's receipt/intent,
+actual exit 2, stopped-child capture and three-record failed archive; it preserves
+that original failure, cursor, history and exclusion through restart.
+
+The durable exact request precedes supervised standalone DuckDB 2.0.0 verification.
+Standalone rechecks original content, schemas/counts and both bounded prefixes after
+each data observation; main DuckDB 1.5.6 reads bounded JSON only and requires the
+independently reported source rows/files/bytes to equal authenticated original
+migration-intent totals. Original/request/result/capture checks repeat after launch.
+Entities, deletion, multiple events/hours, partial output and missing/changed original
+coverage refuse. Passing preflight cannot launch another writer or release readers;
+durable intentional retry has a separate locally regression-accepted implementation
+below. Its endpoint/resource qualification and entity-only exclusive ownership remain
+open; read-only preflight does not confer that permission.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/retry.py §verify_retry_prepared/_original_source_totals; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/retry_verifier.py §verify_retry/_request/main -->
+
+The separate read-only preflight local regression gate is closed: 821 main tests/
+three skips and 554 standalone tests/two opt-in S3 skips. Complete reports and all
+269 frozen identities are checked after notifications; each full suite began only
+after its own affected pass/report/identity check. Retain this baseline and the prior
+failed controls; new durable retry/entity slices require separate evidence. These
+results do not qualify actual S3, resources, native-Mac shutdown or dcc-02–05.
+<!-- SOURCE: wiki/work/dbt-compaction-coordination/verification.md §Retry preflight — prerequisite only, integration pending -->
+
+### Audited raw-only intentional retry
+
+Linux `service retry-hour` requires explicit cannot-resume confirmation/reason and
+the original execution receipt, not current writer overrides. Under uninterrupted
+ledger exclusion, a fresh independent preflight permits atomic disposition plus
+fresh receipt-bound ownership for exactly one raw-only failed-merge event/hour,
+deletion disabled, original inputs unchanged and output absent. The original remains
+exactly `BLOCKED` with its actual failure/archive; there is no original completion,
+cursor advance or admission-open interval at ownership COMMIT. Unrelated flags refuse
+before configuration resolution; this operator path calls no transport/admission/grants.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §main; ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py §retry_and_complete_prepared -->
+
+Distinct durable independent post-COMMIT/pre-launch evidence precedes launch. Normal
+completion and audited resolution require equal authenticated original/new source
+hashes, partitions, schemas and counts before new-run completion/cursor/backlog-mode
+COMMIT. Main reads bounded JSON only; standalone DuckDB 2.0.0 owns data verification.
+Frozen ephemeral credentials are reused under unchanged storage scope. Failures,
+restart and acknowledgment uncertainty stay blocked; neither an orphan receipt nor
+a committed retry authorizes automatic relaunch. Bounded predecessor-linked ledger-v4
+history preserves failures without pruning; explicit compatible v1/v2/v3 upgrade is
+required, never ordinary-open replacement. Public one-hour `compact` validators remain
+unchanged, and entity-only ownership is a separate unimplemented operation.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py §_recheck_retry_completion/validate_history; ../Wintap-PyUtil/wintappy/coordination/completion.py §_build_completion_proof; ../Wintap-PyUtil/wintappy/coordination/ledger.py §upgrade; ../Wintap-PyUtil/wintappy/coordination/recovery.py §resolve_hour -->
+
+Local successor regressions pass 880 main/three opt-in skips and 554 standalone/two
+S3 opt-in skips on 275 unchanged identities, following successful focused/affected
+gates and complete-report checks. Retain that freeze and all historical failures
+before distinct entity-only work. These local passes do not qualify Linux, actual S3,
+representative resources, native-Mac shutdown or dcc-02–05.
+<!-- SOURCE: wiki/work/dbt-compaction-coordination/verification.md §Intentional-retry ownership — active, not accepted -->
+
+### Read-only entity input authentication
+
+The separate `entity_execution` receipt binds `entities-init` or `entities-replay`,
+exact UTC hours and all four roots; preparation grants no launch permission. Default
+window budget is 24 hours, hard ceiling 168; canonical event allowlists include
+`raw_process`. Raw compaction/deletion/grace/resume settings are excluded, leaving
+public one-hour compaction/completion validators unchanged.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/entity_execution.py §prepare_entity_execution/validate_entity_receipt -->
+
+The qualified owner-free input-authentication slice requires explicit v5, no owner
+and zero readers under the main-runtime ledger lock. Separately supervised standalone DuckDB
+2.0.0 verification supplies input/destination observations; main authenticates actual
+canonical single-link receipt/request/command/capture/shutdown evidence using bounded
+JSON only. Original observations must match their real artifacts before a fresh
+unchanged-input check. Hourly file/byte totals equal selected aggregates; clocks before
+receipt creation refuse before verifier launch. Result/request/proof budgets are
+64 KiB/1 MiB/128 KiB and refuse without pruning.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/entity_verification.py §verify_entity_inputs_prepared/recheck_input_observation/_validate_inputs -->
+
+Successful read-only observations change no dataset, ledger rows, authority, cursor or admission.
+Its 58-control input-authentication focus passes on unchanged repair identities, not
+entity ownership/launch/completion/publication, successor full regressions or Linux
+acceptance. A later focused-green typed-intent overlay adds original-bound same-session
+post-COMMIT checks and BLOCKED retention on failure, but no entity launch/completion.
+Its unchanged 34-control repair focus passes, including genuine COMMIT/restart/lost-ack;
+expanded history and combined main/standalone focuses now pass on unchanged identities.
+Affected/full and entity launch/completion/recovery qualification remain separate gates.
+Historical publication needs original-generation durable authentication, never mutually
+rehashed archives or comparison with today's aggregate.
+<!-- SOURCE: wiki/work/dbt-compaction-coordination/verification.md §Main-side entity input observations — no permission -->
+<!-- SOURCE: wiki/work/dbt-compaction-coordination/verification.md §Typed entity intent and restart exclusion — no launch -->
+
+### Read-only current-generation entity completion observations
+
+`verify_entity_completion_prepared` launches only the separate read-only standalone
+verifier under retained same-session typed exclusion. Main binds original receipt/intent,
+post-COMMIT inputs, actual single-link CLI command/shutdown/capture and archived publication
+report, plus fresh bounded standalone completion evidence. CLI pretty-printed bytes and
+canonical verifier bytes remain distinct; replay preserves original bootstrap provenance.
+`publication: None` and exact genesis/immediate-successor current generation refuse
+historical certification. No ledger rows, authority, cursor, admission or live acknowledgment
+transition is implemented, including on refusal; this is not an entity writer/service API.
+`validate_completion_observation` checks a retained contract only. Actual-original artifact
+recheck is distinct from fresh standalone data verification; dictionaries alone confer
+neither current data authority nor historical publication evidence.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/entity_completion.py §verify_entity_completion_prepared/recheck_completion_observation/validate_completion_observation -->
+
+Initial completion-observation focus passes 44 controls on unchanged fixture-repair
+identities after complete report review. Separate expanded artifact/data/non-mutation
+focus passes 67 controls with all 295 identities unchanged after complete report review.
+Combined standalone focus passes 141 and main passes 447; complete reports/all 295
+identities reviewed on the unchanged distinct freeze. Combined read-only focus is closed.
+Original-generation publication has separate initial focused evidence below; entity launch
+and atomic completion-authority linkage, recovery and affected/full/service acceptance
+remain separate. Historical statistics
+never derive from mutually rehashed archives or today's aggregate.
+<!-- SOURCE: wiki/work/dbt-compaction-coordination/verification.md §Main current-generation completion observations — read-only, active -->
+
+### Immutable original-generation publication evidence
+
+`retain_entity_publication_prepared` obtains fresh current-only completion internally
+under the same acknowledged typed exclusion, rechecking original receipt/input/intent,
+post-COMMIT prelaunch and actual CLI/archive/capture/shutdown before evidence/audit COMMIT.
+It accepts no caller completion or publication dictionary. The retained envelope binds
+the exact standalone completion core, original observation and typed intent; the core
+keeps `publication_sha256: None`. `get_retained_entity_publication` returns an authenticated
+copy of this original core for later historical requests, never today's aggregate.
+
+Ordinary reopen/history uses retained JSON only, without runtime/artifact reconstruction.
+Same-connection materialized SQL-limited keyset pages authenticate original owner, core,
+observation, audit and predecessor chain, including staged transaction rows. Publication
+records cap at 128 KiB/10,000 operations; shared typed intent/publication/audit history caps
+at 64 MiB and audits at 16 KiB. Budgets precede owner/payload fetches and refuse without
+pruning. Successful retention changes only publication evidence/audit, not ownership,
+authority, raw cursor, grants or live acknowledgment. Committed lost acknowledgment keeps
+evidence and BLOCKED original ownership; it is neither atomic completion nor audited recovery.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/entity_publication.py; ../Wintap-PyUtil/wintappy/coordination/entity_intent.py §_budget/validate_history -->
+
+The unchanged 46-control initial focus passes on all 297 frozen identities after complete
+report review. This includes genuine later-hour evolution without overwriting original
+checkpoints and historical standalone requests using the authenticated original core;
+the existing main completion adapter still refuses historical certification. Separate expanded
+qualification passes 79 controls (77 new plus two unchanged actual COMMIT process-death
+controls) on all 298 frozen identities, after complete report/actual-diagnostic review.
+Real UTF-8 SQL byte caps, positive budget/equality boundaries and materialized keyset-tail
+refusals execute without history reconstruction or pruning. Both actual crash children exit
+87 at the selected before/after publication COMMIT hooks and retain original exclusion,
+with absent-before/retained-after publication. This is bounded compatibility/process-death
+evidence, not representative sizing, physical power loss or entity permission. A distinct
+unchanged combined focus passes 570 main and 141 standalone controls, with complete reports,
+actual retained publication crash diagnostics and all 298 source/runner/operator identities
+reviewed. The publication/completion/exclusion compatibility focused gate is closed;
+affected/full, entity writer/service/recovery and Linux acceptance remain separate.
+<!-- SOURCE: wiki/work/dbt-compaction-coordination/verification.md §Durable original-generation publication retention — active, not accepted -->
+
+### Retained authority and qualification limits
+
+Entity checks require a verified retained anchor and fresh same-session admission/
+writer checks; forward committed lineage is allowed, rollback/forks reject with
+the retained ledger. Historical checkpoints bind their own generation receipts,
+not today's aggregate snapshot hash. SQL validation, Parquet interchange,
+`evidence_json`, original bootstrap provenance and ancestry/instance identities
+remain unchanged. Reopen authenticates retained completion/maintenance evidence
+without reopening historical runtime files; fresh recovery still needs those files.
+Maintenance history is bounded at 128 KiB per audit/10,000 operations/64 MiB total,
+with 256-row reads and refusal rather than pruning.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/authority.py; ../Wintap-PyUtil/wintappy/coordination/verification.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py; ../Wintap-PyUtil/wintappy/coordination/maintenance.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §validate_checkpoint_receipts -->
+
+Cooperative exclusion does not fence sensor uploads or hostile/external services.
+Whole-ledger-plus-authority rollback freshness still requires independent external
+evidence/exclusion; process-crash/WAL tests do not qualify physical power loss.
+Actual isolated S3 roots/access and representative 32 GB RAM / 64 GB disk sizing
+with aggregate monitoring remain unqualified; lower limits need a separate rerun.
+No production cron is installed. The human-approved utility Live diagnostic exception
+cannot bypass DBT, authoritative verification, ledger locking or recovery.
+<!-- SYNTHESIS: scoped implementation/tests and acceptance boundaries in wiki/work/dbt-compaction-coordination/implementation_plan.md; wiki/work/dbt-compaction-coordination/design.md §Diagnostic observation exception -->
 
 Related: [[wiki/repo/wintap-primary-sensor-repo]],
 [[wiki/repo/lintap-supporting-repo]],
