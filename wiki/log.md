@@ -23,8 +23,10 @@ failed. An unchanged Darwin refusal control detects generic `run_supervised` rea
 the new macOS worker path; the parent rejected non-Linux. A Darwin-only rerun confirms
 the mismatch. This is a genuine candidate regression against the intended reader-only
 Mac scope; no PyUtil source was changed. The initial standalone attempt used the wrong
-working directory and is retained as invalid; a correctly rooted standalone run is
-active. Candidate acceptance remains blocked; no PR, endpoint/data access or deployment.
+working directory and is retained as invalid. The correctly rooted standalone run has
+694 passed/two expected skips and one `TemporaryDirectory` cleanup error after the
+expected byte-budget refusal; a fresh single-test rerun passes, and a fresh full rerun
+is active. Candidate acceptance remains blocked; no PR, endpoint/data access or deployment.
 
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 

@@ -1573,9 +1573,12 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   macOS supervisor launch path. Parent source rejected non-Linux; candidate source
   broadens generic `run_supervised` beyond the coordinated-reader scope. A Darwin-only
   rerun confirms the failure. The first standalone invocation used the wrong working
-  directory and is invalid; the corrected standalone run from its project directory is
-  active. Preserve all reports and do not accept `c549424` until the scope regression is
-  resolved and the required affected/full gates pass on an authorized successor.
+  directory and is invalid. The correctly rooted standalone run has one cleanup failure
+  after the expected byte-budget refusal (694 passed/two skipped); that control passes
+  alone in a fresh directory, but the full report is not accepted. A second full
+  standalone rerun is active. Preserve all reports and do not accept `c549424` until the
+  scope regression is resolved and required affected/full gates pass on an authorized
+  successor.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean
