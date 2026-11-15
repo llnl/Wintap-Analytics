@@ -8492,8 +8492,9 @@ actual-S3, DBT/data, resource and deployment gates were not rerun or qualified.
 ## [2026-11-15] planning | next coordination phases; PR deferred
 
 Per human direction, added an ordered continuation plan without opening or preparing
-a PR: close original-bound recovery/entity-maintenance gaps; finish dcc-04 evidence,
-dcc-02 service completion and dcc-03 client semantics in dependency order; run frozen
+a PR: close original-bound entity pending-publication/missing-original recovery and
+entity-maintenance gaps; reauthenticate raw-only retry without broadening it; finish
+dcc-04 evidence, dcc-02 service completion and dcc-03 client semantics in dependency order; run frozen
 latest-revision platform regressions; then proceed only with a concretely approved,
 isolated real-data/S3/resource qualification. The immediate baseline gate is affected
 and full main/standalone Linux regression on `c549424`; neither the 90-control focused

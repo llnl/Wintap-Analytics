@@ -1566,10 +1566,14 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   standalone Linux regressions at `c549424`, retaining reports and identity checks.
   The 90-control focused pass and the parent's 307-control service-affected result
   are not substitutes for this current-revision baseline.
-- [ ] Implement and independently qualify the still-open original-bound
-  pending-publication repair/retry and missing-original migration/deletion cases.
+- [ ] Implement and independently qualify the still-open original-bound entity
+  pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean
   resolution; preserve blocked ownership on missing, damaged or mismatched evidence.
+- [ ] Reauthenticate the raw-only intentional-retry local contract on the frozen
+  candidate; its historical local regression gate is recorded, but current-revision
+  and service/platform integration remain separate. Do not broaden retry semantics
+  into entity recovery without its own original-bound controls.
 - [ ] Complete exclusive entity maintenance and its completion/high-water/history
   contract. Add the remaining multi-hour/forward-evolution, corruption/non-mutation,
   budget/paging, compatible-upgrade, crash/lost-ack and service-flag controls before
