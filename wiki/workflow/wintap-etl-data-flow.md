@@ -41,6 +41,9 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/retry.py
   - ../Wintap-PyUtil/wintappy/coordination/entity_execution.py
   - ../Wintap-PyUtil/wintappy/coordination/entity_verification.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_writer.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_history.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_operation_verifier.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/retry_verifier.py
   - wiki/tool/durable-process-entity-manager.md
@@ -222,9 +225,10 @@ Implementation review: [[wiki/work/dbt-compaction-coordination/implementation-re
 
 ## Linux shared-reader and hourly-writer integration
 
-Wintap-PyUtil owns the current **uncommitted Linux integration**; this Analytics
-wiki records its semantics and qualification limits. It is not production rollout
-or dcc-02–05 acceptance. The Linux runbook is
+Wintap-PyUtil owns the Linux integration submitted at **`123b9d3`**; this Analytics
+wiki records its semantics and qualification limits. The historical regression
+counts below apply only to their frozen revisions, not full latest-HEAD acceptance,
+production rollout or dcc-02–05 closure. The Linux runbook is
 `../Wintap-PyUtil/wintappy/coordination/LINUX.md`; current results and remaining gates
 are in [[wiki/work/dbt-compaction-coordination/verification]]. Native-Mac shutdown
 remains a separate worker-owned gate; Windows coordination is outside this milestone.
@@ -254,8 +258,11 @@ remains a separate worker-owned gate; Windows coordination is outside this miles
 - **Advisory status:** private atomically replaced `<state>/status.json` carries
   explicit observation time and bounded job/run/maintenance summaries, not access
   permission or partition/completion certificates. Missing/stale status means
-  unknown; export failure cannot undo completion or authorize reads. The separately
-  planned status utility is not implemented by this integration.
+  unknown; export failure cannot undo completion or authorize reads. The separate
+  Analytics utility now consumes only this pinned local advisory v1 export, without
+  ledger/lock/data-root access. Raw intent markers are reported, not certified;
+  inventory, entity dispositions, delivery, progress and launch/finish remain unknown.
+  See [[wiki/tool/recent-host-activity-dashboard]].
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintappy/coordination/inputs.py; ../Wintap-PyUtil/wintappy/coordination/client.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/wintappy/coordination/writer.py; ../Wintap-PyUtil/wintappy/coordination/supervisor.py -->
 
 **Audited recovery is narrower than general data repair.** Explicitly confirmed
@@ -272,8 +279,10 @@ Conflicting checkpoint replacement needs separate confirmation and retains prior
 rows. Failed/crashed maintenance stays pending until audited cannot-resume
 abandonment, which also preserves the original block. Missing original phases,
 unqualified incomplete deletion and unresolved entity publication remain blocked.
-Raw-only intentional retry has separate closed local regressions; general exclusive
-entity init/replay and endpoint/resource qualification remain unfinished. The retry slice is described in
+Raw-only intentional retry has separate closed local regressions. Explicit-v5 Linux
+entity init/replay and clean-original resolution are implemented below; interrupted
+publication, missing-original recovery and endpoint/resource qualification remain open.
+The retry slice is described in
 [[wiki/work/dbt-compaction-coordination/verification#Intentional-retry ownership — active, not accepted]],
 not accepted by the earlier repair regressions.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/recovery.py; ../Wintap-PyUtil/wintappy/coordination/maintenance.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py -->
@@ -317,8 +326,8 @@ migration-intent totals. Original/request/result/capture checks repeat after lau
 Entities, deletion, multiple events/hours, partial output and missing/changed original
 coverage refuse. Passing preflight cannot launch another writer or release readers;
 durable intentional retry has a separate locally regression-accepted implementation
-below. Its endpoint/resource qualification and entity-only exclusive ownership remain
-open; read-only preflight does not confer that permission.
+below. Its endpoint/resource qualification remains open; entity-only exclusive
+ownership uses a distinct explicit-v5 contract and is not authorized by this preflight.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/retry.py §verify_retry_prepared/_original_source_totals; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/retry_verifier.py §verify_retry/_request/main -->
 
 The separate read-only preflight local regression gate is closed: 821 main tests/
@@ -350,7 +359,7 @@ restart and acknowledgment uncertainty stay blocked; neither an orphan receipt n
 a committed retry authorizes automatic relaunch. Bounded predecessor-linked ledger-v4
 history preserves failures without pruning; explicit compatible v1/v2/v3 upgrade is
 required, never ordinary-open replacement. Public one-hour `compact` validators remain
-unchanged, and entity-only ownership is a separate unimplemented operation.
+unchanged; entity-only ownership uses a separate explicit-v5 operation, described below.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py §_recheck_retry_completion/validate_history; ../Wintap-PyUtil/wintappy/coordination/completion.py §_build_completion_proof; ../Wintap-PyUtil/wintappy/coordination/ledger.py §upgrade; ../Wintap-PyUtil/wintappy/coordination/recovery.py §resolve_hour -->
 
 Local successor regressions pass 880 main/three opt-in skips and 554 standalone/two
@@ -380,13 +389,11 @@ receipt creation refuse before verifier launch. Result/request/proof budgets are
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/entity_verification.py §verify_entity_inputs_prepared/recheck_input_observation/_validate_inputs -->
 
 Successful read-only observations change no dataset, ledger rows, authority, cursor or admission.
-Its 58-control input-authentication focus passes on unchanged repair identities, not
-entity ownership/launch/completion/publication, successor full regressions or Linux
-acceptance. A later focused-green typed-intent overlay adds original-bound same-session
-post-COMMIT checks and BLOCKED retention on failure, but no entity launch/completion.
-Its unchanged 34-control repair focus passes, including genuine COMMIT/restart/lost-ack;
-expanded history and combined main/standalone focuses now pass on unchanged identities.
-Affected/full and entity launch/completion/recovery qualification remain separate gates.
+The historical 58-control input and 34-control typed-intent repair focuses establish
+only their own authentication/exclusion boundaries, including actual COMMIT/restart/
+lost-ack controls. Submitted Linux launch/completion now uses these observations
+internally through the distinct writer contract below. These older focuses cannot
+qualify that later writer, successor full regressions or broader Linux acceptance.
 Historical publication needs original-generation durable authentication, never mutually
 rehashed archives or comparison with today's aggregate.
 <!-- SOURCE: wiki/work/dbt-compaction-coordination/verification.md §Main-side entity input observations — no permission -->
@@ -400,8 +407,9 @@ post-COMMIT inputs, actual single-link CLI command/shutdown/capture and archived
 report, plus fresh bounded standalone completion evidence. CLI pretty-printed bytes and
 canonical verifier bytes remain distinct; replay preserves original bootstrap provenance.
 `publication: None` and exact genesis/immediate-successor current generation refuse
-historical certification. No ledger rows, authority, cursor, admission or live acknowledgment
-transition is implemented, including on refusal; this is not an entity writer/service API.
+historical certification. This read-only adapter changes no ledger rows, authority,
+cursor, admission or live acknowledgment, including on refusal; the separate writer/
+service below owns those transitions.
 `validate_completion_observation` checks a retained contract only. Actual-original artifact
 recheck is distinct from fresh standalone data verification; dictionaries alone confer
 neither current data authority nor historical publication evidence.
@@ -412,9 +420,9 @@ identities after complete report review. Separate expanded artifact/data/non-mut
 focus passes 67 controls with all 295 identities unchanged after complete report review.
 Combined standalone focus passes 141 and main passes 447; complete reports/all 295
 identities reviewed on the unchanged distinct freeze. Combined read-only focus is closed.
-Original-generation publication has separate initial focused evidence below; entity launch
-and atomic completion-authority linkage, recovery and affected/full/service acceptance
-remain separate. Historical statistics
+Original-generation publication has separate initial focused evidence below. These
+historical read-only passes do not accept the later entity writer/recovery/service;
+broader affected/full/platform acceptance remains separate. Historical statistics
 never derive from mutually rehashed archives or today's aggregate.
 <!-- SOURCE: wiki/work/dbt-compaction-coordination/verification.md §Main current-generation completion observations — read-only, active -->
 
@@ -452,8 +460,56 @@ evidence, not representative sizing, physical power loss or entity permission. A
 unchanged combined focus passes 570 main and 141 standalone controls, with complete reports,
 actual retained publication crash diagnostics and all 298 source/runner/operator identities
 reviewed. The publication/completion/exclusion compatibility focused gate is closed;
-affected/full, entity writer/service/recovery and Linux acceptance remain separate.
+the later writer/service/recovery is separately evidenced below, and full latest-HEAD
+and broader Linux acceptance remain open.
 <!-- SOURCE: wiki/work/dbt-compaction-coordination/verification.md §Durable original-generation publication retention — active, not accepted -->
+
+### Explicit-v5 Linux entity writer and clean-original recovery
+
+Default ledger initialization/upgrade remains v4. Entity operations require explicit
+v5 opt-in; ordinary open never migrates. Linux service `entities-init`/`entities-replay`
+uses separate allowlisted `entity_writer` configuration, explicit confirmation/reason,
+an exact bounded UTC window and unowned zero-reader exclusion. The receipt and typed
+intent COMMIT precede fresh independently supervised input rechecks and actual CLI
+launch. The main DuckDB 1.5.6 ledger lock spans standalone DuckDB 2.0.0 execution,
+shutdown authentication, current-generation data verification and atomic completion/
+authority/audit COMMIT. No raw compaction or deletion occurs through this operation.
+
+Typed completion preserves the raw cursor and leaves admission `DRAINING`; it does
+not grant readers or automatically reopen. `Ledger.entity_evidence(run_id)` is the
+supported history accessor, returning typed completion when retained, otherwise
+publication evidence. Predecessor-linked completion/resolution records are bounded
+at 128 KiB/10,000 each within shared typed history budgets; same-connection materialized
+256-row keyset checks authenticate staged rows without pruning or reopening artifacts.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py §initialize/upgrade/entity_evidence; ../Wintap-PyUtil/wintappy/coordination/service.py §validate_config/main; ../Wintap-PyUtil/wintappy/coordination/entity_writer.py §execute_entity_and_complete_prepared; ../Wintap-PyUtil/wintappy/coordination/entity_history.py §complete_observation/validate_history; ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py §validate_history -->
+
+Failures, restart and uncertain acknowledgment retain typed exclusion/`BLOCKED`;
+committed completion/authority evidence is never erased to fabricate a clean retry.
+Linux `resolve-entity` authenticates the exact original receipt, typed intent,
+prelaunch observation, CLI/archive/capture/shutdown and fresh current-only verifier
+under the same lock. It neither relaunches entities nor uses current overrides to
+replace originals. If completion already committed, a distinct immutable resolution
+consumes the original blocker and preserves completion/publication/authority records.
+Another lost acknowledgment retains a new blocker; successful resolution still
+preserves the raw cursor and returns `DRAINING`.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/recovery.py §load_original_entity_execution; ../Wintap-PyUtil/wintappy/coordination/entity_writer.py §_block_uncertain/_recovery_originals/resolve_entity_prepared; ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py §blocked_original/complete_resolution/block_acknowledgment -->
+
+**Clean-original recovery is not interrupted-publication repair.** Partial host
+publication has no successful original publication/checkpoint archive. Matching
+journal candidates alone cannot supply those records or original coordinator/CLI
+identity, authorize historical success or enter clean resolution. Missing/damaged
+originals remain blocked; a separate bounded repair contract and its genuine controls
+are still producer-worker-owned and unqualified.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/entity_writer.py §resolve_entity_prepared; wiki/work/dbt-compaction-coordination/implementation_plan.md §Original-bound pending-publication controls — source planning only -->
+
+Worker-reported Linux strict-service focus passes 71 controls; the unchanged
+13-module service-affected scope passes 307 in 2,036.10 s. Submitted sources/reports
+were independently authenticated, and a native-Mac portable smoke passes 76/zero
+skips; the private Linux fixture execution was not independently reproduced on Mac.
+These focused/affected gates do not replace historical 880/554 regressions with a
+full latest-HEAD result. Native shutdown, actual S3, retained-state resources and
+dcc-02–05 remain open:
+[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
 
 ### Retained authority and qualification limits
 

@@ -95,7 +95,11 @@ standalone Streamlit direct-S3 view using DBT's existing dataset/AWS environment
 variables, without invoking DBT. The default file-metadata mode lists object
 keys/sizes (no Parquet reads), parses filename Win32 FILETIME as collect time,
 and reports per-host counts and sizes; raw-row DuckDB analysis remains optional.
-27 offline tests and metadata-mode AppTest pass; live metadata-mode performance
+The unchanged raw baseline passed 27 tests; the implemented advisory/navigation
+extension now passes 46 offline tests, including real Streamlit controls. Pinned
+local v1 Status/raw intent Runs need no ledger/lock/SDK/data reads; Partitions is
+explicitly unavailable, not zero. Full catalog/timeline, compacted/entity access and
+managed live/coordinated lifecycles remain pending. Live metadata-mode performance
 remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
 20 seconds); standard families retain the 2-million-row cap.
@@ -151,7 +155,7 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] | high | Resolved by scope change: fixed-hour writes and manual cleanup accept visible partial output; atomic publication is not required. |
 | [[wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint]] | high | Dissolved: ignored conditional PUT remains an endpoint observation, but reservations/manifests were removed. |
 | [[wiki/tension/dbt-arbitrary-representatives-vs-compaction-equivalence]] | high | Resolved by human acceptance: existing ANY_VALUE quality debt is non-blocking for compaction; bronze/schema/build gates remain and affected downstream drift is reported. |
-| [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] | medium | Open native-Mac shutdown gate; human authorized Linux-first completion and assigned the native solution to the Mac worker, without weakening release or removing eventual Mac scope. |
+| [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] | medium | Actual-Mac restricted synthetic DBT build/test feasibility passes with a prestarted helper; deprecated Apple/private CPython dependencies remain unselected, and complete lifetime/interruption/wrapper-death shutdown acceptance stays open. |
 ## Decision
 
 | Page | Confidence | Summary |
@@ -230,8 +234,8 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/tool/wintap-workbench]] | high | Summarizes the Angular Workbench UI, feature routes, SignalR/EPL query path, and query-state boundary. |
-| [[wiki/tool/durable-process-entity-manager]] | high | Implemented optional S3 fixed-host snapshots, replay-safe evidence/no GC, entity-before-delete ordering, hourly processing checkpoints and DBT ancestor closure/terminal QA; production scheduling deferred. |
-| [[wiki/tool/recent-host-activity-dashboard]] | high | Standalone manually refreshed 12-hour UTC S3 metadata-first dashboard (keys/sizes and filename collect-time series, no Parquet reads), with optional DuckDB raw-row mode; 27 offline tests pass, but live metadata-mode performance remains unverified. |
+| [[wiki/tool/durable-process-entity-manager]] | high | Optional fixed-host snapshots/no GC, hourly checkpoints and DBT ancestry; submitted explicit-v5 Linux entity launch/history/clean-original recovery preserves raw cursor and DRAINING. Interrupted-publication repair and broader qualification remain open. |
+| [[wiki/tool/recent-host-activity-dashboard]] | high | Raw metadata/optional row viewer plus pinned manual advisory v1 Status/raw intent Runs; 46 offline tests pass. Partitions/history/certificates unavailable; full catalog and managed jobs pending, no deployment. |
 ## Workflow
 
 | Page | Confidence | Summary |
@@ -295,20 +299,38 @@ Compaction status utility follow-on:
 [[wiki/work/compaction-status-utility/brief]],
 [[wiki/work/compaction-status-utility/design]],
 [[wiki/work/compaction-status-utility/implementation_plan]] and
-[[wiki/work/compaction-status-utility/verification]] — draft extension of the
-same-server HostActivity app with Status, Partitions, run timeline and raw/compacted
-Activity plus optional entity inspection. Advisory local exports remain readable
-during writers. Human-approved default live diagnostics need no reservation and
-always warn about incomplete/overlapping/mixed-generation observations; optional
-coordinated refresh uses bounded reader grants. The scoped exception does not
-relax DBT, authoritative verification, ledger locking or maintenance. Separate
-inventory, migration/deletion evidence and entity coverage; all-partition catalog
-is resumable with explicit unknown scope. Worker interfaces, remaining defaults
-and implementation approval are pending. Reviewed PyUtil `8ee714c` now has local
-verified completion/history, not qualified status/export/client integration.
-Unchanged offline raw-viewer baseline passes 27 tests; no utility code/deployment.
+[[wiki/work/compaction-status-utility/verification]] — human-authorized isolated
+implementation from Analytics `ee9c27a` / PyUtil `123b9d3`. Navigation, pinned bounded
+manual advisory Status/raw intent Runs and explicit unavailable Partitions pass
+46 offline controls/zero skips; separate-runtime genuine export read passes while
+the synthetic producer lock stays held and fixture files remain unchanged. Activity
+is still synchronous/raw-only and always Live diagnostic — uncoordinated. Reserved
+is not delivery, `COMPLETED` is not certified, launch/finish/progress/entity history
+are unknown and continuations are incomplete history. Full catalog/timeline,
+compacted/entity reads and managed live/optional coordinated refresh remain pending.
+The diagnostic exception never relaxes DBT, authoritative verification, ledger or
+maintenance. No deployment, scheduling, real-dataset mutation, commit or push.
 
 Scheduled DBT/compaction coordination:
+
+**Current submitted review / native checkpoint (November 15):** PyUtil `123b9d3`
+and Analytics `ee9c27a` include the Linux service/client/advisory, v4 retry and explicit-v5
+entity launch/history/clean-original service paths. Worker-reported 71 strict-service/
+307 service-affected Linux passes retain their narrow scopes. Independent submitted
+source/report review authenticates 365 hashes; native portable smoke passes 76/zero
+skips and a separately provisioned five-module rerun passes 169/25 reviewed Linux-only
+skips with 83 unchanged identities. Native kqueue returns `ENOTSUP`; restricting
+fork/spawn denies plain DBT but a prestarted helper enables a tiny genuine build/test.
+Deprecated/private dependencies are unselected and complete shutdown is unqualified.
+No production backend wiring before human dependency/design review. Pending publication
+stays producer-worker-owned; no new full latest-HEAD/S3/resource/dcc-02–05 acceptance.
+[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
+Prepared gated Linux/S3/resource procedure:
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]] — concrete private
+environment/fixture/root/access/runner/ceiling approval is still required; no remote run.
+
+**Historical implementation/qualification chronology:** the entries below preserve
+their original frozen revision/scope, not claims that later interfaces remain absent.
 [[wiki/work/dbt-compaction-coordination/brief]],
 [[wiki/work/dbt-compaction-coordination/design]] and
 [[wiki/work/dbt-compaction-coordination/dev_handoff]] — proposed once-per-minute Python
@@ -409,7 +431,7 @@ with the native worker:
 tests and three dependency controls pass; no actual-Mac backend is established.
 Injected SDK scope/secret-exclusion tests make no endpoint requests; supported Mac
 reader shutdown, S3, representative resource and integrated service gates remain open.
-The current uncommitted Linux overlay now integrates service/client/root-aware
+The then-uncommitted Linux overlay (now submitted in `123b9d3`) integrates service/client/root-aware
 Makefile routing, same-lock verified completion and bounded atomic advisory exports.
 Reader invocation/launch/shutdown and resolved transport repairs have 49 then 142
 affected passes; the original two-request startup timeout remains historically
@@ -633,8 +655,10 @@ genuine original eligibility and a separate bounded repair contract remain unqua
 [[wiki/work/dbt-compaction-coordination/implementation_plan#Original-bound pending-publication controls — source planning only]].
 The prior input slice preserved all 286 schema identities and conferred no durable publication:
 [[wiki/work/dbt-compaction-coordination/verification#Main-side entity input observations — no permission]].
-dcc-02–05, actual isolated S3/resource qualification and native-Mac shutdown stay open;
-no production scheduling, utility implementation, commit or push is authorized.
+dcc-02–05, actual isolated S3/resource qualification and native-Mac shutdown stay open.
+The historical producer pass authorized no utility work; the later isolated Analytics/
+native implementation authorization is recorded above. No deployment, scheduling,
+real-dataset mutation, commit or push is authorized by the current pass.
 
 Historical PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
 [[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],

@@ -478,6 +478,14 @@ selected. Retain uncertain reservations. Options and source limits:
 [[wiki/tension/native-macos-readers-vs-descendant-shutdown]]. Commands/results:
 [[wiki/work/dbt-compaction-coordination/verification#Reader-supervision feasibility checkpoint — human review required]].
 
+**November 15 actual-Mac feasibility:** isolated submitted `123b9d3` investigation
+confirms native kqueue `ENOTSUP` and sandbox fork/spawn `EPERM`. Prestarting Python's
+helper enables a genuine fixed synthetic DBT build/test under restriction, but the
+deprecated Apple/private CPython seams are not selected for production. No client
+backend, closed lifetime tracking or interruption/wrapper-death/shutdown gate passes.
+Review before wiring; preserve Linux supervision and direct local-only DBT.
+[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
+
 ### C. Independent completion and transactional history
 
 Use a separately invoked read-only verifier in the qualified standalone runtime,
@@ -1336,6 +1344,9 @@ diff/privacy inspection and scoped nine-Markdown/seven-frontmatter audit pass, a
 do both whitespace checks. Scoped review and local regressions do not qualify Linux. The broader
 slice-E and dcc-02–05 checkboxes below remain unchanged.
 
+Prepared stage/approval worksheet:
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]]. No environment,
+fixture manifest or access is selected; no remote execution or deployment is authorized.
 Before actual-endpoint runs, confirm a fresh exact test prefix, approved access via
 existing credential configuration, fixture manifest, event scope, first UTC hour,
 optional freshly initialized entity roots and a representative retained workload.
@@ -1470,6 +1481,18 @@ macOS commands/results in [[wiki/work/dbt-compaction-coordination/verification]]
 - [x] Completion slice E read-only retry frozen affected/full regressions: 548 affected main/one opt-in skip, 248 affected standalone, 821 full main/three skips (1602.08 s) and 554 full standalone/two opt-in S3 skips (287.54 s); exit 0, complete reports inspected and all 269 identities unchanged after each notification. Each full began only after its own affected checks. Combined local preflight closure only; retain baseline before new source work.
 - [ ] Completion slice E broader audited partial/deletion disposition, verified intentional retry and exclusive entity maintenance; the narrow checkpoint path does not satisfy this gate.
 - [ ] Completion slice B/D: Linux and macOS reader supervision and actual-platform qualification.
+- [x] Independent submitted `123b9d3` review and portable Mac controls: 76/zero skips
+  smoke, exact 307-test collection and provisioned five-module 169/25 Linux-only
+  skips with 83 unchanged identities; not full latest-HEAD or native shutdown acceptance.
+- [x] Actual-Mac restriction/bootstrap feasibility recorded with unchanged script/
+  main-lock/manifest identities; genuine tiny DBT build/test passes, no backend selected.
+- [ ] Native dependency/design selection and closed-lifetime interruption/detached-
+  child/wrapper-death controls qualify complete shutdown before release.
+- [x] Prepare gated isolated Linux/S3/retained-state procedure and approval worksheet;
+  concrete environment/fixture/root/access/runner/ceiling selection and execution remain open.
+- [x] Complete scoped tracked/untracked source/wiki/privacy review; separate cosmetic
+  probe successor repeats genuine synthetic build/test with three unchanged identities.
+  Original reports/sources remain retained; no native shutdown or broader gate closes.
 - [x] Completion slice B/D source/dependency feasibility investigation: 34 Linux supervision tests and three bounded dependency controls; unresolved native-Mac contract recorded for human review, not backend/platform acceptance.
 - [x] Completion slice B: human-run Mac harness selected and committed with public source manifest/15 local harness controls in PyUtil `8ee714c`; exact-revision task dcc-mac-baseline-01 defined (not actual-Mac execution or reader-shutdown acceptance).
 - [x] Mac qualification packaging correction: exact original main lock tracked in PyUtil `fab647f`; all 22 committed/local identities verified from a fresh Git-only clone; three pre-fix coverage failures become 18 passing harness controls. Manifest/runtime hashes unchanged; original blocked Mac result retained.

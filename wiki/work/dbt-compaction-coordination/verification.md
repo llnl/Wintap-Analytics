@@ -49,6 +49,7 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
   - ../Wintap-PyUtil/.gitignore
   - ../Wintap-PyUtil/uv.lock
+  - ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py
   - ../Wintap-PyUtil/wintappy/coordination/service.py
   - ../Wintap-PyUtil/wintappy/coordination/client.py
   - ../Wintap-PyUtil/wintappy/coordination/recovery.py
@@ -88,12 +89,124 @@ tags: [feature-work, verification, coordination, review, regression]
 
 # Verification: Scheduled DBT and Compaction Coordination
 
+## Independent submitted review and native-Mac feasibility — November 15
+
+Submitted PyUtil `123b9d36705a5d9c356724d007b28bac224605a6` and Analytics
+`3f11d13` / `ee9c27a75397702700c7f969b39685edc91a2586` matched their submitted
+upstream heads. The independent Git-only review retained both source snapshots,
+authenticated report hashes and all **365** reviewed source hashes; both submitted
+ranges passed `git diff --check`. The worker's Linux 71/307 execution reports retain
+their original scope below: collection/source/report review is not an independent
+re-execution of its private Linux fixtures.
+
+The human approved isolated implementation/review work including scoped native-Mac
+PyUtil changes and the Analytics utility. Separate worktrees from `123b9d3` and
+`ee9c27a` keep the busy producer checkout/environments untouched. No deployment,
+cron installation, real-dataset mutation, commit or push is authorized. Pending
+publication recovery remains with the producer worker. Concrete S3/resource fixtures,
+roots and access still need explicit approval.
+<!-- SOURCE: Human implementation approval, conversation 2026-11-15. -->
+
+### Portable submitted review and provisioned rerun
+
+`review-results.json`, `portable-review-smoke.txt` and
+`submitted-scope-collection.txt` are retained in the private submitted-review
+archive. On native Python 3.12.12/main DuckDB 1.5.6, protocol/ledger/local-route/
+effective-root smoke passes **76 tests/zero skips in 44.63 s**. The exact 13-module
+submitted scope collects **307 tests**, including 71 entity-service controls; this
+does not execute the Linux suite on Mac. All 365 source identities match before/after.
+
+Provisioned isolated main and standalone environments with:
+
+```sh
+uv sync --locked --offline --dev --python 3.12
+# Separately from extras/raw-sensor-compact/ with its own lock/environment:
+uv sync --locked --offline --dev --python 3.12
+```
+
+Main uses DuckDB 1.5.6; standalone uses 2.0.0. Locks/manifests remain unchanged.
+From PyUtil, with a sanitized environment and 1,200-second outer ceiling:
+
+```sh
+.venv/bin/python -m pytest -q -ra \
+  tests/test_coordination_protocol.py tests/test_coordination_ledger.py \
+  tests/test_coordination_execution.py tests/test_coordination_tick.py \
+  tests/test_coordination_authority.py
+```
+
+| Retained evidence | Result |
+|---|---|
+| `producer-portable.stdout.txt` / `.json` | Initial **24 failures/145 passes/25 skips in 19.30 s**. All 24 failures are exactly `Qualified standalone execution runtime unavailable`: standalone had not yet been provisioned. No other error class; source unchanged. |
+| `producer-portable-provisioned.stdout.txt` / `.json` | After standalone provisioning, **169 passes/25 skips in 14.58 s**, exit 0. Full 22-line stdout/empty stderr inspected after completion notification; all **83** recorded source/lock identities match before/after and current files. |
+
+Reviewed skips: two Linux writer-subreaper execution controls, three Linux procfs/
+subreaper tick controls and twenty Linux authority/writer/verifier-supervision
+controls. These were not run and cannot qualify Mac shutdown. This five-module
+rerun is neither the old nine-module baseline nor full latest-HEAD regression.
+Provisioned report SHA-256:
+`5bbcd06b89e5cbc720c2ee033b397872fcff9d4ad7925a547686e6b967d52c5c`.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_execution.py; ../Wintap-PyUtil/tests/test_coordination_tick.py; ../Wintap-PyUtil/tests/test_coordination_authority.py -->
+
+### Actual-Mac restriction/bootstrap feasibility
+
+From the isolated PyUtil main environment:
+
+```sh
+.venv/bin/python -B scripts/dcc_macos_restriction_probe.py
+```
+
+Actual Mac kqueue `NOTE_TRACK` returns `ENOTSUP`. A native no-fork sandbox denies
+both `os.fork` and subprocess spawn with `EPERM`; plain DBT `Manifest()` also
+refuses because Python must start its resource tracker. Prestarting that helper
+before restriction permits a genuine fixed synthetic DBT **build (three passes)**
+and **test (two passes)**. Python is 3.12.12; DBT core/adapters/duckdb are
+1.12.3/1.24.5/1.9.6, main DuckDB 1.5.6. No repository DBT project, S3 or real data is used.
+
+Both first and formatted probes exit 0. The formatted run finishes in **4.288 s**;
+full stdout/empty stderr inspected, with script/main-lock/manifest identities
+unchanged before/after. Original formatted-script SHA-256:
+`833dfb8dcef173508aec773fd4bb26dd272c8f084ffdf2efbee47090c6b030ed`.
+Retained report: `native-mac-restriction-formatted.stdout.txt`, SHA-256
+`fe7178ebf3d2cce0569763b99c4d112028919fcab4030431352f5ac3a186ed67`.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py; ../Wintap-PyUtil/uv.lock -->
+
+The final audit's separate import-order/explicit-default style successor reruns the
+same `.venv/bin/python -B scripts/dcc_macos_restriction_probe.py` command: exit 0 in
+**4.269 s**, genuine synthetic build three/test two passes. Full 38-line stdout/empty
+stderr reviewed; all three successor script/main-lock/manifest identities match
+before/after/current files. `native-mac-restriction-style.stdout.txt` SHA-256:
+`791e328afa780c7dcc864033422f9699aa21a07393a8e7a310c38373be3324f6`.
+Current probe SHA-256:
+`1db8e762234570653c64ce86efbb17886fed9a9f4fe9a22027566ed4bd37a17b`.
+The original probe and ten original utility source/lock files remain authenticated
+in an 11-file private pre-polish snapshot; original reports are never replaced.
+Scoped final source/wiki/privacy checks and retained baseline lint findings:
+[[wiki/work/compaction-status-utility/verification#Final scoped audit and style successor — November 15]].
+
+**Feasibility only:** deprecated Apple sandbox APIs and private CPython tracker/
+finalizer seams are not selected production dependencies. The experiment has no
+closed lifetime tracker, client/backend integration, detached-child/inheritance/
+delegation controls, interruption or wrapper-death qualification. Its ordinary
+synthetic cleanup and timeout are not complete-shutdown proof; the report explicitly
+sets `native_shutdown_qualified: false`. No reservation/grant/release is published.
+Stop for dependency/design review before production wiring; uncertain ownership
+remains reserved/`BLOCKED`. The native tension stays open:
+[[wiki/tension/native-macos-readers-vs-descendant-shutdown]].
+
+Utility evidence is separate:
+[[wiki/work/compaction-status-utility/verification#Authorized advisory implementation — November 15]].
+Historical **880 main/three skips** and **554 standalone/two skips** predate later
+entity changes. Submitted 307 Linux passes close only their service-affected scope;
+no full latest-HEAD, S3/resources, native shutdown, dcc-02–05 or rollout acceptance.
+
 ## Linux integration continuation — slices D/E, qualification pending
 
 Human authorized finishing Linux independently of the native Mac worker's unresolved
-shutdown backend. Current implementation is an **uncommitted overlay** on PyUtil
-`fab647f`; Analytics remains `65bff3d`. The accepted exact-revision Mac baseline and
-original omitted-lockfile failure remain unchanged and separately attributed.
+shutdown backend. This section records the **historical uncommitted overlay** on
+PyUtil `fab647f` / Analytics `65bff3d`; it is now included in submitted `123b9d3`.
+Use the independent submitted/native review above for the current worktree boundary.
+The accepted exact-revision Mac baseline and original omitted-lockfile failure remain
+unchanged and separately attributed.
 
 ### Implemented Linux paths
 

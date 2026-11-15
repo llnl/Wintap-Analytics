@@ -19,6 +19,11 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/authority.py
   - ../Wintap-PyUtil/wintappy/coordination/verification.py
   - ../Wintap-PyUtil/wintappy/coordination/completion.py
+  - ../Wintap-PyUtil/wintappy/coordination/service.py
+  - ../Wintap-PyUtil/wintappy/coordination/recovery.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_writer.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_history.py
+  - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
   - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql
@@ -29,7 +34,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/models/monitoring/process_ancestry_quality.sql
   - wiki/work/durable-process-entity-manager/verification.md
 policy: agent-editable
-last_validated: 2026-11-14
+last_validated: 2026-11-15
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -143,7 +148,9 @@ configuration together. Preserve old snapshots/checkpoints. Missing archive hist
 precludes claiming equivalent ancestry recovery. The coordination library's ledger-v2
 anchor now rejects whole-journal/snapshot rollback when that ledger is retained.
 Rollback of both ledger and authority still needs independent external retained
-operator evidence and exclusion; ordinary DBT is not yet integrated with this gate.
+operator evidence and exclusion. The Linux coordinated reader now spans entity
+preflight/build under a matching four-root reservation; direct local DBT still
+requires operator-managed writer exclusion and does not open the ledger.
 Journal rewrite and large retained-state budgets remain unqualified; these receipts
 do not close the raw migration/final-checkpoint recovery boundary.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/README.md §Bootstrap and hourly operation; ../Wintap-PyUtil/wintap_dbt/README.md §Durable process context -->
@@ -155,7 +162,7 @@ The authorized R4 implementation, included in PyUtil `fe7fcb5`, adds opt-in `--r
 server-local, separate from raw/compacted/entity/metrics roots and the independent
 coordination ledger (protocol/ledger, admission/draining tick and Linux supervision
 libraries plus receipt-bound synthetic local launch, not an installed or
-actual-endpoint-qualified runtime service).
+actual-endpoint-qualified deployment; a Linux service now integrates these libraries).
 Immutable, checksummed predecessor-linked JSON records retain
 the original run binding, entity generation, original per-file identities and
 per-protocol SQL counts/schemas, migration and deletion intent/outcome, and original
@@ -194,7 +201,9 @@ anchor and returns candidate evidence without advancing it. The separate v3 norm
 success path obtains fresh independent evidence internally, then retains completion
 history, run, optional authority, exact-hour cursor and backlog mode in one COMMIT.
 It requires an uninterrupted clean live intent under the same lock. Blocked/restarted
-intents cannot use it; audited recovery commands and service integration remain absent.
+intents cannot use that live-success seam. Submitted Linux service integration and
+audited clean-original/checkpoint/deletion recovery use separate authenticated paths;
+neither stopping a process nor an exit code alone authorizes completion/reopening.
 Frozen credentials remain ephemeral and outside all receipt/intent
 hashes; the scope tests use injected SDK sessions without endpoint access.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/writer.py; ../Wintap-PyUtil/tests/test_coordination_execution.py -->
@@ -216,6 +225,41 @@ prior-completion clock floor do not prove coherent whole-ledger/store rollback
 freshness. Real three-hour instrumented paging and small synthetic entity/crash
 controls do not qualify representative accumulated-state resources.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/ledger.py §upgrade/_validate_authority_checks/_require_entity_authority; ../Wintap-PyUtil/wintappy/coordination/authority.py; ../Wintap-PyUtil/wintappy/coordination/verification.py §verify_authority_prepared -->
+
+### Submitted Linux entity-only service contract
+
+Submitted PyUtil `123b9d3` adds separate Linux `entities-init`/`entities-replay` and
+`resolve-entity` service paths. Default ledger v4 stays unchanged; v5 requires
+explicit opt-in and ordinary open never migrates. Separate allowlisted entity
+configuration, confirmation/reason and zero-reader/unowned exclusion precede typed
+intent. The same main-runtime lock spans intent COMMIT, fresh independent post-COMMIT
+input verification, standalone launch/shutdown, current-only completion verification
+and atomic typed completion/authority/audit. This is entity state maintenance, not
+raw compaction/deletion. Success preserves the raw cursor and leaves `DRAINING`;
+no grant or admission reopening is implied.
+
+`Ledger.entity_evidence(run_id)` is the supported retained-history accessor; typed
+completion takes precedence over publication-only evidence. Completion/resolution
+chains retain bounded JSON and original predecessors, not reconstructed historical
+artifacts. Clean-original recovery reauthenticates actual original artifacts plus
+fresh current-only verification; it never relaunches entities. Committed completion
+lost acknowledgment gets a separate immutable resolution, not rewritten success.
+Failures/restart/uncertainty retain `BLOCKED` typed exclusion.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §validate_config/main; ../Wintap-PyUtil/wintappy/coordination/ledger.py §initialize/upgrade/entity_evidence; ../Wintap-PyUtil/wintappy/coordination/entity_writer.py; ../Wintap-PyUtil/wintappy/coordination/entity_history.py; ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py -->
+
+Interrupted host publication is **not** clean-original recovery: pending journal
+candidates do not replace missing successful original publication/checkpoint records
+or original coordinator/CLI identity. That repair remains producer-worker-owned and
+unqualified. Worker-reported 71 strict-service and 307 service-affected Linux passes
+retain focused/affected scope, not full latest-HEAD, actual-S3/resource, native-Mac or
+production acceptance. Independent submitted/portable evidence and durable details:
+[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]],
+[[wiki/workflow/wintap-etl-data-flow#Explicit-v5 Linux entity writer and clean-original recovery]].
+
+The Analytics utility consumes advisory status v1 only; no entity disposition history,
+inventory, progress or completion certificate is exported. Diagnostic observation
+cannot authorize maintenance, completion, deletion or reopening:
+[[wiki/tool/recent-host-activity-dashboard]].
 
 ## Evidence, conflicts and limits
 
@@ -259,7 +303,9 @@ publication/verification; init/replay/rebuild and reconciliation are writers too
 The generation journal does not supply a multi-host storage transaction or
 reader/writer coordination service. Production-scale staging/rewrite budgets and
 external schedule exclusion still require operator review.
-Planned implementation: [[wiki/work/dbt-compaction-coordination/dev_handoff]].
+Implemented cooperative Linux coordination and remaining qualification gates:
+[[wiki/work/dbt-compaction-coordination/dev_handoff]]. Direct local-only DBT remains
+available; native-Mac coordinated shutdown is not qualified.
 
 Actual-data qualification exposed these limits: historical bootstrap initially
 rejected unknown identities (negative-PID Refresh and sentinel-key Stop evidence).

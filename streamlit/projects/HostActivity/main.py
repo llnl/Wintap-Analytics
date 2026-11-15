@@ -19,6 +19,7 @@ from s3_source import (
     open_metadata_client,
     partition_hours,
 )
+from status_views import LIVE_WARNING, render as render_status_view
 
 
 UTC = dt.timezone.utc
@@ -289,6 +290,14 @@ def main():
     st.set_page_config(page_title="Recent Host Activity", page_icon="📈", layout="wide")
     st.title("Recent Host Activity")
     st.caption("S3 bronze raw_sensor • read-only • metadata mode lists object keys and sizes; it does not read Parquet contents")
+
+    with st.sidebar:
+        view = st.selectbox("View", ("Activity", "Status", "Runs", "Partitions"))
+    if view != "Activity":
+        render_status_view(view, st)
+        return
+    st.warning(LIVE_WARNING)
+    st.caption("Existing raw-only viewer; managed live jobs, compacted/entity reads and coordinated refresh are not yet implemented or qualified.")
 
     try:
         settings = load_settings()

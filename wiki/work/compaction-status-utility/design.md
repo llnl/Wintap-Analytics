@@ -7,6 +7,10 @@ grounded_by:
   - streamlit/projects/HostActivity/queries.py
   - streamlit/projects/HostActivity/file_metadata.py
   - streamlit/projects/HostActivity/pyproject.toml
+  - streamlit/projects/HostActivity/status_source.py
+  - streamlit/projects/HostActivity/status_views.py
+  - ../Wintap-PyUtil/wintappy/coordination/service.py
+  - ../Wintap-PyUtil/wintappy/coordination/client.py
   - ../Wintap-PyUtil/wintappy/coordination/ledger.py
   - ../Wintap-PyUtil/wintappy/coordination/protocol.py
   - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
@@ -19,7 +23,7 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py
   - wiki/work/dbt-compaction-coordination/design.md
 policy: agent-editable
-last_validated: 2026-11-14
+last_validated: 2026-11-15
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -38,11 +42,34 @@ default **Live diagnostic** reads without reservations and optional **Coordinate
 refresh** reads of mutable shared data. Use the same-server assumption to read
 compact local summaries rather than repeatedly query S3 or open the coordinator
 database. The human approved both read modes and the scoped diagnostic exception
-on November 14; implementation and remaining interface/default choices are pending.
+on November 14; the November 15 implementation plan is also authorized. Production
+dependency selection, unavailable producer interfaces and operational acceptance
+remain separate gates.
 
-This is a proposed consumer contract. Field names, export files and adapters
-below are not existing APIs and must be agreed with the coordination worker.
+The full design below remains proposed except for the implemented subset described
+next. Do not confuse recommended fields with the actual producer v1 schema.
 Requirements: [[wiki/work/compaction-status-utility/brief]].
+
+### Implemented advisory subset — November 15
+
+`status_source.py` consumes the existing `service.status_page` v1 local export;
+it never opens DuckDB, the ledger/process lock, transport or data roots. Deployment
+must pin the full canonical binding SHA-256 and ledger identity. Reads are manual,
+bounded to 1 MiB/100 records per kind, regular-file-only and final-symlink refusing;
+strict schema/duplicate/nonfinite JSON, identity, page order and timestamp checks
+fail to sanitized unavailable. Stale observation (over 180 seconds) stays visible.
+Timestamp rollback is refused within the pinned session, but v1 has no sequence
+and cannot establish same-second or whole-session rollback protection.
+
+Status renders reported mode/cursor/owner/reserved/queued summaries only. Roots,
+authority payloads and free-form diagnostics are withheld. Runs exposes sorted
+raw intent markers and reported disposition, not measured execution bars or
+completion certificates; continuations stay incomplete rather than opening the
+ledger. Partitions reports unavailable, not zero. Lock observation, delivery,
+progress, actual launch/finish, entity-only history and inventory remain unknown.
+Activity remains synchronous/raw-only and visibly Live diagnostic; managed jobs,
+compacted/entity access and coordinated refresh are not integrated.
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/status_source.py §read_snapshot/_read/_validate; streamlit/projects/HostActivity/status_views.py §render; streamlit/projects/HostActivity/main.py §main; ../Wintap-PyUtil/wintappy/coordination/service.py §status_page/export_status -->
 
 ## Current source constraints
 
@@ -52,7 +79,7 @@ Requirements: [[wiki/work/compaction-status-utility/brief]].
 | Raw metadata parses `hostname+event_type+FILETIME.parquet`. Compaction preserves partition/row semantics, not original filenames. | Keep raw filename charts distinct. Use partition inventory for compacted metadata and row-level host/time for compacted activity. |
 | App and main coordination runtime pin DuckDB 1.5.6; compactor is isolated at 2.0.0. | Do not import compactor writer code into the app or use its runtime to open the ledger. |
 | `Ledger.open` takes the persistent lock and calls `_block_unresolved_writer`. | It is not a side-effect-free dashboard reader. A SELECT after calling it can already have mutated recovery state. |
-| At reviewed PyUtil `8ee714c`, ledger v3 retains `COMPLETED` runs and bound completion proofs; normal completion exists as a locked local library. | Agree a bounded advisory export of committed disposition/history; do not open the ledger from the app or infer an implemented service/export API. |
+| Submitted PyUtil `123b9d3` has Linux service/client, default v4 plus explicit v5, raw completion and typed entity history; status v1 exports bounded raw dispositions only. | Consume the existing advisory subset; qualify additional history/certificate/catalog interfaces before extending the app. |
 | Metrics v4 are fixed one-row hourly objects and can be overwritten by entity replay; status can mean coverage despite deletion errors. | Separate coverage from immutable migration history and coordinator disposition. |
 | Phase archives preserve checksummed sequence/lineage, but have no uniform phase timestamp field. | Existing records establish order, not measured phase duration. Do not invent timestamps from file modification times. |
 
@@ -63,9 +90,11 @@ Requirements: [[wiki/work/compaction-status-utility/brief]].
 
 ### 1. A status plane that never grants access
 
-The coordinator publishes a bounded, versioned local advisory snapshot outside
-ledger/data roots after relevant committed transitions, before writer launch and
-after its verified disposition. It can publish progress from its existing
+The coordinator publishes a bounded, versioned local advisory snapshot alongside
+its ledger in the private state directory, separate from telemetry roots. The
+existing service exports after raw intent COMMIT/before launch and service
+transitions. The richer recommended interface would additionally expose verified
+disposition and progress from its existing
 supervision path without starting another ledger-opening process. Atomic local
 replacement avoids half-written JSON. The planned S3 `status.json` may mirror
 the summary, but the app's default status path is local.
@@ -252,11 +281,12 @@ mixed observations rather than upgrading the whole catalog's consistency label.
 
 ### Optional coordinated reader lifecycle
 
-Reuse the worker's qualified `shared-command` client rather than create a second
-local admission mechanism. The implemented protocol already allows that action;
-the managed client/wrapper is still a dependency, not a callable interface at the
-inspected milestone.
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/protocol.py §validate_message -->
+Reuse the existing Linux `shared-command` client rather than create a second
+local admission mechanism. It is not yet integrated into this app; native-Mac
+coordinated execution explicitly refuses. App-specific managed-job/browser-loss
+qualification and genuine Mac shutdown remain dependencies, not portable support
+inferred from the Linux client.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/protocol.py §validate_message; ../Wintap-PyUtil/wintappy/coordination/client.py; ../Wintap-PyUtil/wintappy/coordination/LINUX.md -->
 
 1. Freeze selected roots, window, family/query mode and effective configuration.
    Bind to the coordinator's complete active-root/entity-policy identity. Turning
@@ -346,9 +376,10 @@ last-qualified producer evidence separately, with its original scope and time.
 
 ## Interfaces, errors and risks
 
-- Recommended local status polling: 10 seconds; recent partition detail: 24
-  hours; timeline: seven days; activity: existing 12 hours. Data refresh is manual.
-  These are recommendations awaiting review, not runtime settings added here.
+- Implemented local status refresh is manual; stale presentation is 180 seconds.
+  Automatic polling (previously recommended at 10 seconds), recent partition
+  detail of 24 hours and a seven-day timeline remain future choices. Current raw
+  Activity retains its 12-hour window; exported pages are not date-filtered history.
 - Show last observation age on every view, separately for status, inventory,
   validation and run history. A long writer can legitimately outlast the minute
   tick cadence. No uniform stale threshold implies death or authorizes recovery;
@@ -384,14 +415,13 @@ last-qualified producer evidence separately, with its original scope and time.
 - **Derive history from processing_metrics:** rejected; replay overwrites coverage
   and entity-only completion can coexist with raw `not_run`.
 
-Before code: agree export schema/ownership, client interface, catalog bootstrap/
-retention, freshness cadence, OS permissions and entity validation/detail scope.
-No telemetry/schema changes are proposed; observability exports and catalog are
-new advisory artifacts. The worker's v3 completion/history schema now provides a
-local source for timeline disposition; service/export qualification is still needed.
-The repaired `fab647f` handoff now passes the actual-Mac offline baseline with
-Linux-only supervision paths skipped. This is not Mac reader-shutdown or producer
-service/export/client acceptance. The original missing-lock failure remains separate. See
+Before extending the subset: agree additional history/certificate/catalog fields,
+managed client integration, bootstrap/retention, progress cadence, OS permissions
+and entity validation/detail scope. No telemetry interchange change is proposed.
+Submitted Linux producer behavior is source-reviewed, not full latest-HEAD or
+endpoint/resource acceptance. The repaired `fab647f` actual-Mac baseline and original
+missing-lock failure remain historical; new native feasibility also cannot qualify
+reader shutdown. See
 [[wiki/work/dbt-compaction-coordination/implementation-review]].
 
 Next: [[wiki/work/compaction-status-utility/implementation_plan]].

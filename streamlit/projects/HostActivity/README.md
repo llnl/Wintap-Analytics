@@ -6,6 +6,11 @@ keys and sizes only; it does not open Parquet contents. The optional row-count
 view uses an in-memory DuckDB connection. Neither mode requires DBT, a
 materialized database, or another Analytics app.
 
+Activity is always **Live diagnostic — uncoordinated**. Reads can overlap
+compaction/entity publication and observe partial, duplicated or mixed-generation
+data. They are not a consistent snapshot or authoritative verification, even when
+advisory status reports `OPEN`.
+
 ## Configure and run
 
 Use the same environment variables as `wintap_dbt`. The dataset value is the
@@ -33,6 +38,51 @@ mode uses boto3 `ListObjectsV2` and S3's `Size` field; it sends no object GETs.
 The optional row-count mode creates an in-memory DuckDB S3 secret that is closed
 after refresh. No S3 writes are issued. `httpfs` may be installed by DuckDB on
 first launch if it is not already available.
+
+## Advisory Status, Runs and Partitions
+
+Navigation also exposes a manually refreshed local producer export. Status reads
+need no dataset/AWS configuration, SDK calls, DuckDB connection or coordinator lock.
+Configure all three deployment values before using **Refresh advisory status**:
+
+```bash
+export WINTAP_STATUS_EXPORT=/absolute/path/to/coordinator-state/status.json
+export WINTAP_STATUS_BINDING_SHA256='<64-lowercase-hex canonical binding hash>'
+export WINTAP_STATUS_LEDGER_ID='<32-lowercase-hex ledger identity>'
+```
+
+Use independently trusted operator configuration for the pins, not values copied
+automatically from an untrusted export. The binding hash covers the entire canonical
+producer binding, including every active root and optional entity policy (PyUtil
+`protocol.digest(binding)`). The path must be an absolute regular `status.json`
+file, not a final-component symlink, FIFO, device or database. Serving-account read
+permission must be explicitly arranged; same server does not imply access. The
+producer normally publishes the export with mode `0600`.
+
+- Supported producer contract: `wintappy.coordination.service.status_page` v1,
+  at most 1 MiB and 100 records per kind. Only allowlisted summaries are rendered;
+  binding roots, authority payloads and free-form block diagnostics are withheld.
+- Missing/unpinned/unreadable/malformed exports and wrong identities/versions show
+  **unavailable**, never `OPEN` or zero activity. Observation and retrieval times
+  are distinct. An observation over 180 seconds old is visibly stale; age is only
+  presentation, never process-death or recovery evidence.
+- Within one session, a producer timestamp rollback is refused. V1 has no monotonic
+  sequence; same-second changes and whole-session restarts cannot prove freshness.
+  Changed deployment pins/path clear cached summaries. Navigation uses the cache
+  and never polls automatically or fetches subsequent ledger pages.
+- **Status** shows reported mode/cursor/owner and reserved/queued counts. Reserved
+  is not grant delivered. Process-lock observation, progress and delivery are unavailable.
+- **Runs** shows bounded raw-run intent markers, sorted by intent time and run ID.
+  Actual launch/finish and completion certificates are unavailable. `COMPLETED` is
+  reported disposition only; maintenance `FINISHED` does not authorize reopening.
+  Continuations mean incomplete history, not a seven-day or latest-run selection.
+- **Partitions** reports inventory unavailable, not zero; no survey has run.
+
+Advisory status is never permission to read, complete, delete, repair or reopen.
+Its pins identify only the status source; Activity keeps its separately configured
+raw root. Activity remains synchronous/raw-only. Compacted/entity reads, full
+catalog/timeline, managed live jobs and optional coordinated refresh are not yet
+implemented or qualified. No recovery controls, scheduler or deployment are added.
 
 ## Dashboard semantics and limits
 

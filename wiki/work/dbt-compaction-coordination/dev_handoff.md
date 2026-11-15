@@ -63,7 +63,26 @@ tags: [feature-work, dev-handoff, dbt, compaction, coordination, cron, duckdb, s
 
 ## Handoff summary
 
-**Current snapshot / next gate:** PyUtil commit
+**Current submitted snapshot / next gate:** PyUtil
+`123b9d36705a5d9c356724d007b28bac224605a6`, Analytics `ee9c27a` (following
+`3f11d13`). Linux service/client/advisory, v4 retry and explicit-v5 entity writer/
+history/clean-original service dispatch are committed in that submitted baseline.
+The 71/307 Linux gates below are focused/affected, not full latest-HEAD acceptance.
+Independent portable review passes 76/zero skips; a separate provisioned native
+five-module rerun passes 169/25 reviewed Linux-only skips with 83 identities intact.
+Native restriction/bootstrap permits a tiny genuine DBT build/test, but uses
+deprecated/private dependencies and qualifies no complete shutdown. No backend
+is selected or integrated. Current evidence:
+[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
+
+The human authorizes scoped native-Mac and Analytics utility implementation in
+isolated worktrees; the busy producer retains interrupted-publication recovery.
+The utility implements advisory v1 Status/raw intent Runs only, not catalog,
+compacted/entity reads or managed live/coordinated lifecycles. No deployment,
+scheduling, real-dataset mutation, commit or push is authorized by this pass.
+<!-- SOURCE: Human implementation approval, conversation 2026-11-15. -->
+
+**Historical accepted packaging baseline:** PyUtil commit
 `fab647f900196b0bc473fe7977b7dadcf7f4ce52` contains the receipt-bound launch,
 independent verification and ledger-v3 completion/history work plus the durable
 Mac harness and exact original main lockfile. All 22 manifest files pass committed/
@@ -75,8 +94,9 @@ Both locked runtimes and all 22 identities pass, with no timeout. Evidence:
 [[wiki/work/dbt-compaction-coordination/verification#Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed]].
 R9's reproducible packaging repair is verified; skipped Linux writer/completion
 paths do not establish Mac support. The uncommitted-overlay procedure is superseded.
-Subsequent Linux work adds an uncommitted service/client/advisory and audited-recovery
-overlay, including narrow checkpoint/deletion repair; broader recovery, S3/resource
+Subsequent Linux work added the then-uncommitted service/client/advisory and audited-
+recovery overlay, now committed in `123b9d3`, including narrow checkpoint/deletion
+repair; broader recovery, S3/resource
 qualification and dcc-02–05 remain open. Follow
 [[wiki/work/dbt-compaction-coordination/macos-qualification#Stage 2: reader backend acceptance remains pending]]
 for the later Mac lifetime/shutdown gate, not another unchanged baseline rerun.
@@ -137,7 +157,7 @@ Preserve the ordinary single-user local-raw workflow as a first-class path.
 This document specifies the full integration task. Protocol/ledger and the first
 controlled-clock tick and Linux supervision libraries exist. Verified normal
 completion/history exists as a locked local library, not the current tick callback;
-service/client integration now exists in the uncommitted Linux overlay, while
+service/client integration now exists in submitted `123b9d3`, while
 production scheduling remains uninstalled. Current local
 DBT, dual-root reads, compaction and optional durable entities already exist. Wintap-PyUtil owns
 implementation; Wintap-Analytics owns
@@ -173,31 +193,37 @@ HostActivity utility defaults to uncoordinated live observation with persistent
 warnings and inconclusive race failures; coordinated refresh is optional. Do not
 apply its bypass to DBT, authoritative verification, ledger access or recovery, and
 do not count diagnostic observations as reserved readers or completion evidence.
-The utility is separate planning work, not added implementation scope here. Read
+The utility is a separately authorized implementation slice, not producer recovery
+work or operational acceptance. Read
 [[wiki/work/dbt-compaction-coordination/design#Diagnostic observation exception]]
 before documenting that all dashboards must acquire grants. The worker-owned
-local status/run-summary export agreement remains a follow-on dependency.
+local status v1 is consumed; catalog/entity history/certificate/progress exports
+remain follow-on dependencies.
 
 ## Worker continuation after the Mac review
 
-The human finalized this review for commit/push and returns the remaining
+Historically the human finalized the packaging review for commit/push and returned the remaining
 implementation to the PyUtil worker. Resume the existing completion plan; do not
 restart the accepted baseline or interpret its Linux-only skips as Mac support.
+The November 15 isolated implementation pass has no commit/push permission; use
+the submitted snapshot and current authorization in the handoff summary above.
 
 1. **Reader platform gate:** implement and qualify Linux/macOS reader lifetime and
    descendant shutdown. If Mac shutdown cannot be established, stop for human review;
    uncertain readers retain reservations.
-   **Current feasibility checkpoint:** no safe native-Mac backend has been established
-   from the investigated candidates. Apple source rejects automatic kqueue descendant
-   tracking; installed DBT dependency probes require a spawned helper. Read
+   **Current feasibility checkpoint:** no safe native-Mac backend has been selected.
+   Actual-Mac kqueue rejects descendant tracking; no-fork denies plain DBT, while
+   prestarting its helper enables a tiny synthetic build/test. Deprecated/private
+   dependencies, interruption and wrapper death still need review/qualification. Read
    [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] and the new verification
    entry before another code pass. **Subsequent human direction authorizes finishing
    Linux integration now; the native Mac worker owns the unresolved Mac solution.**
    Mac qualification remains a separate gate, not a Linux blocker or a weaker release
    contract. Do not claim native-Mac support from the accepted baseline.
-2. **Service/client integration (slice D):** wire the qualified locked completion
-   adapter into the service, not the conservative `tick` callback. Complete durable
-   request/grant/cancel/release handling and bounded advisory exports. Preserve direct
+2. **Service/client integration (slice D):** the Linux service now wires locked
+   completion, durable request/grant/cancel/release handling and bounded advisory
+   exports; broader qualification remains open. Do not use the conservative `tick`
+   callback as a completion bypass. Preserve direct
    local-only `make dbt-build` and optional compaction/entities.
 3. **Audited recovery (slice E):** add explicit confirmed/reasoned operator operations
    using original evidence under exclusion. Stopped processes or diagnostic reads
@@ -210,18 +236,21 @@ restart the accepted baseline or interpret its Linux-only skips as Mac support.
    The subsequent `repair-deletions` path authenticates complete original
    migrations and unchanged survivors/outputs, retains separate actual disposition
    observations and never replays entities. Its local regressions are closed;
-    incomplete migration evidence and general exclusive entity maintenance remain
-    blocked. Raw-only intentional retry now has separate closed local regressions,
-    not endpoint/resource or Linux qualification. Read
+   incomplete migration evidence and interrupted entity publication remain
+   blocked. Explicit-v5 entity launch/clean-original resolution is implemented;
+   missing originals still refuse. Raw-only intentional retry has closed local regressions,
+   not endpoint/resource or Linux qualification. Read
    [[wiki/work/dbt-compaction-coordination/verification#Checkpoint maintenance — narrow repaired-phase path, regressions pending]]
    and `../Wintap-PyUtil/wintappy/coordination/LINUX.md` before recovery work.
 4. **Integrated qualification (slice F):** first synthetic local lifecycle controls,
    then human-approved isolated S3 fixtures and representative resource measurements.
    Keep dcc-02–05 unchecked until their own acceptance evidence is recorded.
-5. **Utility dependency agreement:** agree status/run/catalog export and reader
-   interfaces with the follow-on HostActivity plan. Utility implementation/deployment
-   still requires separate approval; Live diagnostic remains non-authoritative and
-   Coordinated refresh remains optional.
+   The gated [[wiki/work/dbt-compaction-coordination/isolated-qualification]] procedure
+   is prepared; concrete environment, roots, access, runner and ceilings are unselected.
+5. **Utility dependency agreement:** advisory v1 consumer implementation is authorized
+   and passes 46 offline controls. Agree additional run/catalog/certificate interfaces
+   and qualify managed reader lifetimes before extending it. Deployment still requires
+   approval; Live diagnostic is non-authoritative and Coordinated refresh optional.
 
 Read [[wiki/work/dbt-compaction-coordination/implementation_plan#Completion plan — November 14]],
 [[wiki/work/dbt-compaction-coordination/macos-qualification#Stage 2: reader backend acceptance remains pending]],

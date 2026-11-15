@@ -8365,3 +8365,52 @@ After updating the status pages, the fresh scoped changed-wiki/privacy audit pas
 files/seven frontmatters, 263 grounded paths, 493 inline sources and 458 wikilinks; six linked
 diagrams validate. The complete changed-text privacy scan and both repositories' whitespace
 checks pass. Index/log frontmatter exceptions remain preserved; no whole-wiki lint is implied.
+
+## [2026-11-15] implementation | authorized advisory utility and independent native review
+
+Isolated Analytics `ee9c27a` / PyUtil `123b9d3` work preserves the busy producer checkout
+and environments; interrupted-publication recovery remains producer-worker-owned. Submitted
+source/report review authenticates 365 hashes, 76 portable smoke passes/zero skips and exact
+307-test collection. Separate provisioned native five-module rerun passes 169/25 reviewed
+Linux-only skips with all 83 identities unchanged; initial 24 missing-runtime failures remain
+retained. Actual-Mac kqueue refuses tracking; restricted synthetic DBT build/test succeeds
+with a prestarted helper. Deprecated Apple/private CPython dependencies are unselected;
+closed lifetime/interruption/wrapper-death shutdown remains unqualified and REVIEW NEEDED.
+
+Analytics navigation/pinned manual advisory v1 Status/raw intent Runs and unavailable
+Partitions pass 46 offline tests/zero skips with ten unchanged source/lock identities.
+First import/selector failures remain retained. Separate-runtime genuine producer-export
+read passes with synthetic lock held and files unchanged. Activity stays synchronous/raw-only,
+always Live diagnostic — uncoordinated; catalog, entity history, progress, delivery, actual
+launch/finish and certificates remain unknown/pending, never permissions.
+
+Pages updated: four utility artifacts, coordination handoff/plan/verification/Mac runbook,
+native tension, canonical dashboard/ETL/entity guidance, index; both supporting READMEs.
+Page created: isolated qualification procedure/approval worksheet (human-review-required).
+Reconciled historical absent/uncommitted claims against submitted source without expanding
+71/307 Linux focused/affected scopes or historical 880/554 full regressions. No full latest-HEAD,
+S3/resources/native-shutdown/dcc-02–05/rollout acceptance. Concrete isolated environment/fixtures/
+roots/access still need approval. No deployment, cron, real-dataset mutation, commit or push.
+
+## [2026-11-15] verification | final scoped audit and cosmetic successor
+
+Complete tracked/untracked review covers 23 changed files/five additions, 15 wiki pages/
+13 frontmatters, 327 grounding paths/546 inline sources, 490 wikilinks/92 sections,
+five local Markdown links, six Python syntax checks, 38 added Python section references
+and three linked diagrams. Fresh final audit exits 0; complete retained diff/privacy review
+and both whitespace checks pass. Separate result-recording output preserves the final report.
+No new errors/privacy candidates. Index/log exceptions and three historical installed-package
+citations absent from isolated Python 3.12 remain explicitly scoped, not whole-wiki lint.
+Ruff's initial 14 broad findings/one new-file format mismatch remain retained. New-file
+import/default/test-binding/format polish passes four-file default lint/format and six-file
+core lint; eight reproduced baseline findings remain, not a full broad lint pass.
+
+Distinct utility successor passes 46/zero skips (1.580 s), with full 76-line stderr/empty
+stdout and ten unchanged successor identities. Native style successor passes genuine tiny
+build/test (4.269 s), with full 38-line stdout/empty stderr and three unchanged identities.
+All 365 submitted-archive sources, 83 producer identities, original reports, 11 pre-polish
+source/lock snapshot files and retained runner reauthenticate; all 21 first-audit report
+hashes, both retained diff hashes and six polished source identities match. No producer runtime/dependency or
+query changes. Deprecated/private native dependencies, full catalog/lifecycles and concrete
+Linux/S3/resource approvals remain open. No acceptance expansion, deployment, scheduling,
+real-dataset mutation, commit or push.

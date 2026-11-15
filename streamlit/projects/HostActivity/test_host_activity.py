@@ -825,19 +825,20 @@ class StreamlitRenderTests(unittest.TestCase):
             self.assertEqual(len(app.exception), 0)
             self.assertEqual([item.value for item in app.title], ["Recent Host Activity"])
             self.assertEqual([item.label for item in app.button], ["Refresh last 12 hours"])
-            self.assertEqual([item.label for item in app.selectbox], ["Event family"])
+            self.assertEqual([item.label for item in app.selectbox], ["View", "Event family"])
             self.assertEqual([item.label for item in app.radio], ["Query mode"])
             self.assertEqual(app.radio[0].value, "File metadata")
-            self.assertEqual(app.selectbox[0].value, "All event families")
+            self.assertEqual(app.selectbox[0].value, "Activity")
+            self.assertEqual(app.selectbox[1].value, "All event families")
             self.assertTrue(any("all event families" in item.value for item in app.info))
             self.assertNotIn("host_activity_snapshot", app.session_state)
 
-            app.selectbox[0].select("Process file").run()
-            self.assertEqual(app.selectbox[0].value, "Process file")
+            app.selectbox[1].select("Process file").run()
+            self.assertEqual(app.selectbox[1].value, "Process file")
             self.assertNotIn("host_activity_snapshot", app.session_state)
             self.assertTrue(any("Process file" in item.value for item in app.info))
 
-            app.selectbox[0].select("All event families").run()
+            app.selectbox[1].select("All event families").run()
 
             class MetadataClient:
                 closed = False
@@ -879,11 +880,11 @@ class StreamlitRenderTests(unittest.TestCase):
                 "query_mode": "File metadata",
                 "event_type": "__all__",
             }
-            app.selectbox[0].select("Process").run()
+            app.selectbox[1].select("Process").run()
             self.assertEqual(len(app.exception), 0)
             self.assertTrue(any("does not match the selected query/family" in item.value for item in app.info))
             app.radio[0].set_value("Raw Parquet rows").run()
-            app.selectbox[0].select("Process file").run()
+            app.selectbox[1].select("Process file").run()
 
             class Connection:
                 closed = False

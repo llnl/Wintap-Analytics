@@ -9,6 +9,10 @@ grounded_by:
   - streamlit/projects/HostActivity/s3_source.py
   - streamlit/projects/HostActivity/file_metadata.py
   - streamlit/projects/HostActivity/test_host_activity.py
+  - streamlit/projects/HostActivity/status_source.py
+  - streamlit/projects/HostActivity/status_views.py
+  - streamlit/projects/HostActivity/test_status_source.py
+  - ../Wintap-PyUtil/wintappy/coordination/service.py
   - ../Wintap-PyUtil/wintap_dbt/macros/s3.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/time.sql
   - ../wintap/wintap/core/etl/extract/FileSerializer.cs
@@ -18,7 +22,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/extract/SELinuxSerializer.cs
   - ../wintap/wintap/core/etl/load/RawSensorWriter.cs
 policy: agent-editable
-last_validated: 2026-11-11
+last_validated: 2026-11-15
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -190,17 +194,41 @@ Run tests and launch instructions are maintained in the app's README and the
 feature record:
 [[wiki/work/recent-host-activity-dashboard/verification]].
 
-## Planned compaction/status follow-on
+## Advisory compaction/status subset and pending extensions
 
 [[wiki/work/compaction-status-utility/brief]] proposes extending this same app,
 on the compaction server, with all/subset partition status, lock/admission state,
 a run timeline, compacted event reads and optional retained entity inspection.
-This is a draft, not implemented behavior. Its
-[[wiki/work/compaction-status-utility/design]] separates advisory local status,
-default live diagnostic reads without reservations and optional coordinated
-refresh. The human approved the two modes and scoped diagnostic exception on
-November 14; live observations must always warn about partial/overlapping or
-mixed-generation data and cannot certify integrity, completion or safe recovery.
-DBT, authoritative verification, ledger locking and maintenance retain their
-protections. Raw filename metadata cannot stand in for compacted row-level host/time,
-and entity context is not extra event history. No new mode is implemented yet.
+The human approved the two modes on November 14 and implementation on November 15;
+deployment remains unauthorized. The implemented subset adds Activity/Status/Runs/
+Partitions navigation and manual pinned local advisory v1 inspection. All 46 offline
+tests pass, including real Streamlit controls; a separate dashboard-runtime process
+reads a genuine producer export with the synthetic ledger lock held and files unchanged.
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/main.py; streamlit/projects/HostActivity/status_source.py; streamlit/projects/HostActivity/status_views.py; wiki/work/compaction-status-utility/verification.md -->
+
+Status requires `WINTAP_STATUS_EXPORT` (absolute regular local `status.json`),
+`WINTAP_STATUS_BINDING_SHA256` (full canonical producer binding) and
+`WINTAP_STATUS_LEDGER_ID`. No ledger/lock/data-root/SDK access is performed. Strict
+identity/schema/byte/page/timestamp failures show unavailable; age over 180 seconds
+shows stale. Producer observation and app retrieval times are distinct. Timestamp
+rollback is refused within the pinned session, not a sequence-based or whole-session
+freshness guarantee. Changed pins/path clear cached summaries; navigation is cached.
+
+Only allowlisted mode/cursor/owner/job/raw-run/maintenance summaries are displayed.
+Roots, authority payloads and free-form block diagnostics are withheld. Reserved is
+not grant delivered. Runs shows bounded raw intent markers, not measured bars:
+`COMPLETED` is reported disposition only, actual launch/finish/certificates are
+unavailable and continuations mean incomplete history. Partitions reports unavailable,
+not zero. Process-lock observations, inventory, progress and entity-only history
+are not exported by producer v1.
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/status_source.py §_validate/read_snapshot; streamlit/projects/HostActivity/status_views.py §render; ../Wintap-PyUtil/wintappy/coordination/service.py §status_page/export_status -->
+
+Activity is still synchronous/raw-only and always displays **Live diagnostic —
+uncoordinated**, even with reported `OPEN` or missing status. Full catalog/timeline,
+compacted/entity reads and managed live/coordinated job lifecycles remain pending.
+The Linux client exists, but is not integrated here; native coordinated shutdown is
+unqualified. Status never permits reading, completion, deletion, recovery or reopening.
+No unlocked DBT or live-ledger inspection is added. Raw filename metadata is not
+compacted row-level host/time, and entity context is not extra event history.
+Configure/test through the app README; see [[wiki/work/compaction-status-utility/design]]
+for remaining design and [[wiki/work/compaction-status-utility/verification]] for limits.

@@ -14,11 +14,9 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
   - ../Wintap-PyUtil/tests/test_coordination_supervisor.py
   - ../Wintap-PyUtil/uv.lock
-  - ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/mp_context.py
-  - ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/contracts/graph/manifest.py
-  - ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/adapters/base/connections.py
+  - ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py
 policy: human-review-required
-last_validated: 2026-11-14
+last_validated: 2026-11-15
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -47,6 +45,12 @@ execute or qualify a Mac descendant-shutdown backend. PyUtil owns implementation
 Analytics owns this shared evidence and unresolved decision.
 <!-- GROUND_TRUTH: wiki/work/dbt-compaction-coordination/macos-qualification.md §Stage 2: reader backend acceptance remains pending -->
 
+On November 15 the human authorized isolated native-Mac implementation/review
+work. The actual restriction/bootstrap probe below improves feasibility evidence,
+not dependency acceptance: no safe backend is selected or wired into the client.
+<!-- SOURCE: Human implementation approval, conversation 2026-11-15. -->
+<!-- REVIEW NEEDED: deprecated Apple sandbox and private CPython helper lifecycle dependencies must be reviewed before any production backend selection. -->
+
 ## Evidence and limits
 
 ### Linux ownership is not a portable process-group algorithm
@@ -67,6 +71,10 @@ states that the child's PID is not passed through in the actual event. These are
 observations of published source revision `f6217f891ac0bb64f3d375211650a4c1ff8ca1ea`,
 **not a probe of the kernel installed on the qualification Mac**.
 
+The subsequent native November 15 probe now independently observes `ENOTSUP` for
+`NOTE_TRACK` on the actual Mac. It does not upgrade `NOTE_FORK` to complete tracking.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py §main -->
+
 Sources inspected on 2026-11-14:
 - [XNU `filt_procattach`, lines 1099–1107](https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_event.c#L1099-L1107).
 - [XNU event flags and fork-event payload, lines 255–274 and 362–369](https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/sys/event.h#L255-L274).
@@ -85,7 +93,7 @@ dbt-adapters **1.24.5**, dbt-duckdb **1.9.6**. DBT explicitly selects a spawn
 multiprocessing context; manifest and connection-manager construction use its
 `Lock`/`RLock`. Separate DBT model work uses a thread pool. These installed-package
 observations are version-scoped, not committed dependency source or Mac execution.
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/uv.lock §dbt-core/dbt-adapters/dbt-duckdb; ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/mp_context.py; ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/contracts/graph/manifest.py §Manifest._lock; ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/adapters/base/connections.py §BaseConnectionManager.__init__; ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/graph/thread_pool.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/uv.lock §dbt-core/dbt-adapters/dbt-duckdb; wiki/work/dbt-compaction-coordination/verification.md §Reader-supervision feasibility checkpoint — human review required (historical installed dependency probes) -->
 
 Two fresh Linux dependency probes each observe **one real helper launch** from
 `get_mp_context().RLock()` or `Manifest()`. A third, synthetic helper-launch denial
@@ -105,13 +113,35 @@ Sources: [Python 3.12 multiprocessing contexts](https://docs.python.org/3.12/lib
 and [CPython 3.12.12 resource tracker](https://github.com/python/cpython/blob/v3.12.12/Lib/multiprocessing/resource_tracker.py).
 <!-- SOURCE: Python documentation and pinned CPython source; retrieved 2026-11-14. -->
 
+### Actual-Mac restricted DBT bootstrap — feasibility only
+
+The native probe uses Python 3.12.12/main DuckDB 1.5.6 with the unchanged lock's
+DBT versions. `sandbox_init` no-fork restrictions deny both fork and subprocess
+spawn with `EPERM`; ordinary manifest construction refuses. Starting the resource
+tracker before applying restriction enables a genuine synthetic build (three
+passes) and test (two passes). First/formatted probes succeed; the formatted run
+is 4.288 s with unchanged script/lock/manifest identities and empty stderr. A separate
+style successor repeats the same synthetic result in 4.269 s; both revisions and
+their original reports remain retained, without backend or shutdown acceptance.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py; wiki/work/dbt-compaction-coordination/verification.md §Independent submitted review and native-Mac feasibility — November 15 -->
+
+This is **not a production containment design**. It uses deprecated Apple sandbox
+APIs and private CPython resource-tracker/finalizer/semaphore cleanup seams. The
+known helper is bootstrapped but no closed lifetime tracker, restriction inheritance/
+delegation matrix, detached-child controls, interruption, wrapper death or complete
+shutdown qualification exists. Normal synthetic cleanup and timeout cannot certify
+all readers stopped. The script explicitly reports shutdown unqualified and has
+no grant/release path. Keep the tension open and stop for dependency/design review
+before production wiring; do not weaken Linux or direct local DBT compatibility.
+<!-- REVIEW NEEDED: accept/reject the dependency strategy and lifetime design explicitly; successful build/test does not close native-Mac acceptance. -->
+
 ## Candidates not accepted
 
 | Candidate | Unclosed requirement |
 |---|---|
 | Process-group kill, sampled process lists or root-only kqueue | No complete ownership/shutdown proof for detached or reparented descendants; cannot authorize release. |
 | `launchd` default process-group cleanup | Apple's historical published manpage promises cleanup of the same process group, not every detached descendant. No current-Mac containment probe has run. |
-| Native process-creation restrictions, possibly a Seatbelt-based experiment | Must accommodate the known helper before source access, establish restriction inheritance and fork/spawn/delegation behavior, and test actual DBT plus interruption/wrapper death. API/profile compatibility and workload restrictions require review; no sandbox backend is selected or implemented. |
+| Native process-creation restrictions with a prestarted helper | Actual-Mac synthetic DBT feasibility now passes, but deprecated/private dependencies, helper ownership, inheritance/delegation, interruption/wrapper death and complete shutdown remain unqualified. No sandbox backend is selected or implemented. |
 | Privileged/signed Mac containment service | No such service or shutdown proof exists in this feature. Installation, entitlements and operating costs are additional decisions, not implied authorization. |
 | Run readers in a qualified Linux environment | Potential staging path, not native-Mac acceptance. Deferring the human-selected native platform requires explicit approval. |
 

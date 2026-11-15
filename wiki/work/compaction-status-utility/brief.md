@@ -9,7 +9,7 @@ grounded_by:
   - wiki/work/compaction-status-utility/design.md
   - wiki/tool/durable-process-entity-manager.md
 policy: agent-editable
-last_validated: 2026-11-14
+last_validated: 2026-11-15
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -47,9 +47,18 @@ The human requested this follow-on plan on November 14:
   and exclusive maintenance/recovery.
 
 The human approved these two read modes and the diagnostic-contract exception on
-November 14. This is planning, not implementation authorization or acceptance of
-the remaining detailed recommendations below. The current coordination worker
-retains implementation ownership; this session changes only wiki artifacts.
+November 14, then authorized the implementation/review plan on November 15:
+Analytics utility work plus scoped native-Mac changes in an isolated PyUtil
+worktree. The busy producer worker retains interrupted-publication recovery.
+No deployment, cron installation, real-dataset mutation, commit or push is authorized.
+<!-- SOURCE: Human implementation approval, conversation 2026-11-15. -->
+
+**Implemented subset:** Activity/Status/Runs/Partitions navigation, pinned bounded
+local advisory v1 status, raw intent markers and an explicit unavailable catalog.
+Activity stays synchronous/raw-only with its mandatory Live diagnostic warning.
+All 46 offline controls pass; full catalog/timeline, compacted/entity access and
+managed live/coordinated lifecycles remain pending. No utility operational acceptance.
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/status_source.py; streamlit/projects/HostActivity/status_views.py; streamlit/projects/HostActivity/main.py; wiki/work/compaction-status-utility/verification.md -->
 
 ## Goals and recommended first version
 
@@ -149,25 +158,30 @@ and optional shared-reader interfaces with the active worker before integrating;
 sibling changes require explicit authorization.
 Wintap sensor code and Lintap packaging are unaffected.
 
-The initial planning baseline was PyUtil `fe7fcb5`. The subsequent source review
-at `8ee714c` confirms local retained completion/history and authority now exist;
-service integration, advisory exports and the reader client remain unfinished.
-The corrected `fab647f` handoff passes the scoped actual-Mac baseline: 169 main
-passed/129 Linux-only skips and 267 standalone passed. Mac reader shutdown and
-service/client/export qualification remain open; the original lockfile failure is
-preserved separately.
-See [[wiki/work/dbt-compaction-coordination/implementation-review]]; this refresh
-does not authorize utility implementation or accept its producer interfaces.
+Initial `fe7fcb5` planning and `8ee714c`/`fab647f` reviews are historical. Submitted
+PyUtil `123b9d3` implements Linux service/client, advisory status and typed entity
+writer/history/clean recovery. The utility consumes only `service.status_page` v1:
+no partition inventory, entity disposition history, grant delivery, monotonic
+sequence, actual launch/finish or completion certificate is exported. These facts
+remain unavailable, not inferred from metrics or CLI exits.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §status_page; ../Wintap-PyUtil/wintappy/coordination/entity_writer.py; ../Wintap-PyUtil/wintappy/coordination/entity_history.py -->
 
-## Open choices for human/worker review
+The accepted `fab647f` Mac baseline and original lockfile failure remain separate.
+Native shutdown, actual-S3/resource qualification and broader dcc-02–05 acceptance
+are still open. Review [[wiki/work/dbt-compaction-coordination/verification]] and
+[[wiki/tension/native-macos-readers-vs-descendant-shutdown]]; successful native
+restriction/bootstrap feasibility is not a selected production backend.
 
-- Adopt the recommended read-only four-view scope and leave recovery actions out?
+## Remaining choices for human/worker review
+
+- Four-view read-only scope is selected; recovery actions remain out. Full view
+  functionality is not accepted by the implemented advisory subset.
 - Recommended defaults: recent 24-hour partition detail, seven-day timeline,
   existing 12-hour activity queries; all-history catalog remains available by
   pagination. These are separate windows, not a global query-limit increase.
-- Recommended refresh: inexpensive local status polling every 10 seconds;
-  data/catalog surveys only on explicit request. Final freshness thresholds and
-  history retention need agreement with the producer's actual publication cadence.
+- Current status refresh is manual, with a 180-second presentation-only stale
+  threshold. Automatic polling, history retention and producer progress cadence
+  still need agreement; data/catalog surveys remain explicit future work.
 - Prefer coordinator-owned local status/catalog export plus the existing planned
   S3 advisory summary; confirm deployment read permissions and client import/CLI
   interface. Same server does not imply the same OS account or unlocked access.

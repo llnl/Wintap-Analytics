@@ -7,8 +7,11 @@ grounded_by:
   - wiki/work/compaction-status-utility/design.md
   - wiki/work/dbt-compaction-coordination/implementation_plan.md
   - streamlit/projects/HostActivity/test_host_activity.py
+  - streamlit/projects/HostActivity/status_source.py
+  - streamlit/projects/HostActivity/status_views.py
+  - ../Wintap-PyUtil/wintappy/coordination/service.py
 policy: agent-editable
-last_validated: 2026-11-14
+last_validated: 2026-11-15
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -22,22 +25,25 @@ tags: [feature-work, status, streamlit, compaction, implementation-plan]
 
 ## Scope and dependency gate
 
-This is a follow-on plan, not instructions to interrupt the active coordination
-implementation or modify sibling code now. Read
-[[wiki/work/compaction-status-utility/brief]] and
-[[wiki/work/compaction-status-utility/design]], then obtain implementation and
-cross-repo authorization. Re-read the worker's latest source/verification before
-coding. Initial planning used PyUtil `fe7fcb5`; the subsequent `8ee714c` source
-review confirms local completion/history, not qualified service/export/client
-interfaces. The repaired `fab647f` exact-Mac baseline passes with Linux-only
-supervision paths skipped; Mac reader-shutdown and producer interfaces remain open.
+The human authorized this implementation/review plan, including scoped native-Mac
+PyUtil source/test work, on November 15. Work is isolated from the busy producer
+checkout; interrupted-publication recovery remains with that worker. No deployment,
+cron installation, real-dataset mutation, commit or push is authorized. Actual S3
+and resource qualification still need specifically approved fixtures/roots/access.
+<!-- SOURCE: Human implementation approval, conversation 2026-11-15. -->
 
-The two read modes and scoped diagnostic exception are human-approved, not code
-authorization. The status/export agreement can be coordinated now. Mocked
-consumer/UI work can start once authorized; live diagnostic integration need not
-wait for the client, but must qualify configured roots, warnings, race handling and
-supervised bounded reads. Coordinated refresh waits for the qualified client;
-authoritative timeline success depends on writer-completion/disposition exports.
+Submitted PyUtil `123b9d3` implements Linux service/client and local advisory v1
+status. The implemented utility subset uses only that supported export, not the
+live ledger. Navigation, pinned bounded status, raw intent markers and explicit
+unavailable inventory pass 46 offline controls plus a separate real-export read
+with the synthetic producer lock held. This is not full csu-01/02 acceptance.
+
+Initial `fe7fcb5`, `8ee714c` and repaired `fab647f` baseline reviews retain their
+historical scope. Mac reader shutdown remains unqualified: the new native sandbox/
+tracker-bootstrap experiment is feasibility-only, not selected for production.
+Live diagnostic extension must still qualify root binding, races and supervised
+bounded jobs. Coordinated refresh waits for qualified app/client lifetime;
+authoritative timeline success needs producer certificate/disposition exports.
 Existing R6–R8 follow-through and dcc-02–05 gates remain owned by
 [[wiki/work/dbt-compaction-coordination/implementation_plan]]. Do not check those
 off because a dashboard mock renders successfully.
@@ -127,9 +133,10 @@ off because a dashboard mock renders successfully.
 - Analytics: `streamlit/projects/HostActivity/main.py`, `s3_source.py`, `queries.py`,
   `file_metadata.py`, focused tests and README; proposed status/catalog/run adapters,
   managed query runner and view modules. Update dependencies only if required.
-- PyUtil worker-owned interface: `wintappy/coordination/` status/summary/client
-  integration and tests, deployment examples and operator README; agreed catalog
-  summary generation. These are candidate touchpoints, not newly authorized edits.
+- PyUtil: native-Mac probe/backend/client work and supporting documentation are
+  authorized in the isolated worktree. Producer recovery remains worker-owned;
+  additional status/catalog schema work requires interface agreement, not concurrent
+  edits to the worker's checkout.
 - Wiki: feature verification/checklist/log, canonical dashboard and implemented
   cross-repo data-flow/entity usage where semantics actually change.
 
@@ -162,7 +169,17 @@ Preserve local-only DBT and optional compaction/entities throughout.
   completion/history from pending exports/client and the separately scoped Mac baseline.
 - [x] Record `fab647f` handoff repair and passing actual-Mac offline baseline without
   accepting skipped Linux paths, Mac reader shutdown or utility producer interfaces.
-- [ ] Human/worker approves csu-01 contract and implementation scope.
+- [x] Human authorizes the implementation/review scope, including isolated Analytics
+  utility and scoped native-Mac PyUtil work; no deployment or commit/push.
+- [x] Qualify existing producer v1 advisory shape/pins and bounded consumer negatives;
+  real separate-runtime export read passes with synthetic lock held and files unchanged.
+- [x] Implement navigation, advisory Status/raw intent Runs and unavailable Partitions;
+  46 combined offline controls pass with all ten source/lock identities unchanged.
+- [x] Promote only implemented advisory-subset facts to canonical dashboard/README;
+  preserve full catalog/timeline and job-lifetime limitations.
+- [x] Audit all tracked/untracked changes, retain original source/report identities
+  and qualify the cosmetic successor with 46 offline passes; no broader utility gate.
+- [ ] Agree additional csu-01 producer catalog/history/certificate/progress fields.
 - [ ] csu-01 inspection/export/lock-probe negative gates pass.
 - [ ] csu-02 status/timeline/AppTest gates pass.
 - [ ] csu-03 catalog coverage/pagination/evidence-grain gates pass.

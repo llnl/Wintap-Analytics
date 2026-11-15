@@ -5,13 +5,17 @@ confidence: medium
 grounded_by:
   - streamlit/projects/HostActivity/test_host_activity.py
   - streamlit/projects/HostActivity/pyproject.toml
+  - streamlit/projects/HostActivity/status_source.py
+  - streamlit/projects/HostActivity/status_views.py
+  - streamlit/projects/HostActivity/test_status_source.py
+  - ../Wintap-PyUtil/wintappy/coordination/service.py
   - ../Wintap-PyUtil/wintappy/coordination/ledger.py
   - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
   - wiki/work/compaction-status-utility/implementation_plan.md
 policy: agent-editable
-last_validated: 2026-11-14
+last_validated: 2026-11-15
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -22,6 +26,136 @@ tags: [feature-work, status, compaction, verification, streamlit]
 ---
 
 # Verification: Compaction Status Utility
+
+## Authorized advisory implementation — November 15
+
+The human authorized Analytics implementation plus scoped native-Mac PyUtil work
+in isolated worktrees from Analytics `ee9c27a` and PyUtil `123b9d3`. The busy
+producer checkout/environments remain untouched; producer interrupted-publication
+recovery remains worker-owned. This pass authorizes neither deployment/scheduling
+nor real-dataset mutation, commit or push. The November 14 planning/publication
+authorization below is historical, not the current implementation boundary.
+<!-- SOURCE: Human implementation approval, conversation 2026-11-15. -->
+
+### Commands and retained results
+
+App provisioning: `uv sync --locked --offline --python 3.12` first refused the
+uncached `pandas==2.3.3` Mac wheel. `uv sync --locked --python 3.12` then succeeded
+without changing manifest/lock. Python is 3.12.12, DuckDB 1.5.6. No dependency or
+query-runtime repair was made.
+
+From `streamlit/projects/HostActivity/`:
+
+```sh
+.venv/bin/python -m unittest discover -s . -p 'test_*.py' -v
+.venv/bin/python -m unittest test_status_source -v
+```
+
+| Evidence | Result and attribution |
+|---|---|
+| Untouched app baseline | 27 passes in 12.763 s, before source edits. |
+| First new source-test import | `ModuleNotFoundError: status_source`, before implementation. |
+| `utility-first.stderr.txt` / `.json` | 45 passes/one AppTest selector error in 1.062 s; adding View moved Event family to index 1. All ten source/lock identities match before/after. Three remaining selectors corrected; runtime unchanged. |
+| `utility-green.stderr.txt` / `.json` | **46 passes/zero skips in 1.546 s**, exit 0; all ten app source/lock identities match before/after. Only non-failing existing Streamlit bare-mode/width warnings. |
+| `status-real-producer-contract.json` | Separate dashboard-runtime process reads a real `service.export_status` v1 export while the synthetic producer ledger lock remains held; one waiting job observed, exit 0, all fixture files unchanged. Catalog and delivery remain `null`. |
+
+The first combined failure's private reports were accidentally retained in the
+approved temporary parent evidence directory rather than the isolated worktree
+parent's `evidence/`; both original and final reports remain retained, not replaced.
+The real-export harness initially misused `Ledger.initialize` as a context manager;
+corrected initialization followed by `Ledger.open` required no producer code repair.
+
+Report SHA-256 (`utility-green.stderr.txt`):
+`9f23312a6ee5399cc9a98208c99ff230ae048cf44fc430655e68704bb9314ec5`.
+Contract report SHA-256:
+`5522cc4ce6914d42a103aa069a9c8125608d294236b9b624b15cb4921a259562`.
+Raw logs/fixture paths stay private; source is cited in place, not copied to `raw/`.
+
+### Qualified subset and limits
+
+Controls exercise mandatory full-binding/ledger pins, missing configuration/no I/O,
+wrong identity/version, unknown fields, duplicate/nonfinite/partial JSON, bounded
+regular-file reads, FIFO/final-symlink/database-path refusal, timestamps/future/rollback/
+staleness, page order/duplicates/continuation and redaction. Binding/version bypass
+mutations prove the specific checks cause refusal. Actual Streamlit controls cover
+manual-only refresh, cached navigation, no SDK/data connection, unavailable failure
+hiding old results, changed pins clearing cache and always-visible Live warnings.
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/test_status_source.py; streamlit/projects/HostActivity/test_host_activity.py -->
+
+This qualifies advisory consumer behavior, not producer truth/authenticity or a
+consistent dataset. Same-session timestamp checks are not a monotonic sequence or
+whole-session rollback defense. V1 has no catalog, entity dispositions, delivery,
+launch/finish, progress or completion certificates. Runs is bounded raw intent
+markers only; `COMPLETED` is reported, never certified. Partitions is unavailable,
+not zero. Ordinary raw Activity stays synchronous: no managed jobs, compacted/entity
+reads, coordinated refresh or same-server slow-writer/resource pilot has run.
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/status_source.py; streamlit/projects/HostActivity/status_views.py; ../Wintap-PyUtil/wintappy/coordination/service.py §status_page -->
+
+Native and producer independent review results:
+[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
+
+### Final scoped audit and style successor — November 15
+
+The first complete tracked/untracked audit finds no new grounding, link, section,
+newline, whitespace or privacy errors. Three historical Python 3.11 installed-package
+citations in producer verification are unavailable in this isolated Python 3.12
+environment; they remain historical evidence, not newly verified live sources.
+Index/log retain their existing frontmatter exceptions; this is not whole-wiki lint.
+
+Ruff 0.16.10's broad six-file check first reports 14 findings; six concern the new
+files and eight reproduce existing main/test findings. A four-new-file format
+check also requests two test context-manager wraps. Retained `source-audit-before-polish.json`
+and an 11-file private source snapshot preserve the original green source/locks.
+The successor changes only new-file import order, explicit default `check=False`,
+test callback binding and context-manager formatting; producer runtime, existing
+main/tests, queries and all manifests/locks stay unchanged.
+
+Distinct successor command from the app:
+
+```sh
+.venv/bin/python -B -m unittest discover -s . -p 'test_*.py' -v
+```
+
+`utility-style.stderr.txt` / `.json` passes **46 tests/zero
+skips in 1.580 s**, exit 0. Full 76-line stderr/empty stdout reviewed; all ten
+successor source/lock identities match before/after/current files. Original failures
+remain retained with unchanged report hashes and their recorded before/after
+identities; the earlier 1.546-second green source authenticates against the retained
+pre-polish snapshot. Successor stderr SHA-256:
+`0f5d810c816fa75bec6d9a1dd3e518de31af725ab55aa52f0965423c3a22378d`.
+
+`source-audit-polished.json` retains default Ruff lint/100-column format passes for
+all four new Python files and `--select E4,E7,E9,F` passes for all six changed Python
+files. Broad six-file lint still reports eight baseline findings (imports,
+intentional naive-time tests, argument shadowing and sanitized broad exceptions),
+with no new finding; it is not represented as a full lint pass. Complete cosmetic
+delta reviewed in `source-polish-review.diff`; all six identities stay unchanged
+during checks. Native synthetic successor evidence remains feasibility only, below
+the same producer verification heading linked above.
+
+Audit command from Analytics, using the already locked producer PyYAML 6.0.3:
+
+```sh
+../Wintap-PyUtil/.venv/bin/python -B ../evidence/dcc-final-scope-audit.py \
+  --output ../evidence/dcc-final-scope-audit-final.json
+```
+
+The app has no PyYAML; the initial tooling import refusal required no dependency
+or environment change. `dcc-final-scope-audit-final.json` exits 0 and covers all
+**23 changed files/five untracked additions**, **15 wiki pages/13 frontmatters**,
+**327 grounding paths/546 inline source paths**, **490 wikilinks/92 sections**,
+five local Markdown links, six Python syntax checks, 38 added Python section
+references and three linked diagrams. No new errors or added-content privacy
+candidates; complete retained diff reviewed and both repositories' fresh
+`git diff --check` pass. This is scoped review, not whole-wiki or broad-lint acceptance.
+
+All 365 submitted-archive sources, 83 producer identities, ten utility and three
+native successor identities, the 11-file prior green snapshot and retained runner
+reauthenticate. All 21 report hashes from the first audit remain unchanged;
+cosmetic/full retained diff hashes and six polished source identities also match.
+The same audit with fresh output `../evidence/dcc-final-scope-audit-final-recorded.json`
+checks this result-recording update separately; prior reports refuse overwrite.
+No new runtime/platform or operational gate is accepted.
 
 ## Results — planning baseline, November 14
 
@@ -121,13 +255,13 @@ return to the worker through
 
 | Gate | Required proof | Status |
 |---|---|---|
-| Inspection during write | Held process lock, S3 outage and waiting coordinated job still render status/history without opening ledger or reserving data access. | Not run |
+| Inspection during write | Held process lock, S3 outage and waiting coordinated job still render status/history without opening ledger or reserving data access. | Synthetic held-lock export read and no-SDK AppTests pass; actual slow-writer/waiting data-job pilot not run |
 | Live overlap and warning | Live diagnostics can observe writing/blocked state without messages/reservations; visible warning survives fresh `OPEN`, stale/unknown status and cached/exported results. | Not run |
 | Live races | Disappearance/replacement between LIST/schema/rows and mixed snapshot/authority/checkpoint generations stay inconclusive, never false zero/corruption/deletion/migration failure. | Not run |
-| Read-only status | No init/recovery mutation; malformed/stale/binding/version failures show unknown; free lock cannot clear blocked intent. | Not run |
+| Read-only status | No init/recovery mutation; malformed/stale/binding/version failures show unknown; free lock cannot clear blocked intent. | Advisory v1 consumer negatives pass; no lock probe/exporter/recovery path added |
 | Catalog scope | Resumable survey, new families/protocols, pagination and unknown inventory; no truncated all-partition completion claim. | Not run |
 | Evidence independence | Replay `completed`/raw `not_run`, skipped destinations, failed deletion and missing checkpoint cannot become verified migration success. | Not run |
-| Timeline | Data hour versus execution time, missing times, linked repairs and committed disposition; exit zero is not success. | Not run |
+| Timeline | Data hour versus execution time, missing times, linked repairs and committed disposition; exit zero is not success. | Raw intent markers/missing launch-finish and reported-only completion controls pass; full timeline/certificates pending |
 | Event compatibility | Raw/compacted/both exact counts/timestamp equivalence, physical overlap warnings and raw filename-only metadata; existing budgets retained. | Not run |
 | Entity context | Disabled mode, expected-host/namespace/authority failures, valid historical coverage and bounded retained-instance inspection without added event rows; live checks remain observational even when they pass. | Not run |
 | Mode separation | Explicit coordinated mode cannot read before grant or silently fall back; mode switches/cached mixed-page catalogs cannot upgrade live results to coordinated. | Not run |
@@ -137,10 +271,10 @@ return to the worker through
 
 ## Known gaps and follow-ups
 
-No status/export/client API is assumed implemented by this draft. Agree the
-consumer/producer contract now; coordinated refresh needs the qualified client,
-while authoritative run history needs an export of the implemented local committed
-completion disposition. Then record
+Submitted Linux status/client interfaces exist; the current app consumes only
+advisory v1. Agree additional catalog/history/progress interfaces; coordinated
+refresh needs qualified managed app/client lifetime, while authoritative timeline
+success needs a producer completion-certificate export. Continue recording
 actual commands, before/after failures, test results, identity/privacy
 checks and isolated pilot limits here. Use synthetic labels in committed evidence;
 do not persist private host/account/network values or raw diagnostic payloads.

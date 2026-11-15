@@ -15,8 +15,9 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
   - ../Wintap-PyUtil/.gitignore
   - ../Wintap-PyUtil/uv.lock
+  - ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py
 policy: agent-editable
-last_validated: 2026-11-14
+last_validated: 2026-11-15
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -150,9 +151,10 @@ remain separate human-confirmed gates.
 
 ## Stage 2: reader backend acceptance remains pending
 
-The macOS reader backend and client are not implemented. Worker-reported Linux
-full main passes 641 tests (three skips); the scoped Mac baseline passes with
-Linux-only supervision paths skipped. After
+The macOS reader backend is not implemented; the existing Linux client explicitly
+refuses native coordinated execution. Historical full-main 641 (three skips) and
+the scoped Mac baseline predate later Linux entity/service work; newer submitted
+307 Linux passes are service-affected, not full latest-HEAD acceptance. After
 the backend exists, refresh the manifest/harness for that
 exact revision and run real Mac controls for ordinary DBT lifetime, preflight/build
 failure, interruption, descendants, detached-child attempts and wrapper death.
@@ -182,6 +184,38 @@ Sources, candidate limits and choices:
 [[wiki/work/dbt-compaction-coordination/verification#Reader-supervision feasibility checkpoint — human review required]].
 Any subsequent approved native probe needs its own exact-revision task and private
 reports; the historical Stage 1 prompt below is not a Stage 2 command.
+
+### November 15 authorized native probe — not Stage 2 acceptance
+
+The human authorized scoped native source/test work in a separate PyUtil worktree
+from submitted `123b9d3`, leaving the busy producer and its recovery work untouched.
+Locked Python 3.12.12 environments use main DuckDB 1.5.6 and standalone 2.0.0.
+The five-module portable rerun passes 169/25 reviewed Linux-only skips after
+standalone provisioning; this is not a repeat of the old manifest-selected baseline.
+
+From the isolated PyUtil main runtime:
+
+```sh
+.venv/bin/python -B scripts/dcc_macos_restriction_probe.py
+```
+
+The actual Mac rejects kqueue `NOTE_TRACK` with `ENOTSUP`. No-fork sandboxing
+denies fork/spawn with `EPERM` and breaks plain manifest construction; prestarting
+Python's helper allows a real fixed synthetic DBT build (three passes) and test
+(two passes). First/formatted probes exit 0; the formatted run is 4.288 s with
+unchanged script/main-lock/manifest identities. Private reports and command scope:
+[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
+The separate final style successor passes the same synthetic build/test in 4.269 s
+with three unchanged successor identities; original source/report evidence is retained.
+
+**Do not wire this experiment into the client as an accepted backend.** Deprecated
+Apple sandbox and private CPython helper/finalizer dependencies require review.
+Closed lifetime tracking, inheritance/delegation, detached-child attempts,
+interruption, wrapper death and complete shutdown remain unqualified. A successful
+synthetic build, normal helper cleanup, timeout or root exit cannot authorize release.
+The script explicitly reports `native_shutdown_qualified: false`; no reservation
+is published. This runbook records feasibility only and leaves Stage 2 pending.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py; wiki/tension/native-macos-readers-vs-descendant-shutdown.md -->
 
 ### Copy/paste continuation prompt for the Mac
 
