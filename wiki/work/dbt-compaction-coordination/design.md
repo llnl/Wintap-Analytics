@@ -30,6 +30,8 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
   - ../Wintap-PyUtil/wintappy/coordination/service.py
   - ../Wintap-PyUtil/wintappy/coordination/client.py
+  - ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
   - ../Wintap-PyUtil/wintappy/coordination/recovery.py
   - ../Wintap-PyUtil/wintappy/coordination/maintenance.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py
@@ -55,7 +57,10 @@ tags: [feature-work, design, dbt, compaction, coordination, cron, duckdb, s3, dr
 S3 messages for clients, and a **local DuckDB coordination ledger**. Coordinator
 paths, commands and schemas proposed below describe the complete intended service.
 Protocol/ledger, evolving-clock admission/draining, Linux command-tree supervision
-and receipt-bound local standalone launch/separate verification libraries exist.
+and receipt-bound local standalone launch/separate verification libraries exist. An
+isolated native-Mac process-group candidate is wired to the coordinated reader and
+passes 12 actual-Mac synthetic lifecycle controls; broader DBT/data/service acceptance
+remains open.
 High-water initialization/freshness checks also exist. The historical v3 retained-history/
 normal-completion prototype passes hardened local controls; full standalone passes
 439 tests (two skips), combined main focus passes 298 tests and full main passes
@@ -65,8 +70,16 @@ routing, durable reader lifetime, advisory exports and audited reader/clean-hour
 checkpoint repair, followed by locally regression-accepted original-bound deletion disposition.
 Current regression status and remaining recovery scope
 are in [[wiki/work/dbt-compaction-coordination/verification]]. Production scheduling
-is not installed; actual-endpoint/resources and native-Mac reader shutdown remain
-unqualified. The proposal below retains the full intended scope, not full acceptance.
+is not installed; actual-endpoint/resources and broad native-Mac reader acceptance
+remain unqualified. The proposal below retains the full intended scope, not full acceptance.
+The human has accepted a native-Mac best-effort exception to complete-descendant
+shutdown proof: normal release may follow wrapper completion and observation of no
+live members in the dedicated process group, with escaped-descendant risk explicit.
+Timeout, supervisor death or uncertain group state retains the reservation. Linux supervision and direct
+local-only DBT are unchanged; no Linux VM or Docker is required. Synthetic lifecycle
+qualification is narrower than backend/platform acceptance. See
+[[wiki/tension/native-macos-readers-vs-descendant-shutdown]].
+<!-- SOURCE: Human native-Mac risk decision, conversation 2026-11-15. -->
 
 **Local-only compatibility:** single-user builds over local raw Parquet retain
 the direct `make dbt-build` path. Compaction, durable entity state and this
@@ -88,7 +101,7 @@ Post-pull source review and reproduced gaps:
 
 | Component | Runs where / when | Responsibility |
 |---|---|---|
-| DBT wrapper | Each user's machine, for one invocation | Request access; supervise local DBT children; publish release after they stop. |
+| DBT wrapper | Each user's machine, for one invocation | Request access; supervise local DBT work; publish release under the platform's accepted shutdown rule (Linux descendant tree; native Mac best-effort process group). |
 | S3 coordination prefix | Existing Garage bucket | Exchange small per-job JSON messages. |
 | Coordinator tick | Existing compaction server, once per minute | Admit readers, drain for writers, run one eligible hour, record outcome. |
 | DuckDB ledger | Persistent local disk on that server | Authoritative readers, writer state, scheduling cursor, retry/outbox and audit records. |
@@ -687,6 +700,17 @@ block. External services, non-Linux clients and power-loss/resource budgets rema
 unqualified. There is no production service adapter or installed scheduler.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py; ../Wintap-PyUtil/wintappy/coordination/coordinator.py; wiki/work/dbt-compaction-coordination/verification.md -->
 
+**Native-Mac exception, synthetic lifecycle-qualified; platform acceptance pending:**
+the isolated process-group candidate is wired to the native coordinated reader and
+passes 12 actual-Mac synthetic controls. A surviving supervisor may treat no live
+members in the dedicated process group after wrapper completion as a normal-release
+signal; this is explicitly best effort and does not prove that an escaped/detached
+descendant stopped. On timeout, supervisor death or uncertain group state, retain the
+reservation for manual verification. The limited controls do not qualify real DBT/data,
+actual S3, production service or representative resources. Linux's subreaper contract
+and local-only direct DBT remain unchanged.
+<!-- SOURCE: Human native-Mac risk decision, conversation 2026-11-15. -->
+
 The schema is small and independent of DBT analytics models:
 
 | Table | Principal fields / purpose |
@@ -997,7 +1021,7 @@ one-hour bound.
 | Second cron tick while compaction runs | Local lock busy; exit without opening the ledger or starting another writer. |
 | Crash after grant COMMIT, before/during PUT | Reader remains reserved; resend the identical grant from outbox. |
 | Client cancels while waiting | Persist/publish cancellation, never start from a late grant; coordinator tombstone retires the reservation. |
-| DBT exits unsuccessfully | Release after children stop; return the DBT failure. It has not mutated the source dataset. |
+| DBT exits unsuccessfully | Release after the platform's accepted shutdown check; return the DBT failure. Linux requires its supervised descendant tree to stop. Native Mac may release after the wrapper finishes and no live members are observed in its dedicated process group, accepting escaped-descendant risk; timeout, supervisor death or uncertain group state retains the reservation. It has not mutated the source dataset. |
 | Client machine disappears or release PUT fails | Keep its reservation; display job age/status; retry release or manually resolve. |
 | Writer/host crashes | Persistent `WRITING` becomes blocked/uncertain. Confirm old child stopped and reconcile data before reopening. |
 | Partial compaction or raw/compacted overlap | Keep the dataset blocked until reconciliation; a stopped writer alone does not permit coordinated reads. Live diagnostic observations remain inconclusive and cannot reopen admissions. |

@@ -25,6 +25,8 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/execution.py
   - ../Wintap-PyUtil/wintappy/coordination/writer.py
   - ../Wintap-PyUtil/tests/test_coordination_supervisor.py
+  - ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
   - ../Wintap-PyUtil/wintappy/coordination/verification.py
   - ../Wintap-PyUtil/wintappy/coordination/authority.py
   - ../Wintap-PyUtil/wintappy/coordination/completion.py
@@ -71,12 +73,23 @@ The 71/307 Linux gates below are focused/affected, not full latest-HEAD acceptan
 Independent portable review passes 76/zero skips; a separate provisioned native
 five-module rerun passes 169/25 reviewed Linux-only skips with 83 identities intact.
 Native restriction/bootstrap permits a tiny genuine DBT build/test, but uses
-deprecated/private dependencies and qualifies no complete shutdown. No backend
-is selected or integrated. Current evidence:
-[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
+deprecated/private dependencies and qualifies no complete shutdown. The probe uses
+in-process `dbtRunner`, unlike the client's `subprocess.call` path. Separately, the
+isolated PyUtil overlay now wires a process-group candidate into the native coordinated
+reader and passes 12 actual-Mac synthetic lifecycle controls, plus final bounded stress
+of 50 normal exits and 20 same-group-child shutdowns. This is limited lifecycle
+qualification, not broad backend/service/DBT acceptance. Current evidence:
+[[wiki/work/dbt-compaction-coordination/verification#Native macOS process-group prototype — actual-Mac synthetic lifecycle]].
 
-The human authorizes scoped native-Mac and Analytics utility implementation in
-isolated worktrees; the busy producer retains interrupted-publication recovery.
+The current human direction preserves native-Mac scope and explicitly accepts a
+best-effort process-group shutdown rule: normal release may follow wrapper completion
+and observation of no live members in the dedicated reader group, accepting the
+residual possibility of an escaped descendant. Timeout, supervisor death or uncertain
+group state retains the reservation for manual verification. No Linux VM or Docker is
+required; no helper/service API or
+dependency is selected, and broader actual-Mac platform acceptance remains open.
+Analytics utility implementation remains authorized in its isolated worktree; the
+busy producer retains interrupted-publication recovery.
 The utility implements advisory v1 Status/raw intent Runs only, not catalog,
 compacted/entity reads or managed live/coordinated lifecycles. No deployment,
 scheduling, real-dataset mutation, commit or push is authorized by this pass.
@@ -209,17 +222,25 @@ The November 15 isolated implementation pass has no commit/push permission; use
 the submitted snapshot and current authorization in the handoff summary above.
 
 1. **Reader platform gate:** implement and qualify Linux/macOS reader lifetime and
-   descendant shutdown. If Mac shutdown cannot be established, stop for human review;
-   uncertain readers retain reservations.
-   **Current feasibility checkpoint:** no safe native-Mac backend has been selected.
-   Actual-Mac kqueue rejects descendant tracking; no-fork denies plain DBT, while
-   prestarting its helper enables a tiny synthetic build/test. Deprecated/private
-   dependencies, interruption and wrapper death still need review/qualification. Read
-   [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] and the new verification
-   entry before another code pass. **Subsequent human direction authorizes finishing
-   Linux integration now; the native Mac worker owns the unresolved Mac solution.**
-   Mac qualification remains a separate gate, not a Linux blocker or a weaker release
-   contract. Do not claim native-Mac support from the accepted baseline.
+   shutdown under their respective contracts. For native macOS, normal release may
+   follow wrapper completion plus observation of no live members in the dedicated
+   process group; the
+   human explicitly accepts the residual risk of an escaped descendant. A timeout,
+   supervisor death or uncertain group state retains the reservation for manual
+   verification. No Linux VM or Docker is required; Linux rules and direct local-only
+   DBT stay unchanged.
+     **Current feasibility checkpoint:** an isolated native-Mac process-group
+     candidate is implemented and wired to the coordinated client; 12 synthetic
+     lifecycle controls pass on an actual Mac. This is not backend/platform acceptance:
+     real DBT/data, actual S3, production service, representative resources and broader
+     Mac behavior remain open. The restriction probe's in-process DBT success remains
+     separate from the client's subprocess-based launcher. Apple's XPC/launchd service
+     lifecycle does not establish detached-descendant shutdown; Endpoint Security fork
+     events are notifications. The human accepted the process-group risk boundary but
+     selected no helper/service API or dependency. Read
+     [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] and the new verification
+     entry. Continue Linux integration independently; do not claim native-Mac production
+     support from the synthetic controls or accepted baseline.
 2. **Service/client integration (slice D):** the Linux service now wires locked
    completion, durable request/grant/cancel/release handling and bounded advisory
    exports; broader qualification remains open. Do not use the conservative `tick`
@@ -429,11 +450,17 @@ settings alone cannot activate coordination for local inputs. Shell-reset guidan
 4. Keep job IDs/digests stable across retries; retain terminal records. Process
    releases/cancellations before admission. A cancellation is terminal even if its
    request arrives later, and that client must never honor a delayed grant.
-5. Hold one grant across source preflight, the complete DBT build/tests, and child
-   shutdown. Bronze models are views and can read S3 after initial discovery.
-6. Release after unsuccessful DBT work once children stop. On uncertain delivery,
-   retain a local pending release for retry and report the outstanding job ID.
-   If child shutdown is uncertain, retain ownership for recovery.
+5. Hold one grant across source preflight, the complete DBT build/tests, and the
+   platform's accepted shutdown check. Linux requires its supervised descendant tree
+   to stop. Native macOS uses the human-approved best-effort rule: after wrapper
+   completion, observation of no live members in the dedicated process group may
+   authorize normal release,
+   with escaped-descendant risk explicitly accepted. Bronze models are views and can
+   read S3 after initial discovery.
+6. Release after unsuccessful DBT work only under that platform's shutdown rule. On
+   uncertain delivery, retain a local pending release for retry and report the
+   outstanding job ID. On native Mac, timeout, supervisor death or uncertain group
+   state retains ownership for manual verification; Linux rules are unchanged.
 7. Advance the hour cursor only after verified completion. Stopped children,
    elapsed time, an existing destination or a zero exit status alone do not prove
    successful migration. Partial output/source overlap remains blocked.

@@ -7,6 +7,10 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_coordination_execution.py
   - ../Wintap-PyUtil/tests/test_coordination_tick.py
   - ../Wintap-PyUtil/tests/test_coordination_supervisor.py
+  - ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/client.py
+  - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
   - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_phase_evidence.py
   - ../Wintap-PyUtil/pyproject.toml
   - ../Wintap-PyUtil/extras/raw-sensor-compact/pyproject.toml
@@ -151,18 +155,53 @@ remain separate human-confirmed gates.
 
 ## Stage 2: reader backend acceptance remains pending
 
-The macOS reader backend is not implemented; the existing Linux client explicitly
-refuses native coordinated execution. Historical full-main 641 (three skips) and
-the scoped Mac baseline predate later Linux entity/service work; newer submitted
-307 Linux passes are service-affected, not full latest-HEAD acceptance. After
-the backend exists, refresh the manifest/harness for that
-exact revision and run real Mac controls for ordinary DBT lifetime, preflight/build
-failure, interruption, descendants, detached-child attempts and wrapper death.
-Any uncertain shutdown retains reader ownership; root exit/process-group checks
-alone cannot authorize release. No Linux emulation, skip or Stage 1 result closes
-this gate. If a safe supported contract cannot be qualified, stop for human review
-rather than silently dropping macOS.
-<!-- SYNTHESIS: approved slice B/D acceptance contract in wiki/work/dbt-compaction-coordination/implementation_plan.md; no implemented macOS backend is claimed. -->
+The isolated PyUtil overlay now implements and wires a native macOS process-group
+reader path. Its actual-Mac synthetic lifecycle qualification passes all 12 controls.
+This is a scoped implementation result, not backend/platform acceptance: the tests use
+synthetic commands and fake coordination transport, not representative DBT/data, actual
+S3 or the production service. Historical full-main 641 (three skips) and the scoped Mac
+baseline predate later Linux entity/service work; newer submitted 307 Linux passes are
+service-affected, not full latest-HEAD acceptance.
+
+Current actual-Mac evidence, on the isolated uncommitted PyUtil source overlay:
+
+```sh
+uv run --locked --python 3.12 --group dev pytest -q tests/test_coordination_macos_supervisor.py
+# 12 passed
+uv run --locked --python 3.12 pytest -q tests/test_coordination_supervisor.py tests/test_coordination_client.py tests/test_coordination_local_route.py tests/test_coordination_macos_supervisor.py tests/test_coordination_retry.py
+# 17 passed, 113 skipped (platform/declared skips)
+```
+
+Additional bounded actual-Mac stress controls passed: 50 successive ordinary exits
+and 20 same-group descendant shutdowns. The stress driver was ephemeral, not added as
+a checked-in test. Black check and whitespace validation passed. These results cover
+the current synthetic coordinated-client launch/release path and local-only regression
+set; they do not qualify real DBT, real S3, service installation or representative
+resources. The prior kqueue attempt that signaled after root exit failed and is
+superseded; current code holds the direct child unreaped while it enumerates live
+members, signals before reaping, and does not inspect or signal the PGID after reaping.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/wintappy/coordination/MACOS.md; ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_mac_worker -->
+
+The human has explicitly accepted a **best-effort native-Mac process-group rule**:
+for normal completion, the surviving supervisor may release after the reader wrapper
+finishes and no live members are observed in its dedicated process group. This accepts
+a residual risk that a detached/escaped descendant can outlive the group and go
+unnoticed. If
+the supervisor dies, shutdown times out, or group state/acknowledgment is uncertain,
+retain the reservation for manual verification; do not auto-expire it. This rule
+does not establish a backend or complete descendant containment. It is specific to
+coordinated native-Mac readers; Linux release rules and direct local-only DBT remain
+unchanged. A Linux VM or Docker is not a prerequisite.
+
+The candidate lifecycle controls now exercise normal/nonzero command completion,
+same-group child shutdown, timeout, missing executable, output limits, interruption,
+wrapper/supervisor death, acknowledgment loss, coordinated-client release/hold, and
+detached-child limitation characterization. No Linux emulation, skip or Stage 1 result
+substitutes for those actual-Mac controls. Remaining gate: qualify real DBT/preflight
+and representative data behavior, service/transport integration, and the human's broader
+backend acceptance. The listed synthetic controls passed on this Mac; stop for human
+review if a later rerun or broader actual-Mac qualification fails.
+<!-- SYNTHESIS: approved slice B/D acceptance contract in wiki/work/dbt-compaction-coordination/implementation_plan.md; actual-Mac synthetic lifecycle qualification is narrower than backend acceptance. -->
 
 Results belong in [[wiki/work/dbt-compaction-coordination/verification]].
 Service, audited recovery, isolated S3 and representative resource acceptance remain
@@ -170,14 +209,18 @@ separate gates in [[wiki/work/dbt-compaction-coordination/implementation_plan]].
 
 ### Native reader feasibility checkpoint — human review required
 
-The next source/dependency investigation establishes **no safe native-Mac backend**
-from the investigated candidates. Apple published source rejects automatic kqueue
+At the time of this checkpoint, the source/dependency investigation established
+**no safe native-Mac backend** from the investigated candidates. Apple published source rejects automatic kqueue
 descendant tracking; DBT's installed spawn-context locks/manifest start a Python
 helper. Linux dependency probes and 34 Linux supervision tests do not qualify Mac
-shutdown. No process-group fallback, blanket no-fork restriction, sandbox dependency
-or eventual platform removal has been selected. Subsequent human direction authorizes
-Linux-first completion and assigns the native solution to the Mac worker. This Mac
-gate no longer blocks Linux integration; accepted Stage 1 need not be repeated.
+shutdown. At that checkpoint, no process-group fallback, blanket no-fork restriction,
+sandbox dependency or eventual platform removal had been selected. The November 14
+direction authorized Linux-first completion; the initial November 15 direction
+preserved native-Mac scope and called for OS-supported helper/service design first.
+A later human decision accepts a best-effort process-group release rule, recorded
+below; that risk decision did not establish backend ownership or broader actual-Mac
+platform acceptance. The Mac gate does not block Linux integration; accepted Stage 1
+need not be repeated.
 
 Sources, candidate limits and choices:
 [[wiki/tension/native-macos-readers-vs-descendant-shutdown]]. Exact new evidence:
@@ -189,6 +232,10 @@ reports; the historical Stage 1 prompt below is not a Stage 2 command.
 
 The human authorized scoped native source/test work in a separate PyUtil worktree
 from submitted `123b9d3`, leaving the busy producer and its recovery work untouched.
+The initial follow-up direction preserved native-Mac scope and limited the next slice
+to design of an OS-supported helper/service boundary. A subsequent human decision
+accepts the best-effort process-group risk rule below; this does not select a helper/
+service API or dependency.
 Locked Python 3.12.12 environments use main DuckDB 1.5.6 and standalone 2.0.0.
 The five-module portable rerun passes 169/25 reviewed Linux-only skips after
 standalone provisioning; this is not a repeat of the old manifest-selected baseline.
@@ -202,20 +249,39 @@ From the isolated PyUtil main runtime:
 The actual Mac rejects kqueue `NOTE_TRACK` with `ENOTSUP`. No-fork sandboxing
 denies fork/spawn with `EPERM` and breaks plain manifest construction; prestarting
 Python's helper allows a real fixed synthetic DBT build (three passes) and test
-(two passes). First/formatted probes exit 0; the formatted run is 4.288 s with
-unchanged script/main-lock/manifest identities. Private reports and command scope:
+(two passes) through in-process `dbtRunner`. The current coordinated client instead
+uses `subprocess.call`, so this does not establish launcher compatibility. First/
+formatted probes exit 0; the formatted run is 4.288 s with unchanged
+script/main-lock/manifest identities. Private reports and command scope:
 [[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
 The separate final style successor passes the same synthetic build/test in 4.269 s
 with three unchanged successor identities; original source/report evidence is retained.
 
-**Do not wire this experiment into the client as an accepted backend.** Deprecated
-Apple sandbox and private CPython helper/finalizer dependencies require review.
-Closed lifetime tracking, inheritance/delegation, detached-child attempts,
-interruption, wrapper death and complete shutdown remain unqualified. A successful
-synthetic build, normal helper cleanup, timeout or root exit cannot authorize release.
-The script explicitly reports `native_shutdown_qualified: false`; no reservation
-is published. This runbook records feasibility only and leaves Stage 2 pending.
+**The restriction probe itself is not the coordinated backend.** A separate
+process-group implementation now exists; the probe's deprecated Apple sandbox and
+private CPython helper/finalizer dependencies remain unselected. The probe explicitly
+reports `native_shutdown_qualified: false` and publishes no reservation. Its synthetic
+build and normal helper cleanup do not expand the current process-group lifecycle
+evidence or close the remaining backend-acceptance gates.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py; wiki/tension/native-macos-readers-vs-descendant-shutdown.md -->
+
+### Human-approved native-Mac risk rule — 2026-11-15
+
+The human accepts best-effort supervision for coordinated readers that run natively
+on macOS; a Linux VM or Docker is not a prerequisite. For normal completion, a
+surviving supervisor may release the reservation after the wrapper finishes and no
+live members are observed in the dedicated reader process group. This explicitly
+accepts the residual risk that a detached/escaped descendant can outlive that group and go
+unnoticed. If the supervisor dies, shutdown times out, or group state/acknowledgment
+is uncertain, keep the reservation for manual verification and do not auto-expire it.
+Linux shutdown rules and direct local-only DBT are unchanged.
+
+This is a human-approved risk boundary, **not** backend selection or acceptance.
+The exact helper/service/API and dependency remain open. Actual-Mac qualification
+must exercise the current coordinated launcher, ordinary child shutdown, failures,
+interruption, detached-child risk characterization, wrapper/supervisor death and
+acknowledgment loss before coordinated native-Mac support is claimed.
+<!-- SOURCE: Human native-Mac risk decision, conversation 2026-11-15. -->
 
 ### Copy/paste continuation prompt for the Mac
 

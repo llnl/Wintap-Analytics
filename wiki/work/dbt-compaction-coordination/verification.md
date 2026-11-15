@@ -75,6 +75,8 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_resolution.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_completion_history_qualification.py
+  - ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
   - ../Wintap-PyUtil/tests/test_coordination_entity_forward_history.py
 policy: agent-editable
 last_validated: 2026-11-15
@@ -4809,6 +4811,67 @@ bytes match the preservation stash; every original index/log addition and the
 retained stash still exist. Existing diagram XML references and PNG signature pass;
 no diagram edit or rerender. Index/log frontmatter exceptions remain unchanged.
 
+### Native Mac design review — coordinated launcher mismatch
+
+Read-only tracing of the committed client found that `run_reader` launches
+`DBT_BATCH`, which reaches `_dbt_run` and uses `subprocess.call` for DBT commands;
+`dbt-build` runs a separate source preflight and then a build. The native restriction
+probe instead invokes `dbtRunner().invoke()` in-process, while its no-fork control
+denies subprocess creation. Thus the successful synthetic build/test does not
+exercise the current coordinated DBT launch path and cannot establish its
+compatibility with the restriction. An in-process coordinated adapter would be a
+separate behavior change requiring equivalence coverage, and would still leave
+resource-tracker ownership and full interruption/wrapper-death shutdown unresolved.
+
+**Recommendation:** do not wire the sandbox/bootstrap experiment as the production
+backend; retain the local-only DBT path unchanged. The human selected preserving
+native-Mac scope and design-only work on an OS-supported helper/service boundary.
+This source review did not identify a native helper/service contract that proves
+detached-descendant shutdown. No backend code until ownership and shutdown proof are
+accepted. This was static review only: no runtime, dependency, test, platform-
+acceptance or shutdown claim changed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader/main/_dbt_commands/_dbt_run; ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py §_restricted_child -->
+
+### Native Mac helper/service boundary review — 2026-11-15
+
+Reviewed Apple's public XPC, launchd, Endpoint Security, App Sandbox and
+Virtualization documentation against the required fail-closed reader lifetime:
+
+| Boundary | Documented capability and design disposition |
+|---|---|
+| XPC/launchd helper | launchd starts XPC services on demand, stops idle services and restarts crashes; the inspected launchd cleanup contract is process-group scoped. Service lifecycle is not a detached-descendant guarantee. Reject as a sufficient boundary by itself. |
+| Endpoint Security | `NOTIFY_FORK` is notification-only and `AUTH_EXEC` authorizes image execution; a pure fork can continue without an exec event. Client setup also requires the documented entitlement/privilege and user approval path. Not established as deny-fork containment. |
+| App Sandbox | Public documentation describes resource access constrained by entitlements; it does not establish a configurable no-fork policy or kill/reap semantics for a workload tree. Not a substitute for the deprecated custom profile without separate proof. |
+| Virtualization.framework | Apple documents Linux/macOS guests on Intel and Apple-silicon Macs, a virtualization entitlement, and `VZVirtualMachine.stop` completion on successful stop. A stopped Linux guest is a candidate whole-workload boundary, but it is Linux DBT hosted by Mac—not a native macOS reader—and would require explicit scope approval plus guest, data, credential, entitlement and resource design. |
+
+**Design result:** XPC/launchd service wrapping alone does not satisfy the requested
+native-host contract. No native service/helper implementation or dependency is
+selected. If no supported native-host containment primitive can be identified, a
+Mac-hosted Linux VM is an explicit architecture/scope decision, not an inferred
+fallback. In all designs, failed/missing stop acknowledgment, helper death or uncertain
+ownership retains the reservation. No probe, backend implementation, entitlement
+request or Mac runtime test was performed for this design review.
+<!-- SOURCE: Apple XPC https://developer.apple.com/documentation/xpc; Apple launchd.plist(5), pinned historical source in wiki/tension/native-macos-readers-vs-descendant-shutdown.md; Apple Endpoint Security NOTIFY_FORK https://developer.apple.com/documentation/endpointsecurity/es_event_type_notify_fork and AUTH_EXEC https://developer.apple.com/documentation/endpointsecurity/es_event_type_auth_exec; Endpoint Security client requirements https://developer.apple.com/documentation/endpointsecurity/client; App Sandbox https://developer.apple.com/documentation/security/app-sandbox; Virtualization https://developer.apple.com/documentation/virtualization; virtualization entitlement https://developer.apple.com/documentation/virtualization/adding-the-virtualization-entitlement-to-your-project; VZVirtualMachine.stop https://developer.apple.com/documentation/virtualization/vzvirtualmachine/stop(completionhandler:); retrieved 2026-11-15. -->
+<!-- SYNTHESIS: cited public API contracts compared against the complete-shutdown acceptance in wiki/work/dbt-compaction-coordination/implementation_plan.md and the open tension. -->
+
+### Human-approved native-Mac risk rule — 2026-11-15
+
+The human subsequently accepts a best-effort process-group boundary for coordinated
+readers running natively on macOS. This supersedes the preceding disposition only
+for the native-Mac normal-release predicate: a surviving supervisor may release
+after the wrapper finishes and no live members are observed in the dedicated reader process group,
+while accepting the residual risk that an escaped/detached descendant could remain
+active and go unnoticed. Supervisor death, timeout, or uncertain group state or
+acknowledgment retains the reservation for manual verification; no automatic expiry.
+No Linux VM or Docker is a prerequisite. Linux release rules and direct local-only
+DBT remain unchanged.
+
+This is a human risk decision, not implementation, dependency/API selection, or
+dcc-02–05 acceptance. No test or runtime probe was performed for this decision; the
+process-group candidate's actual-Mac synthetic controls were run and recorded later
+in this verification page. Broader backend/platform acceptance remains open.
+<!-- SOURCE: Human native-Mac risk decision, conversation 2026-11-15. -->
+
 ## Baseline Review Manual Checks
 
 - Read the manager brief, full design, handoff and implementation review plus the
@@ -4902,14 +4965,55 @@ units. Ledger/protocol tests may use fake children independently of writer fixes
   scheduled incremental entity → deletion → checkpoint operation or complete ancestry.
 - Steady-state resource measurements and actual shared-reader/writer latency remain
   unmeasured; example server budgets are unqualified.
-- Client-platform supervision and deployment configuration still need confirmation.
+- The native-Mac process-group lifecycle now has bounded synthetic qualification;
+  real DBT/data, S3/service, representative-resource and deployment acceptance still
+  need confirmation.
 
 ## Follow-Ups
 
 Worker-reported local v3 high-water/history/atomic-completion full regressions pass;
-R9's repair and the actual-Mac offline baseline are now verified. Qualify supported
-Mac reader-shutdown feasibility before claiming client acceptance. Follow
+R9's repair and the actual-Mac offline baseline are verified. The native-Mac
+process-group candidate passes synthetic lifecycle qualification, but real DBT/data,
+S3/service, representative-resource and broader backend acceptance remain open. Follow
 [[wiki/work/dbt-compaction-coordination/macos-qualification#Stage 2: reader backend acceptance remains pending]];
-continue service and audited operations before real destructive qualification.
-Add commands, negative regressions and runtime
-qualification results as each planned unit is implemented.
+continue service and audited operations before real destructive qualification. Add
+commands, negative regressions and runtime qualification results as each planned unit
+is implemented.
+
+## Native macOS process-group prototype — actual-Mac synthetic lifecycle
+
+An isolated, uncommitted Wintap-PyUtil worktree implements a native macOS coordinated
+reader path and wires it through the existing client. The accepted risk contract is
+unchanged: a normal release may follow wrapper completion and no live member remaining
+in the dedicated process group; descendants escaping into another session/group remain
+an accepted residual risk. Timeout, interruption, supervisor death, uncertain shutdown
+or lost acknowledgment does not publish a release and retains the durable reservation
+for manual verification. Direct local-only DBT and Linux's subreaper contract remain
+separate and unchanged. No deployment, scheduling, actual S3, or real-data work occurred.
+
+The first kqueue revision signaled the process-group ID after wrapper exit and failed
+actual-Mac controls with `EPERM`. A reproduced macOS behavior is that `killpg(..., 0)`
+can return `EPERM` for an exited but unreaped group leader; this is not safe evidence
+for either emptiness or permission to signal. The corrected worker observes wrapper
+exit via kqueue, enumerates live group members with `/bin/ps` while the direct child
+remains unreaped, ignores zombie-only members, and sends TERM/KILL only before reaping.
+The caller masks termination signals across worker creation; the worker installs its
+cleanup handlers before unblocking inherited signals.
+After `wait()`, it does not inspect or signal that numeric PGID. Enumeration errors,
+ambiguous group state or inherited capture pipes that remain open fail closed. This is
+cooperative best-effort supervision, not hostile-process containment.
+
+### Actual-Mac results
+
+- `uv run --locked --python 3.12 --group dev pytest -q tests/test_coordination_macos_supervisor.py` — **12 passed** (3.15 s). Controls include normal/nonzero exit, same-group child shutdown, timeout, missing executable, output limits, detached-child characterization, escaped pipe uncertainty, interrupt, caller/wrapper death, supervisor death/no observation, lost acknowledgment, and coordinated-client release/retention.
+- `uv run --locked --python 3.12 pytest -q -rs tests/test_coordination_supervisor.py tests/test_coordination_client.py tests/test_coordination_local_route.py tests/test_coordination_macos_supervisor.py tests/test_coordination_retry.py` — **17 passed, 113 skipped**. The skips are declared Linux subreaper/reader and Linux unprivileged-merge tests; Mac lifecycle and local route controls ran.
+- Final ephemeral stress driver — **50 normal exits and 20 same-group descendant shutdowns passed**. It was not added as a checked-in test.
+- Black `--check` on the supervisor, client and Mac test, plus `git diff --check`, passed.
+
+The suite uses synthetic commands and fake coordination transport. It does not qualify
+production DBT/preflight/data behavior, actual S3, Linux runtime, production service
+installation, representative resources, or deployment. The source changes remain
+uncommitted in the isolated PyUtil worktree; producer recovery files were not edited.
+The separate Analytics advisory status utility retains its existing scoped verification
+record and was not changed or re-run by this Mac supervision pass.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_mac_worker; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader/main; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/wintappy/coordination/MACOS.md -->

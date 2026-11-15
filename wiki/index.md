@@ -155,7 +155,7 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] | high | Resolved by scope change: fixed-hour writes and manual cleanup accept visible partial output; atomic publication is not required. |
 | [[wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint]] | high | Dissolved: ignored conditional PUT remains an endpoint observation, but reservations/manifests were removed. |
 | [[wiki/tension/dbt-arbitrary-representatives-vs-compaction-equivalence]] | high | Resolved by human acceptance: existing ANY_VALUE quality debt is non-blocking for compaction; bronze/schema/build gates remain and affected downstream drift is reported. |
-| [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] | medium | Actual-Mac restricted synthetic DBT build/test feasibility passes with a prestarted helper; deprecated Apple/private CPython dependencies remain unselected, and complete lifetime/interruption/wrapper-death shutdown acceptance stays open. |
+| [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] | medium | Human accepts best-effort native-Mac process-group release for normal completion, with escaped-descendant risk explicit and reservation retention on timeout/supervisor death/uncertain group state; no VM/Docker prerequisite. An isolated candidate passes 12 actual-Mac synthetic lifecycle controls; broader DBT/data/S3/service platform acceptance remains open. |
 ## Decision
 
 | Page | Confidence | Summary |
@@ -313,17 +313,21 @@ maintenance. No deployment, scheduling, real-dataset mutation, commit or push.
 
 Scheduled DBT/compaction coordination:
 
-**Current submitted review / native checkpoint (November 15):** PyUtil `123b9d3`
+**Current submitted review / isolated native-Mac overlay (November 15):** PyUtil `123b9d3`
 and Analytics `ee9c27a` include the Linux service/client/advisory, v4 retry and explicit-v5
 entity launch/history/clean-original service paths. Worker-reported 71 strict-service/
 307 service-affected Linux passes retain their narrow scopes. Independent submitted
 source/report review authenticates 365 hashes; native portable smoke passes 76/zero
 skips and a separately provisioned five-module rerun passes 169/25 reviewed Linux-only
-skips with 83 unchanged identities. Native kqueue returns `ENOTSUP`; restricting
-fork/spawn denies plain DBT but a prestarted helper enables a tiny genuine build/test.
-Deprecated/private dependencies are unselected and complete shutdown is unqualified.
-No production backend wiring before human dependency/design review. Pending publication
-stays producer-worker-owned; no new full latest-HEAD/S3/resource/dcc-02–05 acceptance.
+skips with 83 unchanged identities. Native kqueue `NOTE_TRACK` returns `ENOTSUP`; the
+restriction probe's prestarted helper enables a tiny genuine build/test but does not
+qualify the client launcher. Separately, an isolated native process-group candidate is
+wired to the coordinated client; 12 actual-Mac synthetic lifecycle controls pass, as
+do bounded 50-normal-exit and 20-same-group-child stress runs. This remains limited
+lifecycle evidence, not real DBT/data, actual S3, service, representative-resource or
+platform acceptance. Pending publication stays producer-worker-owned; no new full
+latest-HEAD/S3/resource/dcc-02–05 acceptance.
+[[wiki/work/dbt-compaction-coordination/verification#Native macOS process-group prototype — actual-Mac synthetic lifecycle]] and
 [[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
 Prepared gated Linux/S3/resource procedure:
 [[wiki/work/dbt-compaction-coordination/isolated-qualification]] — concrete private

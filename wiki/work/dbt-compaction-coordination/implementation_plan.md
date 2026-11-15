@@ -24,6 +24,8 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
   - ../Wintap-PyUtil/tests/test_coordination_tick.py
   - ../Wintap-PyUtil/wintappy/coordination/supervisor.py
+  - ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py
+  - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
   - ../Wintap-PyUtil/wintappy/coordination/execution.py
   - ../Wintap-PyUtil/wintappy/coordination/writer.py
   - ../Wintap-PyUtil/tests/test_coordination_supervisor.py
@@ -367,6 +369,13 @@ The human selected the following scope during this planning review:
 
 - **Linux coordinator/writer; Linux and macOS coordinated DBT readers.** Windows
   coordinated execution is outside this milestone. Local-only DBT remains direct.
+- **Native-Mac shutdown risk rule (November 15):** a surviving supervisor may treat
+  observation of no live members in the dedicated reader process group after wrapper
+  completion as sufficient for normal release, accepting the residual risk of a
+  detached/escaped descendant. A
+  timeout, supervisor death, or uncertain group state retains the reservation for
+  manual verification. No Linux VM or Docker prerequisite; Linux release behavior is
+  unchanged.
 - **Actual existing S3 endpoint, fresh isolated feature-owned fixtures.** Deletion
   is limited to fixtures created for this qualification. Confirm exact roots and
   access before any remote write; no production dataset mutation or cron install.
@@ -380,6 +389,7 @@ The human selected the following scope during this planning review:
 
 These are qualification choices, not installed defaults or implementation results.
 <!-- SOURCE: Human planning decisions, conversation 2026-11-14. -->
+<!-- SOURCE: Human native-Mac risk decision, conversation 2026-11-15. -->
 
 ### Dependency order and acceptance boundaries
 
@@ -391,9 +401,9 @@ and retain the existing unit checkboxes until all their acceptance evidence exis
 | Slice | Work | Exit gate / unit contribution |
 |---|---|---|
 | A — Review repairs | R6 post-ingestion clock, R7 authority-independent SQL negatives, R8 portable observations/platform guards. | Recorded red/green behavior; disabling SQL validation breaks the new integrity tests; Linux durability/tree coverage is retained. |
-| B — Execution contract and platform feasibility | Resolved non-secret execution receipts, pre-launch binding, explicit runtime/root/budget configuration; macOS reader supervision spike. | Active launch/completion mismatch and secret-exclusion tests; an achievable, tested macOS shutdown contract before broad client integration. |
+| B — Execution contract and platform feasibility | Resolved non-secret execution receipts, pre-launch binding, explicit runtime/root/budget configuration; native macOS process-group candidate wired to the coordinated client. | Launch/completion mismatch and secret-exclusion tests; actual-Mac synthetic lifecycle suite passes 12 controls. Real DBT/data, actual S3, service/representative-resource qualification and broader backend acceptance remain open. |
 | C — Completion foundation | Independent read-only phase verifier, authority high-water checks, retained run history and atomic completion transaction. | Synthetic and real local one-hour success/empty cases; crash/corruption/rollback negatives; no callback can certify itself. Supplies dcc-02 and dcc-04. |
-| D — Service and client | Production UTC clock/CLI wiring and advisory status; Linux/macOS reader wrapper and Makefile routing. | Scheduling/backlog/crash tests and full client lifetime/local-bypass tests. Close dcc-02 only after slice C's real-writer verification gates pass. |
+| D — Service and client | Production UTC clock/CLI wiring and advisory status; Linux/macOS reader wrapper and Makefile routing under their respective shutdown rules. | Scheduling/backlog/crash tests and full client lifetime/local-bypass tests; native Mac must preserve reservations on timeout or uncertain group state. Close dcc-02 only after slice C's real-writer verification gates pass. |
 | E — Audited operations | Qualified isolated compactor adapter, explicit initialization/upgrade, reader recovery, blocked-hour reconciliation and exclusive entity maintenance. | No force-success path; original evidence retained and all phases verified before reopening. Close dcc-04 after recovery gates pass. |
 | F — Actual-endpoint qualification | Overlapping readers, queued reader, sequential hours, failure/restart/repair and measured retained-state workload. | Linux/macOS results, actual S3 evidence, full regressions and resource/latency report. Close dcc-03/dcc-05 only with their required platform/runtime evidence. |
 
@@ -445,13 +455,18 @@ Exercise synthetic-secret exclusion in receipt, intent and diagnostic/capture pa
 including configuration/launch failures. Do not authorize arbitrary secret-bearing
 commands by reusing the qualified compactor adapter.
 
-For macOS, first prove the supported DBT process lifetime and shutdown behavior
-with a platform-specific backend. Test interruption, descendants, detached-child
-attempts and wrapper death. Where shutdown cannot be established, retain the
-reservation; do not equate a root exit or a process-group check with all children
-stopped. If a safe supported backend cannot be qualified, stop and review rather
-than silently dropping the human-selected platform. Actual macOS execution is
-required; Linux emulation and guarded skips cannot close this gate.
+For macOS, qualify a platform-specific backend against the human-approved
+best-effort rule: after wrapper completion, a surviving supervisor may release when
+no live members are observed in the dedicated reader process group. This explicitly
+accepts that an escaped/detached descendant could be missed; no-live-member
+observation is not complete descendant proof. Exercise interruption, ordinary descendants, detached-child
+attempts to characterize the limit, wrapper/supervisor failure and acknowledgment
+loss. A timeout, supervisor death, or uncertain group state retains the reservation
+for manual verification. Do not auto-expire it. Linux release behavior and direct
+local-only DBT remain unchanged. A Linux VM or Docker is not required. Actual macOS
+execution is required; Linux emulation and guarded skips cannot close this gate. The
+isolated candidate's synthetic lifecycle sub-gate now passes on an actual Mac; real
+DBT/data, service/transport and representative-resource acceptance remain open.
 
 **Local receipt/launch slice implemented:** bounded immutable preparation, strict
 canonical regular-file reads, qualified standalone runtime/code identity, explicit
@@ -465,26 +480,43 @@ representative aggregate resource gates remain open. Commands and limits:
 [[wiki/work/dbt-compaction-coordination/verification#Completion slice B — execution baseline]].
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/execution.py; ../Wintap-PyUtil/wintappy/coordination/writer.py; ../Wintap-PyUtil/tests/test_coordination_execution.py -->
 
-**Reader feasibility checkpoint — human review required:** the investigated native
-Mac candidates do not yet establish the required complete-shutdown contract. Pinned
-Apple source rejects automatic kqueue descendant tracking; installed DBT uses a
-spawn-context helper even for manifest/lock construction. Three bounded Linux
-dependency controls and 34 existing Linux supervision tests pass, but neither is
-actual-Mac backend evidence. **The subsequent human instruction is to finish Linux
-and let the native Mac worker find a solution.** Continue Linux slices D–F without
-waiting for that backend; native-Mac qualification remains separately pending.
-No backend, runtime restriction, weaker release or eventual platform removal is
-selected. Retain uncertain reservations. Options and source limits:
+**Reader feasibility and accepted-risk checkpoint:** the investigated native
+Mac candidates do not establish complete descendant shutdown. Pinned Apple source
+and the actual-Mac probe reject the assumed kqueue descendant tracking; installed
+DBT uses a spawn-context helper even for manifest/lock construction. The successful
+restriction probe calls `dbtRunner` in-process, unlike the current coordinated
+client's `subprocess.call` path. Three bounded Linux dependency controls and 34
+existing Linux supervision tests pass, but neither is actual-Mac backend evidence.
+The human now accepts process-group emptiness as a best-effort native-Mac normal
+release signal, while accepting the risk of an escaped descendant; ambiguous
+shutdown still retains the reservation for manual verification. No helper,
+entitlement, runtime restriction, or dependency is selected. The isolated process-group
+candidate now passes its synthetic actual-Mac lifecycle controls; **do not claim broad
+backend/platform acceptance until real DBT/data, service/transport and representative
+resource behavior are separately qualified.** Continue Linux slices independently;
+direct local-only DBT remains unchanged and no Linux VM or Docker is required. Options
+and source limits:
 [[wiki/tension/native-macos-readers-vs-descendant-shutdown]]. Commands/results:
 [[wiki/work/dbt-compaction-coordination/verification#Reader-supervision feasibility checkpoint — human review required]].
 
-**November 15 actual-Mac feasibility:** isolated submitted `123b9d3` investigation
-confirms native kqueue `ENOTSUP` and sandbox fork/spawn `EPERM`. Prestarting Python's
-helper enables a genuine fixed synthetic DBT build/test under restriction, but the
-deprecated Apple/private CPython seams are not selected for production. No client
-backend, closed lifetime tracking or interruption/wrapper-death/shutdown gate passes.
-Review before wiring; preserve Linux supervision and direct local-only DBT.
+**November 15 restriction-probe feasibility (historical, separate from the candidate):**
+the isolated submitted `123b9d3` investigation confirms native kqueue `ENOTSUP` and
+sandbox fork/spawn `EPERM`. Prestarting Python's helper enables a genuine fixed
+synthetic DBT build/test under restriction, but the deprecated Apple/private CPython
+seams are not selected for production. That in-process probe did not provide the
+client backend or prove lifetime/interruption/wrapper-death shutdown; it differs from
+the current client's subprocess launcher. Preserve Linux supervision and direct
+local-only DBT. The separate process-group candidate's control results are recorded in
+[[wiki/work/dbt-compaction-coordination/verification#Native macOS process-group prototype — actual-Mac synthetic lifecycle]].
 [[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
+
+The subsequent human decision accepts best-effort process-group release for native
+macOS, with reservation retention on timeout, supervisor death or uncertain group
+state; detached descendants are an explicitly accepted residual risk, not a proven
+safe case. The accepted rule removes any implicit VM/Docker prerequisite, not the
+broader actual-Mac platform-acceptance gate or the requirement to keep ordinary
+local-only DBT direct. Backend and helper/service choices remain open.
+<!-- SOURCE: Human native-Mac risk decision, conversation 2026-11-15. -->
 
 ### C. Independent completion and transactional history
 
@@ -1480,23 +1512,28 @@ macOS commands/results in [[wiki/work/dbt-compaction-coordination/verification]]
 - [x] Completion slice E retry affected main regression: 548 passes/one approval-gated isolated-local compactor/DBT migration skip in 1446.75 s, exit 0; complete report inspected and all 269 identities unchanged after notification. Full main launched only after those checks; no full-main, combined or Linux acceptance.
 - [x] Completion slice E read-only retry frozen affected/full regressions: 548 affected main/one opt-in skip, 248 affected standalone, 821 full main/three skips (1602.08 s) and 554 full standalone/two opt-in S3 skips (287.54 s); exit 0, complete reports inspected and all 269 identities unchanged after each notification. Each full began only after its own affected checks. Combined local preflight closure only; retain baseline before new source work.
 - [ ] Completion slice E broader audited partial/deletion disposition, verified intentional retry and exclusive entity maintenance; the narrow checkpoint path does not satisfy this gate.
-- [ ] Completion slice B/D: Linux and macOS reader supervision and actual-platform qualification.
+- [ ] Completion slice B/D: broader Linux and native-Mac service/runtime qualification and platform acceptance; synthetic native-Mac process-group lifecycle is recorded separately below.
 - [x] Independent submitted `123b9d3` review and portable Mac controls: 76/zero skips
   smoke, exact 307-test collection and provisioned five-module 169/25 Linux-only
   skips with 83 unchanged identities; not full latest-HEAD or native shutdown acceptance.
 - [x] Actual-Mac restriction/bootstrap feasibility recorded with unchanged script/
   main-lock/manifest identities; genuine tiny DBT build/test passes, no backend selected.
-- [ ] Native dependency/design selection and closed-lifetime interruption/detached-
-  child/wrapper-death controls qualify complete shutdown before release.
+- [x] Implement and actual-Mac synthetically qualify the human-approved best-effort
+  process-group rule: 12 lifecycle controls pass, including ordinary and same-group
+  child shutdown, escaped-child risk characterization, timeout/interruption,
+  supervisor/acknowledgment loss and coordinated-client reservation retention. An
+  additional ephemeral stress driver passes 50 normal exits and 20 same-group child
+  shutdowns. Real DBT/data, S3/service, representative resources and native backend
+  acceptance remain open; no helper/service API or dependency is selected.
 - [x] Prepare gated isolated Linux/S3/retained-state procedure and approval worksheet;
   concrete environment/fixture/root/access/runner/ceiling selection and execution remain open.
 - [x] Complete scoped tracked/untracked source/wiki/privacy review; separate cosmetic
   probe successor repeats genuine synthetic build/test with three unchanged identities.
   Original reports/sources remain retained; no native shutdown or broader gate closes.
-- [x] Completion slice B/D source/dependency feasibility investigation: 34 Linux supervision tests and three bounded dependency controls; unresolved native-Mac contract recorded for human review, not backend/platform acceptance.
+- [x] Completion slice B/D source/dependency feasibility and native service-boundary design review: 34 Linux supervision tests, three bounded dependency controls, actual-Mac probe, and public XPC/launchd/Endpoint Security/App Sandbox/Virtualization comparison; no backend selected or platform acceptance claimed. Subsequent human decision accepts a best-effort native-Mac process-group release rule with an explicit escaped-descendant residual risk.
 - [x] Completion slice B: human-run Mac harness selected and committed with public source manifest/15 local harness controls in PyUtil `8ee714c`; exact-revision task dcc-mac-baseline-01 defined (not actual-Mac execution or reader-shutdown acceptance).
 - [x] Mac qualification packaging correction: exact original main lock tracked in PyUtil `fab647f`; all 22 committed/local identities verified from a fresh Git-only clone; three pre-fix coverage failures become 18 passing harness controls. Manifest/runtime hashes unchanged; original blocked Mac result retained.
-- [x] dcc-mac-baseline-01: unchanged corrective PyUtil `fab647f` passes on an actual Mac with a new private report directory and separate locked runtimes: 169 main passed/129 reviewed Linux-only skips; 267 standalone passed/zero skipped; no timeout. See [[wiki/work/dbt-compaction-coordination/verification#Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed]]. Original `8ee714c` pre-test failure remains separate; reader shutdown is not qualified.
+- [x] dcc-mac-baseline-01: unchanged corrective PyUtil `fab647f` passes on an actual Mac with a new private report directory and separate locked runtimes: 169 main passed/129 reviewed Linux-only skips; 267 standalone passed/zero skipped; no timeout. See [[wiki/work/dbt-compaction-coordination/verification#Maintainer repaired Mac baseline — dcc-mac-baseline-01 passed]]. The baseline itself did not qualify reader shutdown; the later synthetic process-group controls are recorded separately above.
 - [x] Maintainer reviews `8ee714c` and attempts actual-Mac locked provisioning; retains the original pre-test failure and R9 handoff finding without substituting dependencies.
 - [x] R9 packaging repair: reviewed main lock and committed-blob guard pulled in `fab647f`; independent 22-file pre/post-run identities, both locked Mac runtimes and 18 harness controls pass. Corrected baseline passes; original failed attempt remains in [[wiki/work/dbt-compaction-coordination/verification#Maintainer completion review — Mac provisioning blocked]].
 - [x] Completion slice C local library: independent verifier, entity high-water enforcement and atomic retained-history/cursor transaction, with red/green and full main/standalone evidence; not service/platform/endpoint acceptance.

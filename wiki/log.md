@@ -8414,3 +8414,58 @@ hashes, both retained diff hashes and six polished source identities match. No p
 query changes. Deprecated/private native dependencies, full catalog/lifecycles and concrete
 Linux/S3/resource approvals remain open. No acceptance expansion, deployment, scheduling,
 real-dataset mutation, commit or push.
+
+## [2026-11-15] design | native Mac coordinated-launch review
+
+Read-only tracing found the current coordinated client runs DBT through
+`subprocess.call` (including a separate source preflight for `dbt-build`), while the
+native restriction probe calls `dbtRunner().invoke()` in-process and observes
+subprocess creation denied. The successful synthetic build/test therefore does not
+exercise the production coordinated launcher. An in-process adapter would change
+the launch contract and still would not prove resource-tracker ownership or complete
+interruption/wrapper-death shutdown.
+
+Recommendation: keep native Mac backend selection pending and ordinary local-only
+DBT unchanged. Request an explicit human choice of a supportable containment boundary
+with installation/ownership costs, or an explicit macOS coordinated-reader scope
+amendment. Updated the native tension, coordination verification and index. Static
+review only; no runtime/dependency/test changes or acceptance claim.
+
+## [2026-11-15] design | native Mac helper/service boundary review
+
+The human selected preserving native-Mac scope and authorizes design-only work on
+an OS-supported helper/service boundary; backend code remains prohibited until
+ownership and shutdown proof are accepted. Compared Apple's XPC/launchd lifecycle,
+process-group cleanup, Endpoint Security fork/exec events, App Sandbox contract and
+Virtualization.framework stop/entitlement API against the reader-release requirement.
+
+No native helper/service contract establishes detached-descendant shutdown: XPC/
+launchd service lifecycle is not a subtree contract, Endpoint Security fork is
+notification-only, and public App Sandbox documentation does not promise no-fork
+or tree-reaping semantics. A Linux guest stopped through Virtualization.framework
+is a possible whole-guest boundary, but it is not native macOS DBT and requires an
+explicit scope change plus guest/data/credential/resource design. Updated tension,
+handoff, implementation plan, Mac qualification, verification and index. No backend,
+entitlement request, runtime test or Mac acceptance performed.
+
+## [2026-11-15] decision | native Mac best-effort reader shutdown
+
+The human accepts process-group emptiness as a best-effort normal-release signal
+for coordinated native-Mac readers, explicitly accepting the residual risk of an
+escaped descendant. Timeout, supervisor death or uncertain group state retains the
+reservation for manual verification; no automatic expiry. Native readers remain in
+scope without a Linux VM or Docker prerequisite. Linux release rules and direct
+local-only DBT remain unchanged. Updated the native tension, coordination design/plan,
+handoff, Mac qualification, verification and index. No backend was implemented or
+qualified; actual-Mac controls and service/dependency choice remain open.
+
+## [2026-11-15] verification | native-Mac coordinated reader lifecycle
+
+Recorded the isolated native macOS process-group candidate and its corrected PGID
+handling in the coordination evidence. On the actual Mac, 12 synthetic lifecycle
+controls pass; the focused reader/local-route batch passes 17 with 113 declared Linux
+skips, and a final ephemeral stress driver passes 50 normal exits plus 20 same-group
+descendant shutdowns. This is limited lifecycle qualification, not real DBT/data, S3,
+service, representative-resource or backend/platform acceptance. Local-only DBT and
+Linux supervision remain unchanged; source stays uncommitted and no deployment or
+producer changes occurred.
