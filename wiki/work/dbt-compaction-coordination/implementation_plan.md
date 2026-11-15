@@ -1562,6 +1562,10 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
 - [ ] Use a clean, isolated PyUtil checkout at the exact candidate revision; record
   source, lock, test-runner and fixture identities before changing code. Keep local
   DuckDB data and environment files out of the checkout/review scope.
+- [ ] Before further source edits, run candidate-specific affected and full main/
+  standalone Linux regressions at `c549424`, retaining reports and identity checks.
+  The 90-control focused pass and the parent's 307-control service-affected result
+  are not substitutes for this current-revision baseline.
 - [ ] Implement and independently qualify the still-open original-bound
   pending-publication repair/retry and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean
