@@ -45,8 +45,11 @@ passes 1521 with 15 declared skips in 6397.74 s; all skip reasons were inspected
 S3 opt-in was set. The correctly rooted standalone full run hit the same temp-directory
 cleanup error after the expected byte-budget refusal (694 passed/two skipped); the
 failing control passes alone using local `/dev/shm` temp. A complete standalone retry
-uses local tmpfs for both TMPDIR and pytest base. No PR/push, S3, real-data or deployment
-activity.
+uses local tmpfs for both TMPDIR and pytest base and passes 695/two expected opt-in S3
+skips. Its complete report is reviewed; home-backed-TMPDIR failures remain preserved as
+likely filesystem-interference evidence. All local Linux regression gates now pass;
+native-Mac execution and broader operational acceptance remain open. No PR/push, S3,
+real-data or deployment activity.
 
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 

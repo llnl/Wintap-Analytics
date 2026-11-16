@@ -1574,7 +1574,8 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   control passes alone. A second fresh full run passes 695/two opt-in S3 skips in 435.41 s;
   the complete report is reviewed. The wrong-root attempt and initial cleanup failure
   remain preserved and are not counted as the accepted green report.
-- [ ] Resolve the current-revision main regression and rerun main gates. Main finished
+- [x] Resolve the current-revision main regression and close local Linux regression gates.
+  Main finished
   1519 passed/15 skipped/one failed in 6421.87 s: an unchanged Darwin refusal control now reaches the generic
   macOS supervisor launch path. Parent source rejected non-Linux; candidate source
   broadens generic `run_supervised` beyond the coordinated-reader scope. A Darwin-only
@@ -1585,13 +1586,15 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   remains Linux-only, and focused controls pass 83/12 plus the complete tick module 53.
   The 15-module affected Linux report passes 341/12, and the source-freeze identity
   matches after execution. Full main passes 1521/15 in 6397.74 s with AWS and all
-  opt-ins disabled. The correct-root standalone run has one repeated TemporaryDirectory
-  cleanup error after the expected byte-budget refusal (694 passed/two skipped); the
-  temp directory is empty afterward, and the failing control passes alone with local
-  `/dev/shm` TMPDIR. A fresh complete standalone run now uses `/dev/shm` for TMPDIR and
-  pytest base to distinguish filesystem cleanup interference. Review that report and
-  final source identity before accepting the local gates. Native-Mac execution remains
-  separately unverified.
+  opt-ins disabled. Correct-root standalone runs with home-backed TMPDIR each retain the
+  same TemporaryDirectory cleanup error after expected byte-budget refusal (694
+  passed/two skipped); the failing temp directory is empty afterward. That control
+  passes alone with local `/dev/shm` TMPDIR. A full standalone rerun with TMPDIR and
+  pytest base on tmpfs passes 695/two expected skips in 365.40 s; its full report and
+  final source identity were reviewed. Both failures remain preserved as likely
+  filesystem-interference evidence, not discarded. Local Linux affected/main/standalone
+  gates pass. Native-Mac execution remains unverified, and operational acceptance for
+  S3/data/resources/service/deployment remains open.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean
