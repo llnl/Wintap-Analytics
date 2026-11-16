@@ -5127,6 +5127,9 @@ passes on the changed runtime modules and native-Mac test. Black check across th
 client/tick/supervisor test files reports existing file-wide formatting drift; no
 whole-file reformat was applied.
 
+The affected 15-module set does not include `test_coordination_tick.py`, so its
+complete current-tree run was executed separately and passes **53 tests** in **10.37 s**.
+
 The authorized source diff is frozen at base `c549424b6cf507f33dee301d85bd9e0aeb082e1b`
 with private diff digest `fe86456c0e5e050bb396eea15ae4a1f457787b098374b2b17794cb36ddc82874`.
 The 15-module affected Linux regression is active with an isolated environment and AWS
