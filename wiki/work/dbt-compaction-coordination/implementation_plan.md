@@ -1582,10 +1582,11 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   explicitly reader-scoped; preserve the no-launch/no-artifact refusal control. The
   human authorized this narrow source/test/doc fix in the detached `c549424` tree.
   `run_reader_supervised` is wired to the coordinated reader, generic writer dispatch
-  remains Linux-only, and the corrected focused gate passes 83/12. The 15-module
-  affected Linux rerun is active; inspect its full report and source freeze before the
-  full main/standalone gates. Do not accept the fix until affected/full gates pass on
-  this successor tree; native-Mac execution remains separately unverified.
+  remains Linux-only, and focused controls pass 83/12 plus the complete tick module 53.
+  The 15-module affected Linux report passes 341/12, and the source-freeze identity
+  matches after execution. The full main suite is active; standalone follows only if
+  green. Do not accept the fix until full gates pass on this successor tree; native-Mac
+  execution remains separately unverified.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean

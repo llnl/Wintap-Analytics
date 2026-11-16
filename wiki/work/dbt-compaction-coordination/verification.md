@@ -5132,8 +5132,12 @@ complete current-tree run was executed separately and passes **53 tests** in **1
 
 The authorized source diff is frozen at base `c549424b6cf507f33dee301d85bd9e0aeb082e1b`
 with private diff digest `fe86456c0e5e050bb396eea15ae4a1f457787b098374b2b17794cb36ddc82874`.
-The 15-module affected Linux regression is active with an isolated environment and AWS
-configuration/credentials disabled. Await its complete report and source-freeze check
-before running current-tree full main and standalone regressions. The correction has
-not yet been accepted; native-Mac execution remains unverified for these edits.
+The corrected 15-module affected Linux regression passes **341 tests with 12 expected
+native-Mac skips** in **1800.62 s**; its complete 19-line report is reviewed with no
+failure/error. The private post-run source-freeze check exactly matches the recorded
+base and diff digest. The separate complete tick module also passes 53. The full main
+suite is now running with fresh home/temp/base directories and AWS configuration and
+credentials disabled; standalone will follow from its own project directory if main is
+green. The correction has not yet been accepted; native-Mac execution remains
+unverified for these edits.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_macos_supervision_dispatch_is_explicitly_reader_scoped; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->
