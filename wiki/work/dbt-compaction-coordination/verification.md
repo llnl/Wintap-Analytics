@@ -5136,8 +5136,10 @@ The corrected 15-module affected Linux regression passes **341 tests with 12 exp
 native-Mac skips** in **1800.62 s**; its complete 19-line report is reviewed with no
 failure/error. The private post-run source-freeze check exactly matches the recorded
 base and diff digest. The separate complete tick module also passes 53. The full main
-suite is now running with fresh home/temp/base directories and AWS configuration and
-credentials disabled; standalone will follow from its own project directory if main is
-green. The correction has not yet been accepted; native-Mac execution remains
-unverified for these edits.
+suite then passes **1521 tests with 15 expected skips** in **6397.74 s**; the full
+39-line report is reviewed. The skips are two explicit local/S3 migration opt-ins, 12
+native-Mac-only controls, and the synthetic S3-write control. The standalone full suite
+is now running from its project directory with fresh home/temp/base directories and
+AWS configuration and credentials disabled. The correction has not yet been accepted;
+native-Mac execution remains unverified for these edits.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_macos_supervision_dispatch_is_explicitly_reader_scoped; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->

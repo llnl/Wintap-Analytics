@@ -1584,9 +1584,10 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   `run_reader_supervised` is wired to the coordinated reader, generic writer dispatch
   remains Linux-only, and focused controls pass 83/12 plus the complete tick module 53.
   The 15-module affected Linux report passes 341/12, and the source-freeze identity
-  matches after execution. The full main suite is active; standalone follows only if
-  green. Do not accept the fix until full gates pass on this successor tree; native-Mac
-  execution remains separately unverified.
+  matches after execution. Full main passes 1521/15 in 6397.74 s with AWS and all
+  opt-ins disabled. The standalone full suite is active from its own project directory;
+  review that report and final source identity before accepting the local gates. Native-
+  Mac execution remains separately unverified.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean

@@ -40,9 +40,10 @@ gate passes 83 with 12 expected native-Mac skips. An earlier test harness accide
 held a `darwin` platform spoof across lazy imports; that report is retained and the
 test now scopes its spoof to the writer callback. The complete coordination tick module
 passes 53 tests; the 15-module affected regression passes 341 with 12 expected Mac
-skips, and the frozen source diff authenticates unchanged after the run. The full main
-suite is now running with S3 disabled; standalone follows only if main is green. No
-PR/push, S3, real-data or deployment activity.
+skips, and the frozen source diff authenticates unchanged after the run. Full main then
+passes 1521 with 15 declared skips in 6397.74 s; all skip reasons were inspected and no
+S3 opt-in was set. The correctly rooted standalone full run is now active. No PR/push,
+S3, real-data or deployment activity.
 
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 
