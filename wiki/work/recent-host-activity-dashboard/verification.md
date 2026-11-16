@@ -22,7 +22,7 @@ tags: [host-activity, verification, feature-work]
 ## Test Commands
 
 - `uv run python -m unittest discover -s . -p 'test_*.py' -v` from
-  `streamlit/projects/HostActivity/` — 52 tests passed in the app's locked UV
+  `streamlit/projects/HostActivity/` — 54 tests passed in the app's locked UV
   environment (DuckDB 1.5.6, Streamlit 1.67.0, Altair 6.3.0, Pandas 2.3.3,
   boto3 1.44.0).
 - `uv run python -m compileall -q .` from the app directory — passed.
@@ -58,6 +58,9 @@ file or DBT runtime is needed.
   trailing buckets become zero across the selected window while observed values
   and aggregate totals remain unchanged. Adaptive bucket width keeps the
   zero-filled series under the existing chart-point budget.
+- Focused Altair chart-spec tests verify hover text contains only UTC bucket
+  time, host, and the selected metric: file count/object size, raw-row count, or
+  normalized peak ratio.
 - Synthetic metadata checks verified paginated `ListObjectsV2` requests scoped
   to requested event/day/hour partitions, nested `protoPK` keys, S3 `Size`
   accounting, invalid-size/object-limit failures, filename event aliases,

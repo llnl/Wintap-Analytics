@@ -127,6 +127,9 @@ Wintappy's DBT S3 contract.
   zero-compatible.
   Optional row-mode normalization divides each host by its own peak and is a
   shape comparison, not a volume comparison.
+- Chart hovers show only UTC bucket time, host, and the metric used by that
+  chart: file count or object size (MiB) in metadata mode; raw-row count or
+  normalized peak ratio in row mode.
 
 Fail-closed limits include 10,000 discovered objects and 1,000 chart points per
 view. Standard row-mode families also have a 2,000,000 timestamped in-window raw-row
@@ -155,14 +158,16 @@ eliminates S3 latency.
 
 ## Verification status
 
-On 2026-11-16, the app-scoped suite passes 52 tests. `AppTest` verifies the
+On 2026-11-16, the app-scoped suite passes 54 tests. `AppTest` verifies the
 effective environment info box (credential values hidden), the rolling default,
 and a 25-hour inclusive custom partition range whose exact bounds reach metadata
 discovery with the expected >24-hour warning. Synthetic tests verify both
 metadata and raw-row charts zero-fill missing per-host buckets across the full
 selected interval; duration-aware buckets continue to respect chart budgets.
-Multi-day tests cover lazy/chunked partition enumeration and retained row/object
-budgets. Live S3 custom-range behavior remains unverified.
+Focused chart-spec tests verify concise hover fields for both metadata metrics,
+raw-row counts, and normalized peak ratios. Multi-day tests cover lazy/chunked
+partition enumeration and retained row/object budgets. Live S3 custom-range
+behavior remains unverified.
 The user tested the zero-filled chart behavior and accepted it on 2026-11-16.
 
 On 2026-11-11, 27 focused tests passed in the app-scoped UV environment

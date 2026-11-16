@@ -231,10 +231,13 @@ def _chart(result, selected_hosts, normalized, log_scale):
             ),
             color=alt.Color("hostname:N", title="Hostname"),
             tooltip=[
-                alt.Tooltip("bucket_utc:T", title="Bucket (UTC)"),
-                alt.Tooltip("hostname:N", title="Hostname"),
-                alt.Tooltip(f"{value_column}:Q", title=title, format=".4g"),
-                alt.Tooltip("raw_rows:Q", title="Raw rows", format=","),
+                alt.Tooltip("bucket_utc:T", title="UTC", format="%Y-%m-%d %H:%M"),
+                alt.Tooltip("hostname:N", title="Host"),
+                alt.Tooltip(
+                    f"{value_column}:Q",
+                    title="Peak ratio" if normalized else "Rows",
+                    format=".2f" if normalized else ",",
+                ),
             ],
         )
         .properties(height=420)
@@ -251,10 +254,12 @@ def _metadata_chart(points, selected_hosts, metric):
     frame["bucket_utc"] = pd.to_datetime(frame["bucket_utc"], utc=True)
     if metric == "File size (MiB)":
         frame["metric_value"] = frame["size_bytes"] / (1024 * 1024)
-        title = "S3 object size (MiB)"
+        title = "Object size (MiB)"
+        value_format = ",.2f"
     else:
         frame["metric_value"] = frame["file_count"]
-        title = "Parquet object count"
+        title = "Files"
+        value_format = ",.0f"
     chart = (
         alt.Chart(frame)
         .mark_line(point=False)
@@ -263,10 +268,9 @@ def _metadata_chart(points, selected_hosts, metric):
             y=alt.Y("metric_value:Q", title=title, scale=alt.Scale(zero=True)),
             color=alt.Color("hostname:N", title="Hostname"),
             tooltip=[
-                alt.Tooltip("bucket_utc:T", title="Collect time (UTC)"),
-                alt.Tooltip("hostname:N", title="Hostname"),
-                alt.Tooltip("file_count:Q", title="Files", format=","),
-                alt.Tooltip("size_bytes:Q", title="Size (bytes)", format=","),
+                alt.Tooltip("bucket_utc:T", title="UTC", format="%Y-%m-%d %H:%M"),
+                alt.Tooltip("hostname:N", title="Host"),
+                alt.Tooltip("metric_value:Q", title=title, format=value_format),
             ],
         )
         .properties(height=420)

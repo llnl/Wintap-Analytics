@@ -8629,6 +8629,14 @@ The user tested the dashboard's zero-filled missing-bucket behavior and confirme
 it matches expectations. The behavior is accepted; live S3 validation remains
 unperformed.
 
+## [2026-11-16] implementation | concise host activity chart hovers
+
+Chart hovers now show only UTC bucket time, host, and the selected metric: file
+count or object size for metadata charts, and raw-row count or normalized peak
+ratio for row charts. Added chart-spec tests and updated the dashboard README,
+canonical tool page, work plan, verification record, and index. The full app suite
+passes 54 tests; compile, lock, and diff checks pass.
+
 ## [2026-11-16] implementation | custom partition ranges and environment summary
 
 Added a bottom-of-Activity-sidebar info box for effective non-secret dataset/AWS

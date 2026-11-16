@@ -946,6 +946,59 @@ class DashboardControlTests(unittest.TestCase):
                 sys.modules.pop("main", None)
 
 
+class ChartTooltipTests(unittest.TestCase):
+    def setUp(self):
+        app_file = Path(__file__).with_name("main.py")
+        spec = importlib.util.spec_from_file_location("host_activity_tooltip_test_main", app_file)
+        self.dashboard = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(self.dashboard)
+
+    def _capture_tooltip(self, render_chart):
+        charts = []
+        with patch.object(self.dashboard.st, "altair_chart", side_effect=lambda chart, **_kwargs: charts.append(chart)):
+            render_chart()
+        self.assertEqual(len(charts), 1)
+        return charts[0].to_dict()["encoding"]["tooltip"]
+
+    def test_metadata_hover_shows_only_selected_metric(self):
+        point = {
+            "bucket_utc": START,
+            "hostname": "synthetic-host",
+            "file_count": 3,
+            "size_bytes": 2_097_152,
+        }
+
+        file_tooltip = self._capture_tooltip(
+            lambda: self.dashboard._metadata_chart((point,), ("synthetic-host",), "File count")
+        )
+        size_tooltip = self._capture_tooltip(
+            lambda: self.dashboard._metadata_chart((point,), ("synthetic-host",), "File size (MiB)")
+        )
+
+        self.assertEqual([item["field"] for item in file_tooltip], ["bucket_utc", "hostname", "metric_value"])
+        self.assertEqual([item["title"] for item in file_tooltip], ["UTC", "Host", "Files"])
+        self.assertEqual([item["field"] for item in size_tooltip], ["bucket_utc", "hostname", "metric_value"])
+        self.assertEqual([item["title"] for item in size_tooltip], ["UTC", "Host", "Object size (MiB)"])
+
+    def test_raw_row_hover_shows_concise_count_or_peak_ratio(self):
+        result = queries.FamilyResult(
+            "raw_process",
+            rows=3,
+            rows_without_hostname=0,
+            bucket_minutes=5,
+            host_count=1,
+            points=({"bucket_utc": START.replace(tzinfo=None), "hostname": "synthetic-host", "raw_rows": 3},),
+        )
+
+        raw_tooltip = self._capture_tooltip(lambda: self.dashboard._chart(result, ("synthetic-host",), False, False))
+        relative_tooltip = self._capture_tooltip(lambda: self.dashboard._chart(result, ("synthetic-host",), True, False))
+
+        self.assertEqual([item["field"] for item in raw_tooltip], ["bucket_utc", "hostname", "raw_rows"])
+        self.assertEqual([item["title"] for item in raw_tooltip], ["UTC", "Host", "Rows"])
+        self.assertEqual([item["field"] for item in relative_tooltip], ["bucket_utc", "hostname", "value"])
+        self.assertEqual([item["title"] for item in relative_tooltip], ["UTC", "Host", "Peak ratio"])
+
+
 class StreamlitRenderTests(unittest.TestCase):
     def test_real_streamlit_renders_without_refreshing_s3(self):
         from streamlit.testing.v1 import AppTest

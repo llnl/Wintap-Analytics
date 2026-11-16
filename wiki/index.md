@@ -100,8 +100,9 @@ mode lists object keys/sizes (no Parquet reads), parses filename Win32 FILETIME
 as collect time,
 and reports per-host counts and sizes; missing per-host buckets are zero-filled
 in both chart modes, but zeros are not completeness evidence. Raw-row DuckDB
-analysis remains optional. The current app suite passes 52 offline tests,
-including real Streamlit controls.
+analysis remains optional. Chart hovers show UTC time, host, and the selected
+metric. The current app suite passes 54 offline tests, including real Streamlit
+controls.
 Pinned local v1 Status/raw-intent Runs need no ledger/lock/SDK/data reads;
 Partitions is explicitly unavailable, not zero. Full catalog/timeline,
 compacted/entity access and managed live/coordinated lifecycles remain pending.

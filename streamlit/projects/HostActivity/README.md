@@ -134,6 +134,9 @@ implemented or qualified. No recovery controls, scheduler or deployment are adde
   remains compatible with zero-valued buckets). Normalized mode
   divides each host's values by that host's own peak and is only for comparing
   temporal shape, not volume.
+- Chart hover text stays concise: UTC bucket time, host, and only the selected
+  metric. Metadata hovers show file count or object size in MiB; raw-row hovers
+  show row count or the normalized peak ratio.
 - Limits fail closed for every range: at most 10,000 discovered objects and
   1,000 chart points per view. Partition discovery is lazy (metadata listing has
   at most eight concurrent partition requests; raw-row glob scans are chunked

@@ -78,6 +78,8 @@ references.
     least one accepted metadata or row observation. Preserve adaptive chart-point
     budgets, use a zero-compatible symmetric-log absolute row scale, and state
     that zero-filled results are not completeness evidence.
+14. [x] Add concise chart hover details with UTC bucket time, host, and only the
+    selected metric; test metadata, raw-row, and normalized chart specifications.
 
 ## Files Likely To Change
 
