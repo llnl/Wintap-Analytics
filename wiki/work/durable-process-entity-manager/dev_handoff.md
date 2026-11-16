@@ -10,7 +10,7 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py
   - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
 policy: agent-editable
-last_validated: 2026-11-13
+last_validated: 2026-11-16
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -21,6 +21,16 @@ tags: [feature-work, handoff, milestone, entity-state, compaction, dbt]
 ---
 
 # Milestone summary
+
+**Historical intermediate handoff:** newer SQL-cache/DBT results in
+[[wiki/work/durable-process-entity-manager/verification]] supersede the bootstrap
+blockers and stale-state status below. For the active November 16 completion
+priority, use [[wiki/work/dbt-compaction-coordination/integration-milestone-plan]]:
+all current deployments/data are developmental, and actual end-to-end Linux/Mac
+integration takes priority over comprehensive old-data preservation/recovery.
+The old commands and qualifications below retain their original scope; they do
+not order the next development pilot or authorize data deletion.
+<!-- SOURCE: Human planner-role direction and development-data clarification, conversation 2026-11-16. -->
 
 **First-round implementation is complete; this is an intermediate handoff, not
 production readiness.** The human accepts the three failed-hour compacted outputs

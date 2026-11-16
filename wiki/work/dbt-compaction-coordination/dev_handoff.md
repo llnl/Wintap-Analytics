@@ -3,6 +3,7 @@ title: "Dev Handoff: Scheduled DBT and Compaction Coordination"
 type: concept
 confidence: medium
 grounded_by:
+  - wiki/work/dbt-compaction-coordination/integration-milestone-plan.md
   - wiki/work/dbt-compaction-coordination/brief.md
   - wiki/work/dbt-compaction-coordination/design.md
   - wiki/workflow/wintap-etl-data-flow.md
@@ -51,12 +52,12 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_completion_history_qualification.py
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-16
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: developer
-status: draft
+status: reviewed
 source_paths: wiki/work/dbt-compaction-coordination; ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintap_dbt; ../Wintap-PyUtil/extras/raw-sensor-compact
 tags: [feature-work, dev-handoff, dbt, compaction, coordination, cron, duckdb, s3, local-only]
 ---
@@ -65,21 +66,85 @@ tags: [feature-work, dev-handoff, dbt, compaction, coordination, cron, duckdb, s
 
 ## Handoff summary
 
-**Current submitted snapshot / next gate:** PyUtil
-`123b9d36705a5d9c356724d007b28bac224605a6`, Analytics `ee9c27a` (following
-`3f11d13`). Linux service/client/advisory, v4 retry and explicit-v5 entity writer/
-history/clean-original service dispatch are committed in that submitted baseline.
-The 71/307 Linux gates below are focused/affected, not full latest-HEAD acceptance.
-Independent portable review passes 76/zero skips; a separate provisioned native
-five-module rerun passes 169/25 reviewed Linux-only skips with 83 identities intact.
-Native restriction/bootstrap permits a tiny genuine DBT build/test, but uses
-deprecated/private dependencies and qualifies no complete shutdown. The probe uses
-in-process `dbtRunner`, unlike the client's `subprocess.call` path. Separately, the
-PyUtil commit `c549424` (based on `1f4897a`) wires a process-group candidate into the
-native coordinated reader and passes 12 actual-Mac synthetic lifecycle controls, plus
-final bounded stress of 50 normal exits and 20 same-group-child shutdowns. This is limited lifecycle
-qualification, not broad backend/service/DBT acceptance. Current evidence:
-[[wiki/work/dbt-compaction-coordination/verification#Native macOS process-group prototype — actual-Mac synthetic lifecycle]].
+**Human-approved handoff (November 16): integration first.** The entire sensor,
+raw-data and ETL/analysis environment is a development deployment, with no
+preservation-critical production dataset. The next deliverable is DCC-E2E-01:
+actual sensor/upload data → fresh entities → hourly compaction → Linux and native-Mac
+DBT clients. Read [[wiki/work/dbt-compaction-coordination/integration-milestone-plan]]
+before following older recovery-first prompts below. Defer general interrupted-
+publication/missing-original repair and comprehensive maintenance hardening unless
+integration exposes a blocker; retain fail-closed behavior and existing evidence.
+Confirm the concrete runner/data/access/mutation scope before executing. The human
+approved the plan and this repository's wiki commit/push, and will deliver the
+handoff to the Linux runner. This publication is not an integration execution,
+source-change approval, or blanket remote/deletion authorization.
+<!-- SOURCE: Human planner-role direction and development-data clarification, conversation 2026-11-16. -->
+
+## Active Linux-runner assignment — DCC-E2E-01
+
+**Use this assignment and the approved integration plan, not the historical
+recovery-first continuation below.** Own the Linux coordinator/writer, fresh entity
+cache and Linux DBT client; arrange the native-Mac client stage with the human/Mac
+operator. Linux-only success or synthetic Mac controls cannot close the milestone.
+
+1. Pull the published Analytics `work/raw-sensor-file-aggregation` wiki changes and
+   verify the existing PyUtil `work/raw-sensor-compacted-union` baseline, `badb67f`.
+   Record any later source delta rather than silently treating old tests as current.
+   Read the integration plan, current verification sections and the development-run
+   worksheet in [[wiki/work/dbt-compaction-coordination/isolated-qualification]].
+2. Propose/confirm the concrete Linux runner, actual sensor source and recent data
+   window, endpoint/access references, exact development data/transport/state roots,
+   allowed creation/migration/deletion and resource/stop ceilings privately. Start
+   small within the 32 GB RAM / 64 GB disk planning envelope. Report only necessary
+   configuration/launch gaps; do not begin another general recovery rewrite.
+3. After scope selection, observe fresh sensor uploads and establish a bounded
+   settled raw-only baseline under correct exclusion. Initialize a fresh entity-
+   enabled ledger, explicitly opt into v5, and use service `entities-init` with
+   separate `entity_writer` settings. Bootstrap preserves the raw cursor and leaves
+   `DRAINING`; ordinary entity-enabled hourly ticks must clear the eligible backlog.
+4. Run actual Linux and native-Mac Make/client DBT preflight/build/release, first
+   sequentially and then with two overlapping readers, a due writer and a third
+   queued reader. Use separate local databases/client state; compare covered data
+   populations, schemas and deterministic results without bypassing coordination.
+5. Reach three consecutive hourly migrations **in total**, counting verified pilot
+   hours on the same scope, including newly collected activity and a natural UTC
+   eligibility boundary. Include one restart between completed operations and
+   measure actual writer/client/queue durations, RAM and disk/spill use.
+6. Record commands, results, genuine skips, aggregate measurements and ranked
+   defects in [[wiki/work/dbt-compaction-coordination/verification]]; update the
+   integration checklist and implementation-plan progress. Reuse unchanged green
+   regressions; add targeted controls for repairs and reconcile final suites after
+   stabilization. Request human milestone acceptance, not production rollout.
+
+**Explicitly later: strict upload-time UTC contract.** In a separate task, upload
+clients will be reviewed and required to write only into the UTC day/hour time
+bucket current at upload time, including delayed uploads/retries—not an old event-
+time or merge-time bucket. Enforcement and downstream delayed-event implications
+are outside this assignment. Do not add collector changes, retrospective recompaction
+or an exhaustive late-arrival campaign as pilot prerequisites. Current uploader
+compliance is not yet verified: record concrete effects if observed, but do not
+mistake this future contract for already-deployed behavior. Follow
+[[wiki/todo/raw-sensor-upload-time-partition]] for the separate task.
+<!-- SOURCE: Human plan approval, deferred strict UTC upload-client contract, and Linux handoff publication request, conversation 2026-11-16. -->
+
+The human handles delivery to the Linux runner; this session only publishes these
+wiki instructions. Existing exclusion, verified completion, fail-closed uncertainty,
+privacy and exact-scope mutation rules remain in force.
+
+## Reviewed platform checkpoint — November 16
+
+**Reviewed pre-publication branches / next gate:** PyUtil
+`work/raw-sensor-compacted-union` is at
+`badb67f2f4d767ea28f17459ff75422a0506f493`; Analytics
+`work/raw-sensor-file-aggregation` is at `2826c0f`. These are the existing branches
+pulled for the Linux continuation; no new branch was created for this recheck. The
+PyUtil successor narrows native macOS dispatch to coordinated readers and keeps the
+generic/writer supervisor Linux-only. On actual macOS 26.7.1 arm64/Python 3.12.12, its
+six-module relevant suite passes 67 tests with 116 declared Linux-only skips, and the
+dedicated native-Mac lifecycle module passes all 12 controls. This closes the current
+synthetic scope/lifecycle gate, not real DBT/data, S3, production-service/transport or
+representative-resource acceptance. Full commands and limitations:
+[[wiki/work/dbt-compaction-coordination/verification#Native macOS reader-scope requalification — 2026-11-16]].
 
 The current human direction preserves native-Mac scope and explicitly accepts a
 best-effort process-group shutdown rule: normal release may follow wrapper completion
@@ -88,12 +153,12 @@ residual possibility of an escaped descendant. Timeout, supervisor death or unce
 group state retains the reservation for manual verification. No Linux VM or Docker is
 required. No helper/service API or dependency is selected, and broader actual-Mac
 platform acceptance remains open.
-Analytics utility implementation remains separately authorized in its isolated
-worktree; the busy producer retains interrupted-publication recovery.
-The utility implements advisory v1 Status/raw intent Runs only, not catalog,
-compacted/entity reads or managed live/coordinated lifecycles. No deployment,
-scheduling, real-dataset mutation or push occurred. The local commits below are
-explicitly authorized wrap-up commits; no deployment or production acceptance follows.
+Analytics utility implementation remains separately authorized; the busy producer
+retains interrupted-publication recovery. The utility implements advisory v1
+Status/raw intent Runs only, not catalog, compacted/entity reads or managed
+live/coordinated lifecycles. The existing branches were fast-forwarded/pushed as
+authorized; no new branch, PR, deployment, scheduling or real-dataset mutation occurred.
+No production acceptance follows from these local Mac tests.
 <!-- SOURCE: Human implementation approval, conversation 2026-11-15. -->
 
 **Historical accepted packaging baseline:** PyUtil commit
@@ -115,7 +180,8 @@ qualification and dcc-02–05 remain open. Follow
 [[wiki/work/dbt-compaction-coordination/macos-qualification#Stage 2: reader backend acceptance remains pending]]
 for the later Mac lifetime/shutdown gate, not another unchanged baseline rerun.
 
-**Latest Linux results:** strict entity service focus passes all 71 controls (251.19 s), and
+**Historical strict-service Linux results:** strict entity service focus passes all
+71 controls (251.19 s), and
 the unchanged 13-module service-affected scope passes **307 controls in 2,036.10 s**. Complete
 report/sidecar, actual crash diagnostics, all 307 frozen identities, 5,982 retained fixture
 entries and prior green/red/accepted-forward evidence authenticate. Read-only inspection validates
@@ -128,13 +194,21 @@ focused/affected gates close; pending-publication/missing-original repair and br
 integration remain next. S3, resources, native-Mac shutdown and dcc-02–05 remain open:
 [[wiki/work/dbt-compaction-coordination/verification#Service-affected Linux result — 307-control affected gate closed]].
 
-**Native-candidate Linux cross-check:** the transferred PyUtil `c549424` has the
+**Historical native-candidate Linux cross-check:** the transferred PyUtil `c549424` has the
 reported `1f4897a` parent, directly above the prior `123b9d3` Linux target. Its
 focused supervisor/client/Linux-lifecycle/local-route suite passes **90** with
 **12 native-Mac-only skips**; no Linux behavior change was observed. The earlier
 307-control service-affected gate was not rerun, and broad latest-HEAD, endpoint,
 resource and deployment qualification remain open:
 [[wiki/work/dbt-compaction-coordination/verification#Linux regression after candidate handoff — focused, no behavior change observed]].
+
+**Current native-Mac recheck:** PyUtil `badb67f` passes the six-module actual-Mac
+suite (67 passed/116 declared Linux-only skips) and the standalone Mac lifecycle module
+(12 passed). Linux worker affected/full regression outcomes and the scope-repair review
+are recorded in
+[[wiki/work/dbt-compaction-coordination/verification#Authorized reader-scope dispatch repair — Linux regression results]]
+and its November 16 actual-Mac requalification section. Real DBT/data, S3, service/
+transport and representative resources remain unqualified.
 
 The selected narrow successor first adds strict init/replay/clean-original resolution service
 dispatch and explicit v5 upgrade selection, with separate entity configuration and genuine
@@ -224,16 +298,21 @@ remain follow-on dependencies.
 
 ## Worker continuation after the Mac review
 
-Historically the human finalized the packaging review for commit/push and returned the remaining
-implementation to the PyUtil worker. Resume the existing completion plan; do not
-restart the accepted baseline or interpret its Linux-only skips as Mac support.
-The November 15 implementation initially had no commit/push permission; the human
-subsequently authorized local commits. The native-Mac source is PyUtil `c549424` on
-the isolated branch, based on `1f4897a`; the Analytics evidence is committed locally
-as well. Neither commit was pushed. The Linux worker has no shared filesystem with
-this worktree, so transfer the PyUtil commit through the approved channel before
-testing/integration; the hash alone is not present on that worker. Use the transferred
-commit and verification record above as the continuation baseline.
+**Historical broader backlog; the active Linux-runner assignment above supersedes
+its ordering.** Read the November 16 integration milestone first. The numbered
+full-scope continuation below is the broader backlog, not a demand to finish all recovery
+work before the real-data development pilot. Current Linux and Mac regression
+results can support that pilot at the same revision; real transport/DBT results
+must still be obtained on both platforms.
+
+The prior no-push/local-transfer state is historical. On November 16, the Linux worker
+updated the existing branches and the human pulled them: PyUtil is at `badb67f` on
+`work/raw-sensor-compacted-union`, and Analytics is at `2826c0f` on
+`work/raw-sensor-file-aggregation`. No additional branch was created. The native-Mac
+synthetic scope/lifecycle recheck now passes on the pulled PyUtil revision; preserve
+the accepted risk boundary and do not restart the earlier packaging baseline or treat
+Linux-only skips as Mac support. Continue the existing completion plan; actual
+DBT/data, S3, service/transport and representative-resource gates remain separate.
 
 1. **Reader platform gate:** implement and qualify Linux/macOS reader lifetime and
    shutdown under their respective contracts. For native macOS, normal release may

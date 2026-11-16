@@ -21,7 +21,7 @@ grounded_by:
   - ../Wintap-PyUtil/uv.lock
   - ../Wintap-PyUtil/scripts/dcc_macos_restriction_probe.py
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-16
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -168,8 +168,8 @@ route regression passes **90** with **12 native-Mac-only skips**. No Linux behav
 was observed; the existing service-affected result was not rerun. Details and exact scope:
 [[wiki/work/dbt-compaction-coordination/verification#Linux regression after candidate handoff — focused, no behavior change observed]].
 
-Current actual-Mac evidence, on PyUtil commit `c549424`, based on `1f4897a` in the
-isolated feature branch (committed locally, not pushed):
+Initial actual-Mac evidence before the reader-scope repair, on PyUtil commit
+`c549424` based on `1f4897a`:
 
 ```sh
 uv run --locked --python 3.12 --group dev pytest -q tests/test_coordination_macos_supervisor.py
@@ -187,6 +187,30 @@ resources. The prior kqueue attempt that signaled after root exit failed and is
 superseded; current code holds the direct child unreaped while it enumerates live
 members, signals before reaping, and does not inspect or signal the PGID after reaping.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/wintappy/coordination/MACOS.md; ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_mac_worker -->
+
+#### Reader-scope dispatch repair — actual Mac, November 16
+
+**Next actual-Mac gate is the development integration pilot**, alongside the Linux
+client/writer, not another unchanged synthetic-baseline cycle. Follow
+[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]]: genuine Make/client
+subprocess preflight/build against the actual endpoint and covered entity-enabled
+data, reader/writer contention, release and local DuckDB comparison. The human
+clarifies that all current deployment data is developmental/expendable. Concrete
+endpoint/scope approval remains needed; production acceptance is not the milestone.
+<!-- SOURCE: Human planner-role direction and development-data clarification, conversation 2026-11-16. -->
+
+The later PyUtil revision `badb67f2f4d767ea28f17459ff75422a0506f493` narrows native
+macOS dispatch to the coordinated reader API and keeps generic/writer supervision
+Linux-only. On macOS 26.7.1 arm64 with Python 3.12.12, the current native-Mac
+lifecycle module passes **12/12**; the six-module reader/client/tick/supervisor
+regression passes **67 tests with 116 declared Linux-only skips**. See the complete
+commands and attribution in
+[[wiki/work/dbt-compaction-coordination/verification#Native macOS reader-scope requalification — 2026-11-16]].
+
+This requalifies the synthetic lifecycle and dispatch boundary after the API-scope
+repair. It does not close Stage 2 backend acceptance: production DBT/preflight,
+representative data, actual S3 and service/transport integration remain separate gates.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/tests/test_coordination_tick.py -->
 
 The human has explicitly accepted a **best-effort native-Mac process-group rule**:
 for normal completion, the surviving supervisor may release after the reader wrapper

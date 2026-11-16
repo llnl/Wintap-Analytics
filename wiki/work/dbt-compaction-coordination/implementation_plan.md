@@ -52,7 +52,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_completion_history_qualification.py
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-16
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -63,6 +63,29 @@ tags: [feature-work, implementation-plan, coordination, dbt, compaction, recover
 ---
 
 # Implementation Plan: Scheduled DBT and Compaction Coordination
+
+## Active priority — development integration first, November 16
+
+The human clarified that sensors, raw data and ETL/analysis are all a development
+deployment; existing telemetry is expendable, not a preservation-critical production
+archive. The immediate completion target is actual sensor data through entity cache
+creation, hourly compaction and coordinated Linux/native-Mac DBT clients. Follow
+[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]] for the reviewed
+platform status, finite DCC-E2E-01 checklist, integration-first sequence and impact-based
+triage. Its recommendations are not new execution results or endpoint/deletion approval.
+
+**This supersedes the recovery-first ordering below**, not the recorded evidence or
+core exclusion/completion/privacy contracts. General pending-publication/missing-original
+repair and comprehensive entity-maintenance hardening are deferred unless the pilot
+demonstrates a blocking need. Reuse current green revision-specific tests; do not demand
+unchanged full-suite repeats before attempting approved end-to-end development runs.
+Broader dcc-02–05 and production acceptance remain separate from this scoped milestone.
+The human subsequently approved the plan and wiki commit/push for Linux-runner
+handoff. Strict upload-time UTC client enforcement and downstream delayed-data
+implications are separate later tasks, not pilot prerequisites; current uploader
+compliance must not be assumed. The active assignment is in
+[[wiki/work/dbt-compaction-coordination/dev_handoff#Active Linux-runner assignment — DCC-E2E-01]].
+<!-- SOURCE: Human planner-role direction and development-data clarification, conversation 2026-11-16. -->
 
 ## Scope
 
@@ -1549,12 +1572,21 @@ macOS commands/results in [[wiki/work/dbt-compaction-coordination/verification]]
 
 ## Next phases — PR deferred, qualification sequence
 
-**Current checkpoint:** PyUtil candidate `c549424` is based on `1f4897a`; the
-focused Linux supervisor/client/lifecycle/local-route regression passes 90 with 12
-native-Mac-only skips and observed no Linux behavior change. This is not a full
-latest-HEAD regression or operational acceptance. The human has deferred PR work;
-do not open or prepare a PR as the next action. The approved best-effort native-Mac
-process-group rule remains the selected risk boundary, not broad Mac acceptance.
+**Historical November 15 ordering:** retained for the broader recovery/qualification
+backlog. The active November 16 integration-first milestone above supersedes its
+requirement to finish every Phase 1–3 item before using actual development data.
+Do not treat the unchecked recovery items as prerequisites to the first approved pilot.
+
+**Current checkpoint (November 16):** PyUtil `work/raw-sensor-compacted-union` is at
+`badb67f2f4d767ea28f17459ff75422a0506f493`, the reader-scope repair on top of
+`c549424`; Analytics `work/raw-sensor-file-aggregation` is at `2826c0f`. The Linux
+worker reports its affected/full-main/full-standalone gates green for this successor.
+On actual macOS 26.7.1 arm64, Python 3.12.12, the six-module relevant suite passes
+67 with 116 declared Linux-only skips, and the dedicated native-Mac lifecycle module
+passes all 12 controls. The dispatch repair preserves Linux-only generic/writer
+supervision. These are local regression and synthetic Mac lifecycle results, not broad
+Mac backend or operational acceptance. PR work remains deferred; the approved
+best-effort process-group rule remains the risk boundary.
 <!-- SOURCE: Human direction in conversation, 2026-11-15. -->
 
 ### Phase 1 — Freeze the candidate and close local implementation gaps
@@ -1593,11 +1625,12 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   pytest base on tmpfs passes 695/two expected skips in 365.40 s; its full report and
   final source identity were reviewed. Both failures remain preserved as likely
   filesystem-interference evidence, not discarded. Local Linux affected/main/standalone
-  gates pass. Native-Mac execution remains unverified, and operational acceptance for
-  S3/data/resources/service/deployment remains open. The reader-scope fix is committed
-  locally in the detached candidate as `badb67f2f4d767ea28f17459ff75422a0506f493`;
-  the candidate is clean and the commit is not pushed. Run the native-Mac lifecycle
-  controls as the next platform-specific gate.
+  gates pass. The successor `badb67f2f4d767ea28f17459ff75422a0506f493` was pulled on
+  the existing work branch. Its native-Mac recheck passes 12 lifecycle controls and
+  67 controls/116 declared Linux-only skips across the six-module platform suite on
+  macOS 26.7.1 arm64/Python 3.12.12. The synthetic reader-scope gate is current; actual
+  DBT/data, S3, service/transport, representative-resource and deployment acceptance
+  remain open. Do not infer broad backend support from this run.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean

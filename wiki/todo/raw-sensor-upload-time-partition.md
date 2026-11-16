@@ -9,7 +9,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs
   - ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-16
 repo_scope: wintap
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -21,12 +21,23 @@ tags: [todo, upload, s3, partitioning, raw_sensor, wintap, lintap]
 
 # To-Do: Set Raw Sensor Partitions at Upload Time
 
-**Priority:** Untriaged (requested follow-up; correctness implications need
-review).
+**Priority:** Separate later task; not a prerequisite to the approved development
+end-to-end integration milestone DCC-E2E-01. Correctness implications still need review.
 **State:** Open — intake only; no .NET code change is authorized by this TODO.
 **Likely next step:** Review the intended timestamp boundary and design a
 retry-safe S3-key/path correction in the shared upload code, then obtain explicit
 implementation authorization.
+
+**November 16 direction:** the human will separately review and enforce that
+upload clients write only into the UTC day/hour time bucket current at upload
+time, including delayed uploads/retries, rather than an old event/merge-time
+partition. This is intended to simplify initial delayed-data handling; downstream
+delayed-event implications remain later work too. Do not pull this implementation
+or exhaustive late-arrival testing into the approved
+[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]]. This is a future
+contract, not a claim of current uploader compliance. Existing source findings
+below retain their reviewed scope; no uploader code or data is changed here.
+<!-- SOURCE: Human deferred strict UTC upload-client contract and downstream-work clarification, conversation 2026-11-16. -->
 
 ## Finding
 

@@ -41,7 +41,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_completion_history_qualification.py
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-16
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -52,6 +52,14 @@ tags: [feature-work, design, dbt, compaction, coordination, cron, duckdb, s3, dr
 ---
 
 # Cron, S3 messages and DuckDB coordination
+
+**Development milestone, November 16:** the human prioritizes actual sensor-data
+integration across the Linux writer/entity cache and Linux/native-Mac DBT clients.
+Existing deployment telemetry is expendable; comprehensive repair/preservation
+hardening is not a prerequisite to that finite milestone. See
+[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]]. This changes
+delivery order and acceptance scope, not the protocol's ownership/completion rules.
+<!-- SOURCE: Human planner-role direction and development-data clarification, conversation 2026-11-16. -->
 
 **Selected architecture:** one scheduled coordinator on the compaction server,
 S3 messages for clients, and a **local DuckDB coordination ledger**. Coordinator
@@ -65,7 +73,7 @@ High-water initialization/freshness checks also exist. The historical v3 retaine
 normal-completion prototype passes hardened local controls; full standalone passes
 439 tests (two skips), combined main focus passes 298 tests and full main passes
 641 tests (three skips) on the unchanged revision.
-The subsequent uncommitted Linux overlay adds service CLI, root-aware Makefile
+The subsequent Linux overlay (committed in `123b9d3`) adds service CLI, root-aware Makefile
 routing, durable reader lifetime, advisory exports and audited reader/clean-hour/
 checkpoint repair, followed by locally regression-accepted original-bound deletion disposition.
 Current regression status and remaining recovery scope

@@ -313,7 +313,23 @@ maintenance. No deployment, scheduling, real-dataset mutation, commit or push.
 
 Scheduled DBT/compaction coordination:
 
-**Current submitted review / isolated native-Mac overlay (November 15):** PyUtil `123b9d3`
+**Approved priority — development end-to-end milestone (November 16):**
+[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]] — reviewed Linux
+service/writer/entities and native-Mac reader are ready for an actual-data integration
+attempt. The human clarifies that all sensor/raw/ETL deployments are developmental;
+existing telemetry is expendable. Approved DCC-E2E-01 targets real delivery, cache
+creation, hourly compaction and Linux/Mac DBT clients over successive hours, with
+impact-based defect triage. Comprehensive recovery/old-data preservation and unchanged
+full-suite repeats no longer precede the pilot; ownership/privacy/correctness stay.
+Concrete runner/data/access/mutation scope remains to be selected in
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]]. No execution or
+production acceptance is claimed by the plan.
+The approved Linux-runner assignment is in
+[[wiki/work/dbt-compaction-coordination/dev_handoff#Active Linux-runner assignment — DCC-E2E-01]];
+the human handles delivery. Strict upload-time UTC client enforcement and downstream
+delayed-data semantics are separate later tasks, not pilot prerequisites.
+
+**Historical submitted review / isolated native-Mac overlay (November 15):** PyUtil `123b9d3`
 and Analytics `ee9c27a` include the Linux service/client/advisory, v4 retry and explicit-v5
 entity launch/history/clean-original service paths. Worker-reported 71 strict-service/
 307 service-affected Linux passes retain their narrow scopes. Independent submitted

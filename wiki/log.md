@@ -8556,3 +8556,58 @@ and full main/standalone Linux regression on `c549424`; neither the 90-control f
 run nor the parent's 307-control result substitutes. Native-Mac backend acceptance and
 rollout remain separate final decisions. The plan grants no endpoint, data, production
 or deployment authorization.
+
+## [2026-11-16] verification | native macOS reader-scope requalification
+
+Reviewed the pulled PyUtil reader-only dispatch repair (`badb67f`) and ran the actual
+Mac six-module coordination suite: 67 passed, 116 declared Linux-only skips; the
+dedicated native-Mac lifecycle module passes 12/12 on macOS 26.7.1 arm64/Python 3.12.12.
+Generic/writer supervision remains Linux-only. Updated the handoff and qualification
+records; no PyUtil source, S3/data, deployment or scheduling was changed.
+
+## [2026-11-16] planning | development end-to-end integration first
+
+The human clarifies that the entire sensor/raw-data/ETL/analysis deployment is
+developmental and existing telemetry is expendable, not a production preservation
+objective. Reviewed current PyUtil `badb67f` source and recorded Linux/Mac results:
+Linux service/hourly writer/entity-init/replay and both reader paths exist; actual
+S3/DBT combined integration is the leading gap, not missing whole implementations.
+Earlier real-data compaction/cache/DBT component runs remain distinct from current
+platform/service qualification. No new tests, telemetry/S3 access or source changes.
+
+Created `wiki/work/dbt-compaction-coordination/integration-milestone-plan.md` with a
+proposed finite DCC-E2E-01 checklist: actual sensor delivery, fresh cache, successive
+hourly migrations, genuine Linux/Mac DBT builds, contested admission and measured
+development-load behavior. Supersedes recovery-first sequencing with integration-first
+and impact-based bounded repairs; general pending-publication/missing-original repair,
+maintenance corners and historical ancestry/scale move to conditional backlog. Reuse
+unchanged green suites, reconcile final regressions after repairs stabilize. Unsupported
+failures stay blocked; a separately approved fresh disposable scope is preferable to
+inventing recovery success. Actual-upload partition/late-arrival risk stays visible.
+
+Updated coordination brief/design/plan/handoff/Mac runbook/development worksheet,
+historical entity handoff, canonical ETL deployment context and index. Preserved
+pre-existing uncommitted Mac evidence and private untracked environment files. Concrete
+runner/data/access/mutation/resource selection remains needed; no broad cleanup,
+ledger reset, collector change, scheduling, commit/push or production rollout authorized.
+Planning-only validation: whitespace, changed-page frontmatter, new-plan sources/links
+and complete diff/privacy review pass. Three migrations are proposed in total, counting
+verified pilot hours; the live-delivery requirement remains explicit.
+
+## [2026-11-16] handoff | approved Linux-runner integration plan
+
+The human approved DCC-E2E-01 and this repository's wiki commit/push, and will
+deliver the handoff to the Linux runner. Added the active assignment to
+`wiki/work/dbt-compaction-coordination/dev_handoff.md`: select concrete scope, use
+current evidence, create fresh entities, run hourly migrations and actual Linux/Mac
+DBT clients, demonstrate contested admission, measure resources and report defects.
+Three migrations count verified pilot hours; historical recovery-first instructions
+remain reference/backlog, not the active assignment. Plan approval is not milestone
+acceptance, remote execution or an unspecified data/source mutation authorization.
+
+Recorded the strict UTC upload-time bucket contract as a separate later upload-client
+review/enforcement task, with downstream delayed-data implications also deferred.
+Current compliance is not assumed; no uploader/recompaction redesign or exhaustive
+late-arrival campaign precedes the pilot. Updated the integration plan, implementation
+plan, runbook, upload-contract TODO and index consistently. No application tests,
+source, collector, environment or S3/data operations were performed for this handoff.

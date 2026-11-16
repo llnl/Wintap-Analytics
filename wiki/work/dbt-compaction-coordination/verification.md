@@ -79,7 +79,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
   - ../Wintap-PyUtil/tests/test_coordination_entity_forward_history.py
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-16
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -5105,7 +5105,7 @@ acceptance or rollout.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_service.py; ../Wintap-PyUtil/tests/test_coordination_client.py; ../Wintap-PyUtil/tests/test_coordination_linux_lifecycle.py; ../Wintap-PyUtil/tests/test_coordination_local_route.py; ../Wintap-PyUtil/tests/test_coordination_recovery.py; ../Wintap-PyUtil/tests/test_coordination_maintenance.py; ../Wintap-PyUtil/tests/test_coordination_deletion_recovery.py; ../Wintap-PyUtil/tests/test_coordination_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_controls.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_history.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_credentials.py; ../Wintap-PyUtil/tests/test_coordination_entity_service.py; ../Wintap-PyUtil/tests/test_coordination_supervisor.py; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_config/run_supervised; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_unsupported_writer_supervision_refuses_launch_and_tick_stays_blocked; ../Wintap-PyUtil/wintappy/coordination/README.md §Linux command-tree supervision -->
 
-## Authorized reader-scope dispatch repair — affected regression active
+## Authorized reader-scope dispatch repair — Linux regression results
 
 After the reproduced main-suite failure, the human authorized a narrow detached-tree
 change only: generic `run_supervised` remains Linux-only, while a separate
@@ -5151,11 +5151,41 @@ finds it empty. The same test passes alone in a fresh `/dev/shm` TMPDIR (one pas
 report was reviewed. The cleanup failure does not recur, supporting—but not proving—an
 interaction with the home-backed temporary filesystem. Both failing reports and the
 successful tmpfs report are retained. Post-run source identity still matches the freeze.
-The local Linux affected/full-main/full-standalone gates now pass. Native-Mac execution
-of these edits and actual S3/data/resource/service/deployment acceptance remain open.
-The reviewed source/test/documentation diff was then committed locally in the detached
-PyUtil candidate as `badb67f2f4d767ea28f17459ff75422a0506f493`
-(`fix: scope macOS supervision to coordinated readers`). The candidate worktree is
-clean at that commit. It has not been pushed; native-Mac lifecycle verification remains
-the next platform-specific gate.
+The local Linux affected/full-main/full-standalone gates now pass. At the time of this
+checkpoint, the reviewed source/test/documentation diff had been committed locally in
+the detached PyUtil candidate as `badb67f2f4d767ea28f17459ff75422a0506f493`
+(`fix: scope macOS supervision to coordinated readers`) but had not yet been pushed;
+actual-Mac lifecycle verification was the next platform-specific gate. The existing
+branch transfer and follow-up Mac result are recorded below.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_macos_supervision_dispatch_is_explicitly_reader_scoped; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->
+
+## Native macOS reader-scope requalification — 2026-11-16
+
+Reviewed the Linux worker's scoped dispatch repair in PyUtil `badb67f2f4d767ea28f17459ff75422a0506f493` (parent `c549424`), now present on the existing `work/raw-sensor-compacted-union` branch. The change gives coordinated readers a dedicated `run_reader_supervised` entry point; generic `run_supervised` remains Linux-only, preserving the writer refusal boundary. Client invocation creation/revalidation and Mac lifecycle controls use the reader-only entry point. The Analytics review branch is `work/raw-sensor-file-aggregation` at `2826c0f`.
+
+On actual macOS 26.7.1 arm64 with Python 3.12.12:
+
+```sh
+uv run --locked --python 3.12 --group dev pytest -q -rs \
+  tests/test_coordination_macos_supervisor.py \
+  tests/test_coordination_supervisor.py \
+  tests/test_coordination_client.py \
+  tests/test_coordination_local_route.py \
+  tests/test_coordination_retry.py \
+  tests/test_coordination_tick.py
+# 67 passed, 116 skipped in 17.10 s
+
+uv run --locked --python 3.12 --group dev pytest -q \
+  tests/test_coordination_macos_supervisor.py
+# 12 passed in 3.27 s
+```
+
+The 116 skips are declared Linux-only subreaper, reader-supervision, procfs and
+unprivileged-merge controls. The actual-Mac lifecycle module and coordinated-reader
+path ran; the Darwin writer-dispatch refusal is also covered by the explicit platform
+boundary regression. The dedicated native-Mac controls pass on the repaired revision.
+This closes the synthetic reader-scope/lifecycle recheck only. It does not qualify real
+DBT/data, actual S3, production-service transport, representative resources, deployment
+or broader backend support. No PyUtil source was changed in this verification; existing
+untracked local environment files were preserved.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_macos_supervision_dispatch_is_explicitly_reader_scoped -->

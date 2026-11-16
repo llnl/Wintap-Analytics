@@ -51,7 +51,7 @@ grounded_by:
   - wiki/work/raw-sensor-file-aggregation/implementation_plan.md
   - ../Lintap/teletap/README.md
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-16
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -62,6 +62,16 @@ tags: [wintap, lintap, wintap-pyutil, dbt, duckdb, etl, s3, bronze, silver, gold
 ---
 
 # Wintap / Lintap ETL data flow
+
+**Current deployment context (November 16):** the human states that the complete
+sensor/raw/ETL/analysis environment is development-only; its existing telemetry is
+expendable rather than preservation-critical production data. The active target
+is a working actual-data end-to-end development milestone on Linux and native Mac,
+not universal recovery or production readiness. See
+[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]]. Concrete data/
+execution/deletion scope must still be selected; privacy and verified ownership/
+completion contracts are unchanged.
+<!-- SOURCE: Human planner-role direction and development-data clarification, conversation 2026-11-16. -->
 
 The editable [draw.io diagram](wintap-etl-data-flow.drawio) follows host-local
 sensor Parquet through S3, optional hourly compaction, dual-root DBT input and
@@ -244,8 +254,10 @@ remains a separate worker-owned gate; Windows coordination is outside this miles
   scope remain bound. Canonical single-link original shutdown/outcome evidence is
   required for terminal retries; retries do not relaunch DBT. SIGINT/SIGTERM preserve
   130/143; uncertain shutdown or wrapper death retains the reservation. Grants do
-  not expire automatically. Native-Mac coordinated execution currently refuses,
-  while local DBT remains available.
+  not expire automatically. Submitted `123b9d3` refused native-Mac coordinated
+  execution; successor `badb67f` provides reader-only best-effort process-group
+  supervision with 12 passing actual-Mac lifecycle controls. Actual S3/DBT integration
+  remains the next development gate; local-only DBT stays direct on both platforms.
 - **Exclusive writer:** the main DuckDB 1.5.6 runtime alone opens the local ledger.
   The service processes bounded terminal-first messages, refreshes UTC and drains
   due work. With zero readers, it commits receipt-bound intent before supervising
@@ -506,10 +518,13 @@ Worker-reported Linux strict-service focus passes 71 controls; the unchanged
 13-module service-affected scope passes 307 in 2,036.10 s. Submitted sources/reports
 were independently authenticated, and a native-Mac portable smoke passes 76/zero
 skips; the private Linux fixture execution was not independently reproduced on Mac.
-These focused/affected gates do not replace historical 880/554 regressions with a
-full latest-HEAD result. Native shutdown, actual S3, retained-state resources and
-dcc-02–05 remain open:
-[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
+These focused/affected gates retain their original revision/scope. Successor
+`badb67f` has reviewed Linux full-main 1521/15 skips and full-standalone 695/2
+results plus the actual-Mac 12-control lifecycle recheck; these do not qualify
+actual S3/DBT integration, representative retained-state resources or dcc-02–05.
+Current results and the integration-first continuation:
+[[wiki/work/dbt-compaction-coordination/verification#Authorized reader-scope dispatch repair — Linux regression results]],
+[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]].
 
 ### Retained authority and qualification limits
 
