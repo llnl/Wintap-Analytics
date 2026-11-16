@@ -7,7 +7,7 @@ grounded_by:
   - streamlit/projects/HostActivity/README.md
   - streamlit/projects/HostActivity/main.py
 policy: agent-editable
-last_validated: 2026-11-11
+last_validated: 2026-11-16
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -22,7 +22,7 @@ tags: [host-activity, verification, feature-work]
 ## Test Commands
 
 - `uv run python -m unittest discover -s . -p 'test_*.py' -v` from
-  `streamlit/projects/HostActivity/` — 27 tests passed in the app's locked UV
+  `streamlit/projects/HostActivity/` — 52 tests passed in the app's locked UV
   environment (DuckDB 1.5.6, Streamlit 1.67.0, Altair 6.3.0, Pandas 2.3.3,
   boto3 1.44.0).
 - `uv run python -m compileall -q .` from the app directory — passed.
@@ -45,6 +45,19 @@ file or DBT runtime is needed.
   charts. It verified the default all-family selection, client closure, filename
   FILETIME basis, and that no DuckDB connection, Parquet schema inspection, or
   row aggregation was invoked.
+- The sidebar AppTest verified the non-secret effective settings box
+  and hidden credential values. It selected inclusive UTC day/hour endpoints for
+  a 25-hour custom range, observed the >24-hour warning, and confirmed the exact
+  `[start,end)` bounds and 25 listed UTC partitions reached metadata discovery.
+- Multi-day source tests exercised hourly metadata listing beyond the default
+  interval and 24-hour-batched raw glob scans. The implementation lazily keeps
+  at most eight metadata partition requests in flight. Duration-aware
+  metadata/raw-row chart buckets were verified; a 48-hour synthetic raw
+  query retained exact event-time filtering and failed closed at its row budget.
+- Focused metadata and raw-row aggregation tests verify missing interior and
+  trailing buckets become zero across the selected window while observed values
+  and aggregate totals remain unchanged. Adaptive bucket width keeps the
+  zero-filled series under the existing chart-point budget.
 - Synthetic metadata checks verified paginated `ListObjectsV2` requests scoped
   to requested event/day/hour partitions, nested `protoPK` keys, S3 `Size`
   accounting, invalid-size/object-limit failures, filename event aliases,
@@ -110,10 +123,19 @@ file or DBT runtime is needed.
 
 ## Results
 
+The user tested the zero-filled chart behavior on 2026-11-16 and confirmed it
+matches expectations. The behavior is accepted. Automated verification below
+remains synthetic/offline; no live S3 validation was performed for this change.
+
 The default app mode now provides a metadata-only herd overview through S3
-object listings; optional schema-aware raw-row querying remains available. No
-source schemas, raw files, or S3 objects were changed. Metadata mode was tested
-with synthetic/mocked results but has not been run against live S3.
+object listings; optional schema-aware raw-row querying remains available. The
+rolling 12-hour default is preserved, custom inclusive day/hour ranges have no
+duration cap, and >24-hour selections warn. Partition work stays lazy/chunked and
+existing object/row/query/group/chart budgets remain fail-closed. No source
+schemas, raw files, or S3 objects were changed. Multi-day behavior was verified
+synthetically; custom-range and metadata-mode behavior have not been run against
+live S3. Missing buckets now display zero for hosts observed in the interval;
+this is not a completeness or collector-health assertion.
 
 ## Known Gaps
 

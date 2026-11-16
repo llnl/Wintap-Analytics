@@ -232,18 +232,66 @@ def inspect_family(con, event_type: str, paths) -> FamilyProjection:
     raise ValueError("No supported row-level event-time column")
 
 
-def choose_bucket_minutes(host_count: int, point_budget: int = MAX_CHART_POINTS) -> int:
+def choose_bucket_minutes(
+    host_count: int,
+    point_budget: int = MAX_CHART_POINTS,
+    window_minutes: int = WINDOW_MINUTES,
+) -> int:
     """Keep a full-window host-by-bucket chart under a fixed point budget."""
     if host_count <= 0:
         return BASE_BUCKET_MINUTES
     if point_budget < 1:
         raise ValueError("Point budget must be positive")
+    if window_minutes < 1:
+        raise ValueError("Window duration must be positive")
     if host_count > point_budget:
         raise ValueError(f"Chart point budget is too small for {host_count:,} hosts; no chart was produced")
     width = BASE_BUCKET_MINUTES
-    while host_count * math.ceil(WINDOW_MINUTES / width) > point_budget:
-        width = min(width * 2, WINDOW_MINUTES)
+    while host_count * math.ceil(window_minutes / width) > point_budget:
+        width = min(width * 2, window_minutes)
     return width
+
+
+def zero_fill_time_buckets(
+    points,
+    hostnames,
+    start: dt.datetime,
+    end: dt.datetime,
+    bucket_minutes: int,
+    value_fields,
+    point_budget: int = MAX_CHART_POINTS,
+):
+    """Add zero-valued points for every missing host/bucket in the selected window."""
+    if end <= start:
+        raise ValueError("Window end must be after window start")
+    if bucket_minutes < 1:
+        raise ValueError("Bucket width must be positive")
+    if point_budget < 1:
+        raise ValueError("Point budget must be positive")
+    hosts = tuple(sorted(set(hostnames)))
+    fields = tuple(value_fields)
+    if not hosts:
+        return ()
+    bucket_count = math.ceil((end - start).total_seconds() / (bucket_minutes * 60))
+    if len(hosts) * bucket_count > point_budget:
+        raise ValueError(f"Chart point budget exceeded ({point_budget:,} points); no chart was produced")
+
+    existing = {
+        (point["bucket_utc"], point["hostname"]): point
+        for point in points
+    }
+    filled = []
+    for bucket_index in range(bucket_count):
+        bucket = start + dt.timedelta(minutes=bucket_index * bucket_minutes)
+        if bucket >= end:
+            break
+        for hostname in hosts:
+            point = existing.get((bucket, hostname))
+            if point is None:
+                point = {"bucket_utc": bucket, "hostname": hostname}
+                point.update({field: 0 for field in fields})
+            filled.append(point)
+    return tuple(filled)
 
 
 def _execute_with_timeout(con, sql: str, params, timeout_seconds: float):
@@ -296,6 +344,7 @@ def _aggregate_process_file(
     point_budget: int,
     max_intermediate_groups: int,
     query_timeout_seconds: float,
+    window_minutes: int,
 ) -> FamilyResult:
     """Aggregate every matching process-file row without materializing raw rows."""
     if (not isinstance(max_intermediate_groups, int) or isinstance(max_intermediate_groups, bool)
@@ -358,7 +407,7 @@ def _aggregate_process_file(
             "no chart was produced"
         )
 
-    bucket_minutes = choose_bucket_minutes(host_count, point_budget)
+    bucket_minutes = choose_bucket_minutes(host_count, point_budget, window_minutes)
     start_utc = start_utc.replace(tzinfo=None)
     point_counts = {}
     for row in rows:
@@ -375,9 +424,17 @@ def _aggregate_process_file(
     if len(point_counts) > point_budget:
         raise ValueError(f"Chart point budget exceeded ({point_budget:,} points); no chart was produced")
 
-    points = tuple(
-        {"bucket_utc": bucket, "hostname": hostname, "raw_rows": count}
-        for (bucket, hostname), count in sorted(point_counts.items())
+    points = zero_fill_time_buckets(
+        (
+            {"bucket_utc": bucket, "hostname": hostname, "raw_rows": count}
+            for (bucket, hostname), count in point_counts.items()
+        ),
+        (hostname for _, hostname in point_counts),
+        start_utc,
+        end_utc,
+        bucket_minutes,
+        ("raw_rows",),
+        point_budget,
     )
     return FamilyResult(
         projection.event_type,
@@ -404,8 +461,6 @@ def aggregate_family(
     """Count selected-family rows exactly in [start,end), using bounded aggregation."""
     if start.tzinfo is None or end.tzinfo is None or end <= start:
         raise ValueError("Aggregation window must be an increasing timezone-aware interval")
-    if end - start > dt.timedelta(hours=12):
-        raise ValueError("Aggregation window is limited to 12 hours")
     if max_rows < 1:
         raise ValueError("Row budget must be positive")
     if point_budget < 1:
@@ -419,6 +474,7 @@ def aggregate_family(
     time_expr = projection.timestamp_expression
     start_utc = start.astimezone(dt.timezone.utc).replace(tzinfo=None)
     end_utc = end.astimezone(dt.timezone.utc).replace(tzinfo=None)
+    window_minutes = max(1, math.ceil((end_utc - start_utc).total_seconds() / 60))
     if projection.event_type == "raw_process_file":
         # This family uses the exact grouped-result budget rather than the
         # general raw-row cap; the remaining resource guards are family-specific.
@@ -431,18 +487,19 @@ def aggregate_family(
             point_budget=point_budget,
             max_intermediate_groups=max_intermediate_groups,
             query_timeout_seconds=query_timeout_seconds,
+            window_minutes=window_minutes,
         )
 
     bucket_cases = []
     width = BASE_BUCKET_MINUTES
     while True:
         bucket_cases.append(
-            f"WHEN host_count * {math.ceil(WINDOW_MINUTES / width)} <= ? THEN {width}"
+            f"WHEN host_count * {math.ceil(window_minutes / width)} <= ? THEN {width}"
         )
-        if width == WINDOW_MINUTES:
+        if width == window_minutes:
             break
-        width = min(width * 2, WINDOW_MINUTES)
-    bucket_case = "CASE " + " ".join(bucket_cases) + " ELSE " + str(WINDOW_MINUTES) + " END"
+        width = min(width * 2, window_minutes)
+    bucket_case = "CASE " + " ".join(bucket_cases) + " ELSE " + str(window_minutes) + " END"
     sql = (
         "WITH bounded AS MATERIALIZED ("
         f"SELECT {host_expr} AS hostname, {time_expr} AS event_ts "
@@ -474,15 +531,23 @@ def aggregate_family(
     if row_count > max_rows:
         raise ValueError(f"Raw-row budget exceeded ({max_rows:,} rows); no chart was produced")
     # Preserve the same fail-closed host-count rule as choose_bucket_minutes.
-    choose_bucket_minutes(host_count, point_budget)
+    choose_bucket_minutes(host_count, point_budget, window_minutes)
     grouped_rows = [row for row in rows if row[4] is not None]
     if len(grouped_rows) > point_budget:
         # Guard sparse data whose actual groups exceed the full-window estimate.
         raise ValueError(f"Chart point budget exceeded ({point_budget:,} points); no chart was produced")
 
-    points = tuple(
-        {"bucket_utc": row[4], "hostname": str(row[5]), "raw_rows": int(row[6])}
-        for row in grouped_rows
+    points = zero_fill_time_buckets(
+        (
+            {"bucket_utc": row[4], "hostname": str(row[5]), "raw_rows": int(row[6])}
+            for row in grouped_rows
+        ),
+        (str(row[5]) for row in grouped_rows),
+        start_utc,
+        end_utc,
+        bucket_minutes,
+        ("raw_rows",),
+        point_budget,
     )
     return FamilyResult(
         projection.event_type,

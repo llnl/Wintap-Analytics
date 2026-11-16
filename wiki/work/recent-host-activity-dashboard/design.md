@@ -10,7 +10,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/time.sql
 policy: agent-editable
-last_validated: 2026-11-11
+last_validated: 2026-11-16
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -62,19 +62,30 @@ listing keep the first version bounded.
    For high-volume `raw_process_file`, use an exact aggregate-only DuckDB path
    rather than materializing or truncating raw rows; guard query time, memory/temp
    use, intermediate group count, and final chart points.
-5. **Bound chart density.** Target approximately five-minute buckets initially.
-   Widen the bucket until the selected view stays within a small fixed point
-   budget; show the actual interval. Preserve empty time buckets as gaps/zeros
-   only where source availability is known, and never imply that absent source
-   data means zero activity.
+ 5. **Bound chart density and make gaps visible.** Target approximately
+    five-minute buckets initially. Widen the bucket until the selected view
+    stays within a small fixed point budget; show the actual interval. For a
+    host with at least one accepted observation in the selected window, fill
+    every missing bucket across that window with zero. This is a display of no
+    qualifying result for the host/bucket, not proof of true zero activity or
+    complete source availability; do not invent hosts when the window has no
+    accepted observations.
 6. **Render a focused view.** Default to all-family metadata, with an optional
    family filter before manual refresh; changing the selector alone does not
    query S3. Include a host selector and separate count and size charts with a
    line per host, UTC range and refresh time, staged progress and elapsed
-   duration, plus absolute linear/log
+    duration, plus absolute linear/symmetric-log
    scale and a clearly separate normalized-to-own-peak view. The normalized mode
-   is for temporal-shape comparison only and labels values as relative.
-7. **Keep access ephemeral/read-only.** Use the AWS environment/profile chain;
+    is for temporal-shape comparison only and labels values as relative.
+7. **Make range selection explicit and bounded.** Keep the rolling 12-hour UTC
+    interval as the default; allow custom inclusive `dayPK/hourPK` endpoints of
+    any duration, with a short warning above 24 hours. Enumerate metadata
+    partitions lazily and issue raw-row glob queries in fixed-size hour chunks;
+    preserve existing object, row, query, group, and chart-point budgets.
+8. **Expose effective settings safely.** Put the resolved dataset and effective
+    non-secret AWS/transport settings in a bottom-of-sidebar info box. Never
+    render credential values.
+9. **Keep access ephemeral/read-only.** Use the AWS environment/profile chain;
    use boto3 ListObjectsV2 for metadata and create any DuckDB S3 secret only in
    the in-memory optional row-mode connection. Never display credentials; close
    clients/connections after refresh and issue no S3 writes.

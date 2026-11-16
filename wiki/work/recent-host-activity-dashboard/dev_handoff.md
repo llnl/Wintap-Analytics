@@ -8,7 +8,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/README.md
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
 policy: agent-editable
-last_validated: 2026-11-11
+last_validated: 2026-11-16
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -52,10 +52,18 @@ Use this prompt to hand remaining verification to another agent:
 ## Handoff Summary
 
 The default query is a read-only file-metadata view over the rolling 12-hour UTC
-interval, using partition-pruned S3 object listings and filename collect time;
-it charts per-host file count and size without reading Parquet bytes. Optional raw
-row analysis retains the selected-family DuckDB flow and its event-time
-semantics/limits. Manual refresh and adaptive buckets apply to both modes.
+interval; custom inclusive UTC `dayPK/hourPK` ranges of any duration are also
+available, with a warning above 24 hours. Partition discovery is lazy/chunked,
+and existing object/row/chart/query budgets remain fail-closed. A bottom-of-sidebar
+info box shows effective non-secret environment settings; credentials stay
+hidden. Metadata uses partition-pruned S3 object listings and filename collect
+time; it charts per-host file count and size without reading Parquet bytes.
+Optional raw-row analysis retains the selected-family DuckDB flow and its
+event-time semantics/limits. Manual refresh and adaptive buckets apply to both
+modes. Both charts fill missing buckets with zero for hosts observed at least
+once in the selected interval, while retaining the caveat that zero is not a
+completeness assertion; the zero-compatible symmetric-log option preserves this
+behavior on the absolute raw-row chart.
 
 ## Primary Sources For The Dev Agent
 

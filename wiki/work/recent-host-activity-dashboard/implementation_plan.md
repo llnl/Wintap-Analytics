@@ -9,7 +9,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/README.md
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
 policy: agent-editable
-last_validated: 2026-11-11
+last_validated: 2026-11-16
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -23,8 +23,9 @@ tags: [host-activity, streamlit, duckdb, s3, feature-work]
 
 ## Scope
 
-Standalone read-only Analytics app for manually refreshed, rolling 12-hour UTC
-S3 file metadata trends by host, with optional raw-row analysis. Implementation
+Standalone read-only Analytics app for manually refreshed S3 file metadata trends
+by host, defaulting to rolling 12-hour UTC with an inclusive custom day/hour range,
+plus optional raw-row analysis. Implementation
 and tests stay in Wintap-Analytics. Wintap-PyUtil/Wintap sources are read-only
 references.
 
@@ -48,7 +49,7 @@ references.
    and final chart-point guards.
 5. [x] Implement standalone Streamlit controls, selected-family-only manual
    refresh, staged status and elapsed-time reporting, host time series, adaptive
-   bucket sizing, linear/log and normalized-to-host-peak views, and honest
+    bucket sizing, linear/symmetric-log and normalized-to-host-peak views, and honest
    empty/error/family-processing states.
 6. [x] Add synthetic Parquet, mocked DuckDB glob discovery, query-budget,
    credential-SQL, chart-data, and manual-refresh tests. No writes or credential
@@ -68,6 +69,15 @@ references.
     filename Win32 collect timestamps; retain row-level DuckDB analysis as an
     explicit secondary mode. Verify partition pruning, pagination, budgets,
     exact filename-time filtering, and the no-Parquet-read UI path.
+12. [x] Add non-secret effective environment settings to the Activity sidebar
+    and allow arbitrary inclusive custom UTC dayPK/hourPK ranges while preserving
+    the rolling 12-hour default and warning above 24 hours. Remove duration caps,
+    adapt chart buckets to the selected interval, and keep partition-list work
+    lazy/chunked under existing fail-closed object/row/point budgets.
+13. [x] Zero-fill missing buckets across the selected interval for hosts with at
+    least one accepted metadata or row observation. Preserve adaptive chart-point
+    budgets, use a zero-compatible symmetric-log absolute row scale, and state
+    that zero-filled results are not completeness evidence.
 
 ## Files Likely To Change
 
@@ -83,7 +93,8 @@ references.
 
 ## Tests To Add Or Update
 
-- UTC 12-hour interval and cross-midnight day/hour partition pruning.
+- UTC rolling 12-hour default plus custom multi-day partition-range pruning,
+  inclusive end-hour semantics, and duration-aware adaptive chart buckets.
 - Safe dataset-root/endpoint config and DBT-compatible credential-chain SQL
   rendering; bare-host endpoint compatibility was also exercised in the live
   pilot.
@@ -134,4 +145,11 @@ required.
   only), parses filename Win32 FILETIME collect stamps, and renders per-host
   counts/sizes without opening Parquet contents. Synthetic/AppTest verification
   passed; live S3 metadata-mode validation remains open.
+- [x] Activity sidebar reports effective non-secret source settings, custom
+  inclusive UTC partition-hour ranges are available without a duration cap,
+  >24-hour ranges warn, and listing/bucketing retain their fail-closed budgets.
+- [x] Metadata and raw-row chart series zero-fill missing buckets for observed
+  hosts across the selected interval; tests verify zero counts and preserved
+  chart budgets, and UI text distinguishes zero results from collection proof.
+- [x] User tested the zero-filled chart behavior and accepted it (2026-11-16).
 - [x] Verification, index, canonical usage docs, and operation log are updated.

@@ -10,7 +10,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/time.sql
 policy: agent-editable
-last_validated: 2026-11-11
+last_validated: 2026-11-16
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -61,13 +61,18 @@ hosts.
   `ListObjectsV2`, using object keys and sizes only; it never opens Parquet
   contents. It reports per-host file counts, sizes, latest collect time, and
   separate file-count and object-size time series.
+- A time-range selector preserves that rolling 12-hour default and supports a
+  custom inclusive range of UTC `dayPK/hourPK` partitions. Custom ranges have
+  no duration cap; ranges over 24 hours show a short runtime/budget warning.
+- The bottom of the sidebar shows the effective dataset, AWS profile,
+  region, endpoint, and TLS settings. It never displays credential values.
 - Metadata time comes from `hostname+event_type+FILETIME.parquet`; the Win32
   FILETIME is collection time, not S3 upload/LastModified time. Exact filename
   timestamp filtering follows day/hour partition pruning. Malformed filenames
   are reported and excluded from host/time aggregates.
 - Raw Parquet rows remain available as an explicit secondary mode, selecting one
   family and using the existing DuckDB schema/event-time logic.
-- Changing query mode or family does not query S3 until explicit refresh. The
+- Changing query mode, family, or range does not query S3 until explicit refresh. The
   status panel reports metadata listing/aggregation or row-mode listing/schema/
   aggregation stages and elapsed time.
 - S3 discovery is limited to relevant event-family and `dayPK`/`hourPK`
@@ -77,12 +82,17 @@ hosts.
   collect time. Raw-row mode charts rows over event time.
 - Adaptive buckets start around five minutes and may widen to respect a bounded
   point/query budget; the current bucket width is displayed.
-- Absolute counts support linear/log axis selection. A separate normalized
+- For each host with at least one accepted observation in the selected interval,
+  missing buckets across the full interval are displayed as zero in metadata and
+  row charts. A zero indicates no qualifying result for that host/bucket, not
+  confirmed complete collection or true zero activity. Hosts with no qualifying
+  observation cannot be inferred or plotted.
+- Absolute counts support linear/symmetric-log axis selection. A separate normalized
   view scales each host to its own peak for pattern comparison and is clearly
   labeled as relative, not event volume.
 - Families without supported row-level hostname and event-time columns are
-  excluded from the chart and listed with the reason. Empty or unreadable data is
-  not rendered as zero activity.
+  excluded from the chart and listed with the reason. Empty or unreadable data
+  with no host observations does not produce a synthetic zero-activity series.
 - Timestamp decoding is producer-specific: the app uses Unix seconds for known
   serializer families and FILETIME for Windows event fields. File activity uses
   its `FirstSeen`/`LastSeen` activity bounds before the serializer-time
@@ -97,21 +107,25 @@ hosts.
 1. App launches independently of SmokeTests and DataQA.
 2. Uses DuckDB and Streamlit to read configured S3 raw Parquet without changing
    any object or requiring a DBT materialization.
-3. Default view is the last 12 hours in UTC, with manual refresh only.
+3. Default view is the last 12 hours in UTC, with manual refresh only; a custom
+   inclusive UTC partition range is also supported without a duration cap.
 4. `dayPK`/`hourPK` are used to prune candidate objects across midnight; row
-   timestamps are then filtered to the precise 12-hour interval.
+   timestamps and filename collection times are filtered to the selected exact
+   interval. Ranges over 24 hours are warned about, not refused.
 5. The default metadata refresh reports per-host file counts/sizes and a
    filename-collect-time series without opening Parquet contents; optional
    selected-family raw-row analysis labels the metric unambiguously.
 6. Event-family selection, per-host time series, adaptive visible bucket size,
-   linear/log absolute counts, and normalized-to-host-peak mode are available.
+   linear/symmetric-log absolute counts, and normalized-to-host-peak mode are available.
 7. Missing/incompatible families, empty data, access errors, and query budget
    failures are reported distinctly; results are never silently truncated.
 8. AWS credentials are not accepted in app config, logged, displayed, or stored
    in the repository. S3 access is read-only.
-9. Synthetic local Parquet and mocked S3 tests cover partition pruning, schema
+9. Activity sidebar shows effective non-secret environment settings without
+   credential values.
+10. Synthetic local Parquet and mocked S3 tests cover partition pruning, schema
    variation, timestamps, counting, scaling, and error handling.
-10. A bounded read-only pilot against the actual configured S3 data confirms
+11. A bounded read-only pilot against the actual configured S3 data confirms
     observed roots, supported families, host values, and acceptable refresh
     behavior before calling the dashboard operationally verified.
 

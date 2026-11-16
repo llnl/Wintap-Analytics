@@ -10,7 +10,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/s3.sql
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-16
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -144,10 +144,27 @@ bronze `raw_sensor` Parquet. It starts with a manually refreshed rolling 12-hour
 UTC view; uses day/hour partitions for scan pruning; groups rows by event-family
 and row hostname; offers one event-family at a time with host lines; and reports
 families lacking usable row-level host/time. Counts are explicitly raw rows.
-Adaptive buckets start near five minutes. Absolute counts support linear/log
-scaling, with a separate normalized-to-host-peak view to compare patterns
+Adaptive buckets start near five minutes. Absolute counts support linear and
+symmetric-log scaling, with a separate normalized-to-host-peak view to compare patterns
 without implying equal volume. The live bucket root and schema remain an
 operator-data check. No sensor, DBT, or sibling-repository edits are in scope.
+
+## Subsequent UI clarification (2026-11-16)
+
+The user confirmed that the rolling 12-hour interval remains the default, but
+operators may select any inclusive UTC `dayPK/hourPK` range. There is no custom
+duration cap; ranges longer than 24 hours receive a short warning. Existing
+object, row, query, group, and chart-point safeguards remain in force. The user
+also requested a bottom-of-Activity-sidebar summary of effective non-secret
+environment settings; credential values remain hidden.
+
+## Subsequent chart clarification (2026-11-16)
+
+The user asked for missing chart buckets to display as zero rather than having
+the line bridge sparse observations. The selected behavior fills the full chosen
+interval for hosts with at least one accepted observation, in both metadata and
+raw-row modes. The UI clarifies that zero means no qualifying result was returned
+for that bucket, not proof of complete collection or true zero activity.
 
 ## Sealed — human estimates
 

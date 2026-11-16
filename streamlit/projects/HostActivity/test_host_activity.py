@@ -26,6 +26,7 @@ from s3_source import (
     discover_object_metadata,
     load_settings,
     partition_globs,
+    partition_count,
     partition_hours,
     secret_sql,
 )
@@ -79,6 +80,8 @@ class SourceConfigurationTests(unittest.TestCase):
         self.assertEqual(settings.dataset_root, "s3://example-bucket/sensor-data")
         self.assertEqual(settings.raw_sensor_root, "s3://example-bucket/sensor-data/raw_sensor")
         self.assertEqual(settings.region, "us-west-2")
+        self.assertEqual(settings.dataset_env_name, "WINTAP_DBT_RAW_SENSOR_DATASET")
+        self.assertEqual(settings.region_env_name, "AWS_REGION")
         self.assertEqual(settings.endpoint_url, "s3.example.test")
         self.assertFalse(settings.use_ssl)
         self.assertIn("PROFILE 'researcher''s-profile'", secret_sql(settings))
@@ -137,10 +140,53 @@ class SourceConfigurationTests(unittest.TestCase):
             "s3://bucket/root/raw_sensor/raw_process/dayPK=20261110/hourPK=23/**/*.parquet",
             "s3://bucket/root/raw_sensor/raw_process/dayPK=20261111/hourPK=00/**/*.parquet",
         ])
-        with self.assertRaisesRegex(ValueError, "limited to 12 hours"):
-            partition_hours(START, END + dt.timedelta(microseconds=1))
+        long_end = START + dt.timedelta(hours=49)
+        self.assertEqual(len(partition_hours(START, long_end)), 49)
+        self.assertEqual(partition_count(START, long_end), 49)
+        self.assertEqual(partition_hours(START, long_end)[-1], ("20261112", "00"))
         with self.assertRaisesRegex(ValueError, "timezone"):
             partition_hours(dt.datetime(2026, 11, 10), END)
+
+    def test_metadata_discovery_lists_a_multi_day_range(self):
+        settings = load_settings({"WINTAP_DBT_DATASET": "s3://bucket/root"})
+        client = FakeS3MetadataClient({})
+        found = discover_object_metadata(
+            client,
+            settings,
+            START,
+            START + dt.timedelta(hours=30),
+            event_types=("raw_host",),
+        )
+        self.assertEqual(found, ())
+        self.assertEqual(len(client.calls), 30)
+        prefixes = {call["Prefix"] for call in client.calls}
+        self.assertTrue(any("hourPK=00/" in prefix for prefix in prefixes))
+        self.assertTrue(any("hourPK=05/" in prefix for prefix in prefixes))
+
+    def test_long_raw_discovery_builds_partition_globs_in_bounded_chunks(self):
+        class RecordingConnection:
+            def __init__(self):
+                self.pattern_batches = []
+
+            def execute(self, _sql, params):
+                self.pattern_batches.append(params[0])
+                return self
+
+            def fetchall(self):
+                return []
+
+        settings = load_settings({"WINTAP_DBT_DATASET": "s3://bucket/root"})
+        connection = RecordingConnection()
+        found = discover_files(
+            connection,
+            settings,
+            START,
+            START + dt.timedelta(hours=30),
+            event_types=("raw_host",),
+        )
+        self.assertEqual(found, {})
+        self.assertEqual([len(batch) for batch in connection.pattern_batches], [24, 6])
+        self.assertTrue(all(len(batch) <= s3_source.PARTITION_GLOB_CHUNK_HOURS for batch in connection.pattern_batches))
 
     def test_discovery_deduplicates_and_keeps_nested_network_files(self):
         settings = load_settings({"WINTAP_DBT_DATASET": "s3://bucket/root"})
@@ -160,11 +206,13 @@ class SourceConfigurationTests(unittest.TestCase):
 
     def test_discovery_fails_closed_at_file_limit_and_rejects_outside_root(self):
         settings = load_settings({"WINTAP_DBT_DATASET": "s3://bucket/root"})
-        files = [(f"s3://bucket/root/raw_sensor/raw_host/dayPK=20261110/hourPK=12/{i}.parquet",) for i in range(3)]
+        files = [(f"s3://bucket/root/raw_sensor/raw_host/dayPK=20261110/hourPK=00/{i}.parquet",) for i in range(3)]
         with self.assertRaisesRegex(ValueError, "file limit exceeded"):
             discover_files(FakeConnection(files), settings, START, END, max_files=2)
         with self.assertRaisesRegex(ValueError, "positive integer"):
             discover_files(FakeConnection([]), settings, START, END, max_files=0)
+        with self.assertRaisesRegex(ValueError, "Unsupported raw_sensor event"):
+            discover_files(FakeConnection([]), settings, START, END, event_types=("not_a_family",))
         with self.assertRaisesRegex(RuntimeError, "outside"):
             discover_files(FakeConnection([("s3://elsewhere/raw_sensor/raw_host/a.parquet",)]), settings, START, END)
         out_of_window = "s3://bucket/root/raw_sensor/raw_host/dayPK=20261110/hourPK=12/h.parquet"
@@ -249,6 +297,30 @@ class FakeS3MetadataClient:
 
 
 class FileMetadataTests(unittest.TestCase):
+    def test_missing_metadata_buckets_are_zero_filled_across_window(self):
+        end = START + dt.timedelta(minutes=20)
+        objects = tuple(
+            s3_source.S3ObjectMetadata(
+                f"raw_sensor/raw_host/dayPK=20261110/hourPK=00/alpha+raw_host_sensor+{filetime(START + dt.timedelta(minutes=minute))}.parquet",
+                "raw_host",
+                1024,
+            )
+            for minute in (1, 11)
+        )
+
+        result = file_metadata.aggregate_file_metadata(objects, START, end)
+
+        self.assertEqual(result.bucket_minutes, 5)
+        self.assertEqual(
+            [(point["bucket_utc"], point["file_count"], point["size_bytes"]) for point in result.points],
+            [
+                (START, 1, 1024),
+                (START + dt.timedelta(minutes=5), 0, 0),
+                (START + dt.timedelta(minutes=10), 1, 1024),
+                (START + dt.timedelta(minutes=15), 0, 0),
+            ],
+        )
+
     def test_filename_filetime_and_s3_size_aggregation(self):
         objects = (
             s3_source.S3ObjectMetadata(
@@ -291,14 +363,31 @@ class FileMetadataTests(unittest.TestCase):
         self.assertEqual(result.outside_window_files, 2)
         self.assertEqual(result.outside_window_size_bytes, 522)
         self.assertEqual(result.host_count, 2)
+        observed = [point for point in result.points if point["file_count"]]
         self.assertEqual(
-            {(point["hostname"], point["file_count"], point["size_bytes"]) for point in result.points},
+            {(point["hostname"], point["file_count"], point["size_bytes"]) for point in observed},
             {("alpha", 1, 1024), ("alpha", 1, 2048), ("beta", 1, 1024)},
         )
+        self.assertEqual(len(result.points), 2 * (12 * 60 // result.bucket_minutes))
+        self.assertTrue(any(point["hostname"] == "alpha" and point["file_count"] == 0 for point in result.points))
         self.assertEqual(sum(point["file_count"] for point in result.points), result.files_in_window)
         self.assertEqual(sum(point["size_bytes"] for point in result.points), result.total_size_bytes)
         self.assertEqual(result.host_summary[0]["hostname"], "alpha")
         self.assertEqual(result.host_summary[0]["file_count"], 2)
+
+    def test_custom_multi_day_window_uses_adaptive_buckets_and_exact_file_times(self):
+        start = START
+        end = start + dt.timedelta(hours=48)
+        timestamp = filetime(start + dt.timedelta(hours=36, minutes=2))
+        obj = s3_source.S3ObjectMetadata(
+            f"raw_sensor/raw_host/dayPK=20261111/hourPK=12/alpha+raw_host_sensor+{timestamp}.parquet",
+            "raw_host",
+            4096,
+        )
+        result = file_metadata.aggregate_file_metadata((obj,), start, end)
+        self.assertEqual(result.files_in_window, 1)
+        self.assertGreaterEqual(result.bucket_minutes, 5)
+        self.assertEqual(result.points[0]["hostname"], "alpha")
 
 
 class QueryTests(unittest.TestCase):
@@ -310,6 +399,28 @@ class QueryTests(unittest.TestCase):
     def tearDown(self):
         self.con.close()
         self.temp.cleanup()
+
+    def test_missing_raw_row_buckets_are_zero_filled_across_window(self):
+        end = START + dt.timedelta(minutes=20)
+        values = ",".join(
+            f"('alpha', {filetime(START + dt.timedelta(minutes=minute))}::BIGINT)"
+            for minute in (1, 11)
+        )
+        copy_values(self.con, self.path, f"SELECT * FROM (VALUES {values}) AS t(Hostname, EventTime)")
+        projection = inspect_family(self.con, "raw_process", [str(self.path)])
+
+        result = aggregate_family(self.con, projection, [str(self.path)], START, end)
+
+        self.assertEqual(result.bucket_minutes, 5)
+        self.assertEqual(
+            [(point["bucket_utc"], point["raw_rows"]) for point in result.points],
+            [
+                (START.replace(tzinfo=None), 1),
+                ((START + dt.timedelta(minutes=5)).replace(tzinfo=None), 0),
+                ((START + dt.timedelta(minutes=10)).replace(tzinfo=None), 1),
+                ((START + dt.timedelta(minutes=15)).replace(tzinfo=None), 0),
+            ],
+        )
 
     def test_filetime_exact_window_counts_raw_rows_and_blank_hostnames(self):
         values = [
@@ -330,8 +441,9 @@ class QueryTests(unittest.TestCase):
         self.assertEqual(result.rows, 4)
         self.assertEqual(result.rows_without_hostname, 2)
         self.assertEqual(result.host_count, 3)
-        counts = {(p["hostname"], p["raw_rows"]) for p in result.points}
+        counts = {(p["hostname"], p["raw_rows"]) for p in result.points if p["raw_rows"]}
         self.assertEqual(counts, {("alpha", 2), ("beta", 1), ("gamma", 1)})
+        self.assertTrue(any(point["raw_rows"] == 0 for point in result.points))
         empty_start = END + dt.timedelta(days=1)
         empty = aggregate_family(
             self.con,
@@ -425,7 +537,11 @@ class QueryTests(unittest.TestCase):
         self.assertEqual(result.rows_without_hostname, 1)
         self.assertEqual(result.host_count, 2)
         self.assertEqual(result.bucket_minutes, 5)
-        counts = {(point["hostname"], point["bucket_utc"], point["raw_rows"]) for point in result.points}
+        counts = {
+            (point["hostname"], point["bucket_utc"], point["raw_rows"])
+            for point in result.points
+            if point["raw_rows"]
+        }
         self.assertEqual(
             counts,
             {
@@ -550,7 +666,7 @@ class QueryTests(unittest.TestCase):
         self.assertEqual(projection.time_mode, "iso_timestamp")
         result = aggregate_family(self.con, projection, [str(self.path)], START, END)
         self.assertEqual(result.rows, 2)
-        self.assertTrue(all(point["bucket_utc"].hour == 8 for point in result.points))
+        self.assertTrue(all(point["bucket_utc"].hour == 8 for point in result.points if point["raw_rows"]))
 
     def test_unsupported_schemas_are_reportable(self):
         copy_values(self.con, self.path, "SELECT 7::BIGINT AS pid, 42::BIGINT AS EventTime")
@@ -598,6 +714,26 @@ class QueryTests(unittest.TestCase):
         width = choose_bucket_minutes(24, point_budget=500)
         self.assertGreater(width, 5)
         self.assertLessEqual(24 * (720 // width + 2), 500)
+        long_width = choose_bucket_minutes(24, point_budget=500, window_minutes=48 * 60)
+        self.assertGreater(long_width, width)
+        self.assertLessEqual(24 * ((48 * 60 + long_width - 1) // long_width), 500)
+
+    def test_raw_aggregation_accepts_multi_day_window_and_keeps_row_budget(self):
+        start = START
+        end = start + dt.timedelta(hours=48)
+        times = (start + dt.timedelta(hours=1), start + dt.timedelta(hours=36))
+        values = ",".join(
+            f"('long-window-host', {int(value.timestamp())}::BIGINT)" for value in times
+        )
+        copy_values(self.con, self.path, f"SELECT * FROM (VALUES {values}) AS t(Hostname, EventTime)")
+        projection = inspect_family(self.con, "raw_host", [str(self.path)])
+        result = aggregate_family(self.con, projection, [str(self.path)], start, end, max_rows=2)
+        self.assertEqual(result.rows, 2)
+        self.assertEqual(len(result.points), 48 * 60 // result.bucket_minutes)
+        self.assertEqual(sum(point["raw_rows"] for point in result.points), 2)
+        self.assertEqual(sum(point["raw_rows"] == 0 for point in result.points), len(result.points) - 2)
+        with self.assertRaisesRegex(ValueError, "Raw-row budget exceeded"):
+            aggregate_family(self.con, projection, [str(self.path)], start, end, max_rows=1)
 
 
 class DashboardControlTests(unittest.TestCase):
@@ -631,7 +767,7 @@ class DashboardControlTests(unittest.TestCase):
                 if name == "button":
                     return lambda *_args, **_kwargs: True
                 if name == "radio":
-                    return lambda _label, options, index=0, **_kwargs: options[1]
+                    return lambda label, options, index=0, **_kwargs: options[1] if label == "Query mode" else options[index]
                 if name == "selectbox":
                     return lambda _label, options, index=0, **_kwargs: options[index]
                 if name == "status":
@@ -826,11 +962,17 @@ class StreamlitRenderTests(unittest.TestCase):
             self.assertEqual([item.value for item in app.title], ["Recent Host Activity"])
             self.assertEqual([item.label for item in app.button], ["Refresh last 12 hours"])
             self.assertEqual([item.label for item in app.selectbox], ["View", "Event family"])
-            self.assertEqual([item.label for item in app.radio], ["Query mode"])
+            self.assertEqual([item.label for item in app.radio], ["Query mode", "Time range"])
             self.assertEqual(app.radio[0].value, "File metadata")
             self.assertEqual(app.selectbox[0].value, "Activity")
             self.assertEqual(app.selectbox[1].value, "All event families")
             self.assertTrue(any("all event families" in item.value for item in app.info))
+            environment_info = next(item.value for item in app.info if "Credential values: hidden" in item.value)
+            self.assertIn("WINTAP_DBT_DATASET", environment_info)
+            self.assertIn("s3://example.invalid/test-dataset", environment_info)
+            self.assertFalse(any("AWS_ACCESS_KEY_ID" in item.value for item in app.info))
+            self.assertFalse(any("AWS_SECRET_ACCESS_KEY" in item.value for item in app.info))
+            self.assertFalse(any("AWS_SESSION_TOKEN" in item.value for item in app.info))
             self.assertNotIn("host_activity_snapshot", app.session_state)
 
             app.selectbox[1].select("Process file").run()
@@ -869,9 +1011,38 @@ class StreamlitRenderTests(unittest.TestCase):
             self.assertEqual(metadata_snapshot["host_summary"][0]["hostname"], "synthetic-host")
             self.assertTrue(any("S3 LastModified/upload time is ignored" in item.value for item in app.caption))
             self.assertEqual(
-                [item.value for item in app.subheader if item.value != "Source"],
+                [item.value for item in app.subheader if item.value not in {"Source", "Activity source environment"}],
                 ["File count by collect time", "S3 object size by collect time (MiB)"],
             )
+
+            app.radio[1].set_value("Custom dayPK/hourPK range").run()
+            self.assertEqual([item.label for item in app.button], ["Refresh selected range"])
+            app.date_input[0].set_value(dt.date(2026, 11, 10))
+            app.selectbox[1].select("00")
+            app.date_input[1].set_value(dt.date(2026, 11, 11))
+            app.selectbox[2].select("00")
+            app.run()
+            self.assertTrue(any("over 24 hours" in item.value for item in app.warning))
+
+            def custom_metadata_objects(_client, _settings, start, end, event_types):
+                self.assertEqual(start, dt.datetime(2026, 11, 10, 0, 0, tzinfo=UTC))
+                self.assertEqual(end, dt.datetime(2026, 11, 11, 1, 0, tzinfo=UTC))
+                self.assertEqual(event_types, s3_source.RAW_EVENT_TYPES)
+                timestamp = filetime(start + dt.timedelta(minutes=1))
+                return (s3_source.S3ObjectMetadata(
+                    f"root/raw_sensor/raw_host/dayPK=20261110/hourPK=00/synthetic-host+raw_host_sensor+{timestamp}.parquet",
+                    "raw_host",
+                    2_097_152,
+                ),)
+
+            with patch.object(s3_source, "open_metadata_client", return_value=metadata_client), \
+                    patch.object(s3_source, "discover_object_metadata", side_effect=custom_metadata_objects):
+                app.button[0].click().run()
+            self.assertEqual(len(app.exception), 0)
+            custom_snapshot = app.session_state["host_activity_snapshot"]
+            self.assertEqual(custom_snapshot["start"], "2026-11-10T00:00:00+00:00")
+            self.assertEqual(custom_snapshot["end"], "2026-11-11T01:00:00+00:00")
+            self.assertEqual(custom_snapshot["partition_count"], 25)
 
             # Hot-reloading from the earlier all-family snapshot should request a
             # refresh rather than crashing on its missing selected-family marker.
@@ -880,11 +1051,11 @@ class StreamlitRenderTests(unittest.TestCase):
                 "query_mode": "File metadata",
                 "event_type": "__all__",
             }
-            app.selectbox[1].select("Process").run()
+            app.selectbox[3].select("Process").run()
             self.assertEqual(len(app.exception), 0)
             self.assertTrue(any("does not match the selected query/family" in item.value for item in app.info))
             app.radio[0].set_value("Raw Parquet rows").run()
-            app.selectbox[1].select("Process file").run()
+            app.selectbox[3].select("Process file").run()
 
             class Connection:
                 closed = False

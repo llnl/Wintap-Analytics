@@ -33,6 +33,9 @@ uv run streamlit run main.py
 
 Credentials come only from the standard AWS credential chain / selected profile;
 the app has no credential input, config file, or dashboard-specific S3 variables.
+At the bottom of the sidebar, an effective-environment info box shows
+the resolved dataset and non-secret AWS/transport settings. Credential values
+are never displayed.
 Use a profile restricted to read/list access for the selected dataset. Metadata
 mode uses boto3 `ListObjectsV2` and S3's `Size` field; it sends no object GETs.
 The optional row-count mode creates an in-memory DuckDB S3 secret that is closed
@@ -87,10 +90,13 @@ implemented or qualified. No recovery controls, scheduler or deployment are adde
 ## Dashboard semantics and limits
 
 - The default query mode is **File metadata**, intended as a quick herd overview.
-  It lists all supported event families (or one selected family) under the
-  `dayPK`/`hourPK` partitions intersecting the last 12 hours in UTC. It groups
-  per-host file counts and S3 object sizes over time and shows a per-host summary.
-  Both metrics have their own collect-time chart. It does not read Parquet data.
+  The default time range is the rolling last 12 hours in UTC. Choose **Custom
+  dayPK/hourPK range** to select the first and last UTC partition hours; both
+  endpoints are inclusive, and the whole selected hours are processed. Custom
+  ranges have no duration cap. A short warning appears above 24 hours.
+  All-family (or one-family) metadata mode groups per-host file counts and S3
+  object sizes over time and shows a per-host summary. Both metrics have their
+  own collect-time chart. It does not read Parquet data.
 - Filenames use `hostname+event_type+FILETIME.parquet`; the Win32 FILETIME in
   the filename is treated as collect time, not S3 upload/`LastModified` time.
   The same capture time determines `dayPK`/`hourPK`, and the filename timestamp
@@ -99,9 +105,10 @@ implemented or qualified. No recovery controls, scheduler or deployment are adde
 - **Raw Parquet rows** remains available as a separate, slower query mode. It
   requires selecting one family, inspects schemas, and applies row-level event
   time filtering. It reports physical source-row counts, not logical-event totals.
-- Refresh is manual; changing query mode or family does not query S3. Partial
-  boundary hours can mean 13 hourly partitions. Metadata listing is limited to
-  those partitions; row mode then filters the precise event-time interval.
+- Refresh is manual; changing query mode, family, or range does not query S3.
+  The rolling default can intersect 13 hourly partitions because its boundary
+  hours are partial. A custom range selects complete UTC partition hours. Both
+  modes then filter filenames/event timestamps to the exact `[start,end)` range.
 - Discovery lists only supported event families under overlapping
   `dayPK=YYYYMMDD/hourPK=HH` partitions. Recursive matching preserves nested
   network `protoPK` folders; metadata mode filters exact filename collect time,
@@ -118,14 +125,20 @@ implemented or qualified. No recovery controls, scheduler or deployment are adde
   The selected snapshot shows its timestamp fields and encoding priority.
   `Computer` is accepted as a hostname alias alongside `Hostname`/
   `ComputerName`. Unsupported families are listed with a reason.
-- The initial bucket is five minutes. It widens to bound expected host/bucket
-  chart points. The chart includes observed buckets only; it does not fill gaps
-  with zeroes.
-- Absolute raw-row counts can use linear or logarithmic scale. Normalized mode
+- The initial bucket is five minutes. It widens to bound host/bucket chart
+  points. For each host with at least one accepted observation in the selected
+  interval, every bucket across the full interval is plotted; buckets with no
+  returned files/rows are zero-filled. A host with no usable observation in the
+  interval cannot be identified and does not get a synthetic series.
+- Absolute raw-row counts can use linear or symmetric logarithmic scale (which
+  remains compatible with zero-valued buckets). Normalized mode
   divides each host's values by that host's own peak and is only for comparing
   temporal shape, not volume.
-- Limits fail closed: at most 10,000 discovered objects and 1,000 chart points
-  per view. Standard row-mode families also retain the 2,000,000 in-window
+- Limits fail closed for every range: at most 10,000 discovered objects and
+  1,000 chart points per view. Partition discovery is lazy (metadata listing has
+  at most eight concurrent partition requests; raw-row glob scans are chunked
+  by 24 hours), so long ranges do not materialize all listing work at once.
+  Standard row-mode families also retain the 2,000,000 in-window
   raw-row cap. `raw_process_file` instead aggregates all matching rows directly
   in DuckDB (no sampling/raw-row truncation), under a 120-second query limit,
   1 GB memory and temporary-storage limits, and a 20,000 intermediate
@@ -137,9 +150,11 @@ implemented or qualified. No recovery controls, scheduler or deployment are adde
   failures are reported without producing partial charts.
 
 This is an availability snapshot, not a completeness or collector-health
-assertion. Missing files, late arrivals, absent partitions, malformed names, and
-missing hostnames are not interpreted as zero activity. File size is S3 object
-size and does not establish that the Parquet content is valid or complete.
+assertion. A zero-filled bucket means no qualifying object/row was returned for
+that observed host and bucket; it does not establish true zero activity, complete
+collection, or healthy telemetry. Missing files, late arrivals, absent partitions,
+malformed names, and missing hostnames can still reduce coverage. File size is S3
+object size and does not establish that Parquet content is valid or complete.
 
 ## Offline checks
 

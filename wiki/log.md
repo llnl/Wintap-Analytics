@@ -8611,3 +8611,31 @@ Current compliance is not assumed; no uploader/recompaction redesign or exhausti
 late-arrival campaign precedes the pilot. Updated the integration plan, implementation
 plan, runbook, upload-contract TODO and index consistently. No application tests,
 source, collector, environment or S3/data operations were performed for this handoff.
+
+## [2026-11-16] implementation | zero-filled host activity chart gaps
+
+Updated metadata and raw-row chart aggregation to emit zero-valued buckets across
+the selected interval for each host with at least one accepted observation. The
+existing adaptive bucket sizing and chart-point budgets still govern the expanded
+series. Absolute raw-row scaling now uses a zero-compatible symmetric-log option;
+UI and wiki text clarify that zero means no qualifying result was returned, not
+proof of complete collection or true zero activity. Added focused synthetic tests;
+all 52 app tests pass. Compile, lock, and diff checks pass; no live S3 validation
+was performed.
+
+## [2026-11-16] acceptance | zero-filled host activity chart gaps
+
+The user tested the dashboard's zero-filled missing-bucket behavior and confirmed
+it matches expectations. The behavior is accepted; live S3 validation remains
+unperformed.
+
+## [2026-11-16] implementation | custom partition ranges and environment summary
+
+Added a bottom-of-Activity-sidebar info box for effective non-secret dataset/AWS
+settings, with credential values hidden. The rolling 12-hour default remains;
+custom inclusive UTC `dayPK/hourPK` ranges have no duration cap and warn above
+24 hours. Metadata partition requests are lazy and limited to eight concurrent
+workers; raw glob discovery runs in 24-hour chunks. Duration-aware chart buckets
+and the existing object, row, timeout, group, and chart-point budgets remain
+active. App-scoped tests passed (50), compile/lock/diff checks passed. Live S3
+custom-range behavior remains unverified.

@@ -22,7 +22,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/extract/SELinuxSerializer.cs
   - ../wintap/wintap/core/etl/load/RawSensorWriter.cs
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-16
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -60,18 +60,25 @@ and launch the app as described in
 
 The app currently accepts one dataset root. It snapshots source-configuration
 identity in Streamlit session state, but does not store credential material.
-The source setup follows Wintappy's DBT S3 contract.
+The bottom of the sidebar shows the resolved dataset and effective non-secret
+profile/region/endpoint/TLS settings; credential values are hidden. This is a
+configuration summary, not a credential inspector. The source setup follows
+Wintappy's DBT S3 contract.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/s3_source.py §load_settings/open_connection -->
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/main.py §_render_environment_info/main -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/s3.sql §configure_raw_sensor_access -->
 
 ## Query and display semantics
 
-- Each explicit refresh captures the exact rolling 12-hour UTC interval. S3
-  discovery is restricted to intersecting `dayPK=YYYYMMDD/hourPK=HH` partitions;
-  partial boundary hours can result in 13 partitions. Metadata mode uses
-  ListObjectsV2 keys and object sizes only and retains nested network `protoPK`
-  keys. It lists all supported families by default, with a one-family filter.
-  It does not GET/read Parquet content.
+- The default explicit refresh captures the exact rolling 12-hour UTC interval.
+  A custom mode accepts first/last UTC `dayPK/hourPK` partitions, inclusive, and
+  processes full partition hours as `[first-hour, hour-after-last)`. Custom
+  ranges have no duration cap; the UI warns above 24 hours. Both modes restrict
+  discovery to intersecting `dayPK=YYYYMMDD/hourPK=HH` partitions. Partial
+  rolling-window boundary hours can result in 13 partitions. Metadata mode uses
+  ListObjectsV2 keys and object sizes only, retains nested network `protoPK`
+  keys, lists all supported families by default with a one-family filter, and
+  never GETs/reads Parquet content.
 - Metadata filenames use `hostname+event_type+FILETIME.parquet`. The Win32
   FILETIME in the name is the capture/collect timestamp used for the time series;
   S3 `LastModified` is intentionally ignored. Producer materialization also
@@ -103,14 +110,23 @@ The source setup follows Wintappy's DBT S3 contract.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/FileSerializer.cs §HandleSensorEvent; ../wintap/wintap/core/etl/extract/Serializer.cs §GetUnixNowTime; ../wintap/wintap/core/etl/esper/file.epl §query; ../wintap/wintap/core/etl/extract/HostSerializer.cs §GetSendableHost/WriteHostRecordAsync; ../wintap/wintap/core/etl/extract/TcpConnectionSerializer.cs §HandleSensorEvent; ../wintap/wintap/core/etl/extract/UdpPacketSerializer.cs §HandleSensorEvent; ../wintap/wintap/core/etl/extract/SELinuxSerializer.cs §HandleSensorEvent; ../Wintap-PyUtil/wintap_dbt/models/silver/process_file.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql -->
 - In row mode, families with no usable host/time mapping or unreadable schemas
   are skipped with a reason. Rows with null/blank hostnames are counted and
-  reported, not charted. Missing timestamps/partitions are not filled in as zero.
+  reported, not charted.
 - Metadata-mode status identifies object listing and filename/size aggregation;
   row mode reports listing, schema inspection, and timestamp aggregation. Both
   show elapsed time and fail closed without partial charts.
+- Partition enumeration is lazy: metadata mode has at most eight concurrent
+  partition requests, while raw-row glob discovery submits at most 24 hours of
+  partition globs per query. Existing 10,000-object, row, timeout, intermediate
+  group, and 1,000-chart-point budgets still apply to custom ranges.
 - Buckets start at five minutes, are anchored to the refresh window, and widen
-  to fit a 1,000-point view budget. Absolute row counts support linear or
-  logarithmic scaling. Optional row-mode normalization divides each host by its
-  own peak and is a shape comparison, not a volume comparison.
+  to fit a 1,000-point view budget. For each host with at least one accepted
+  observation in the selected window, missing buckets across the full window are
+  filled with zero in both metadata and raw-row charts. Hosts with no qualifying
+  observation cannot be identified and receive no synthetic series. Absolute
+  row counts support linear or symmetric-log scaling, which remains
+  zero-compatible.
+  Optional row-mode normalization divides each host by its own peak and is a
+  shape comparison, not a volume comparison.
 
 Fail-closed limits include 10,000 discovered objects and 1,000 chart points per
 view. Standard row-mode families also have a 2,000,000 timestamped in-window raw-row
@@ -120,10 +136,10 @@ directly in DuckDB, without sampling or materializing raw rows in Python, under 
 and 20,000 intermediate host/time-group limit. All paths fail closed and produce
 no partial chart when a limit is exceeded.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/s3_source.py §MAX_S3_FILES/discover_files -->
-<!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §MAX_ROWS_PER_FAMILY/choose_bucket_minutes/aggregate_family -->
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §MAX_ROWS_PER_FAMILY/choose_bucket_minutes/zero_fill_time_buckets/aggregate_family -->
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §MAX_AGGREGATE_GROUPS/PROCESS_FILE_QUERY_TIMEOUT_SECONDS/PROCESS_FILE_MEMORY_LIMIT/PROCESS_FILE_TEMP_LIMIT/_aggregate_process_file -->
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/main.py §main/_refresh -->
-<!-- GROUND_TRUTH: streamlit/projects/HostActivity/file_metadata.py §parse_file_metadata/aggregate_file_metadata -->
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/file_metadata.py §parse_file_metadata/aggregate_file_metadata; streamlit/projects/HostActivity/queries.py §zero_fill_time_buckets -->
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/RawSensorWriter.cs §MaterializeFromParquetGlob/ParseMergedFileName -->
 <!-- SYNTHESIS: raw Parquet row counts preserve source row grain but do not establish logical-event equivalence across event families -->
 
@@ -138,6 +154,16 @@ eliminates S3 latency.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §aggregate_family -->
 
 ## Verification status
+
+On 2026-11-16, the app-scoped suite passes 52 tests. `AppTest` verifies the
+effective environment info box (credential values hidden), the rolling default,
+and a 25-hour inclusive custom partition range whose exact bounds reach metadata
+discovery with the expected >24-hour warning. Synthetic tests verify both
+metadata and raw-row charts zero-fill missing per-host buckets across the full
+selected interval; duration-aware buckets continue to respect chart budgets.
+Multi-day tests cover lazy/chunked partition enumeration and retained row/object
+budgets. Live S3 custom-range behavior remains unverified.
+The user tested the zero-filled chart behavior and accepted it on 2026-11-16.
 
 On 2026-11-11, 27 focused tests passed in the app-scoped UV environment
 (DuckDB 1.5.6, Streamlit 1.67.0, Altair 6.3.0, Pandas 2.3.3, boto3 1.44.0).
@@ -187,9 +213,12 @@ remain open.
 ## Known limits
 
 This is an availability snapshot, not a completeness, loss, or collector-health
-monitor. Object presence/size does not validate file contents or prove that
-expected data was collected. Late arrivals, absent partitions, malformed names,
-unsupported timestamp encodings, and hostless rows can reduce chart coverage.
+monitor. A zero-filled bucket means no qualifying object/row was returned for
+that observed host and bucket; it is not evidence of true zero activity or
+complete collection. Object presence/size does not validate file contents or
+prove that expected data was collected. Late arrivals, absent partitions,
+malformed names, unsupported timestamp encodings, and hostless rows can reduce
+chart coverage.
 Run tests and launch instructions are maintained in the app's README and the
 feature record:
 [[wiki/work/recent-host-activity-dashboard/verification]].

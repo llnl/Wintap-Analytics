@@ -3,10 +3,11 @@ from __future__ import annotations
 
 import datetime as dt
 import hashlib
+import itertools
 import os
 import re
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from concurrent.futures import FIRST_COMPLETED, ThreadPoolExecutor, wait
 from dataclasses import dataclass
 from urllib.parse import urlsplit
 
@@ -32,7 +33,8 @@ RAW_EVENT_TYPES = (
 )
 
 MAX_S3_FILES = 10_000
-MAX_WINDOW = dt.timedelta(hours=12)
+PARTITION_GLOB_CHUNK_HOURS = 24
+MAX_METADATA_LIST_WORKERS = 8
 UTC = dt.timezone.utc
 
 
@@ -44,6 +46,8 @@ class S3Settings:
     region: str
     endpoint_url: str
     use_ssl: bool
+    dataset_env_name: str
+    region_env_name: str
 
     @property
     def fingerprint(self) -> str:
@@ -115,15 +119,28 @@ def _boolean(value: str, name: str, default: bool) -> bool:
 def load_settings(environ=None) -> S3Settings:
     """Read DBT's dataset and S3 environment variables; no app-specific config."""
     env = os.environ if environ is None else environ
-    dataset = (env.get("WINTAP_DBT_DATASET") or env.get("WINTAP_DATA_ROOT") or "").strip()
-    raw_dataset = (env.get("WINTAP_DBT_RAW_SENSOR_DATASET") or dataset).strip()
+    raw_sensor_dataset = (env.get("WINTAP_DBT_RAW_SENSOR_DATASET") or "").strip()
+    dbt_dataset = (env.get("WINTAP_DBT_DATASET") or "").strip()
+    data_root = (env.get("WINTAP_DATA_ROOT") or "").strip()
+    if raw_sensor_dataset:
+        raw_dataset = raw_sensor_dataset
+        dataset_env_name = "WINTAP_DBT_RAW_SENSOR_DATASET"
+    elif dbt_dataset:
+        raw_dataset = dbt_dataset
+        dataset_env_name = "WINTAP_DBT_DATASET"
+    else:
+        raw_dataset = data_root
+        dataset_env_name = "WINTAP_DATA_ROOT"
     if not raw_dataset:
         raise ValueError(
             "Set WINTAP_DBT_RAW_SENSOR_DATASET (or WINTAP_DBT_DATASET / WINTAP_DATA_ROOT) to an S3 dataset root"
         )
     root = _dataset_root(raw_dataset)
     profile = (env.get("AWS_PROFILE") or "").strip()
-    region = (env.get("AWS_DEFAULT_REGION") or env.get("AWS_REGION") or "").strip()
+    default_region = (env.get("AWS_DEFAULT_REGION") or "").strip()
+    aws_region = (env.get("AWS_REGION") or "").strip()
+    region = default_region or aws_region
+    region_env_name = "AWS_DEFAULT_REGION" if default_region else "AWS_REGION" if aws_region else "(unset)"
     endpoint = _endpoint((env.get("AWS_ENDPOINT_URL") or "").strip())
     use_ssl = _boolean(env.get("DUCKDB_USE_SSL"), "DUCKDB_USE_SSL", True)
     return S3Settings(
@@ -133,6 +150,8 @@ def load_settings(environ=None) -> S3Settings:
         region=region,
         endpoint_url=endpoint,
         use_ssl=use_ssl,
+        dataset_env_name=dataset_env_name,
+        region_env_name=region_env_name,
     )
 
 
@@ -203,38 +222,59 @@ def open_metadata_client(settings: S3Settings):
         ) from None
 
 
-def partition_hours(start: dt.datetime, end: dt.datetime):
-    """Return UTC (YYYYMMDD, HH) partitions intersecting [start, end)."""
+def _partition_bounds(start: dt.datetime, end: dt.datetime):
     if start.tzinfo is None or end.tzinfo is None:
         raise ValueError("Window bounds must include a timezone")
     first = start.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
     exclusive_end = end.astimezone(UTC)
     if exclusive_end <= start.astimezone(UTC):
         raise ValueError("Window end must be after window start")
-    if exclusive_end - start.astimezone(UTC) > MAX_WINDOW:
-        raise ValueError("The dashboard source window is limited to 12 hours")
     last = (exclusive_end - dt.timedelta(microseconds=1)).replace(minute=0, second=0, microsecond=0)
-    result = []
+    return first, last
+
+
+def iter_partition_hours(start: dt.datetime, end: dt.datetime):
+    """Yield UTC (YYYYMMDD, HH) partitions intersecting [start, end) lazily."""
+    first, last = _partition_bounds(start, end)
     current = first
     while current <= last:
-        result.append((current.strftime("%Y%m%d"), current.strftime("%H")))
+        yield (current.strftime("%Y%m%d"), current.strftime("%H"))
         current += dt.timedelta(hours=1)
-    return result
 
 
-def partition_globs(settings: S3Settings, start: dt.datetime, end: dt.datetime,
-                    event_types=RAW_EVENT_TYPES):
-    """Build a bounded list of event/day/hour-specific Parquet globs."""
+def partition_count(start: dt.datetime, end: dt.datetime) -> int:
+    """Count intersecting UTC partitions without building a range-sized list."""
+    first, last = _partition_bounds(start, end)
+    return (last - first) // dt.timedelta(hours=1) + 1
+
+
+def partition_hours(start: dt.datetime, end: dt.datetime):
+    """Return a list of UTC (YYYYMMDD, HH) partitions intersecting [start, end)."""
+    return list(iter_partition_hours(start, end))
+
+
+def _hour_chunks(start: dt.datetime, end: dt.datetime, chunk_size: int):
+    hours = iter_partition_hours(start, end)
+    while chunk := tuple(itertools.islice(hours, chunk_size)):
+        yield chunk
+
+
+def _partition_globs(settings: S3Settings, hours, event_types):
     root = settings.raw_sensor_root.rstrip("/")
-    event_types = tuple(event_types)
-    if any(event not in RAW_EVENT_TYPES for event in event_types):
-        raise ValueError("Unsupported raw_sensor event family")
-    hours = partition_hours(start, end)
     return [
         f"{root}/{event}/dayPK={day}/hourPK={hour}/**/*.parquet"
         for event in event_types
         for day, hour in hours
     ]
+
+
+def partition_globs(settings: S3Settings, start: dt.datetime, end: dt.datetime,
+                    event_types=RAW_EVENT_TYPES):
+    """Build event/day/hour-specific globs; long-range discovery uses chunked calls."""
+    event_types = tuple(event_types)
+    if any(event not in RAW_EVENT_TYPES for event in event_types):
+        raise ValueError("Unsupported raw_sensor event family")
+    return _partition_globs(settings, partition_hours(start, end), event_types)
 
 
 def discover_files(con, settings: S3Settings, start: dt.datetime, end: dt.datetime,
@@ -243,43 +283,45 @@ def discover_files(con, settings: S3Settings, start: dt.datetime, end: dt.dateti
     if not isinstance(max_files, int) or isinstance(max_files, bool) or max_files < 1:
         raise ValueError("S3 file limit must be a positive integer")
     event_types = tuple(dict.fromkeys(event_types))
-    patterns = partition_globs(settings, start, end, event_types=event_types)
-    expected_hours = set(partition_hours(start, end))
-    if not patterns:
+    if any(event not in RAW_EVENT_TYPES for event in event_types):
+        raise ValueError("Unsupported raw_sensor event family")
+    # Validate the range even when no family was selected.
+    _partition_bounds(start, end)
+    if not event_types:
         return {}
-    try:
-        rows = con.execute(
-            "SELECT file FROM glob(?) LIMIT ?", [patterns, max_files + 1]
-        ).fetchall()
-    except Exception:
-        raise RuntimeError("S3 partition listing failed; check read/list access and endpoint settings; details suppressed.") from None
     paths = set()
-    for row in rows:
-        path = row[0]
-        if not isinstance(path, str) or any(char in path for char in "*?[]\\"):
-            raise RuntimeError("S3 object keys contain unsupported wildcard characters")
-        paths.add(path)
-    if len(paths) > max_files:
-        raise ValueError("S3 file limit exceeded; narrow the source or increase MAX_S3_FILES")
-
     by_event = {event: [] for event in event_types}
     marker = settings.raw_sensor_root.rstrip("/") + "/"
+    for hours in _hour_chunks(start, end, PARTITION_GLOB_CHUNK_HOURS):
+        patterns = _partition_globs(settings, hours, event_types)
+        try:
+            rows = con.execute(
+                "SELECT file FROM glob(?) LIMIT ?", [patterns, max_files + 1]
+            ).fetchall()
+        except Exception:
+            raise RuntimeError("S3 partition listing failed; check read/list access and endpoint settings; details suppressed.") from None
+        expected_hours = set(hours)
+        for row in rows:
+            path = row[0]
+            if not isinstance(path, str) or any(char in path for char in "*?[]\\"):
+                raise RuntimeError("S3 object keys contain unsupported wildcard characters")
+            if not path.startswith(marker):
+                raise RuntimeError("S3 listing returned a path outside the configured raw_sensor root")
+            parts = path[len(marker):].split("/")
+            if len(parts) < 4:
+                raise RuntimeError("S3 partition listing returned an unexpected object path")
+            event, day_part, hour_part = parts[:3]
+            day_match = re.fullmatch(r"dayPK=(\d{8})", day_part)
+            hour_match = re.fullmatch(r"hourPK=(\d{2})", hour_part)
+            if (event not in by_event or day_match is None or hour_match is None
+                    or (day_match.group(1), hour_match.group(1)) not in expected_hours
+                    or not parts[-1].endswith(".parquet")):
+                raise RuntimeError("S3 partition listing returned an object outside the requested event/day/hour partitions")
+            paths.add(path)
+            if len(paths) > max_files:
+                raise ValueError("S3 file limit exceeded; narrow the source or increase MAX_S3_FILES")
     for path in sorted(paths):
-        if not path.startswith(marker):
-            raise RuntimeError("S3 listing returned a path outside the configured raw_sensor root")
-        remainder = path[len(marker):]
-        parts = remainder.split("/")
-        if len(parts) < 4:
-            raise RuntimeError("S3 partition listing returned an unexpected object path")
-        event, day_part, hour_part = parts[:3]
-        day_match = re.fullmatch(r"dayPK=(\d{8})", day_part)
-        hour_match = re.fullmatch(r"hourPK=(\d{2})", hour_part)
-        if (event not in by_event or day_match is None or hour_match is None
-                or (day_match.group(1), hour_match.group(1)) not in expected_hours
-                or not parts[-1].endswith(".parquet")):
-            # Never trust a broad/incorrect glob result: file paths are the hard
-            # partition boundary for all subsequent schema and row scans.
-            raise RuntimeError("S3 partition listing returned an object outside the requested event/day/hour partitions")
+        event = path[len(marker):].split("/", 1)[0]
         by_event[event].append(path)
     return {event: tuple(paths) for event, paths in by_event.items() if paths}
 
@@ -298,7 +340,8 @@ def discover_object_metadata(
     event_types = tuple(dict.fromkeys(event_types))
     if any(event not in RAW_EVENT_TYPES for event in event_types):
         raise ValueError("Unsupported raw_sensor event family")
-    hours = partition_hours(start, end)
+    # Validate before starting worker threads; iteration stays lazy for long ranges.
+    _partition_bounds(start, end)
     parsed_root = urlsplit(settings.raw_sensor_root)
     bucket = parsed_root.netloc
     root = parsed_root.path.strip("/")
@@ -342,18 +385,34 @@ def discover_object_metadata(
                 raise RuntimeError("S3 metadata listing returned an incomplete pagination response")
 
     try:
-        with ThreadPoolExecutor(max_workers=8) as executor:
-            futures = [
-                executor.submit(list_partition, event_type, day, hour)
+        with ThreadPoolExecutor(max_workers=MAX_METADATA_LIST_WORKERS) as executor:
+            requests = (
+                (event_type, day, hour)
+                for day, hour in iter_partition_hours(start, end)
                 for event_type in event_types
-                for day, hour in hours
-            ]
+            )
+            pending = set()
+            while len(pending) < MAX_METADATA_LIST_WORKERS:
+                try:
+                    event_type, day, hour = next(requests)
+                except StopIteration:
+                    break
+                pending.add(executor.submit(list_partition, event_type, day, hour))
             try:
-                for future in as_completed(futures):
-                    future.result()
+                while pending:
+                    completed, pending = wait(pending, return_when=FIRST_COMPLETED)
+                    for future in completed:
+                        future.result()
+                        if stop_listing.is_set():
+                            continue
+                        try:
+                            event_type, day, hour = next(requests)
+                        except StopIteration:
+                            continue
+                        pending.add(executor.submit(list_partition, event_type, day, hour))
             except Exception:
                 stop_listing.set()
-                for future in futures:
+                for future in pending:
                     future.cancel()
                 raise
     except ValueError:
@@ -361,6 +420,7 @@ def discover_object_metadata(
     except RuntimeError:
         raise
     except Exception:
+        stop_listing.set()
         raise RuntimeError(
             "S3 metadata listing failed; check read/list access, connectivity, and endpoint settings; details suppressed."
         ) from None

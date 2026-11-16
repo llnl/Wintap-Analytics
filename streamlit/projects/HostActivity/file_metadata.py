@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import datetime as dt
+import math
 from dataclasses import dataclass
 from pathlib import PurePosixPath
 
-from queries import MAX_CHART_POINTS, choose_bucket_minutes
+from queries import MAX_CHART_POINTS, choose_bucket_minutes, zero_fill_time_buckets
 from s3_source import S3ObjectMetadata
 
 
@@ -132,7 +133,8 @@ def aggregate_file_metadata(
         stats["latest_collect"] = max(stats["latest_collect"], file.collect_time)
 
     host_count = len(host_stats)
-    bucket_minutes = choose_bucket_minutes(host_count, point_budget)
+    window_minutes = max(1, math.ceil((end_utc - start_utc).total_seconds() / 60))
+    bucket_minutes = choose_bucket_minutes(host_count, point_budget, window_minutes)
     grouped = {}
     for file in accepted:
         elapsed_minutes = (file.collect_time - start_utc).total_seconds() / 60
@@ -145,15 +147,17 @@ def aggregate_file_metadata(
         stats["file_count"] += 1
         stats["size_bytes"] += file.size_bytes
 
-    if len(grouped) > point_budget:
-        raise ValueError(f"Chart point budget exceeded ({point_budget:,} points); no chart was produced")
-
     host_summary = tuple(
         sorted(host_stats.values(), key=lambda item: (-item["file_count"], item["hostname"]))
     )
-    points = tuple(
-        grouped[key]
-        for key in sorted(grouped)
+    points = zero_fill_time_buckets(
+        grouped.values(),
+        host_stats,
+        start_utc,
+        end_utc,
+        bucket_minutes,
+        ("file_count", "size_bytes"),
+        point_budget,
     )
     return FileMetadataResult(
         listed_files=listed_files,

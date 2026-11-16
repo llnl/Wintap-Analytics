@@ -17,7 +17,7 @@ from s3_source import (
     load_settings,
     open_connection,
     open_metadata_client,
-    partition_hours,
+    partition_count,
 )
 from status_views import LIVE_WARNING, render as render_status_view
 
@@ -29,7 +29,45 @@ def _iso(value):
     return value.isoformat() if hasattr(value, "isoformat") else value
 
 
-def _refresh(query_mode, event_type):
+def _window_bounds(range_mode, *, now=None, start_day=None, start_hour=None, end_day=None, end_hour=None):
+    if range_mode == "Last 12 hours":
+        end = now or dt.datetime.now(UTC)
+        return end - dt.timedelta(hours=12), end
+    if range_mode != "Custom dayPK/hourPK range":
+        raise ValueError("Select a supported time range")
+    if start_day is None or start_hour is None or end_day is None or end_hour is None:
+        raise ValueError("Select both the first and last UTC dayPK/hourPK partitions")
+    start = dt.datetime.combine(start_day, dt.time(int(start_hour), tzinfo=UTC))
+    last_hour = dt.datetime.combine(end_day, dt.time(int(end_hour), tzinfo=UTC))
+    if last_hour < start:
+        raise ValueError("The last dayPK/hourPK partition must not be before the first")
+    # The selected end partition is inclusive; all processing uses [start, end).
+    try:
+        return start, last_hour + dt.timedelta(hours=1)
+    except OverflowError:
+        raise ValueError("The selected last partition is outside the supported UTC date range") from None
+
+
+def _render_environment_info(settings):
+    st.subheader("Activity source environment")
+    if settings is None:
+        st.info("Source settings are unavailable or invalid.")
+        return
+    region_name = settings.region_env_name
+    if region_name == "(unset)":
+        region_name = "AWS_DEFAULT_REGION / AWS_REGION"
+    lines = [
+        f"- `{settings.dataset_env_name}`: `{settings.dataset_root}`",
+        f"- `AWS_PROFILE`: `{settings.profile or '(default credential chain)'}`",
+        f"- `{region_name}`: `{settings.region or '(unset)'}`",
+        f"- `AWS_ENDPOINT_URL`: `{settings.endpoint_url or '(AWS default endpoint)'}`",
+        f"- `DUCKDB_USE_SSL`: `{str(settings.use_ssl).lower()}`",
+        "- Credential values: hidden",
+    ]
+    st.info("\n".join(lines))
+
+
+def _refresh(query_mode, event_type, start, end, range_mode, range_key):
     try:
         settings = load_settings()
     except ValueError as exc:
@@ -37,8 +75,6 @@ def _refresh(query_mode, event_type):
         st.error(str(exc))
         return
 
-    end = dt.datetime.now(UTC)
-    start = end - dt.timedelta(hours=12)
     refresh_started = time.perf_counter()
     if event_type == "__all__":
         status_label = "all-family file metadata"
@@ -51,10 +87,12 @@ def _refresh(query_mode, event_type):
         "settings_fingerprint": settings.fingerprint,
         "query_mode": query_mode,
         "event_type": event_type,
+        "range_mode": range_mode,
+        "range_key": range_key,
         "start": start.isoformat(),
         "end": end.isoformat(),
         "refreshed": end.isoformat(),
-        "partition_count": len(partition_hours(start, end)),
+        "partition_count": partition_count(start, end),
         "results": {},
         "skipped": {},
         "file_count": 0,
@@ -189,7 +227,7 @@ def _chart(result, selected_hosts, normalized, log_scale):
             y=alt.Y(
                 f"{value_column}:Q",
                 title=title,
-                scale=alt.Scale(type="log" if log_scale and not normalized else "linear", zero=False),
+                scale=alt.Scale(type="symlog" if log_scale and not normalized else "linear", zero=True),
             ),
             color=alt.Color("hostname:N", title="Hostname"),
             tooltip=[
@@ -264,7 +302,8 @@ def _render_file_metadata(metadata, host_selector):
     selected_hosts = host_selector.multiselect("Hosts", host_names, default=host_names)
     st.caption(
         f"Filename FILETIME is the collect-time basis; S3 LastModified/upload time is ignored. "
-        f"Bucket width: {metadata['bucket_minutes']} minutes. S3 object sizes are reported in MiB (1 MiB = 1,048,576 bytes)."
+        f"Bucket width: {metadata['bucket_minutes']} minutes. Missing buckets for observed hosts are plotted as zero; this is not a completeness assertion. "
+        "S3 object sizes are reported in MiB (1 MiB = 1,048,576 bytes)."
     )
     visible_summary = [host for host in summary if host["hostname"] in selected_hosts]
     summary_frame = pd.DataFrame([
@@ -294,6 +333,12 @@ def main():
     with st.sidebar:
         view = st.selectbox("View", ("Activity", "Status", "Runs", "Partitions"))
     if view != "Activity":
+        try:
+            settings = load_settings()
+        except ValueError:
+            settings = None
+        with st.sidebar:
+            _render_environment_info(settings)
         render_status_view(view, st)
         return
     st.warning(LIVE_WARNING)
@@ -303,6 +348,7 @@ def main():
         settings = load_settings()
         fingerprint = settings.fingerprint
     except ValueError as exc:
+        settings = None
         fingerprint = None
         st.error(str(exc))
 
@@ -310,6 +356,51 @@ def main():
         st.subheader("Source")
         st.caption("Uses DBT dataset/AWS variables and the standard AWS credential chain.")
         query_mode = st.radio("Query mode", ("File metadata", "Raw Parquet rows"), index=0)
+        range_mode = st.radio("Time range", ("Last 12 hours", "Custom dayPK/hourPK range"), index=0)
+        range_values = {}
+        now = dt.datetime.now(UTC)
+        if range_mode == "Custom dayPK/hourPK range":
+            hour_options = tuple(f"{hour:02d}" for hour in range(24))
+            default_end_hour = now.replace(minute=0, second=0, microsecond=0)
+            default_start_hour = default_end_hour - dt.timedelta(hours=11)
+            range_values["start_day"] = st.date_input(
+                "First dayPK (UTC)",
+                value=default_start_hour.date(),
+                min_value=dt.date.min,
+                max_value=dt.date.max,
+                key="custom_start_day",
+            )
+            range_values["start_hour"] = st.selectbox(
+                "First hourPK (UTC)", hour_options, index=default_start_hour.hour, key="custom_start_hour"
+            )
+            range_values["end_day"] = st.date_input(
+                "Last dayPK (UTC)",
+                value=default_end_hour.date(),
+                min_value=dt.date.min,
+                max_value=dt.date.max,
+                key="custom_end_day",
+            )
+            range_values["end_hour"] = st.selectbox(
+                "Last hourPK (UTC)", hour_options, index=default_end_hour.hour, key="custom_end_hour"
+            )
+        range_error = None
+        try:
+            start, end = _window_bounds(range_mode, now=now, **range_values)
+            range_key = (
+                "last_12_hours"
+                if range_mode == "Last 12 hours"
+                else f"{start.isoformat()}/{end.isoformat()}"
+            )
+        except (TypeError, ValueError) as exc:
+            start = end = None
+            range_key = None
+            range_error = str(exc)
+        if range_error:
+            st.error(range_error)
+        elif range_mode == "Custom dayPK/hourPK range":
+            if end - start > dt.timedelta(hours=24):
+                st.warning("Ranges over 24 hours may take longer and can hit existing query limits.")
+            st.caption("The selected first and last UTC dayPK/hourPK partitions are both included.")
         family_names = {label: event for event, label in EVENT_LABELS.items()}
         family_labels = sorted(family_names)
         if query_mode == "File metadata":
@@ -322,19 +413,31 @@ def main():
             default_index = family_labels.index(default_label)
             selected_label = st.selectbox("Event family", family_labels, index=default_index)
             selected_event = family_names[selected_label]
-        refresh = st.button("Refresh last 12 hours", type="primary", use_container_width=True)
-        st.caption("Changing query/family selection does not access S3; click Refresh to load a new snapshot.")
+        refresh_label = "Refresh last 12 hours" if range_mode == "Last 12 hours" else "Refresh selected range"
+        refresh = st.button(
+            refresh_label,
+            type="primary",
+            use_container_width=True,
+            disabled=range_error is not None,
+        )
+        st.caption("Changing query/family/range selection does not access S3; click Refresh to load a new snapshot.")
         st.divider()
         host_selector = st.empty()
         if query_mode == "Raw Parquet rows":
             normalized = st.checkbox("Normalize each host to its own peak", value=False)
-            log_scale = st.checkbox("Logarithmic absolute scale", value=False, disabled=normalized)
+            log_scale = st.checkbox(
+                "Symmetric logarithmic absolute scale",
+                value=False,
+                disabled=normalized,
+                help="Zero-compatible scale keeps zero-filled gap buckets visible.",
+            )
         else:
             normalized = False
             log_scale = False
+        _render_environment_info(settings)
 
     if refresh:
-        _refresh(query_mode, selected_event)
+        _refresh(query_mode, selected_event, start, end, range_mode, range_key)
 
     snapshot = st.session_state.get("host_activity_snapshot")
     if snapshot is None:
@@ -342,13 +445,17 @@ def main():
             selection_text = "all event families"
         else:
             selection_text = EVENT_LABELS[selected_event]
-        st.info(f"Select **Refresh last 12 hours** to load **{selection_text}** in **{query_mode}** mode.")
+        st.info(f"Select **{refresh_label}** to load **{selection_text}** in **{query_mode}** mode.")
         return
     if fingerprint is None or snapshot["settings_fingerprint"] != fingerprint:
         st.warning("The source configuration changed since this snapshot. Refresh before viewing its results.")
         return
-    if snapshot.get("query_mode") != query_mode or snapshot.get("event_type") != selected_event:
-        st.info("This snapshot does not match the selected query/family. Click **Refresh last 12 hours** to load it.")
+    if (
+        snapshot.get("query_mode") != query_mode
+        or snapshot.get("event_type") != selected_event
+        or snapshot.get("range_key") != range_key
+    ):
+        st.info(f"This snapshot does not match the selected query/family/range. Click **{refresh_label}** to load it.")
         return
     if snapshot.get("error"):
         st.error(snapshot["error"])
@@ -367,7 +474,7 @@ def main():
     if query_mode == "File metadata":
         st.caption(
             f"S3 metadata listing: {snapshot['partition_count']} overlapping UTC day/hour partitions; "
-            "the filename FILETIME is then filtered to the exact rolling 12-hour interval."
+            "the filename FILETIME is then filtered to the exact selected interval."
         )
         if snapshot["file_count"] == 0:
             st.info("No Parquet objects were found for the selected family set in the relevant day/hour partitions.")
@@ -378,7 +485,7 @@ def main():
 
     st.caption(
         f"Coarse S3 scan: {snapshot['partition_count']} overlapping UTC day/hour partitions; "
-        "event timestamps are then filtered to the exact rolling 12-hour interval."
+        "event timestamps are then filtered to the exact selected interval."
     )
     timestamp_sources = snapshot.get("timestamp_sources", ())
     if timestamp_sources:
@@ -424,10 +531,13 @@ def main():
         return
     host_names = sorted({point["hostname"] for point in family["points"]})
     selected_hosts = host_selector.multiselect("Hosts", host_names, default=host_names)
+    st.caption("Missing time buckets for hosts with returned data are plotted as zero. This helps show gaps but does not prove complete collection.")
     if normalized:
         st.caption("Relative values are each host's raw-row count divided by its own maximum; volume comparisons are intentionally removed.")
     else:
-        st.caption("Y-axis: raw Parquet rows per time bucket. No rows are synthesized for gaps.")
+        st.caption("Y-axis: raw Parquet rows per time bucket.")
+        if log_scale:
+            st.caption("The symmetric logarithmic scale is zero-compatible, so zero-filled gaps remain visible.")
     st.caption(
         f"Bucket width: {family['bucket_minutes']} minutes  •  "
         f"Hostnames: {family['host_count']:,}  •  "
@@ -457,7 +567,7 @@ def main():
         )
         _chart(result, selected_hosts, normalized, log_scale)
 
-    st.caption("Missing partitions, late arrivals, and rows without usable timestamps are not interpreted as zero activity or collector health.")
+    st.caption("Hosts with no usable timestamp in this interval cannot be plotted. A zero-filled bucket means no qualifying rows were returned for that observed host and bucket; it is not a collector-health or completeness assertion.")
 
 
 if __name__ == "__main__":

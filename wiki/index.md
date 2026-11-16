@@ -92,14 +92,20 @@ UDP and endpoint observations; dedicated native clone passes with the optional h
 
 Recent Host Activity dashboard: [[wiki/tool/recent-host-activity-dashboard]] —
 standalone Streamlit direct-S3 view using DBT's existing dataset/AWS environment
-variables, without invoking DBT. The default file-metadata mode lists object
-keys/sizes (no Parquet reads), parses filename Win32 FILETIME as collect time,
-and reports per-host counts and sizes; raw-row DuckDB analysis remains optional.
-The unchanged raw baseline passed 27 tests; the implemented advisory/navigation
-extension now passes 46 offline tests, including real Streamlit controls. Pinned
-local v1 Status/raw intent Runs need no ledger/lock/SDK/data reads; Partitions is
-explicitly unavailable, not zero. Full catalog/timeline, compacted/entity access and
-managed live/coordinated lifecycles remain pending. Live metadata-mode performance
+variables, without invoking DBT. It defaults to a rolling 12-hour range and now
+supports arbitrary inclusive UTC `dayPK/hourPK` ranges (warning above 24 hours),
+with lazy/chunked listing and the existing fail-closed budgets. A bottom-of-sidebar
+box shows effective non-secret environment settings. The default file-metadata
+mode lists object keys/sizes (no Parquet reads), parses filename Win32 FILETIME
+as collect time,
+and reports per-host counts and sizes; missing per-host buckets are zero-filled
+in both chart modes, but zeros are not completeness evidence. Raw-row DuckDB
+analysis remains optional. The current app suite passes 52 offline tests,
+including real Streamlit controls.
+Pinned local v1 Status/raw-intent Runs need no ledger/lock/SDK/data reads;
+Partitions is explicitly unavailable, not zero. Full catalog/timeline,
+compacted/entity access and managed live/coordinated lifecycles remain pending.
+Live metadata-mode performance
 remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
 20 seconds); standard families retain the 2-million-row cap.
