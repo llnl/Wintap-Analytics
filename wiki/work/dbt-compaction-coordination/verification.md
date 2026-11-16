@@ -5104,3 +5104,33 @@ production DBT, representative resources, service deployment, native-Mac backend
 acceptance or rollout.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_service.py; ../Wintap-PyUtil/tests/test_coordination_client.py; ../Wintap-PyUtil/tests/test_coordination_linux_lifecycle.py; ../Wintap-PyUtil/tests/test_coordination_local_route.py; ../Wintap-PyUtil/tests/test_coordination_recovery.py; ../Wintap-PyUtil/tests/test_coordination_maintenance.py; ../Wintap-PyUtil/tests/test_coordination_deletion_recovery.py; ../Wintap-PyUtil/tests/test_coordination_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_controls.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_history.py; ../Wintap-PyUtil/tests/test_coordination_intentional_retry_credentials.py; ../Wintap-PyUtil/tests/test_coordination_entity_service.py; ../Wintap-PyUtil/tests/test_coordination_supervisor.py; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §_config/run_supervised; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_unsupported_writer_supervision_refuses_launch_and_tick_stays_blocked; ../Wintap-PyUtil/wintappy/coordination/README.md §Linux command-tree supervision -->
+
+## Authorized reader-scope dispatch repair — affected regression active
+
+After the reproduced main-suite failure, the human authorized a narrow detached-tree
+change only: generic `run_supervised` remains Linux-only, while a separate
+`run_reader_supervised` entry point may select the existing Darwin backend. The
+coordinated reader uses that entry point both for initial configuration and retained
+invocation validation; generic writer call sites are unchanged. Native-Mac lifecycle
+helpers and subprocess controls now call the reader API. The cross-platform tick test
+keeps the Darwin no-launch/no-artifact writer refusal and stubs the reader backend to
+prove the API boundary. `README.md` and `MACOS.md` document the boundary.
+
+The new boundary control had a retained red run (the entry point did not yet exist).
+An initial combined focused run then exposed a test-harness issue: monkeypatching the
+process-global `sys.platform` to `darwin` across a tick caused a lazy standard-library
+`urllib` import to seek `_scproxy`. The control now restores the native platform around
+tick setup and spoofs it only during the writer callback. Corrected focused run passes
+**83 tests with 12 expected native-Mac skips** in **12.66 s** across the tick controls,
+client, supervisor, and native-Mac test modules. Ruff and py_compile pass; Black 26.5.1
+passes on the changed runtime modules and native-Mac test. Black check across the older
+client/tick/supervisor test files reports existing file-wide formatting drift; no
+whole-file reformat was applied.
+
+The authorized source diff is frozen at base `c549424b6cf507f33dee301d85bd9e0aeb082e1b`
+with private diff digest `fe86456c0e5e050bb396eea15ae4a1f457787b098374b2b17794cb36ddc82874`.
+The 15-module affected Linux regression is active with an isolated environment and AWS
+configuration/credentials disabled. Await its complete report and source-freeze check
+before running current-tree full main and standalone regressions. The correction has
+not yet been accepted; native-Mac execution remains unverified for these edits.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_macos_supervision_dispatch_is_explicitly_reader_scoped; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->

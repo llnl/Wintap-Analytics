@@ -30,6 +30,17 @@ passes 695/two expected opt-in S3 skips. The complete second full report is revi
 the original cleanup failure remains preserved. Candidate acceptance remains blocked
 by the main-suite Darwin scope regression; no PR, endpoint/data access or deployment.
 
+## [2026-11-15] code | authorized reader-only macOS dispatch repair
+
+With explicit human authorization, the detached PyUtil candidate now separates
+Linux-only generic/writer supervision from the reader-scoped macOS entry point and
+wires only the coordinated reader through the latter. Native lifecycle tests/docs were
+updated; the Darwin writer-refusal control is preserved. The corrected focused Linux
+gate passes 83 with 12 expected native-Mac skips. An earlier test harness accidentally
+held a `darwin` platform spoof across lazy imports; that report is retained and the
+test now scopes its spoof to the writer callback. The affected suite is running before
+any full current-tree suites. No PR/push, S3, real-data or deployment activity.
+
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 
 The Wintap-PyUtil entity update path now uses DuckDB 2.0.0 relations and SQL
