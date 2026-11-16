@@ -60,6 +60,18 @@ unpushed. Local Linux affected/main/standalone gates pass as recorded in the fea
 verification. Native-Mac lifecycle controls are the next platform-specific step; no
 PR, push, S3/real-data access, or deployment occurred.
 
+## [2026-11-16] verification | historical S3 window inventory
+
+Using the human-authorized existing raw-data scope, a metadata-only listing found 16
+event-family directories and 526 distinct UTC hours; the oldest is 2026-10-25 19:00Z.
+The proposed first batch is three hours, [19:00Z, 22:00Z), with 1/8/8 family partitions
+and 1/109/118 listed Parquet objects (7,317/4,979,975/4,881,446 bytes). `raw_process`
+is absent in the oldest hour and present in each of the next two. Output-prefix checks
+found the conventional compacted/entity/metrics/coordination prefixes empty. This was
+listing metadata only—no object bodies, writes, or deletes; no compaction/entity/DBT run
+has started. The sensor-version attribution is human-provided. Detailed limits are in
+[[wiki/work/dbt-compaction-coordination/verification#Initial historical-window inventory — 2026-11-16]].
+
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 
 The Wintap-PyUtil entity update path now uses DuckDB 2.0.0 relations and SQL

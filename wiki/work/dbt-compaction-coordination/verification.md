@@ -5189,3 +5189,23 @@ DBT/data, actual S3, production-service transport, representative resources, dep
 or broader backend support. No PyUtil source was changed in this verification; existing
 untracked local environment files were preserved.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_macos_supervision_dispatch_is_explicitly_reader_scoped -->
+
+## Initial historical-window inventory — 2026-11-16
+
+Following the human's development-data scope direction, a metadata-only S3 listing
+used the existing configured raw-dataset prefix and profile. It found 16 event-family
+directories and 526 distinct UTC hour partitions; the oldest is **2026-10-25
+19:00Z**. The first three contiguous hours are **[2026-10-25 19:00Z, 22:00Z)**.
+They contain 1, 8, and 8 event-family partitions, respectively. Their listed Parquet
+metadata totals are 1/109/118 objects and 7,317/4,979,975/4,881,446 bytes. The oldest
+hour has no `raw_process` Parquet object; each following hour has 24. This makes the
+first three-hour window a small candidate for the initial iteration, while its sparse
+oldest hour must remain visible in results.
+
+The listing read no object bodies and performed no S3 writes or deletes. The conventional
+compacted, process-entity, processing-metrics and coordination prefixes were empty at
+inspection. The v7.0.1 attribution is human-provided, not independently established by
+the listing. No DBT build, entity initialization or compaction has run yet; the inventory
+does not establish late-upload quiescence or authorize changes outside the selected
+window.
+<!-- SOURCE: Human-provided data scope and metadata-only configured-S3 inventory, conversation 2026-11-16. -->
