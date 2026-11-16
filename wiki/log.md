@@ -51,6 +51,15 @@ likely filesystem-interference evidence. All local Linux regression gates now pa
 native-Mac execution and broader operational acceptance remain open. No PR/push, S3,
 real-data or deployment activity.
 
+## [2026-11-16] code | local reader-scope commit milestone
+
+Committed the authorized reader-only supervision fix in the detached PyUtil candidate
+as `badb67f2f4d767ea28f17459ff75422a0506f493` (`fix: scope macOS supervision to
+coordinated readers`). The candidate worktree is clean; the change remains local and
+unpushed. Local Linux affected/main/standalone gates pass as recorded in the feature
+verification. Native-Mac lifecycle controls are the next platform-specific step; no
+PR, push, S3/real-data access, or deployment occurred.
+
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 
 The Wintap-PyUtil entity update path now uses DuckDB 2.0.0 relations and SQL

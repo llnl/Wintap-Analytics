@@ -5153,4 +5153,9 @@ interaction with the home-backed temporary filesystem. Both failing reports and 
 successful tmpfs report are retained. Post-run source identity still matches the freeze.
 The local Linux affected/full-main/full-standalone gates now pass. Native-Mac execution
 of these edits and actual S3/data/resource/service/deployment acceptance remain open.
+The reviewed source/test/documentation diff was then committed locally in the detached
+PyUtil candidate as `badb67f2f4d767ea28f17459ff75422a0506f493`
+(`fix: scope macOS supervision to coordinated readers`). The candidate worktree is
+clean at that commit. It has not been pushed; native-Mac lifecycle verification remains
+the next platform-specific gate.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_macos_supervision_dispatch_is_explicitly_reader_scoped; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->

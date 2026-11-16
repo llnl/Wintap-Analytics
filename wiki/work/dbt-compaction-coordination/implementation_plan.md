@@ -1594,7 +1594,10 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   final source identity were reviewed. Both failures remain preserved as likely
   filesystem-interference evidence, not discarded. Local Linux affected/main/standalone
   gates pass. Native-Mac execution remains unverified, and operational acceptance for
-  S3/data/resources/service/deployment remains open.
+  S3/data/resources/service/deployment remains open. The reader-scope fix is committed
+  locally in the detached candidate as `badb67f2f4d767ea28f17459ff75422a0506f493`;
+  the candidate is clean and the commit is not pushed. Run the native-Mac lifecycle
+  controls as the next platform-specific gate.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean
