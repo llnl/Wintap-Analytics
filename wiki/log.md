@@ -42,8 +42,11 @@ test now scopes its spoof to the writer callback. The complete coordination tick
 passes 53 tests; the 15-module affected regression passes 341 with 12 expected Mac
 skips, and the frozen source diff authenticates unchanged after the run. Full main then
 passes 1521 with 15 declared skips in 6397.74 s; all skip reasons were inspected and no
-S3 opt-in was set. The correctly rooted standalone full run is now active. No PR/push,
-S3, real-data or deployment activity.
+S3 opt-in was set. The correctly rooted standalone full run hit the same temp-directory
+cleanup error after the expected byte-budget refusal (694 passed/two skipped); the
+failing control passes alone using local `/dev/shm` temp. A complete standalone retry
+uses local tmpfs for both TMPDIR and pytest base. No PR/push, S3, real-data or deployment
+activity.
 
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 

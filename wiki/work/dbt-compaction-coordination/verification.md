@@ -5138,8 +5138,16 @@ failure/error. The private post-run source-freeze check exactly matches the reco
 base and diff digest. The separate complete tick module also passes 53. The full main
 suite then passes **1521 tests with 15 expected skips** in **6397.74 s**; the full
 39-line report is reviewed. The skips are two explicit local/S3 migration opt-ins, 12
-native-Mac-only controls, and the synthetic S3-write control. The standalone full suite
-is now running from its project directory with fresh home/temp/base directories and
-AWS configuration and credentials disabled. The correction has not yet been accepted;
-native-Mac execution remains unverified for these edits.
+native-Mac-only controls, and the synthetic S3-write control. The current-tree standalone
+full suite from its correct project directory again finishes **694 passed, two expected
+opt-in S3 skips and one failure** in **445.00 s**. The sole failure repeats
+`test_byte_budget_failure_before_publication`: after the expected entity-snapshot byte-
+budget exception, `TemporaryDirectory` cleanup reports `OSError: [Errno 39] Directory
+not empty` for its process-entities temp directory; inspection immediately afterward
+finds it empty. The same test passes alone in a fresh `/dev/shm` TMPDIR (one passed in
+0.60 s). As a diagnostic for network-filesystem temp cleanup interference, a complete
+standalone rerun is active with both TMPDIR and pytest base directory on `/dev/shm`,
+fresh isolated home paths, and AWS configuration/credentials disabled. The source digest
+still matches the freeze. This standalone gate is unresolved; the correction has not
+been accepted, and native-Mac execution remains unverified for these edits.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_macos_supervision_dispatch_is_explicitly_reader_scoped; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py -->

@@ -1585,9 +1585,13 @@ process-group rule remains the selected risk boundary, not broad Mac acceptance.
   remains Linux-only, and focused controls pass 83/12 plus the complete tick module 53.
   The 15-module affected Linux report passes 341/12, and the source-freeze identity
   matches after execution. Full main passes 1521/15 in 6397.74 s with AWS and all
-  opt-ins disabled. The standalone full suite is active from its own project directory;
-  review that report and final source identity before accepting the local gates. Native-
-  Mac execution remains separately unverified.
+  opt-ins disabled. The correct-root standalone run has one repeated TemporaryDirectory
+  cleanup error after the expected byte-budget refusal (694 passed/two skipped); the
+  temp directory is empty afterward, and the failing control passes alone with local
+  `/dev/shm` TMPDIR. A fresh complete standalone run now uses `/dev/shm` for TMPDIR and
+  pytest base to distinguish filesystem cleanup interference. Review that report and
+  final source identity before accepting the local gates. Native-Mac execution remains
+  separately unverified.
 - [ ] Implement and independently qualify the still-open original-bound entity
   pending-publication repair and missing-original migration/deletion cases.
   Never synthesize missing original evidence or convert partial history into clean
