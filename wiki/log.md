@@ -9070,6 +9070,13 @@ worksheet's existing review gate remains active for runner, private roots/access
 mutation scope and resource ceilings.
 <!-- SOURCE: Current native-Mac DBT handoff and candidate selection, conversation 2026-11-17. -->
 
+## [2026-11-17] index | compaction rollup refreshed
+
+Refreshed the wiki index rollup with the closed Linux ten-tick/DBT evidence and the
+active-but-unreturned native-Mac reader workstream. The index now points directly to
+the remaining M0 private scope review gate and does not imply DCC-E2E-01 acceptance.
+<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
+
 ## [2026-11-17] plan | active candidate references corrected
 
 Corrected the compaction brief and integration sequence so historical `badb67f`

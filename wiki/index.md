@@ -368,6 +368,14 @@ The approved Linux-runner assignment is in
 the human handles delivery. Strict upload-time UTC client enforcement and downstream
 delayed-data semantics are separate later tasks, not pilot prerequisites.
 
+**Current compaction boundary — November 17:** Linux reached 07:00Z after ten
+independently verified deletion-enabled ticks, and the current isolated DBT gate is
+146/146 build, 87/87 explicit tests and 57 focused DBT/entity regressions. Native-
+Mac DBT is now active in parallel as a reader-only workstream under the updated
+handoff, but no real-data Mac result or reader/writer overlap evidence has returned.
+DCC-E2E-01 remains open; the concrete private runner/data/access/mutation scope is
+still the M0 review gate in [[wiki/work/dbt-compaction-coordination/isolated-qualification]].
+
 The plan now includes the downstream source-mode contract for raw-only,
 compacted-only, mixed, DBT DuckDB and entity-aware reads. It scopes HostActivity
 changes for source/coverage labeling, preserves SmokeTests as raw-producer-evidence
