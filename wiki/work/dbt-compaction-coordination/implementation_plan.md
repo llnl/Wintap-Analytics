@@ -85,7 +85,54 @@ handoff. Strict upload-time UTC client enforcement and downstream delayed-data
 implications are separate later tasks, not pilot prerequisites; current uploader
 compliance must not be assumed. The active assignment is in
 [[wiki/work/dbt-compaction-coordination/dev_handoff#Active Linux-runner assignment — DCC-E2E-01]].
+The first bounded real-data window exposed and authorized a local PyUtil correction for
+no-deletion checkpoint status; its affected regressions passed. The human chose deletion
+over repair: all data and run state for [19:00Z, 22:00Z) were removed and verified
+absent. The confirmed block, [2026-10-25 22:00Z, 2026-10-26 01:00Z), has a fresh v5
+ledger, completed entity initialization, and three verified hourly compactions with raw
+deletion disabled. Entity-aware Linux DBT passed from a private immutable local snapshot
+using a read-only localhost mirror and the original authority bindings; this is offline
+replay evidence, not coordinated-reader or live-S3 qualification. With Mac evidence
+deferred and catch-up authorized, the two earlier continuation hours [01:00Z, 03:00Z)
+completed with raw deletion disabled. Deletion-enabled service ticks completed
+[03:00Z, 19:00Z), each independently verified; the raw-only DBT baseline for
+04:00Z–05:00Z passed (54 models, 84 tests, no failures/skips). Four further ticks
+[15:00Z, 19:00Z) have monotonic production-path timings. The attempted 19:00Z–20:00Z
+tick failed closed and left the ledger BLOCKED at 19:00Z with an active unresolved run;
+read-only phase evidence reports an observed host not explicitly initialized/expected,
+status 2, and no completed migration or S3 output/deletion. The human clarified that any
+host with data in the hour is valid. Classify the cause as a deterministic
+implementation/requirements mismatch, not invalid input or a transient runtime failure.
+Read-only raw-process review found one host in each compacted
+hour 15:00Z–18:00Z and two in raw hours 19:00Z and 20:00Z. The additional host has
+19:00Z-hour process events from the hour's first second, with older event timestamps
+back to September; this is not evidence of a first appearance mid-hour or the actual
+online time. The PyUtil implementation now supports first-seen hosts from observed
+hourly input: host membership is dynamic, new snapshots use the first observed
+partition as bootstrap provenance, authority host evidence grows cumulatively, and
+completion/checkpoint validation follows retained receipt host sets. Identity/lifecycle
+validation and bounded host discovery remain enforced. Focused tests and the full
+compactor suite passed (**700 passed, 2 skipped**); Ruff passed for changed production
+modules. No retry or ledger change was performed; keep the execution disposition
+BLOCKED.
+Current retry/replay gates do not cover this run and no supported recovery path has been
+established. Coordinated DBT remains gated pending authorized resolution; native-Mac DBT
+remains deferred. Coarse and monotonic throughput samples, the failure taxonomy and stop
+evidence are in verification. The no-deletion fix remains local and uncommitted;
+incomplete repair-path edits were removed. See
+[[wiki/work/dbt-compaction-coordination/verification#Confirmed next block and entity-aware Linux DBT snapshot replay — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Linux-only one-hour continuation — 01:00Z–02:00Z — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Second Linux-only one-hour continuation — 02:00Z–03:00Z — 2026-11-16]].
+
+The next fresh qualification exposed a second dynamic-host boundary: standalone
+publication accepted the cumulative observed host set, but the main coordinated
+entity-completion validator still required the original configured seed list. That
+disposable scope was deleted after diagnosis under explicit operator direction; it
+was not retried or continued. The main completion contract was corrected and
+regression-tested, and a fresh next-hour scope then completed one coordinated Linux
+hour successfully. Verify that hour before advancing further.
 <!-- SOURCE: Human planner-role direction and development-data clarification, conversation 2026-11-16. -->
+<!-- SOURCE: Authorized PyUtil fix and bounded-run status, conversation 2026-11-16. -->
 
 ## Scope
 

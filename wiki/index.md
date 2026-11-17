@@ -322,8 +322,28 @@ creation, hourly compaction and Linux/Mac DBT clients over successive hours, wit
 impact-based defect triage. Comprehensive recovery/old-data preservation and unchanged
 full-suite repeats no longer precede the pilot; ownership/privacy/correctness stay.
 Concrete runner/data/access/mutation scope remains to be selected in
-[[wiki/work/dbt-compaction-coordination/isolated-qualification]]. No execution or
-production acceptance is claimed by the plan.
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]]. The plan itself does
+not claim execution or production acceptance. The confirmed 2026-10-25 22:00Z–
+2026-10-26 01:00Z block has completed entity initialization and three no-deletion
+hourly compactions; entity-aware Linux DBT passed against an immutable local snapshot
+through a read-only localhost mirror (59 models/85 tests). This is offline replay only.
+The two no-deletion continuation hours (01:00Z–03:00Z), followed by independently
+verified deletion-enabled compaction through 19:00Z, have completed. The raw-only DBT
+baseline for 04:00Z–05:00Z passed, with coarse and monotonic processing-throughput
+samples recorded. The attempted 19:00Z tick left the ledger BLOCKED with an unresolved
+writer after an observed-host/entity-expectation mismatch; the raw hour remains and no
+retry or authority bypass occurred. The human clarified that any host with data in the
+hour is valid, so the fixed expected-host rejection is a deterministic
+implementation/requirements mismatch, not invalid input or a transient failure. Read-only review
+confirmed two hosts in the failed raw hour; the additional host has process-event times
+from the hour's beginning plus older history, not a demonstrated mid-hour arrival. The
+PyUtil dynamic first-seen entity fix is implemented and fully tested; the blocked-run
+recovery path remains unresolved. Coordinated DBT
+awaits supported resolution and native-Mac DBT remains deferred. See
+[[wiki/work/dbt-compaction-coordination/verification#Confirmed next block and entity-aware Linux DBT snapshot replay — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Linux-only one-hour continuation — 01:00Z–02:00Z — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Second Linux-only one-hour continuation — 02:00Z–03:00Z — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Production-path runtime and throughput accounting — 2026-11-16]].
 The approved Linux-runner assignment is in
 [[wiki/work/dbt-compaction-coordination/dev_handoff#Active Linux-runner assignment — DCC-E2E-01]];
 the human handles delivery. Strict upload-time UTC client enforcement and downstream

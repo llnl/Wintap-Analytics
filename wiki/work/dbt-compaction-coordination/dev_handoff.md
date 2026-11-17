@@ -87,6 +87,139 @@ recovery-first continuation below.** Own the Linux coordinator/writer, fresh ent
 cache and Linux DBT client; arrange the native-Mac client stage with the human/Mac
 operator. Linux-only success or synthetic Mac controls cannot close the milestone.
 
+### Execution checkpoint — 2026-11-16
+
+The confirmed block **[2026-10-25 22:00Z, 2026-10-26 01:00Z)** has a fresh v5
+coordination ledger, completed entity initialization, and three `COMPLETED` hourly
+compactions with raw-source deletion disabled. Entity-aware DBT source validation and
+build passed on Linux against a private immutable 29-object local snapshot (24 compacted,
+three processing-metrics, two entity/authority objects). The snapshot preserves the
+original authority roots and excludes raw inputs to prevent overlap. DBT used a
+temporary read-only localhost S3 mirror; this validates DBT/entity logic but is not
+coordinated S3-reader or live-S3 qualification. With Mac deferred, two Linux ticks
+completed **[01:00Z, 03:00Z)** with deletion disabled, followed by verified
+deletion-enabled compaction for **[03:00Z, 15:00Z)**. The raw-only DBT baseline for
+04:00Z–05:00Z passed (54 models/84 tests). Four further ticks **[15:00Z, 19:00Z)**
+completed with monotonic service-path timing. The next tick failed closed: the real
+ledger is now `BLOCKED` at 19:00Z with an active unresolved run. Read-only child evidence
+reports “observed host is not explicitly initialized/expected,” exit status 2, and no
+completed migration; the raw hour remains and no compacted/metrics output was listed.
+The human clarified that any host with data in the hour is valid. Classify the cause as
+a deterministic implementation/requirements mismatch: the fixed expected-host list
+rejects a valid newly observed host. A read-only partition audit found one host in each
+compacted hour 15:00Z–18:00Z, then two hosts in raw hours 19:00Z and 20:00Z. The
+additional host has 19:00Z-hour process-event timestamps from 19:00:00.040Z onward, plus
+older events back to September; this does not show a mid-hour first appearance or
+establish when it came online. The guard fails before entity publication and
+compaction/deletion. The PyUtil fix now discovers the union of seed, retained-authority,
+and observed hosts, initializes first-seen hosts from their first observed partition,
+and preserves cumulative authority/hash/bootstrap evidence. It also updates independent
+entity-operation, completion, and checkpoint validation for host-set growth while
+retaining identity/lifecycle checks and bounded host counts. Focused tests passed, the
+full compactor suite passed (**700 passed, 2 skipped**), and Ruff passed for changed
+production modules. The run disposition remains blocked. Current retry-hour
+eligibility excludes entity-enabled/deletion-enabled multi-event runs, and
+normal entity replay is not admitted while BLOCKED; no supported recovery route has yet
+been established. No retry, manual cursor advance, authority reopen, or admission bypass
+occurred. Coordinated Linux DBT must wait for authorized supported resolution;
+native-Mac DBT remains deferred, not passed. Coarse and monotonic throughput samples and
+the stop evidence are recorded in verification. Full results and limits:
+[[wiki/work/dbt-compaction-coordination/verification#Linux-only one-hour continuation — 01:00Z–02:00Z — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Second Linux-only one-hour continuation — 02:00Z–03:00Z — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Production-path runtime and throughput accounting — 2026-11-16]].
+
+### Fresh dynamic-host qualification stop — 2026-11-16
+
+A separate fresh v5 scope was used for one hour with the original raw root read-only,
+new compacted/entity/metrics roots, and deletion disabled. Standalone entity execution
+discovered the seed host and a second host present in the hour, published both
+first-seen snapshots/authority evidence and metrics, and exited zero. The coordinated
+main-side completion validator then rejected the report because it still compares the
+reported host list with the original seed list. The fresh ledger is consequently
+`BLOCKED` with an unresolved entity run. No compaction, deletion, retry, or resolution
+was attempted. Per explicit operator direction, that disposable failed scope was
+deleted after diagnosis. The main completion contract was corrected and regression-
+tested before using the fresh next-hour scope below.
+<!-- SOURCE: Fresh isolated Linux entity qualification and read-only retained-artifact diagnosis, conversation 2026-11-16. -->
+
+### Fresh next-hour qualification — 20:00Z–21:00Z — 2026-11-16
+
+The replacement fresh v5 scope completed entity bootstrap and one coordinated hourly
+tick with deletion disabled. The corrected main completion validator accepted the
+cumulative observed host set; the ledger advanced to 21:00Z in `DRAINING` with a
+`COMPLETED` run, committed authority/snapshots, metrics, and compacted output. Raw
+inputs remain present. Independent `entities-verify` passed. This is one successful
+Linux hour; verify again before advancing to the next hour. Native-Mac and coordinated
+DBT qualification remain open.
+<!-- SOURCE: Fresh isolated Linux one-hour qualification, retained completion evidence, metrics readback, and independent entity verification, conversation 2026-11-16. -->
+
+The following deletion-enabled hour, **21:00Z–22:00Z**, also completed successfully.
+The ledger is healthy at 22:00Z in `DRAINING`; compacted rows match source rows and
+all raw objects for that exact hour were independently confirmed deleted with no
+deletion failures. Proceed one hour at a time and stop on any uncertainty.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and independent S3 inventory, conversation 2026-11-16. -->
+
+The next deletion-enabled hour, **22:00Z–23:00Z**, also completed successfully.
+Nine output partitions preserve the exact source row total, all raw objects for the
+hour were independently confirmed deleted, metrics are present, and the ledger is
+healthy at 23:00Z in `DRAINING`. Continue one hour at a time.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and corrected independent S3 inventory, conversation 2026-11-16. -->
+
+The next deletion-enabled hour, **23:00Z–00:00Z**, also completed successfully.
+Nine output partitions preserve the exact source row total, all raw objects for the
+hour were independently confirmed deleted, metrics are present, and the ledger is
+healthy at 00:00Z in `DRAINING`. Continue one hour at a time.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+The next deletion-enabled hour, **00:00Z–01:00Z**, also completed successfully.
+The latest authority generation is committed, both entity snapshots remain present
+and consistent with metrics, output rows match source rows, all raw objects for the
+hour were independently confirmed deleted, and the ledger is healthy at 01:00Z in
+`DRAINING`. Continue one hour at a time.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+The tenth and final requested deletion-enabled hour, **06:00Z–07:00Z**, completed
+successfully. Authority generation 12 is committed, both entity snapshots remain
+present and consistent with metrics, output rows match source rows, all raw objects
+for the hour were independently confirmed deleted, and the ledger is healthy at
+07:00Z in `DRAINING`. No eleventh tick was started.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+The next deletion-enabled hour, **05:00Z–06:00Z**, also completed successfully.
+Authority generation 11 is committed, both entity snapshots remain present and
+consistent with metrics, output rows match source rows, all raw objects for the
+hour were independently confirmed deleted, and the ledger is healthy at 06:00Z in
+`DRAINING`. One final deletion-enabled iteration remains in this qualification.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+The next deletion-enabled hour, **04:00Z–05:00Z**, also completed successfully.
+Authority generation 10 is committed, both entity snapshots remain present and
+consistent with metrics, output rows match source rows, all raw objects for the
+hour were independently confirmed deleted, and the ledger is healthy at 05:00Z in
+`DRAINING`. Continue one hour at a time.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+The next deletion-enabled hour, **03:00Z–04:00Z**, also completed successfully.
+Authority generation 9 is committed, both entity snapshots remain present and
+consistent with metrics, output rows match source rows, all raw objects for the
+hour were independently confirmed deleted, and the ledger is healthy at 04:00Z in
+`DRAINING`. Continue one hour at a time.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+The next deletion-enabled hour, **02:00Z–03:00Z**, also completed successfully.
+Authority generation 8 is committed, both entity snapshots remain present and
+consistent with metrics, output rows match source rows, all raw objects for the
+hour were independently confirmed deleted, and the ledger is healthy at 03:00Z in
+`DRAINING`. Continue one hour at a time.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+The next deletion-enabled hour, **01:00Z–02:00Z**, also completed successfully.
+Authority generation 7 is committed, both entity snapshots remain present and
+consistent with metrics, output rows match source rows, all raw objects for the
+hour were independently confirmed deleted, and the ledger is healthy at 02:00Z in
+`DRAINING`. Continue one hour at a time.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
 1. Pull the published Analytics `work/raw-sensor-file-aggregation` wiki changes and
    verify the existing PyUtil `work/raw-sensor-compacted-union` baseline, `badb67f`.
    Record any later source delta rather than silently treating old tests as current.
