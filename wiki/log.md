@@ -9060,3 +9060,20 @@ DBT is active in parallel but has no returned real-data result. The DCC-E2E-01
 exit checklist remains intentionally open; no additional live tick or remote
 mutation was started.
 <!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
+
+## [2026-11-17] plan | candidate and execution status synchronized
+
+Updated the implementation plan and qualification worksheet to identify PyUtil
+`402ead1` as the current parallel Mac DBT candidate and to distinguish the closed
+Linux ten-tick/DBT evidence from the still-open real Mac and overlap gates. The
+worksheet's existing review gate remains active for runner, private roots/access,
+mutation scope and resource ceilings.
+<!-- SOURCE: Current native-Mac DBT handoff and candidate selection, conversation 2026-11-17. -->
+
+## [2026-11-17] plan | active candidate references corrected
+
+Corrected the compaction brief and integration sequence so historical `badb67f`
+baseline references are not presented as the active candidate. The current parallel
+Mac DBT candidate is `402ead1`; its relevant cumulative-host DBT/entity gate remains
+the accepted 146/146, 87/87 and 57-test evidence already recorded.
+<!-- SOURCE: Current native-Mac DBT handoff and candidate selection, conversation 2026-11-17. -->

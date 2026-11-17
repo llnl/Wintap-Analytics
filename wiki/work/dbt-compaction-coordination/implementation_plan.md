@@ -52,7 +52,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_completion_history_qualification.py
 policy: agent-editable
-last_validated: 2026-11-16
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -85,6 +85,19 @@ handoff. Strict upload-time UTC client enforcement and downstream delayed-data
 implications are separate later tasks, not pilot prerequisites; current uploader
 compliance must not be assumed. The active assignment is in
 [[wiki/work/dbt-compaction-coordination/dev_handoff#Active Linux-runner assignment — DCC-E2E-01]].
+
+## Current execution status — 2026-11-17
+
+Linux live qualification is complete through 07:00Z after ten independently
+verified deletion-enabled ticks; the current candidate's isolated DBT gate remains
+146/146 build, 87/87 explicit tests and 57 focused DBT/entity regressions. Native-
+Mac DBT is active in parallel as a reader-only workstream, but its real-data result
+and the required overlap evidence have not returned. The historical deferred-Mac
+statements below are retained as evidence-state history; they do not supersede the
+current handoff. DCC-E2E-01 remains open and no additional live tick is authorized
+by this plan without a fresh approved scope.
+<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
+
 The first bounded real-data window exposed and authorized a local PyUtil correction for
 no-deletion checkpoint status; its affected regressions passed. The human chose deletion
 over repair: all data and run state for [19:00Z, 22:00Z) were removed and verified

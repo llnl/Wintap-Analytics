@@ -192,10 +192,12 @@ the historical 128 GB/256 GB bootstrap are neither accepted pilot capacities nor
 reasons to silently change limits. Start with bounded real data, measure and adjust
 only the agreed development scope/budgets.
 
-Reuse the current green Linux regression and Mac lifecycle evidence at `badb67f`;
-check source/runtime identity and run short launch/config smoke if needed. Do not
-repeat unchanged multi-hour full suites before the first data run. A changed
-candidate needs the relevant regression controls, not unconditional acceptance.
+Reuse the reviewed Linux regression and Mac lifecycle evidence at historical
+baseline `badb67f` where applicable, but run the current candidate's relevant
+controls. The active candidate is PyUtil `402ead1`, which includes the cumulative
+observed-host DBT/entity correction. Do not repeat unchanged multi-hour full suites
+before the first data run. A changed candidate needs the relevant regression
+controls, not unconditional acceptance.
 Drive real service ticks manually or through a bounded development runner at the
 normal minute cadence; retain ten-second client polling. Do not install production
 cron or replace the service with a mocked clock/permission callback.
@@ -281,8 +283,8 @@ or ten-minute grace already resolves current behavior. Follow
 
 Freeze the final candidate after integration repairs, run affected regressions and
 the final platform/runtime suites once, and inspect their complete results. If the
-candidate remains `badb67f`, authenticate and reuse its already completed suites
-rather than demanding identical repeats. Add new integration reports to
+candidate remains `402ead1`, authenticate and reuse its already completed relevant
+suites rather than demanding identical repeats. Add new integration reports to
 [[wiki/work/dbt-compaction-coordination/verification]], with declared window,
 families, limits, elapsed phases and defect dispositions.
 

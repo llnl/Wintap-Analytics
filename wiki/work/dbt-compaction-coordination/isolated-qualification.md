@@ -11,7 +11,7 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_coordination_linux_lifecycle.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_service.py
 policy: human-review-required
-last_validated: 2026-11-16
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -25,8 +25,10 @@ tags: [qualification, linux, s3, resources, coordination, runbook]
 
 **Prepared procedure only; no environment or fixture is selected and no remote run
 is authorized by this page.** PyUtil owns execution; Analytics owns this record.
-Current development candidate is `badb67f`, not a production release.
+Current development candidate for the parallel Mac DBT worker is PyUtil
+`402ead1` on `work/raw-sensor-compacted-union`, not a production release.
 <!-- REVIEW NEEDED: approve the concrete development runner, private data/root manifest, access, mutation scope and ceilings before execution. -->
+<!-- SOURCE: Current native-Mac DBT handoff and candidate selection, conversation 2026-11-17. -->
 
 **November 16 priority change:** the whole sensor/raw-data/ETL deployment is
 developmental and existing telemetry is expendable. Begin the finite actual-data
