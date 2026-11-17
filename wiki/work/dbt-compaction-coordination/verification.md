@@ -44,6 +44,12 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_coordination_verification.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py
   - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_completion_verifier.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_input_verifier.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_repaired_completion.py
+  - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/cli.py
   - ../Wintap-PyUtil/scripts/dcc_macos_baseline.py
   - ../Wintap-PyUtil/scripts/dcc_macos_source_manifest.json
   - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
@@ -5189,3 +5195,694 @@ DBT/data, actual S3, production-service transport, representative resources, dep
 or broader backend support. No PyUtil source was changed in this verification; existing
 untracked local environment files were preserved.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/supervisor.py §run_reader_supervised; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/tests/test_coordination_macos_supervisor.py; ../Wintap-PyUtil/tests/test_coordination_tick.py §test_macos_supervision_dispatch_is_explicitly_reader_scoped -->
+
+## Initial historical-window inventory — 2026-11-16
+
+Following the human's development-data scope direction, a metadata-only S3 listing
+used the existing configured raw-dataset prefix and profile. It found 16 event-family
+directories and 526 distinct UTC hour partitions; the oldest is **2026-10-25
+19:00Z**. The first three contiguous hours are **[2026-10-25 19:00Z, 22:00Z)**.
+They contain 1, 8, and 8 event-family partitions, respectively. Their listed Parquet
+metadata totals are 1/109/118 objects and 7,317/4,979,975/4,881,446 bytes. The oldest
+hour has no `raw_process` Parquet object; each following hour has 24. This makes the
+first three-hour window a small candidate for the initial iteration, while its sparse
+oldest hour must remain visible in results.
+
+The listing read no object bodies and performed no S3 writes or deletes. The conventional
+compacted, process-entity, processing-metrics and coordination prefixes were empty at
+inspection. The v7.0.1 attribution is human-provided, not independently established by
+the listing. At inventory time, no DBT build, entity initialization or compaction had
+run; the inventory does not establish late-upload quiescence or authorize changes
+outside the selected window.
+<!-- SOURCE: Human-provided data scope and metadata-only configured-S3 inventory, conversation 2026-11-16. -->
+
+## First bounded real-data run — blocked at first hourly completion — 2026-11-16
+
+The approved first iteration used the oldest three-hour window,
+**[2026-10-25 19:00Z, 22:00Z)**, on the existing S3 dataset. A Linux raw-only DBT
+baseline passed **84 checks and 56 successful nodes**; its process relation contained
+2,455 rows and one normalized host identity. Entity initialization over the three-hour
+window then completed with one entity run. Raw-source deletion was disabled throughout.
+
+The 19:00Z hourly compaction published one compacted Parquet object and checkpoint
+artifacts, but the coordinator did not commit completion. A read-only diagnostic against
+the retained verifier request isolated the exact mismatch: the checkpoint candidate
+records `deletion_status: completed` when there were no deletion failures, even though
+the execution receipt and raw-completion archive both bind `delete_source: false`;
+the independent completion verifier correctly requires `not_requested` in that case.
+All other fields in the migration/generation predicate matched. In the source revision
+used for this run, `metric_rows` set the status to `failed` or `completed` based only on
+failure count, while `_checkpoint` distinguished deletion-enabled from deletion-disabled
+runs. The existing completion-verifier test's `delete_source` parameterization was
+raw-only and did not cover this entity-enabled no-deletion case; the regression coverage
+added with the fix is described below. This was a producer/verifier contract mismatch,
+not evidence of a raw-data or compaction-content mismatch.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py §_checkpoint; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_completion_verifier.py §test_real_raw_completion_is_read_only_and_binds_context -->
+
+The ledger remains **BLOCKED** at 19:00Z with the active run retained and zero readers;
+the cursor has not advanced. The raw-process source inventory still contains its original
+48 objects (466,030 listed bytes) across the selected three hours. Partial outputs are
+present: one compacted object, two entity objects and three metrics objects. These are
+not accepted as a completed hour. No source deletion, retry, repair, cleanup or later
+hour was attempted after the uncertain completion. The original ledger, local evidence
+and partial outputs must be preserved.
+
+Recovery is gated on explicit operator approval of a reviewed corrective/recovery path.
+Do not advance the cursor, retry, repair checkpoints, delete source data or remove partial
+outputs based only on the retained CLI report. Native-Mac real-data DBT remains unrun.
+<!-- SOURCE: Bounded Linux/S3 execution and read-only diagnosis, conversation 2026-11-16. -->
+
+## No-deletion checkpoint fix — local regressions pass — 2026-11-16
+
+With human authorization, the PyUtil working tree now records checkpoint deletion as
+`not_requested` when the run's bound `delete_source` setting is false, while preserving
+`failed` for deletion errors and `completed` for requested successful deletion. Repaired
+checkpoint validation derives the expected status from the original `raw_complete`
+phase record. The narrow checkpoint-repair completion grammar no longer incorrectly
+requires deletion to have been enabled. Regression cases cover entity-enabled normal
+completion and checkpoint repair with deletion disabled; the latter verifies the
+published checkpoint and independent completion result. These code changes remain
+local, uncommitted and unpushed.
+
+The defect was reproduced before the change. The six affected standalone modules pass
+**229 tests**; the complete standalone suite passes **697 tests, 2 skipped**. The skips
+are the explicitly opt-in isolated-S3 read-only/write tests, which were not authorized
+or run. Ruff lint and format checks pass for all five changed Python files. These are
+local-fixture results only; no additional S3 verification, retry, checkpoint repair,
+cursor advance, source deletion or Mac real-data run occurred.
+
+Commands were run from PyUtil's `extras/raw-sensor-compact/` directory:
+
+```sh
+TMPDIR=/dev/shm .venv/bin/python -m pytest -q -ra \
+  tests/test_completion_verifier.py tests/test_repaired_completion.py \
+  tests/test_phase_evidence.py tests/test_entity_operation_verifier.py \
+  tests/test_deletion_recovery.py tests/test_deletion_completion.py
+# 229 passed
+
+env -u RAW_COMPACT_S3_TEST_APPROVED TMPDIR=/dev/shm \
+  .venv/bin/python -m pytest -q -ra
+# 697 passed, 2 skipped
+
+.venv/bin/ruff check src/raw_sensor_compact/processing_metrics.py \
+  src/raw_sensor_compact/phase_evidence.py src/raw_sensor_compact/completion.py \
+  tests/test_completion_verifier.py tests/test_repaired_completion.py
+.venv/bin/ruff format --check src/raw_sensor_compact/processing_metrics.py \
+  src/raw_sensor_compact/phase_evidence.py src/raw_sensor_compact/completion.py \
+  tests/test_completion_verifier.py tests/test_repaired_completion.py
+# lint passed; all five files already formatted
+```
+
+This source fix does **not** rewrite or validate the retained historical checkpoint
+candidate, clear the active blocked run, or make its partial outputs acceptable. The
+19:00Z ledger remains blocked and unchanged. Preserve it and obtain approval for a
+separately reviewed recovery path before any operation on that run; keep the Mac runner
+paused until the selected window is independently valid and completed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py §repair_checkpoints; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py §_grammar; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_completion_verifier.py; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_repaired_completion.py -->
+<!-- SOURCE: Authorized PyUtil implementation and local test results, conversation 2026-11-16. -->
+
+## Read-only recovery eligibility review — no existing repair path fits — 2026-11-16
+
+Read-only inspection of the preserved local writer archive confirms its immutable
+`raw_complete` record says `delete_source: false`, while both `checkpoint_intent` and
+`checkpoint_verified` retain `deletion_status: completed`. The CLI archive ends with
+its own `complete` record; the separate coordinator ledger remains `BLOCKED` at
+19:00Z, retains the active writer, has zero readers, and has no completion proof.
+This distinguishes successful standalone migration/checkpoint publication from the
+coordinator's later independent-verification failure.
+
+The current standalone `repair_checkpoints()` validates the archived original row
+against the deletion setting before it publishes anything. With this retained row it
+expects `not_requested` and rejects `completed`; it does not normalize or replace the
+original candidate. The coordinator's existing narrow maintenance path is for an
+original failed/error CLI report, so it is not established as eligible for this
+post-run verifier mismatch. **Do not invoke either repair command or rerun compaction
+as-is.** No S3 objects were contacted and no ledger state was changed during this local audit.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py §repair_checkpoints; ../Wintap-PyUtil/wintappy/coordination/maintenance.py §repair; ../Wintap-PyUtil/wintappy/coordination/ledger.py §dataset_state -->
+
+The next safe engineering step is a separately tested, narrowly scoped recovery path
+that preserves the original archive, derives the corrected checkpoint only from the
+original deletion setting and migration/entity evidence, retains the displaced row in
+new audited repair evidence, and requires independent current-data verification before
+atomic resolution of the exact blocked hour. Before execution it must also re-read the
+remote source/output/checkpoint and entity-authority state; this audit did not contact
+S3 and therefore does not qualify those live prerequisites. Obtain explicit approval
+for the exact S3 checkpoint write and ledger resolution before running that path.
+<!-- SYNTHESIS: recovery requirements derived from the retained phase archive and current repair/maintenance validators -->
+
+## Window cleanup and next-block boundary — 2026-11-16
+
+Following the human's direction to keep recovery simple, the entire selected window
+**[2026-10-25 19:00Z, 22:00Z)** was deleted instead of repaired. Immediately before
+deletion, the exact S3 inventory was re-listed and matched by key, size, and ETag. The
+unversioned bucket contained 228 raw objects across 16 event families (1/109/118 in
+19Z/20Z/21Z), one partial compacted object, three hourly processing-metrics objects,
+and two entity objects (snapshot plus authority); the dedicated coordination prefix
+was empty. All 234 listed objects were submitted for deletion with no S3 errors, then
+each selected prefix was re-listed and returned empty. No keys outside the three
+selected UTC hours were included.
+
+The dedicated local E2E scratch root was independently matched against a private
+pre-delete file/hash inventory (378 files; 78,211,620 bytes) and removed after the
+blocked-run process/open-file check found no users. The exact object inventory, local
+artifact hashes and delete/verification results are retained privately at
+`/tmp/opencode/dcc-cleanup-audit-20261025T19-22Z/`; no hostnames, account names or
+addresses are persisted here. This also removed the blocked local ledgers, phase
+archives, partial outputs and DBT scratch artifacts. The unrelated PyUtil DuckDB and
+environment files were left untouched.
+
+The next raw data begins at **2026-10-25 22:00Z** (86 raw objects in that hour); later
+hours also contain data. Its exclusive end boundary is not established by this
+inventory, so do not initialize the new coordination/entity state or start compaction
+until the human confirms the next block's end. The original no-deletion checkpoint
+fix remains in the local PyUtil working tree; the incomplete special-recovery edits
+were removed. After that cleanup, the three directly affected standalone test modules
+pass **116 tests**. At this checkpoint, next-block processing and DBT had not started;
+the later confirmed run is recorded below.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py §repair_checkpoints; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_completion_verifier.py; ../Wintap-PyUtil/extras/raw-sensor-compact/tests/test_repaired_completion.py -->
+<!-- SOURCE: Human-authorized exact-window cleanup and private S3/local audit, conversation 2026-11-16. -->
+
+## Confirmed next block and entity-aware Linux DBT snapshot replay — 2026-11-16
+
+The human confirmed **[2026-10-25 22:00Z, 2026-10-26 01:00Z)**. A fresh isolated
+coordination ledger was initialized and upgraded to schema v5. `entities-init` completed
+for that exact interval. Three subsequent service ticks each completed one hourly
+compaction; all three processing-metrics receipts say `deletion_status=not_requested`.
+The final ledger is unblocked in `DRAINING` mode at cursor 01:00Z, with three completion proofs
+and no active run. Read-only re-listing after DBT found raw-object counts still 86/85/84
+and compacted-object counts 8/8/8 across the three hours; the entity root has two
+objects and the selected metrics partitions have three. No source deletion was requested.
+
+The initial entity-enabled DBT attempt against locally re-rooted files refused during
+source preflight: the preserved entity authority binds the original S3 roots, so a local
+path substitution is not valid lineage. No build or S3 mutation resulted. Rather than
+rewrite authority evidence or bypass the real `DRAINING` reader gate, a private local
+snapshot was staged from exactly 24 compacted objects, three hourly metrics objects,
+and two entity/authority objects (29 objects; about 9.7 MB). No raw objects were copied.
+Object size/ETag identities were checked at download and afterward. Entity-enabled DBT
+then ran with the original S3 URI bindings against a temporary **read-only localhost
+mirror** serving only those staged objects; raw-input prefixes returned empty. The
+mirror observed 34 HEAD, 525 GET, and 380 LIST requests, with zero write attempts,
+unknown-object requests, or unexpected-bucket requests. The DBT process used no live
+S3 endpoint.
+
+The local DBT configuration check and source preflight passed. The full Linux DBT 1.12.3
+build passed: 59 models succeeded, 85 tests passed, and both build operations succeeded
+(146 result records; no failures or skips). Entity-enabled outputs include 2,327 process
+entity rows and three processing-metrics rows. The database and run evidence are in the
+private tmpfs run area, separate from the repository's unrelated DuckDB files. The
+actual coordination client was not used for this replay because its correct behavior
+is to refuse new readers while due backlog remains; the replay does **not** qualify
+coordinated S3 admission, live endpoint behavior, or production deployment. The ledger
+must not be manually reopened to change that result.
+
+This environment is Linux and has no native-Mac runner, so no native-Mac DBT was run.
+The native-Mac client stage, coordinated-reader qualification, and due-backlog plan
+remain open. The no-deletion PyUtil fix remains local/uncommitted; no PyUtil source was
+changed for DBT. The entity-disabled fallback was not run.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/client.py §coordinated_inputs/run_reader; ../Wintap-PyUtil/wintappy/coordination/ledger.py §admit/drain; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql §raw_sensor_partition_globs; ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics; ../Wintap-PyUtil/Makefile §dbt-build -->
+<!-- SOURCE: Human-confirmed interval and authorized Linux processing/DBT scope, conversation 2026-11-16; exact object identities and execution logs retained in the private tmpfs run area. -->
+
+## Linux-only one-hour continuation — 01:00Z–02:00Z — 2026-11-16
+
+With Mac evidence deferred, the human approved exactly one additional hour,
+**[2026-10-26 01:00Z, 02:00Z)**, with source deletion disabled and a stop/recheck after
+that tick. A first launch through the bare virtualenv failed at Python import because
+`boto3` was unavailable; the service did not start, and read-only checks confirmed no
+ledger or S3 change. The supported project runtime was then verified and the normal
+entity-enabled Linux `service tick` ran once. It invoked the writer and completed the
+hour; no retry or manual state transition was used.
+
+Independent read-only verification found the fourth completion proof, ledger cursor
+**02:00Z**, `DRAINING` mode, no active run and no block reason. The completion receipt
+binds `delete_source=false`. Its hourly metrics Parquet reports
+`deletion_status=not_requested`, `raw_source_rows=182,352`, and
+`raw_output_rows=182,352`. Re-listing found all **86 raw objects** across seven event
+families still present, plus eight compacted objects across those families and one
+metrics object for 01:00Z–02:00Z. Thus no raw deletion occurred.
+
+At this checkpoint processing stopped after the requested one-hour recheck. The next
+ledger cursor was **02:00Z**, with 84 raw objects across seven event families and no
+compacted or processing-metrics output. The ledger remained in `DRAINING`, so coordinated
+Linux DBT could not be admitted. The earlier entity-aware offline DBT replay covered
+only the original 22:00Z–01:00Z snapshot; it was not rerun over the newly completed hour.
+Mac DBT remained deferred, not passed. The separately approved subsequent continuation
+is recorded below; no source, ledger or authority was manually reopened.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/wintappy/coordination/ledger.py §completion_evidence/dataset_state; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows -->
+<!-- SOURCE: Human-approved one-hour Linux continuation and stop/recheck boundary, conversation 2026-11-16; service output, completion proof, metrics artifact and read-only object inventory retained in the private tmpfs run area. -->
+
+## Second Linux-only one-hour continuation — 02:00Z–03:00Z — 2026-11-16
+
+The human approved exactly one further entity-enabled Linux service tick for
+**[2026-10-26 02:00Z, 03:00Z)**, again with raw deletion disabled and a stop/recheck
+afterward. The ordinary tick invoked the writer and completed successfully. No retry,
+manual ledger change or admission bypass occurred.
+
+Read-only verification found five completion proofs total and a clean `DRAINING` ledger
+at cursor **03:00Z** (no active run or block reason). The latest completion receipt binds
+`delete_source=false`; its metrics artifact reports `deletion_status=not_requested` and
+matching `raw_source_rows=190,879` / `raw_output_rows=190,879`. The 84 raw objects across
+seven families remain present; eight compacted objects and one metrics object now cover
+02:00Z–03:00Z.
+
+Processing stopped at the approved boundary. The next cursor hour, **03:00Z–04:00Z**, has
+85 raw objects across seven families and no compacted or metrics output. Because the
+ledger remains `DRAINING`, coordinated Linux DBT still cannot be admitted. The offline
+entity-aware DBT replay continues to cover only the original 22:00Z–01:00Z snapshot; it
+has not been rerun over either continuation hour. Native-Mac DBT remains deferred, not
+passed. The original raw inputs remain intact; this audit made no S3 writes or deletes.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/wintappy/coordination/ledger.py §completion_evidence/dataset_state; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows -->
+<!-- SOURCE: Human-approved second one-hour Linux continuation and stop/recheck boundary, conversation 2026-11-16; completion proof, metrics artifact and read-only object inventory retained in the private tmpfs run area. -->
+
+## Production-path runtime and throughput accounting — 2026-11-16
+
+At the human's request, report processing wall time separately from qualification
+overhead. For future ticks, capture monotonic elapsed time around the actual coordinated
+Linux `service tick` invocation (including its entity preparation, supervised writer,
+and completion commit). Exclude read-only pre/post-run inventories and evidence audits,
+DBT baselines/builds, and setup or waiting time. The first ten-hour batch began before
+this request and has no external monotonic timer, so its ledger-timestamp fallback is
+reported separately below. Later ticks are timed monotonically around the actual service
+subprocess; post-run verification is outside the timer.
+
+For each completed hour, pair elapsed seconds with aggregate source-file count, source
+bytes, expected host count, and source/output row counts from that hour's processing
+metrics. Report files/s and decimal GB/s (`source_bytes / 1e9 / elapsed_seconds`), plus
+elapsed seconds and processed hour. For a batch, report total production-path seconds
+and weighted rates (`sum(files or bytes) / sum(elapsed_seconds)`), not an unweighted
+average of hourly rates. Host counts are aggregate only; do not persist host identifiers.
+This is a planning estimate, not a promise of steady-state throughput.
+
+### Initial coarse sample — 05:00Z–15:00Z processing window
+
+The first ten deletion-enabled catch-up ticks were already in flight when timing was
+requested, so they have no external monotonic measurement. Coarse production elapsed
+time, computed from ledger `compaction_runs.started_at` to each completion proof's
+`completed_at`, totals **668 seconds (11m 08s)** for ten hourly runs (62–80 seconds each;
+64-second median). The processing metrics report **236 input files**, **2,830,513 source
+bytes (2.83 MB / 2.70 MiB)** and **3,069,413 source rows**; `expected_host_count` is one
+in each hourly record. Weighted rates are **0.353 files/s**, **0.00404 MiB/s** (about
+4.24 kB/s), and **4,595 rows/s**. That is ten expected host-hours processed in 11m 08s,
+or about **53.9 host-hours per wall-clock hour**. These are processing-metric input
+totals, not the separate raw-object inventory size. The timestamp-derived duration has
+one-second granularity and excludes pre-writer service preparation; use the next
+monotonic service-tick batch for a more complete production-path wall-time sample.
+
+### Catch-up checkpoint — 04:00Z–15:00Z
+
+After the previously verified 03:00Z–04:00Z deletion-enabled hour, eleven further
+consecutive hours **[04:00Z, 15:00Z)** completed through the normal entity-enabled Linux
+service path with source deletion enabled. This includes the ten-hour sample above and
+the preceding 04:00Z–05:00Z hour. The ledger has **17 completion proofs** total and is
+clean in `DRAINING` at cursor **15:00Z**. For these eleven hours, completion proofs bind
+deletion enabled, raw-source partitions are absent, compacted output and hourly metrics
+exist, and source/output row totals match. The raw-only DBT baseline for hour
+04:00Z–05:00Z passed (54 models, 84 tests, zero failures or skips); this is a reference,
+not coordinated-reader qualification. The next cursor hour has raw inputs and has not
+yet been processed. Coordinated Linux DBT remains gated by `DRAINING`; native-Mac DBT
+remains deferred, not passed. At that checkpoint, subsequent ticks were planned with
+monotonic timing; the later measured run and subsequent stop are recorded below.
+
+### Monotonic sample and blocked stop — 15:00Z–19:00Z — 2026-11-16
+
+Four one-hour deletion-enabled Linux service invocations completed and passed the
+per-hour completion-proof, row-count, metrics, compacted-output, and exact-hour raw
+deletion checks for **[15:00Z, 19:00Z)**. Monotonic service-subprocess wall time totals
+**258.846 seconds (4m 18.846s)**, or **64.712 seconds per hour**. The four samples range
+from 60.637 to 71.508 seconds. Processing metrics total **96 input files**, **838,133
+source bytes (0.80 MiB)**, and **836,228 source rows**, with one expected host in each
+hour. Weighted rates are **0.371 files/s**, **0.00309 MiB/s**, and **3,231 rows/s**;
+this represents four expected host-hours per 4m 19s, or about **55.6 host-hours per
+wall-clock hour**. This timing includes the service process's production preparation,
+writer, and completion path, and excludes the separate read-only verification.
+
+The next service tick, for **[19:00Z, 20:00Z)**, exited nonzero after about 12 seconds.
+The batch stopped immediately; no retry or recovery command was run. Read-only ledger
+inspection shows **`BLOCKED` at 19:00Z**, an active unresolved writer, and the reason
+“Receipt-bound execution uncertain; independent phase verification required.” There
+are 21 completion proofs, with the last accepted proof ending at 19:00Z. A read-only
+S3 inventory found the 19:00Z raw partition still present (135 objects, 15,974,384
+bytes) and no compacted or processing-metrics objects for that hour. The local
+supervision record confirms the writer child exited with status 2 and all children
+stopped. Its error says an observed host was not explicitly initialized/expected; the
+phase evidence reports three records and `migration_complete=false`. Thus the normal
+completion path did not produce an accepted proof or any observed S3 output/deletion for
+this hour. This independent evidence audit does not resolve the active ledger intent or
+authorize a retry/resolution; the private run evidence is retained.
+
+No further processing may proceed from this blocked state without an authorized,
+supported resolution that addresses the observed-host/entity-expectation mismatch. The
+ledger/authority was not manually advanced or reopened.
+Coordinated Linux DBT remains gated, and native-Mac DBT remains deferred, not passed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/writer.py §_execute_prepared/execute_and_complete_prepared; ../Wintap-PyUtil/wintappy/coordination/ledger.py §block_writer/completion_evidence; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §SCHEMA/metric_rows -->
+<!-- SOURCE: Private monotonic service-run records and read-only ledger/S3 audit, conversation 2026-11-16; no retry or state resolution was performed. -->
+
+### Failure classification and evidence-based retry policy
+
+Keep the **cause classification** separate from the **execution/recovery disposition**:
+an understood input error can still leave a run that must remain blocked until its
+receipt-bound effects are independently resolved.
+
+| Cause class | Evidence threshold | Default action |
+| --- | --- | --- |
+| Deterministic data-contract violation | Input violates a domain/data contract that is independently authoritative; a host merely being absent from a static allowlist is not sufficient when host scope is dynamic. | Correct the underlying data/contract issue through an approved path; do not retry unchanged inputs/configuration. |
+| Implementation / requirements mismatch (fixable behavior defect) | The implementation reproducibly rejects or mishandles data that the human-approved semantics define as valid. | Align the design and implementation with the requirement, add regression coverage, then requalify; do not retry the unchanged behavior. |
+| Transient runtime / infrastructure | A timeout, temporary service failure, or worker/runtime failure is evidenced, with no unresolved process or unverified partial side effect. | Retry only if the operation is eligible under its supported retry mechanism and independent checks establish a safe retry boundary. “Transient-looking” alone is insufficient. |
+| Unknown / unresolved execution | Cause or side effects cannot be bounded, evidence is missing/conflicting, or worker/publication state is uncertain. | Preserve the block and evidence; do not retry, advance the cursor, or reopen authority pending independent investigation and an authorized supported resolution. |
+
+For this run, the **cause** is a **deterministic implementation/requirements mismatch**
+(high confidence). The human clarified that any host with data in the hour is valid; host
+membership must not be rejected merely because it is absent from a predeclared host
+list. A read-only audit confirms two observed hosts in the failed-hour raw process input,
+while the configured and initialized lists contain one. `entity_store.update_entities`
+normalizes the configured list and raises when any normalized observed hostname is not
+in it. Under the stated semantics, that rejection is incorrect; the additional host is
+valid input, not an invalid or unauthorized host. The check runs before entity
+publication and before the raw compaction phase. The child exit status,
+`migration_complete=false`, retained raw inputs, and absence of compacted/metrics outputs
+corroborate that no hour completion or source deletion was evidenced.
+
+### Read-only host-timeline review — 2026-11-16
+
+Compared valid, normalized `raw_process` inputs to the explicit scope without recording
+hostnames, hashes, PIDs, object keys, or other identifiers. In each compacted partition
+from **15:00Z through 18:00Z**, only the configured host was observed. The failed
+**19:00Z** raw partition contains **two** observed hosts: the configured host and one
+additional host. The following **20:00Z** raw partition also contains both, so this is
+not a single stray row confined to the failed hour.
+
+For the additional host in the 19:00Z partition, valid process-event `EventTime` values
+span **2026-09-23 16:24:41Z–2026-10-26 19:58:17Z**. Of its rows, **30,183** have event
+times in the 19:00Z hour, with the earliest at **19:00:00.040Z** and the latest at
+**19:58:17.391Z**. Thus the additional host is already represented from the beginning
+of the failed hour; the event-time evidence does **not** show it first appearing midway
+through that hour. Its older event timestamps also mean this is not enough to infer when
+the host itself came online. `ReceiveTime` is zero in the inspected 18:00Z compacted and
+19:00Z/20:00Z raw partitions, so it cannot establish message arrival/onboarding time
+either. The 20:00Z partition continues
+to contain the same additional host, with current-hour process events.
+
+Conclusion: a host joining mid-hour is possible, and the current fixed-list check would
+reject it. The particular 19:00Z failure is not evidence of a host first coming online
+mid-hour: the additional host has process events beginning at the hour's first second
+and older history. Under the human-stated rule, it is valid and should be processed.
+The inspection used only read-only S3 LIST/GET and removed private temporary copies.
+<!-- GROUND_TRUTH: AGENTS.md §Persistent Wiki Content Privacy; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../wintap/shared/WintapAPI/WintapMessage.cs §WintapMessage -->
+<!-- SOURCE: Private read-only process-partition audit and scope comparison, conversation 2026-11-16; only aggregate counts/timestamps retained. -->
+
+Classify this as a **fixable behavior defect against the clarified requirement**, not a
+transient failure or invalid input. The PyUtil fix now removes host membership as a
+rejection criterion for valid process input, discovers the union of seed, retained-
+authority, and observed hosts, and initializes a first-seen host from its first observed
+partition. Authority lineage now permits cumulative host-set growth while preserving
+the original binding, per-host before/after hashes, bootstrap provenance, and snapshot
+integrity. Input verification retains lifecycle/identity validation and bounded host
+budgets; invalid process identities are not silently used to hide an undeclared host.
+Completion and checkpoint verification now derive host counts and host sets from the
+retained receipts rather than the original seed list. Focused regressions and the full
+suite passed after the change. This source fix does not edit the blocked run's config,
+retry it, or alter ledger authority. The **run disposition** remains blocked pending a
+separately supported recovery path.
+
+Implementation verification on 2026-11-16:
+
+* focused dynamic-host/entity-operation tests: **3 passed**;
+* full `extras/raw-sensor-compact` suite: **700 passed, 2 skipped**;
+* Ruff checks for all changed production modules: **passed**.
+
+The source work remains uncommitted in the PyUtil working tree by design; existing
+unrelated PyUtil changes and artifacts were preserved.
+
+The current `retry-hour` preflight is explicitly raw-only, deletion-disabled, and
+single-event; this failed run is entity-enabled, deletion-enabled, and multi-event, so
+it is ineligible. Normal entity replay is admitted only in `OPEN`/`DRAINING`, not while
+the ledger is `BLOCKED`. `resolve-hour` requires proof of the exact original run, and
+the recovery module states that missing original migrations remain blocked. Therefore
+no supported recovery route has yet been established for this case. A human-approved
+next review should separately identify an existing supported disposition for this exact
+blocked run; do not edit the config, retry, or change ledger state as an investigative
+shortcut.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_input_verifier.py §load_process_inputs; ../Wintap-PyUtil/wintappy/coordination/retry.py §_verify_retry_prepared; ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick/entity_launch; ../Wintap-PyUtil/wintappy/coordination/recovery.py §resolve_hour -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority._validate/check; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_operation_verifier.py §_process/_publication; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §validate_checkpoint_receipts -->
+<!-- SOURCE: PyUtil focused/full test and Ruff verification, conversation 2026-11-16. -->
+<!-- SYNTHESIS: cause classification from the explicit host-scope predicate and retained failed-run phase evidence; execution/recovery disposition from retry, service-gate and recovery constraints. -->
+<!-- SOURCE: User clarification that every host with data in the hour is valid, and requested failure taxonomy, conversation 2026-11-16. -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/wintappy/coordination/ledger.py §compaction_runs/completion_evidence; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §SCHEMA/metric_rows -->
+<!-- SOURCE: Human request to track and report production-path wall time and normalized throughput, conversation 2026-11-16. -->
+<!-- SOURCE: Private Linux run evidence and read-only metrics audit, conversation 2026-11-16; elapsed values are coarse ledger timestamp differences, not monotonic timings. -->
+
+### Fresh dynamic-host qualification stop — entity completion scope mismatch — 2026-11-16
+
+A new isolated qualification scope was created without reusing the earlier blocked
+ledger or its compacted/entity/metrics roots. Its raw root was read-only, its writer
+had source deletion disabled, and its v5 ledger began at the first hour containing
+the newly observed host. The ledger initialization and explicit v5 upgrade passed.
+
+The coordinated entity bootstrap read the one-hour raw process window and the
+standalone writer exited zero. Its retained report discovered the configured seed
+host plus a second host observed in that hour, created both first-seen snapshots,
+published cumulative authority evidence, and wrote one processing-metrics object.
+The report recorded the second host's first observed partition as its bootstrap
+provenance. No compacted raw output or source deletion was attempted.
+
+The main coordinator then rejected the otherwise successful entity report and
+blocked this fresh ledger with an active unresolved entity run. A read-only replay
+of the retained report against `wintappy.coordination.entity_completion._cli_result`
+reproduces `Entity CLI host/exclusion scope mismatch`: the completion validator
+still requires the reported host list to equal the original configured seed list.
+The standalone dynamic-host implementation was therefore ahead of the coordinated
+main-side completion contract. This was a deterministic implementation defect, not
+an input or infrastructure failure. Per explicit operator direction, that disposable
+failed test scope was deleted after diagnosis; no retry, resolution, cursor advance,
+compaction, or deletion was performed against it.
+
+The qualification was stopped pending the code correction and focused main-side
+completion regression. The next qualification used a fresh coordination/output
+scope and is recorded below.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/entity_completion.py §_cli_result; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_operation_verifier.py §dynamic host publication -->
+<!-- SOURCE: Fresh isolated Linux entity qualification and read-only retained-artifact diagnosis, conversation 2026-11-16. -->
+
+### Fresh next-hour qualification — 20:00Z–21:00Z — 2026-11-16
+
+After the disposable failed scope was deleted, a new v5 coordination/output scope
+was initialized for **20:00Z–21:00Z**, with the raw source read-only and deletion
+disabled. The corrected main-side completion validator accepted the cumulative
+observed host set. Coordinated entity initialization and the hourly service tick both
+completed successfully; the ledger advanced to **21:00Z** in `DRAINING` with no active
+run or block reason.
+
+Independent retained evidence shows two entity snapshots with first-observed
+bootstrap provenance, one committed authority generation, zero identity exclusions,
+and entity metrics reporting two expected hosts, 30,609 entity rows, and 56 parent
+conflicts. The raw migration completed with ten merged non-empty event partitions:
+184 source files / 24,649,816 source bytes / 1,338,181 source rows became ten
+compacted output files / 18,359,716 output bytes / 1,338,181 output rows. Every
+merged partition reported zero row delta. The raw source remains present because
+`delete_source=false`.
+
+The independent read-only `entities-verify` command passed and reproduced both
+current snapshots and the committed authority generation. This is one successful
+Linux hour after the completion-contract correction; no native-Mac or coordinated
+DBT qualification is inferred. Verify this hour again before advancing to 21:00Z.
+The focused cumulative-host regression passed; the full main-side entity-completion
+qualification passed **68 tests**, and Ruff check/format validation passed for the
+changed modules.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/entity_completion.py §_cli_result; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_store.py §update_entities; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py §raw completion -->
+<!-- SOURCE: Fresh isolated Linux one-hour qualification, retained completion evidence, metrics readback, and independent entity verification, conversation 2026-11-16. -->
+
+### Deletion-enabled qualification — 21:00Z–22:00Z — 2026-11-16
+
+The next fresh-scope tick used `delete_source=true` and completed successfully.
+The ledger advanced to **22:00Z** in `DRAINING` with no active run or block reason.
+Immutable completion evidence reports exit zero and `migration_complete=true`.
+Independent inventory found nine compacted output partitions with matching
+**1,316,629** source/output rows; all **172** raw source objects for this exact
+hour were confirmed absent after deletion, with no deletion failures. The hourly
+processing-metrics object is present. No next hour was started before these checks.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and independent S3 inventory, conversation 2026-11-16. -->
+
+### Deletion-enabled qualification — 22:00Z–23:00Z — 2026-11-16
+
+The next deletion-enabled tick completed successfully and advanced the ledger to
+**23:00Z** in `DRAINING`. Independent evidence reports exit zero and
+`migration_complete=true`. The hour's nine compacted output partitions contain
+**1,199,017** rows matching the source total from **166** raw objects; all exact-hour
+raw objects are absent after deletion, with no row delta or deletion failure. The
+hourly metrics object is present. No next hour was started before this check.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and corrected independent S3 inventory, conversation 2026-11-16. -->
+
+### Deletion-enabled qualification — 23:00Z–00:00Z — 2026-11-16
+
+The next deletion-enabled tick completed successfully and advanced the ledger to
+**00:00Z** on 2026-10-27 in `DRAINING`. Independent evidence reports exit zero and
+`migration_complete=true`. The hour's nine compacted output partitions contain
+**1,435,300** rows matching the source total from **165** raw objects; all exact-hour
+raw objects are absent after deletion, with zero row delta and no deletion failures.
+The hourly metrics object is present. No next hour was started before this check.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+### Resumed-scope deletion-enabled readback — 23:00Z–00:00Z — 2026-11-16
+
+The resumed deletion-enabled service tick completed successfully with immutable
+completion evidence reporting `exit_code=0`, `migration_complete=true` and
+`status=completed`. The active ledger advanced to **00:00Z on 2026-10-28** in
+`DRAINING`, with no readers or waiting jobs; authority generation **29** is
+committed. Independent S3 inventory found nine compacted output objects for the
+exact hour and zero exact-hour raw objects after deletion. The next hour contains
+172 raw objects, so the cursor has a valid next input and was not advanced by a
+bypass.
+
+The authority Parquet readback reports generation 29 as `committed` for the exact
+23:00Z–00:00Z window. The corresponding hourly metrics row reports `completed`
+and carries the same entity generation ID. The authority object, two entity
+snapshots and 28 hourly processing-metrics objects are present. This readback
+verifies object-level publication, deletion, authority/metrics linkage and ledger
+state; it does not claim a row-count comparison for this hour.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
+<!-- SOURCE: Resumed Linux deletion-enabled service completion evidence, local ledger readback, S3 object inventory, authority/metrics Parquet readback, conversation 2026-11-17. -->
+
+### Deletion-enabled qualification — 00:00Z–01:00Z — 2026-11-16
+
+The next deletion-enabled tick completed successfully and advanced the ledger to
+**01:00Z** in `DRAINING`. Independent evidence reports exit zero and
+`migration_complete=true`. The latest authority generation is committed for the
+target window, with both entity snapshots present and their snapshot hashes matching
+the hourly metrics. The hour's nine compacted output partitions contain **1,532,774**
+rows matching the source total from **165** raw objects; all exact-hour raw objects
+are absent after deletion, with zero row delta and no deletion failures. The hourly
+metrics object is present. No next hour was started before these checks.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+## Linux DBT against the deletion-enabled compacted chunk — blocked at authority preflight — 2026-11-16
+
+With native-Mac testing still deferred, a direct Linux DBT qualification was attempted
+against the isolated compacted S3 root for **21:00Z–06:00Z**. The local configuration
+check passed and the DBT source-preflight command reached the real S3/Parquet inputs,
+but `validate_entity_authority` failed closed with:
+`Entity authority binding/lineage invalid or publication unresolved; Processing metrics
+require the same roots, hosts and identity policy/ceiling`.
+
+The failure is a deterministic dynamic-host contract mismatch, not a missing compacted
+partition or a storage write failure. The immutable authority binding retains the
+configured seed-host set, while the latest cumulative entity state and metrics contain
+two observed hosts. DBT's current `validate_entity_authority` requires the authority
+binding host set and the current entity-file host set to agree, so preflight rejects
+the valid cumulative state. No DBT models or tests ran, and no S3 writes or deletions
+were performed; the disposable DuckDB was under `/dev/shm`.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_process_entities; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql §raw_event_input_paths -->
+<!-- SOURCE: Linux direct DBT configuration/source-preflight attempt against the isolated deletion-enabled compacted scope, conversation 2026-11-17. -->
+
+### Resolution: cumulative observed-host authority accepted — 2026-11-16
+
+The DBT authority contract was corrected without weakening fail-closed validation.
+`validate_entity_authority` now requires the immutable binding's seed hosts to be a
+subset of the current cumulative entity host set; it still validates the authority
+array type, host evidence, current snapshots, lineage, roots, identity policy and
+metrics. Additional observed hosts are therefore accepted as cumulative state.
+
+A synthetic regression with an additional observed host passed, and the real compacted
+S3 qualification then passed source preflight and the full DBT build: **59 models and
+85 data tests, 146/146 passed**, with no warnings, errors or skips. An explicit DBT
+test pass was **87/87**. Focused Python DBT/entity suites passed **57 tests**. Output
+counts in the disposable DuckDB were `process_entities=362146`,
+`stg_processing_metrics=11`, `process=331612`, and `process_summary=331612`.
+No S3 writes or deletions occurred. Native-Mac testing remains deferred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/tests/test_process_entities.py §test_cumulative_observed_host_authority_is_accepted -->
+<!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
+
+### Linux-only continuation after DBT authority repair — 2026-11-16
+
+The committed revision's local Linux coordination gates also pass: the entity-service
+and Linux lifecycle regression modules passed **76 tests**. This is local regression
+evidence only; no coordination request, reader grant, service tick, S3 write or
+deletion was performed. The next live step still requires a concrete private
+development manifest with a fresh/approved ledger, roots, client state, access scope,
+mutation scope and resource ceilings. Native-Mac DBT remains deferred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_entity_service.py; ../Wintap-PyUtil/tests/test_coordination_linux_lifecycle.py -->
+<!-- SOURCE: Linux local coordination regression run after DBT authority repair, conversation 2026-11-16. -->
+
+### Deletion-enabled qualification — 06:00Z–07:00Z — 2026-11-16
+
+The tenth and final requested deletion-enabled tick completed successfully and
+advanced the ledger to **07:00Z** in `DRAINING`. Independent evidence reports exit
+zero and `migration_complete=true`. Authority generation 12 is committed for the
+target window; both entity snapshots are present, and their semantic hashes match
+the hourly metrics snapshot hashes. The hour's nine compacted output partitions
+contain **1,415,511** rows matching the source total from **173** raw objects; all
+exact-hour raw objects are absent after deletion, with zero row delta and no
+deletion failures. The hourly metrics object is present. No eleventh tick was
+started.
+Retrospective readback also confirmed that the three earlier deletion-enabled
+hours' committed authority generations matched their metrics generation IDs and
+snapshot semantic hashes.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+### Deletion-enabled qualification — 05:00Z–06:00Z — 2026-11-16
+
+The next deletion-enabled tick completed successfully and advanced the ledger to
+**06:00Z** in `DRAINING`. Independent evidence reports exit zero and
+`migration_complete=true`. Authority generation 11 is committed for the target
+window; both entity snapshots are present, and their semantic hashes match the
+hourly metrics snapshot hashes. The hour's nine compacted output partitions contain
+**1,370,554** rows matching the source total from **172** raw objects; all exact-hour
+raw objects are absent after deletion, with zero row delta and no deletion failures.
+The hourly metrics object is present. No next hour was started before these checks.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+### Deletion-enabled qualification — 04:00Z–05:00Z — 2026-11-16
+
+The next deletion-enabled tick completed successfully and advanced the ledger to
+**05:00Z** in `DRAINING`. Independent evidence reports exit zero and
+`migration_complete=true`. Authority generation 10 is committed for the target
+window; both entity snapshots are present, and their semantic hashes match the
+hourly metrics snapshot hashes. The hour's nine compacted output partitions contain
+**1,548,467** rows matching the source total from **172** raw objects; all exact-hour
+raw objects are absent after deletion, with zero row delta and no deletion failures.
+The hourly metrics object is present. No next hour was started before these checks.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+### Deletion-enabled qualification — 03:00Z–04:00Z — 2026-11-16
+
+The next deletion-enabled tick completed successfully and advanced the ledger to
+**04:00Z** in `DRAINING`. Independent evidence reports exit zero and
+`migration_complete=true`. Authority generation 9 is committed for the target
+window; both entity snapshots are present, and their semantic hashes match the
+hourly metrics snapshot hashes. The hour's nine compacted output partitions contain
+**1,419,050** rows matching the source total from **171** raw objects; all exact-hour
+raw objects are absent after deletion, with zero row delta and no deletion failures.
+The hourly metrics object is present. No next hour was started before these checks.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+### Deletion-enabled qualification — 02:00Z–03:00Z — 2026-11-16
+
+The next deletion-enabled tick completed successfully and advanced the ledger to
+**03:00Z** in `DRAINING`. Independent evidence reports exit zero and
+`migration_complete=true`. Authority generation 8 is committed for the target
+window; both entity snapshots are present, and their semantic hashes match the
+hourly metrics snapshot hashes. The hour's nine compacted output partitions contain
+**1,372,181** rows matching the source total from **172** raw objects; all exact-hour
+raw objects are absent after deletion, with zero row delta and no deletion failures.
+The hourly metrics object is present. No next hour was started before these checks.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+### Deletion-enabled qualification — 01:00Z–02:00Z — 2026-11-16
+
+The next deletion-enabled tick completed successfully and advanced the ledger to
+**02:00Z** in `DRAINING`. Independent evidence reports exit zero and
+`migration_complete=true`. Authority generation 7 is committed for the target
+window; both entity snapshots are present, and their semantic hashes match the
+hourly metrics snapshot hashes. The hour's nine compacted output partitions contain
+**1,349,479** rows matching the source total from **172** raw objects; all exact-hour
+raw objects are absent after deletion, with zero row delta and no deletion failures.
+The hourly metrics object is present. No next hour was started before these checks.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification -->
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->

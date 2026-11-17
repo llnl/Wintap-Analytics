@@ -115,6 +115,8 @@ remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
 20 seconds); standard families retain the 2-million-row cap.
 
+Test-suite navigation and refactor plan: [[wiki/overview/test-suite-organization-and-classification]] — inventory of Analytics and PyUtil tests, purpose/execution taxonomy, proposed filesystem, coordination/entity overlap review, and staged move/archive rules. No test files have been moved or deleted yet.
+
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
 — current-source Accept emission and UDP memory-domain defects, live incomplete UDP
 tuples, source-aware repeated-Start accounting and five synthetic validator blind spots.
@@ -306,6 +308,9 @@ error classification, and target-support boundary remain to be established.
 The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
 .NET gap between current merge-time partitions and the requested actual-upload
 UTC partition contract.
+The approved high-priority test maintenance item is
+[[wiki/todo/test-suite-reorganization]], which points to the staged
+[[wiki/overview/test-suite-organization-and-classification]] plan.
 
 ## Work
 
@@ -336,12 +341,47 @@ creation, hourly compaction and Linux/Mac DBT clients over successive hours, wit
 impact-based defect triage. Comprehensive recovery/old-data preservation and unchanged
 full-suite repeats no longer precede the pilot; ownership/privacy/correctness stay.
 Concrete runner/data/access/mutation scope remains to be selected in
-[[wiki/work/dbt-compaction-coordination/isolated-qualification]]. No execution or
-production acceptance is claimed by the plan.
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]]. The plan itself does
+not claim execution or production acceptance. The confirmed 2026-10-25 22:00Z–
+2026-10-26 01:00Z block has completed entity initialization and three no-deletion
+hourly compactions; entity-aware Linux DBT passed against an immutable local snapshot
+through a read-only localhost mirror (59 models/85 tests). This is offline replay only.
+The two no-deletion continuation hours (01:00Z–03:00Z), followed by independently
+verified deletion-enabled compaction through 19:00Z, have completed. The raw-only DBT
+baseline for 04:00Z–05:00Z passed, with coarse and monotonic processing-throughput
+samples recorded. The attempted 19:00Z tick left the ledger BLOCKED with an unresolved
+writer after an observed-host/entity-expectation mismatch; the raw hour remains and no
+retry or authority bypass occurred. The human clarified that any host with data in the
+hour is valid, so the fixed expected-host rejection is a deterministic
+implementation/requirements mismatch, not invalid input or a transient failure. Read-only review
+confirmed two hosts in the failed raw hour; the additional host has process-event times
+from the hour's beginning plus older history, not a demonstrated mid-hour arrival. The
+PyUtil dynamic first-seen entity fix is implemented and fully tested; the blocked-run
+recovery path remains unresolved. Coordinated DBT
+awaits supported resolution and native-Mac DBT remains deferred. See
+[[wiki/work/dbt-compaction-coordination/verification#Confirmed next block and entity-aware Linux DBT snapshot replay — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Linux-only one-hour continuation — 01:00Z–02:00Z — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Second Linux-only one-hour continuation — 02:00Z–03:00Z — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Production-path runtime and throughput accounting — 2026-11-16]].
 The approved Linux-runner assignment is in
 [[wiki/work/dbt-compaction-coordination/dev_handoff#Active Linux-runner assignment — DCC-E2E-01]];
 the human handles delivery. Strict upload-time UTC client enforcement and downstream
 delayed-data semantics are separate later tasks, not pilot prerequisites.
+
+The plan now includes the downstream source-mode contract for raw-only,
+compacted-only, mixed, DBT DuckDB and entity-aware reads. It scopes HostActivity
+changes for source/coverage labeling, preserves SmokeTests as raw-producer-evidence
+by default, and keeps legacy DataQA/EDA consumers behind an explicit compatibility
+boundary. Synthetic raw-only, deleted-raw, compacted-only, overlap,
+cumulative-authority and duplicate-count gates are required before compacted or
+entity-aware consumer acceptance.
+
+The resumed deletion-enabled Linux scope subsequently completed the 23:00Z–00:00Z
+hour: authority generation 29 and its matching metrics generation are committed,
+nine compacted objects are present, exact-hour raw objects are absent, and the
+ledger is at 00:00Z in `DRAINING`. This is object-level operational evidence; the
+hour's row-count parity was not independently measured in that readback. Native-Mac
+DBT remains deferred.
 
 **Historical submitted review / isolated native-Mac overlay (November 15):** PyUtil `123b9d3`
 and Analytics `ee9c27a` include the Linux service/client/advisory, v4 retry and explicit-v5

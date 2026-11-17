@@ -97,6 +97,167 @@ unpushed. Local Linux affected/main/standalone gates pass as recorded in the fea
 verification. Native-Mac lifecycle controls are the next platform-specific step; no
 PR, push, S3/real-data access, or deployment occurred.
 
+## [2026-11-16] verification | historical S3 window inventory
+
+Using the human-authorized existing raw-data scope, a metadata-only listing found 16
+event-family directories and 526 distinct UTC hours; the oldest is 2026-10-25 19:00Z.
+The proposed first batch is three hours, [19:00Z, 22:00Z), with 1/8/8 family partitions
+and 1/109/118 listed Parquet objects (7,317/4,979,975/4,881,446 bytes). `raw_process`
+is absent in the oldest hour and present in each of the next two. Output-prefix checks
+found the conventional compacted/entity/metrics/coordination prefixes empty. This was
+listing metadata only—no object bodies, writes, or deletes; no compaction/entity/DBT run
+has started. The sensor-version attribution is human-provided. Detailed limits are in
+[[wiki/work/dbt-compaction-coordination/verification#Initial historical-window inventory — 2026-11-16]].
+
+## [2026-11-16] verification | fresh dynamic-host qualification stopped
+
+A new isolated v5 scope read one hour with deletion disabled. Standalone entity
+processing discovered the configured seed plus a second observed host, published
+both first-seen snapshots/authority evidence and metrics, and exited zero. Main-side
+entity completion still compared the report to the original seed list, reproduced
+`Entity CLI host/exclusion scope mismatch`, and blocked the fresh ledger. No compacted
+output, deletion, retry, or resolution was run. Under explicit operator direction,
+the disposable failed scope was deleted; the main completion contract was corrected
+and regression-tested before a fresh next-hour qualification.
+<!-- SOURCE: Fresh isolated Linux entity qualification and read-only retained-artifact diagnosis, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | next-hour dynamic-host qualification passed
+
+The replacement fresh v5 scope completed entity bootstrap and one coordinated
+20:00Z–21:00Z Linux tick with deletion disabled. Main completion accepted the
+cumulative observed host set; the ledger advanced to 21:00Z in `DRAINING`, with
+committed authority/snapshots, metrics, and compacted output. Independent entity
+verification passed and raw inputs remain present. Verify this hour before advancing.
+<!-- SOURCE: Fresh isolated Linux one-hour qualification, retained completion evidence, metrics readback, and independent entity verification, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | first deletion-enabled hour passed
+
+The 21:00Z–22:00Z tick completed with raw deletion enabled. Immutable completion
+evidence passed; compacted rows matched source rows, all exact-hour raw objects were
+confirmed absent with no deletion failures, and the hourly metrics object remained
+present. The ledger advanced to 22:00Z in `DRAINING`; continue only after each
+one-hour verification.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and independent S3 inventory, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | second deletion-enabled hour passed
+
+The 22:00Z–23:00Z tick completed successfully with deletion enabled. Nine output
+partitions matched **1,199,017** source/output rows from 166 raw objects; exact-hour
+raw absence, zero row delta, metrics presence, and no deletion failures were
+independently confirmed. The ledger advanced to 23:00Z in `DRAINING`.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and corrected independent S3 inventory, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | third deletion-enabled hour passed
+
+The 23:00Z–00:00Z tick completed successfully with deletion enabled. Nine output
+partitions matched **1,435,300** source/output rows from 165 raw objects; exact-hour
+raw absence, zero row delta, metrics presence, and no deletion failures were
+independently confirmed. The ledger advanced to 00:00Z in `DRAINING`.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | fourth deletion-enabled hour passed
+
+The 00:00Z–01:00Z tick completed successfully with deletion enabled. The committed
+authority and both entity snapshots were independently read back and matched the
+hourly metrics snapshot hashes. Nine output partitions matched **1,532,774**
+source/output rows from 165 raw objects; exact-hour raw absence, zero row delta,
+metrics presence, and no deletion failures were confirmed. The ledger advanced to
+01:00Z in `DRAINING`.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+## [2026-11-17] verification | Linux DBT compacted-chunk preflight blocked
+
+Direct Linux DBT configuration passed against the isolated compacted S3 window, but
+source preflight failed closed in `validate_entity_authority` because DBT's current
+host-set contract rejects the valid cumulative observed-host authority state. No
+models, tests, S3 writes, or deletions ran. Native-Mac testing remains deferred.
+<!-- SOURCE: Linux direct DBT configuration/source-preflight attempt against the isolated deletion-enabled compacted scope, conversation 2026-11-17. -->
+
+## [2026-11-16] code | DBT cumulative observed-host authority fix qualified
+
+DBT authority validation now accepts cumulative observed hosts while requiring the
+immutable seed-host set to remain present. The synthetic regression and focused
+57-test suites passed; the real deletion-enabled compacted S3 qualification passed
+preflight, build (**146/146**) and explicit test (**87/87**). No S3 mutation occurred;
+native-Mac testing remains deferred.
+<!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | Linux coordination gates remain green
+
+The entity-service and Linux lifecycle regression modules passed **76 tests** after
+the DBT authority repair. No live coordination request, service tick, S3 write or
+deletion was performed. The next step requires selection of a fresh private
+development manifest and authorized writable ledger/client-state scope; native-Mac
+DBT remains deferred.
+<!-- SOURCE: Linux local coordination regression run and scope review, conversation 2026-11-16. -->
+
+## [2026-11-16] plan | downstream compacted/entity consumer integration
+
+Updated [[wiki/work/dbt-compaction-coordination/integration-milestone-plan]] with
+explicit raw-only, compacted-only, raw-plus-compacted, DBT DuckDB, entity-aware and
+authority/status modes. The plan now covers DBT source/coverage labels and
+entity-authority/processing-metrics gates; HostActivity compacted/entity discovery,
+missing-versus-zero semantics and advisory status; SmokeTests' raw producer-evidence
+boundary; and legacy DataQA/EDA compatibility adapters. Added synthetic migration,
+overlap, deleted-raw, cumulative-authority and duplicate-count verification gates.
+No application source was changed; native-Mac DBT remains deferred.
+<!-- SOURCE: DBT routing/authority/metrics sources and Analytics Streamlit consumer inventory, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | tenth deletion-enabled hour passed
+
+The 06:00Z–07:00Z tick completed successfully with deletion enabled. Committed
+authority generation 12 and both entity snapshots matched the hourly metrics
+snapshot hashes. Nine output partitions matched **1,415,511** source/output rows
+from 173 raw objects; exact-hour raw absence, zero row delta, metrics presence, and
+no deletion failures were confirmed. The ledger advanced to 07:00Z in `DRAINING`;
+no eleventh tick was started.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | ninth deletion-enabled hour passed
+
+The 05:00Z–06:00Z tick completed successfully with deletion enabled. Committed
+authority generation 11 and both entity snapshots matched the hourly metrics
+snapshot hashes. Nine output partitions matched **1,370,554** source/output rows
+from 172 raw objects; exact-hour raw absence, zero row delta, metrics presence, and
+no deletion failures were confirmed. The ledger advanced to 06:00Z in `DRAINING`.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | eighth deletion-enabled hour passed
+
+The 04:00Z–05:00Z tick completed successfully with deletion enabled. Committed
+authority generation 10 and both entity snapshots matched the hourly metrics
+snapshot hashes. Nine output partitions matched **1,548,467** source/output rows
+from 172 raw objects; exact-hour raw absence, zero row delta, metrics presence, and
+no deletion failures were confirmed. The ledger advanced to 05:00Z in `DRAINING`.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | seventh deletion-enabled hour passed
+
+The 03:00Z–04:00Z tick completed successfully with deletion enabled. Committed
+authority generation 9 and both entity snapshots matched the hourly metrics
+snapshot hashes. Nine output partitions matched **1,419,050** source/output rows
+from 171 raw objects; exact-hour raw absence, zero row delta, metrics presence, and
+no deletion failures were confirmed. The ledger advanced to 04:00Z in `DRAINING`.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | sixth deletion-enabled hour passed
+
+The 02:00Z–03:00Z tick completed successfully with deletion enabled. Committed
+authority generation 8 and both entity snapshots matched the hourly metrics
+snapshot hashes. Nine output partitions matched **1,372,181** source/output rows
+from 172 raw objects; exact-hour raw absence, zero row delta, metrics presence, and
+no deletion failures were confirmed. The ledger advanced to 03:00Z in `DRAINING`.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+## [2026-11-16] verification | fifth deletion-enabled hour passed
+
+The 01:00Z–02:00Z tick completed successfully with deletion enabled. Committed
+authority generation 7 and both entity snapshots matched the hourly metrics
+snapshot hashes. Nine output partitions matched **1,349,479** source/output rows
+from 172 raw objects; exact-hour raw absence, zero row delta, metrics presence, and
+no deletion failures were confirmed. The ledger advanced to 02:00Z in `DRAINING`.
+<!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
 ## [2026-11-13] code | DuckDB-backed durable process reducer
 
 The Wintap-PyUtil entity update path now uses DuckDB 2.0.0 relations and SQL
@@ -8684,3 +8845,188 @@ workers; raw glob discovery runs in 24-hour chunks. Duration-aware chart buckets
 and the existing object, row, timeout, group, and chart-point budgets remain
 active. App-scoped tests passed (50), compile/lock/diff checks passed. Live S3
 custom-range behavior remains unverified.
+## [2026-11-16] verification | first bounded real-data run blocked
+
+The raw-only Linux DBT baseline passed 84 checks/56 successful nodes for the selected
+three-hour window, and entity initialization completed. The first hourly compaction
+published partial compacted/entity/metrics outputs but remained `BLOCKED` at 19:00Z.
+Read-only verification isolated a checkpoint contract mismatch: with `delete_source=false`,
+`metric_rows` emitted `deletion_status=completed` while the independent verifier requires
+`not_requested`; all other migration/generation checks matched. The raw-process source
+inventory remained 48 objects and no source deletion occurred. No compaction retry, repair,
+cleanup or cursor advance was performed after the block; preserve the blocked ledger/evidence
+and obtain explicit approval before recovery. Native-Mac real-data DBT remains pending. Details:
+`wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] code | no-deletion checkpoint status correction
+
+With human authorization, PyUtil now emits `not_requested` for checkpoints when
+`delete_source=false`, validates repaired checkpoints against the original run's
+deletion setting, and permits no-deletion checkpoint repair in the completion grammar.
+Entity-enabled normal-completion and repaired-completion regressions cover the defect.
+Six affected standalone modules pass 229 tests; the full standalone suite passes
+697 tests with two approval-gated S3 tests skipped; scoped Ruff lint/format checks pass.
+The code remains local and uncommitted/unpushed. The retained S3 run is still blocked:
+no retry, repair, cursor advance, source deletion, or Mac real-data DBT occurred. The
+historical checkpoint/partial outputs and evidence remain preserved pending explicit
+approval of a reviewed recovery path. Details:
+`wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] verification | blocked-run recovery eligibility audit
+
+Read-only local inspection confirms the original phase archive records
+`delete_source=false` but retains `deletion_status=completed` in both checkpoint
+intent and verification; its standalone archive is complete while the separate
+coordinator ledger remains blocked with an active writer, zero readers, and no
+completion proof. The existing standalone repair validator rejects this immutable
+candidate rather than correcting it, and the narrow coordinator repair path targets
+an original failed/error CLI report. No existing repair command is established as
+eligible; no S3 or ledger data was changed. A new narrowly audited correction path and
+explicit approval of its exact S3 write/ledger resolution are required before the
+real-data run can continue. Details:
+`wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] cleanup | discard initial three-hour window and run state
+
+At the human's direction, deleted the complete [19:00Z, 22:00Z) window rather than
+repairing the blocked run: 228 raw, one partial compacted, three metrics, and two
+entity objects. The exact pre-delete inventory matched; the unversioned S3 bucket
+returned no errors and all selected prefixes verified empty afterward. Removed the
+dedicated 378-file local run scratch after confirming no active process/open file and
+matching its private hash inventory. No objects outside the selected hours were
+targeted; unrelated PyUtil artifacts remain untouched. The next block begins 22:00Z,
+but its end boundary needs human confirmation before fresh state or processing is
+started. Exact object keys and local hashes remain in a permission-restricted private
+audit under `/tmp/opencode/dcc-cleanup-audit-20261025T19-22Z/`. Details:
+`wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] verification | next block compaction and entity-aware DBT replay
+
+The confirmed [22:00Z, 2026-10-26 01:00Z) block completed fresh v5 entity initialization
+and three hourly compactions with raw deletion disabled. Entity-aware Linux DBT source
+preflight/build passed against an exact 29-object private snapshot via a read-only
+localhost mirror: 59 models, 85 tests, zero mirror writes or out-of-scope reads. This is
+offline DBT/entity evidence, not coordinated S3-reader or live-endpoint qualification;
+the real ledger correctly remains DRAINING with due backlog. No native-Mac runner was
+available; Mac DBT and coordinated-reader qualification remain open. Details:
+`wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] verification | one-hour Linux continuation without Mac gate
+
+With Mac evidence deferred, the human approved one Linux service tick for
+[2026-10-26 01:00Z, 02:00Z), raw deletion disabled, then a stop/recheck. The hour
+completed with a new proof and `deletion_status=not_requested`; all 86 raw objects
+remain. The ledger advances to 02:00Z but remains DRAINING; the next hour has 84 raw
+objects and no compacted/metrics outputs, so no coordinated DBT was attempted. The
+original offline entity-enabled DBT replay still covers only 22:00Z–01:00Z. No further
+hour or Mac run was performed. Details:
+`wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] verification | second Linux-only continuation hour
+
+The human approved and the Linux service completed [2026-10-26 02:00Z, 03:00Z) with
+deletion disabled. Five hourly completion proofs now cover 22:00Z–03:00Z; raw inputs
+remain, and metrics report `not_requested` with matching source/output counts for this
+hour. The ledger remains DRAINING at 03:00Z; the next raw hour has 85 objects and no
+compacted/metrics outputs. DBT replay still covers only the first three hours, and Mac
+DBT remains deferred. Details: `wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] planning | production-path throughput reporting
+
+Added a lightweight measurement convention for coordinated service-tick wall time,
+excluding audits and DBT, with weighted files/s and decimal GB/s from per-hour processing
+metrics. The in-flight batch predates monotonic timing, so ledger timestamps will be a
+coarse fallback; exact timed samples will be collected on subsequent ticks. No throughput
+sample was available at entry time. Details: `wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] verification | deletion-enabled catch-up to 15:00Z
+
+The normal entity-enabled Linux service completed and independently verified eleven
+deletion-enabled hours from 04:00Z to 15:00Z; the raw-only 04:00Z–05:00Z DBT baseline
+passed (54 models/84 tests). The ledger is clean in DRAINING at 15:00Z with 17 proofs.
+The initial ten-hour [05:00Z, 15:00Z) batch yielded a coarse timestamp-based estimate
+of 668 seconds for 236 input files, 2,830,513 bytes and 3,069,413 rows, one expected
+host per hour; weighted rates were 0.353 files/s and 4,595 rows/s. Exact monotonic
+service-tick timing starts with the next batch. Coordinated DBT remains gated and Mac
+remains deferred. Details: `wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] verification | monotonic timing and fail-closed stop at 19:00Z
+
+Four deletion-enabled hours [15:00Z, 19:00Z) completed with monotonic service-subprocess
+timing: 258.846 seconds total for 96 files, 838,133 input bytes and 836,228 rows; weighted
+rates were 0.371 files/s and 3,231 rows/s (one expected host per hour). The next tick,
+19:00Z–20:00Z, exited nonzero. Read-only checks show the ledger BLOCKED at 19:00Z with an
+active unresolved writer. Read-only child evidence reports an observed host not
+explicitly initialized/expected (exit 2); phase evidence shows no completed migration.
+The 19:00Z raw partition remains and no compacted/metrics output was listed for that
+hour. No retry, resolution or authority change was attempted. Coordinated DBT remains
+gated pending an authorized supported resolution of the entity-expectation mismatch.
+Details: `wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] analysis | failure classification at 19:00Z
+
+Read-only source/evidence review localizes the failure to the explicit host-scope guard
+in `update_entities`, before entity publication and raw compaction/deletion. The human
+clarified that any host with data in the hour is valid, so classify this as a deterministic
+implementation/requirements mismatch: the failed raw partition contains one additional
+valid host beyond the configured/initialized one-host list. Keep run disposition
+separately `BLOCKED`: the entity/deletion/multi-event run
+is ineligible for current raw-only retry, entity replay is not admitted while BLOCKED,
+and no supported recovery route is established for missing migration evidence. No retry
+or ledger change was performed. The evidence-based classification rubric is in
+`wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] implementation | dynamic observed-host entity processing
+
+Implemented the PyUtil fix for the clarified requirement that a host observed in an
+hour is valid. Entity processing now discovers seed/authority/observed hosts, creates
+first-seen snapshots with first-observed-partition provenance, and grows authority host
+evidence without weakening integrity checks. Entity-only verification, completion, and
+checkpoint receipt validation were updated for cumulative host sets; invalid identity
+and lifecycle safeguards remain. Verification: focused dynamic-host tests passed;
+full `extras/raw-sensor-compact` suite **700 passed, 2 skipped**; changed production
+modules passed Ruff. The blocked ledger and source data were not retried or changed.
+Details: `wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] analysis | host-scope timeline review
+
+Read-only comparison found one host in each compacted `raw_process` partition from
+15:00Z–18:00Z, but two hosts in the failed 19:00Z raw partition and the following
+20:00Z raw partition. The additional valid host has process-event timestamps in the
+failed hour beginning 19:00:00Z, plus event timestamps back to September; `ReceiveTime`
+is zero in the checked partitions. This does not show a mid-hour first appearance or
+determine when the host came online. The fix must support discovered hosts and first-seen
+entity initialization, not merely remove the allowlist guard. No host/object identifiers
+were retained, and no source/ledger changes or retries occurred. Details:
+`wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] verification | resumed deletion-enabled scope reached 00:00Z
+
+The resumed 23:00Z–00:00Z service tick completed with immutable evidence reporting
+exit zero and migration complete. Independent readback found nine compacted exact-hour
+objects, zero exact-hour raw objects after deletion, 172 raw objects in the next hour,
+authority generation 29 committed, and matching authority/metrics generation IDs.
+The ledger is at 00:00Z in `DRAINING` with no readers or waiting jobs. Two entity
+snapshots, the authority object and 28 processing-metrics objects are present. This
+readback verifies object-level publication and coordination state, not row-count
+parity for this final hour; native-Mac DBT remains deferred.
+<!-- SOURCE: Resumed Linux deletion-enabled service completion evidence, local ledger readback, S3 object inventory, authority/metrics Parquet readback, conversation 2026-11-17. -->
+
+## [2026-11-16] plan | test-suite organization and classification
+
+Created [[wiki/overview/test-suite-organization-and-classification]] after
+inventorying 34 Analytics test files, 80 PyUtil Python test files, and 7 PyUtil
+DBT SQL tests. The page classifies maintained regression, contract, integration,
+qualification, live, and historical tests; proposes purpose-oriented directories;
+identifies coordination/entity, compactor-verifier, Streamlit, and local/S3
+review groups; and defines a no-delete review gate. No source or test files were
+moved or deleted.
+<!-- SOURCE: Read-only test inventory and collection review across Wintap-Analytics and Wintap-PyUtil, conversation 2026-11-16. -->
+
+## [2026-11-17] plan | approved test-suite reorganization todo
+
+Added the high-priority [[wiki/todo/test-suite-reorganization]] note pointing
+to the approved [[wiki/overview/test-suite-organization-and-classification]] plan.
+The TODO records that implementation is next, while preserving the plan's
+no-delete and qualification-evidence review gates. No test files were moved or
+deleted.

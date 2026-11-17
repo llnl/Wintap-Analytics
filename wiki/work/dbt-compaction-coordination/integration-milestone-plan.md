@@ -13,6 +13,16 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/entity_writer.py
   - ../Wintap-PyUtil/wintappy/coordination/entity_execution.py
   - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
+  - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
+  - ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql
+  - ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql
+  - ../Wintap-Analytics/streamlit/projects/HostActivity/s3_source.py
+  - ../Wintap-Analytics/streamlit/projects/HostActivity/main.py
+  - ../Wintap-Analytics/streamlit/projects/HostActivity/status_views.py
+  - ../Wintap-Analytics/streamlit/projects/SmokeTests/s3_source.py
+  - ../Wintap-Analytics/streamlit/projects/SmokeTests/analysis.py
+  - ../Wintap-Analytics/streamlit/projects/DataQA
 policy: agent-editable
 last_validated: 2026-11-16
 repo_scope: cross-repo
@@ -20,8 +30,8 @@ implementation_area: data-pipeline
 event_domain: cross-domain
 audience: mixed
 status: reviewed
-source_paths: wiki/work/dbt-compaction-coordination; ../Wintap-PyUtil/wintappy/coordination; ../Wintap-PyUtil/wintap_dbt
-tags: [feature-work, planning, integration, development-deployment, real-data, linux, macos, dbt, compaction, entity-state]
+source_paths: wiki/work/dbt-compaction-coordination; ../Wintap-PyUtil/wintappy/coordination; ../Wintap-PyUtil/wintap_dbt; ../Wintap-Analytics/streamlit/projects
+tags: [feature-work, planning, integration, development-deployment, real-data, linux, macos, dbt, compaction, entity-state, streamlit, source-modes]
 ---
 
 # Development end-to-end integration milestone
@@ -264,6 +274,185 @@ Accept **DCC-E2E-01** only when its checklist is demonstrated and human-reviewed
 Keep broader dcc-02–05 criteria separately tracked; do not silently equate this
 development milestone with universal recovery/resource or production acceptance.
 
+## Downstream integration plan — compacted inputs, entity cache and consumers
+
+The deletion-enabled Linux qualification changes the practical input contract for
+downstream readers: a completed hour can have **zero raw objects**, nine or more
+compacted event partitions, a committed entity snapshot, and a processing-metrics
+receipt. A reader that treats missing raw objects as zero activity will report a
+false absence. The following work is the downstream follow-on to DCC-E2E-01. It is
+a plan for application changes and verification, not a claim that those changes
+have already landed.
+
+### 1. Make source modes explicit
+
+Every reader and report must carry a source mode and a coverage disposition. The
+mode is selected deliberately; it is never inferred from whichever root happens to
+contain files.
+
+| Mode | Physical inputs | Intended use | Required semantics |
+|---|---|---|---|
+| `raw-only` | `raw_sensor/<event>` | Producer and delivery evidence; legacy raw viewers | Missing raw is `unavailable`/`unknown`, never zero. No entity enrichment is implied. |
+| `compacted-only` | `compacted/<event>` | Post-migration analysis after approved raw deletion | A compacted partition is a transformed delivery product. Label it as compacted and report its processing receipt/coverage. |
+| `raw-plus-compacted` | Both roots for a bounded window | Transition and overlap diagnostics | Use only with an explicit overlap policy. Do not `UNION ALL` overlapping copies and call the result a count. |
+| `dbt-duckdb` | DBT’s local DuckDB relations built from configured roots | Reusable analytical models | Record the selected roots, window, build revision and test result beside the local output. DBT output is not currently a published `stdview-*` Parquet contract. |
+| `entity-aware` | Event roots plus process-entity snapshots, authority and processing metrics | Process context/ancestry analysis | Fail closed when authority, entity snapshots or per-hour metrics are absent, stale, mismatched, duplicated or outside the binding. |
+| `authority/status` | Authority and processing-metrics objects only | Advisory coverage/status display | Describes producer processing; it is not a reader grant, completion certificate or recovery permission. |
+
+The transition adapter should attach at least `source_mode`, `physical_root`,
+`event_family`, `dayPK`, `hourPK`, `object_count`, `row_count` (when read),
+`coverage_status`, and an optional entity `generation_id` to its snapshot. Source
+labels must survive aggregation so raw and compacted results cannot be silently
+combined. A missing raw partition after a verified delete is `migrated_to_compacted`,
+not `empty`; an absent raw partition with no compacted or receipt evidence is
+`unknown`.
+
+DBT already routes each event family through both raw and compacted physical roots
+and uses `UNION ALL`; this remains correct only when the migration window is
+physically disjoint or the consumer applies an explicit overlap rule.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/paths.sql §raw_event_input_paths/raw_sensor_partition_globs -->
+
+### 2. DBT and entity-cache work
+
+The DBT integration slice should preserve the current fail-closed contracts while
+making coverage and provenance visible to downstream users:
+
+1. Keep raw/compacted root routing configurable independently of the general output
+   dataset root. Test raw-only, compacted-only, and mixed windows with the same
+   model selection and explicit `start_day`/`end_day`/hour bounds.
+2. Add a source-coverage relation or run artifact that reports, per event family
+   and hour, which physical roots were read, object/row totals where available,
+   and whether the hour is raw, compacted, mixed, missing, or unknown. Do not
+   deduplicate by an unverified filename or `ANY_VALUE`; detect overlap and report
+   it as a migration/data-quality condition.
+3. Keep entity mode opt-in and validate the complete binding: entity schema and
+   metadata, configured namespace/hosts, cumulative observed-host authority with
+   the immutable bootstrap set, authority lineage, semantic snapshot hashes,
+   processing-metrics schema, one valid metric receipt per required
+   `raw_process` hour, status, identity policy and exclusion ceiling.
+4. Expose the entity generation and bootstrap/window provenance in the DBT output
+   or a companion relation. `process_context` may enrich activity-only keys through
+   the entity table, but enrichment must not create new lifecycle observations or
+   inflate event counts.
+5. Add migration parity checks over a settled reference hour: source row totals,
+   per-family totals, distinct process keys, deterministic counters and schemas
+   must agree between raw-only and compacted-only reads. Document accepted
+   representative/enrichment differences separately from loss or duplication.
+6. Keep local DuckDB outputs isolated by source binding and window. A downstream
+   export to legacy `stdview-*` Parquet, if needed, is a separate compatibility
+   adapter; it must not be assumed merely because DBT built successfully.
+
+The existing DBT authority and metrics macros already reject missing or invalid
+authority, stale snapshots, missing/duplicate hourly receipts, bad status and
+identity-policy violations. The new tests should assert those failures remain
+visible while validating the cumulative observed-host case.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics/validate_process_entities; ../Wintap-PyUtil/wintap_dbt/models/silver/process_context.sql §entity ancestry enrichment -->
+
+### 3. HostActivity Streamlit application
+
+HostActivity should become a read-only, source-aware viewer rather than a raw-only
+viewer with a broader glob. Planned changes:
+
+- Extend the settings contract with optional compacted, entity and metrics roots
+  (with safe defaults matching DBT), plus an explicit source-mode selector. Keep
+  endpoint/profile validation and credential handling unchanged.
+- Discover objects separately by physical root and event/day/hour. Preserve the
+  root in metadata and row-query paths; never merge two roots into one anonymous
+  file list. The file-metadata view should show raw, compacted, mixed and missing
+  coverage per hour and explain that S3 object absence is not a zero-row result.
+- In row mode, support compacted-only and explicitly bounded raw-plus-compacted
+  inspection. Require a visible overlap policy and source label before presenting
+  totals. The default transition behavior should prefer a verified compacted
+  result for a migrated hour rather than count both copies.
+- Add an entity-aware process view that reads the configured entity snapshot and
+  displays generation, authority/metrics disposition and enrichment status. It
+  must remain advisory: the dashboard cannot grant access, reopen a ledger or
+  certify a migration.
+- Keep the existing 12-hour and file/row budgets, schema guards, timestamp
+  handling, sanitized errors and no-write behavior. A missing authority or
+  processing receipt should produce an explicit unavailable/unknown state, not an
+  empty chart.
+- Update Status/Partitions/Runs wording to distinguish ledger state, processing
+  metrics, raw retention and compacted coverage. `COMPLETED` and `DRAINING` remain
+  reported observations, not authority to coordinate another job.
+
+The implementation should add tests for raw-only, compacted-only after raw delete,
+mixed non-overlapping hours, overlapping raw/compacted objects, missing metrics,
+and a cumulative entity authority. The tests must assert that duplicate physical
+inputs do not double chart counts and that missing data is never rendered as zero.
+<!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/HostActivity/s3_source.py §S3Settings/load_settings/discover_files/discover_object_metadata; ../Wintap-Analytics/streamlit/projects/HostActivity/main.py §_refresh/main; ../Wintap-Analytics/streamlit/projects/HostActivity/status_views.py §advisory status -->
+
+### 4. SmokeTests, DataQA and EDA boundaries
+
+**SmokeTests remains raw producer-evidence first.** Its manifests, HOST receipts,
+stimulus selectors and coverage indicators answer whether a selected producer
+workload has corresponding telemetry. The default source mode must remain
+`raw-only`; a compacted object is not silently substituted for deleted raw
+producer evidence. If an explicit `compacted-replay` mode is added, reports must
+say that they validate post-processing/replay equivalence, not direct producer
+delivery, and must include processing receipt and source labels. Entity authority
+can provide context for a separate analysis but cannot turn a missing raw
+producer-evidence case into PASS.
+
+SmokeTests must also retain its current semantics: coverage is separate from
+harness generation success, missing families stay explicit, separate canary rounds
+are not silently combined, and result fingerprints include the complete object
+snapshot and evaluator code. A deleted raw object should invalidate or make the
+raw-evidence result unavailable rather than reuse a stale success.
+<!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/SmokeTests/s3_source.py §discover_files; ../Wintap-Analytics/streamlit/projects/SmokeTests/analysis.py §input_fingerprint/coverage; ../Wintap-Analytics/streamlit/projects/SmokeTests/batch_views.py §canary_batch_page -->
+
+**DataQA and older EDA consumers need a compatibility boundary.** They currently
+expect mounted/local datasets and legacy Parquet/stdview-style access. Do not
+point them at a compacted root by changing one environment variable, and do not
+claim DBT DuckDB output is a compatible Parquet publication. Choose one of these
+explicit follow-ons per consumer:
+
+- keep a documented `raw-only` compatibility profile for historical notebooks and
+  old charts;
+- add a compacted/entity-aware adapter that publishes stable views and labels the
+  source/coverage contract; or
+- consume a deliberate DBT DuckDB export contract after its schema and lifecycle
+  are separately accepted.
+
+Each adapter needs a migration test showing that raw-only and compacted-only
+results agree for a settled reference window, with duplicate prevention and
+missing-versus-zero assertions. Legacy consumers that cannot report source mode
+and coverage remain explicitly raw-only and are not included in compacted-data
+acceptance.
+<!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py §legacy stdview/local dataset path; ../Wintap-Analytics/streamlit/projects/DataQA/common; wiki/tension/dbt-duckdb-output-vs-legacy-stdview-parquet.md -->
+
+### 5. Verification matrix and rollout order
+
+Implement and review the downstream changes in this order:
+
+1. **Contract fixtures:** synthetic raw-only, compacted-only, raw-deleted,
+   non-overlapping mixed, overlapping mixed, missing-receipt and incomplete
+   authority fixtures. Include at least two event families and process rows with
+   an entity enrichment key.
+2. **DBT gates:** source discovery/labels, raw-vs-compacted parity, duplicate and
+   overlap detection, entity schema/metadata, cumulative authority, metrics
+   coverage, identity-policy ceiling, and local DuckDB output provenance.
+3. **HostActivity gates:** metadata and row modes for every source mode; coverage
+   status rendering; source-labeled counts; no double counting; no empty-chart
+   success when raw is deleted or authority is unavailable; advisory status only.
+4. **SmokeTests gates:** raw producer-evidence behavior remains unchanged;
+   compacted replay, if implemented, is separately labeled and cannot satisfy a
+   raw-evidence assertion; fingerprints invalidate on source/mode/coverage change.
+5. **DataQA/EDA gates:** legacy raw-only behavior remains stable, and every new
+   adapter passes the same parity/duplicate/unknown coverage checks before it is
+   allowed to consume compacted/entity-aware inputs.
+6. **Real development window:** run the adapters against the completed Linux
+   compacted/entity scope, compare a retained settled hour with a raw baseline
+   where both exist, then exercise a deleted-raw hour. Record event families,
+   source modes, entity generation, receipt status, row/count deltas and genuine
+   skips. Native-Mac DBT remains deferred; this downstream qualification does not
+   change that decision.
+
+Acceptance requires explicit source labels, no unexplained row inflation or loss,
+correct missing/unknown semantics, valid entity authority/metrics when entity mode
+is selected, and a reviewed compatibility decision for each consumer. Successful
+DBT build alone is insufficient.
+
 ## Defect triage and bounded repair
 
 | Priority | Examples | Treatment |
@@ -294,12 +483,16 @@ platform/package/release hardening. These remain backlog, not abolished invarian
 
 ## Next handoff
 
-**Next action is concrete development-run selection, then M1/M2—not another
-general corner-case coding cycle.** Confirm the Linux execution host, sensor source
-and data window, existing endpoint/access, which development prefixes may be
-created/migrated/deleted, and resource/stop ceilings in a private operator manifest.
+**Next action is to implement the source-mode/coverage adapters in a disposable
+development branch, beginning with contract fixtures and DBT/HostActivity tests.**
+Then select the real development run: confirm the Linux execution host, sensor
+source and data window, existing endpoint/access, which development prefixes may
+be created/migrated/deleted, and resource/stop ceilings in a private operator
+manifest.
 The simplified worksheet is in
 [[wiki/work/dbt-compaction-coordination/isolated-qualification]]. The human will
 deliver [[wiki/work/dbt-compaction-coordination/dev_handoff]] to the Linux runner.
-This planning/publication task has not run application tests, accessed telemetry/S3,
-changed source, stopped services or deleted data.
+This planning/publication task has not changed application source. The separately
+authorized Linux deletion-enabled processing is operational evidence recorded in
+the feature verification; any still-running tick must be independently verified
+before being described as complete. Native-Mac DBT remains deferred.
