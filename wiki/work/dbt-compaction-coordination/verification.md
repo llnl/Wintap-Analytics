@@ -5737,6 +5737,25 @@ metrics object is present. No next hour was started before these checks.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification -->
 <!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
 
+## Linux DBT against the deletion-enabled compacted chunk — blocked at authority preflight — 2026-11-16
+
+With native-Mac testing still deferred, a direct Linux DBT qualification was attempted
+against the isolated compacted S3 root for **21:00Z–06:00Z**. The local configuration
+check passed and the DBT source-preflight command reached the real S3/Parquet inputs,
+but `validate_entity_authority` failed closed with:
+`Entity authority binding/lineage invalid or publication unresolved; Processing metrics
+require the same roots, hosts and identity policy/ceiling`.
+
+The failure is a deterministic dynamic-host contract mismatch, not a missing compacted
+partition or a storage write failure. The immutable authority binding retains the
+configured seed-host set, while the latest cumulative entity state and metrics contain
+two observed hosts. DBT's current `validate_entity_authority` requires the authority
+binding host set and the current entity-file host set to agree, so preflight rejects
+the valid cumulative state. No DBT models or tests ran, and no S3 writes or deletions
+were performed; the disposable DuckDB was under `/dev/shm`.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_process_entities; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql §raw_event_input_paths -->
+<!-- SOURCE: Linux direct DBT configuration/source-preflight attempt against the isolated deletion-enabled compacted scope, conversation 2026-11-17. -->
+
 ### Deletion-enabled qualification — 06:00Z–07:00Z — 2026-11-16
 
 The tenth and final requested deletion-enabled tick completed successfully and

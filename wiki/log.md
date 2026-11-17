@@ -128,6 +128,14 @@ metrics presence, and no deletion failures were confirmed. The ledger advanced t
 01:00Z in `DRAINING`.
 <!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
 
+## [2026-11-17] verification | Linux DBT compacted-chunk preflight blocked
+
+Direct Linux DBT configuration passed against the isolated compacted S3 window, but
+source preflight failed closed in `validate_entity_authority` because DBT's current
+host-set contract rejects the valid cumulative observed-host authority state. No
+models, tests, S3 writes, or deletions ran. Native-Mac testing remains deferred.
+<!-- SOURCE: Linux direct DBT configuration/source-preflight attempt against the isolated deletion-enabled compacted scope, conversation 2026-11-17. -->
+
 ## [2026-11-16] verification | tenth deletion-enabled hour passed
 
 The 06:00Z–07:00Z tick completed successfully with deletion enabled. Committed
