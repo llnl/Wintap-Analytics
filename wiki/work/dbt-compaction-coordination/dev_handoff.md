@@ -191,6 +191,14 @@ testing remains deferred.
 <!-- SOURCE: Linux direct DBT configuration/source-preflight attempt against the isolated deletion-enabled compacted scope, conversation 2026-11-17. -->
 <!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
 
+The Linux entity-service and Linux lifecycle regression modules subsequently passed
+**76 tests** on the committed revision. No live coordination request or service tick
+was launched because this checkout has no selected private development manifest or
+authorized fresh writable ledger/client-state scope. The next operator action is M0/M1
+scope selection and fresh delivery observation; do not reuse a blocked ledger or bypass
+reader admission. Native-Mac DBT remains deferred.
+<!-- SOURCE: Linux local coordination regression run and scope review, conversation 2026-11-16. -->
+
 The tenth and final requested deletion-enabled hour, **06:00Z–07:00Z**, completed
 successfully. Authority generation 12 is committed, both entity snapshots remain
 present and consistent with metrics, output rows match source rows, all raw objects

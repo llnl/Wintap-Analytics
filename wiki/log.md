@@ -145,6 +145,15 @@ preflight, build (**146/146**) and explicit test (**87/87**). No S3 mutation occ
 native-Mac testing remains deferred.
 <!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
 
+## [2026-11-16] verification | Linux coordination gates remain green
+
+The entity-service and Linux lifecycle regression modules passed **76 tests** after
+the DBT authority repair. No live coordination request, service tick, S3 write or
+deletion was performed. The next step requires selection of a fresh private
+development manifest and authorized writable ledger/client-state scope; native-Mac
+DBT remains deferred.
+<!-- SOURCE: Linux local coordination regression run and scope review, conversation 2026-11-16. -->
+
 ## [2026-11-16] verification | tenth deletion-enabled hour passed
 
 The 06:00Z–07:00Z tick completed successfully with deletion enabled. Committed

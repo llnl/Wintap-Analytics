@@ -142,6 +142,14 @@ regression all passed. Native-Mac testing remains deferred.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/tests/test_process_entities.py §test_cumulative_observed_host_authority_is_accepted -->
 <!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
 
+The additional Linux entity-service and lifecycle gates passed **76 tests** without
+remote access. The remaining work is concrete M0/M1 development-run selection and
+fresh delivery observation, followed by the bounded Linux service/entity/compaction
+sequence. Do not use the existing `DRAINING` scope as an implicit fresh writable run.
+Native-Mac DBT remains deferred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_entity_service.py; ../Wintap-PyUtil/tests/test_coordination_linux_lifecycle.py -->
+<!-- SOURCE: Linux local coordination regression run and scope review, conversation 2026-11-16. -->
+
 ## Scope
 
 **Implementation authorized; production deployment remains outside this milestone.**

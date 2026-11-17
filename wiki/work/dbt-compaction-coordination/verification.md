@@ -5774,6 +5774,17 @@ No S3 writes or deletions occurred. Native-Mac testing remains deferred.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/tests/test_process_entities.py §test_cumulative_observed_host_authority_is_accepted -->
 <!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
 
+### Linux-only continuation after DBT authority repair — 2026-11-16
+
+The committed revision's local Linux coordination gates also pass: the entity-service
+and Linux lifecycle regression modules passed **76 tests**. This is local regression
+evidence only; no coordination request, reader grant, service tick, S3 write or
+deletion was performed. The next live step still requires a concrete private
+development manifest with a fresh/approved ledger, roots, client state, access scope,
+mutation scope and resource ceilings. Native-Mac DBT remains deferred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_entity_service.py; ../Wintap-PyUtil/tests/test_coordination_linux_lifecycle.py -->
+<!-- SOURCE: Linux local coordination regression run after DBT authority repair, conversation 2026-11-16. -->
+
 ### Deletion-enabled qualification — 06:00Z–07:00Z — 2026-11-16
 
 The tenth and final requested deletion-enabled tick completed successfully and
