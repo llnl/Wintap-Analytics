@@ -74,12 +74,15 @@ production rollout, PR work and persistent scheduler installation remain outside
 
 ## Current execution status — 2026-11-17
 
-The Linux live qualification reached 07:00Z after ten independently verified
-deletion-enabled hourly ticks; no eleventh tick was started. The current Linux DBT
-candidate evidence is source preflight, build **146/146**, explicit tests **87/87**,
-and focused DBT/entity regressions **57 passed** against the isolated compacted
-window. These results do not satisfy the complete milestone checklist by
-themselves.
+The earlier Linux live qualification reached 07:00Z after ten independently
+verified deletion-enabled hourly ticks. A separate fresh writer ledger later
+advanced 30 bounded hourly cursor steps from 2026-10-26 19:00Z to 2026-10-28
+01:00Z, including a verified non-empty migration/deletion, empty-hour advancement
+and audited recovery of one interrupted verifier. A separate future-cursor,
+non-entity Linux reader then completed a one-hour DBT build with **140/140**
+resources complete and a readable local DuckDB output. The broader DBT attempt
+that exhausted local disk remains a failure record. These results do not satisfy
+the complete milestone checklist by themselves.
 
 The current execution tranche is intentionally **Linux-only**. It uses the existing
 real S3 `raw_sensor` source, processes the oldest available date forward in small

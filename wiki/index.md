@@ -368,14 +368,19 @@ The approved Linux-runner assignment is in
 the human handles delivery. Strict upload-time UTC client enforcement and downstream
 delayed-data semantics are separate later tasks, not pilot prerequisites.
 
-**Current compaction boundary — November 17:** Linux reached 07:00Z after ten
-independently verified deletion-enabled ticks, and the current isolated DBT gate is
-146/146 build, 87/87 explicit tests and 57 focused DBT/entity regressions. The
-current tranche is Linux-only: server-owned compaction, coordinator, ledger and
-Linux DBT use the existing real S3 source from the oldest date forward in small
-chunks, with completed test-data deletion allowed after verification. Mac DBT is
-deferred. The M0 private-runner gate is replaced by exact-scope operational checks
-in [[wiki/work/dbt-compaction-coordination/isolated-qualification]].
+**Current compaction boundary — November 17:** The earlier Linux qualification
+reached 07:00Z after ten independently verified deletion-enabled ticks. A separate
+fresh writer ledger then advanced 30 bounded cursor steps to 2026-10-28 01:00Z;
+the primary ledger is healthy in `DRAINING` with no readers or waiting jobs. A
+separate future-cursor, non-entity Linux reader completed a one-hour DBT build
+with 140/140 resources and a readable local DuckDB output; its earlier broad
+window failed on local disk capacity and remains recorded as such. The current
+tranche is Linux-only: server-owned compaction, coordinator, ledger and Linux DBT
+use the existing real S3 source from the oldest date forward in small chunks, with
+completed test-data deletion allowed after verification. Mac DBT is deferred. The
+M0 private-runner gate is replaced by exact-scope operational checks in
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]] and the detailed
+[[wiki/work/dbt-compaction-coordination/verification#Second Linux-only live tranche — 2026-11-17]].
 
 The plan now includes the downstream source-mode contract for raw-only,
 compacted-only, mixed, DBT DuckDB and entity-aware reads. It scopes HostActivity

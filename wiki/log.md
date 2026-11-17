@@ -5,6 +5,19 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-17] verification | Linux writer and DBT reader tranche
+
+The fresh primary Linux ledger advanced 30 bounded oldest-forward cursor steps to
+2026-10-28 01:00Z. The first non-empty hour produced 889,436 compacted rows with
+verified raw deletion, metrics and entity/authority readback; one interrupted
+empty-hour verifier was recovered through the audited resolution path. A separate
+future-cursor, non-entity reader qualified a one-hour Linux DBT build with 140/140
+resources complete and a readable DuckDB output. A broader DBT attempt failed on
+local disk capacity; its reader reservation was explicitly released and the
+temporary database/WAL removed. Mac DBT, entity-mode DBT, overlap and all-history
+capacity remain open.
+<!-- SOURCE: Private Linux primary/reader ledgers, compaction evidence, S3 inventory, DBT observations and DuckDB readback, conversation 2026-11-17. -->
+
 ## [2026-11-16] code | experimental raw-process activity heuristic
 
 Added the user-approved, aggregate-only `raw_process` process-diversity metric

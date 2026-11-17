@@ -88,15 +88,17 @@ compliance must not be assumed. The active assignment is in
 
 ## Current execution status — 2026-11-17
 
-Linux live qualification is complete through 07:00Z after ten independently
-verified deletion-enabled ticks; the current candidate's isolated DBT gate remains
-146/146 build, 87/87 explicit tests and 57 focused DBT/entity regressions. Native-
-Mac DBT is now deferred and out of scope for this tranche. The server-owned
-coordinator, ledger, compactor and Linux DBT client will use the existing real S3
-`raw_sensor` source, oldest date forward in small bounded chunks, with completed
-test-data deletion allowed after verification. The historical parallel-Mac
-statements below are retained as evidence-state history. No new live tick is
-authorized outside this exact scope.
+The earlier ten-tick qualification remains recorded through 07:00Z. A separate
+fresh Linux live tranche then advanced a primary writer ledger from 2026-10-26
+19:00Z to 2026-10-28 01:00Z through 30 bounded service runs, including verified
+deletion of completed development-data hours and audited recovery of one
+interrupted empty-hour verifier. A separate future-cursor non-entity reader
+qualified a one-hour Linux DBT build with 140/140 nodes complete and a reopened
+DuckDB output. The broad-window DBT attempt is retained as a disk-capacity
+failure, not relabeled as a pass. Native-Mac DBT remains deferred and out of scope
+for this tranche; the historical parallel-Mac statements below remain evidence-
+state history. No all-history, entity-mode DBT, overlap or production-acceptance
+claim follows.
 <!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
 
 The first bounded real-data window exposed and authorized a local PyUtil correction for

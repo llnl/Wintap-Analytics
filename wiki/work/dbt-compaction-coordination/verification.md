@@ -5907,3 +5907,34 @@ forward in small bounded chunks, with deletion of completed test-data hours allo
 after verification. Mac DBT and reader/writer overlap are deferred and are not
 blockers for this tranche. The earlier parallel-Mac statements remain historical.
 <!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
+
+### Second Linux-only live tranche — 2026-11-17
+
+The fresh primary writer ledger advanced the oldest-forward cursor from
+**2026-10-26 19:00Z** to **2026-10-28 01:00Z** through 30 bounded service runs.
+The first non-empty hour completed with nine compacted output objects and
+**889,436** output rows; the exact-hour raw prefix was empty after deletion, the
+processing-metrics row was present, and the authority/entity snapshots were read
+back with the committed completion. The following hour and the intervening empty
+gap were processed under the same writer-priority ledger. An outer timeout
+interrupted one final empty-hour verifier; the retained run was recovered through
+the audited `resolve-hour` operation, and the next hour completed normally. The
+primary ledger now reports `DRAINING`, no readers or waiting jobs, no block reason,
+and the next cursor above. This is a bounded development run, not all-history
+completion.
+
+A separate future-cursor, non-entity reader ledger qualified the Linux DBT client
+without bypassing or advancing the primary writer backlog. Its first broad-window
+attempt reached **121 passes, 4 errors and 15 skips** before DuckDB exhausted local
+disk while writing its database/WAL; the reader reservation was explicitly
+released and the failed temporary database/WAL was removed. A one-hour retry over
+the verified compacted hour then passed source preflight and the complete DBT
+build: **33 table models, 21 view models, 84 data tests and two hooks**, with
+`PASS=140`, `ERROR=0`, `SKIP=0`, no warnings, and client `exit_code=0`. The local
+DuckDB output reopened successfully with DuckDB **1.5.6**, 54 relations and an
+approximately 72 MiB database. The reader ledger ingested the release and ended
+with zero readers and zero waiting jobs. No entity-mode DBT claim, Mac execution,
+reader/writer overlap claim, or all-history capacity claim follows from this
+qualification.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick/main; ../Wintap-PyUtil/wintappy/coordination/recovery.py §resolve_hour/release_reader; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/wintap_dbt/dbt_project.yml -->
+<!-- SOURCE: Private Linux primary/reader ledgers, compaction evidence, S3 inventory, DBT client observations and DuckDB readback, conversation 2026-11-17. -->
