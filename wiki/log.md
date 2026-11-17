@@ -136,6 +136,15 @@ host-set contract rejects the valid cumulative observed-host authority state. No
 models, tests, S3 writes, or deletions ran. Native-Mac testing remains deferred.
 <!-- SOURCE: Linux direct DBT configuration/source-preflight attempt against the isolated deletion-enabled compacted scope, conversation 2026-11-17. -->
 
+## [2026-11-16] code | DBT cumulative observed-host authority fix qualified
+
+DBT authority validation now accepts cumulative observed hosts while requiring the
+immutable seed-host set to remain present. The synthetic regression and focused
+57-test suites passed; the real deletion-enabled compacted S3 qualification passed
+preflight, build (**146/146**) and explicit test (**87/87**). No S3 mutation occurred;
+native-Mac testing remains deferred.
+<!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
+
 ## [2026-11-16] verification | tenth deletion-enabled hour passed
 
 The 06:00Z–07:00Z tick completed successfully with deletion enabled. Committed

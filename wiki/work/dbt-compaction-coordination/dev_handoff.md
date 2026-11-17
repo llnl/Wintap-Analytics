@@ -180,13 +180,16 @@ hour were independently confirmed deleted, and the ledger is healthy at 01:00Z i
 
 ### Linux DBT compacted-chunk attempt — 2026-11-17
 
-The direct Linux DBT attempt against the isolated compacted S3 window
+The first direct Linux DBT attempt against the isolated compacted S3 window
 **21:00Z–06:00Z** passed configuration and reached source preflight, but failed
-closed in `validate_entity_authority` because the current DBT host-set contract
-does not accept the valid cumulative observed-host authority state. No models,
-tests, S3 writes, or deletions ran. Native-Mac testing remains deferred; do not
-bypass the authority check before resolving the DBT dynamic-host contract.
+closed because the DBT host-set contract rejected valid cumulative observed-host
+state. The validator was corrected to require configured seed hosts to be a subset
+of the current cumulative host set. The follow-up source preflight, full build and
+explicit test passed (**146/146** and **87/87**, respectively); focused DBT/entity
+regressions passed **57 tests**. No S3 writes or deletions occurred. Native-Mac
+testing remains deferred.
 <!-- SOURCE: Linux direct DBT configuration/source-preflight attempt against the isolated deletion-enabled compacted scope, conversation 2026-11-17. -->
+<!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
 
 The tenth and final requested deletion-enabled hour, **06:00Z–07:00Z**, completed
 successfully. Authority generation 12 is committed, both entity snapshots remain

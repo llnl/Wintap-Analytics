@@ -116,8 +116,9 @@ compactor suite passed (**700 passed, 2 skipped**); Ruff passed for changed prod
 modules. No retry or ledger change was performed; keep the execution disposition
 BLOCKED.
 Current retry/replay gates do not cover this run and no supported recovery path has been
-established. Coordinated DBT remains gated pending authorized resolution; native-Mac DBT
-remains deferred. Coarse and monotonic throughput samples, the failure taxonomy and stop
+established. The DBT dynamic-host authority contract was subsequently corrected and
+qualified against the deletion-enabled compacted chunk; native-Mac DBT remains deferred.
+Coarse and monotonic throughput samples, the failure taxonomy and stop
 evidence are in verification. The no-deletion fix remains local and uncommitted;
 incomplete repair-path edits were removed. See
 [[wiki/work/dbt-compaction-coordination/verification#Confirmed next block and entity-aware Linux DBT snapshot replay — 2026-11-16]] and
@@ -133,6 +134,13 @@ regression-tested, and a fresh next-hour scope then completed one coordinated Li
 hour successfully. Verify that hour before advancing further.
 <!-- SOURCE: Human planner-role direction and development-data clarification, conversation 2026-11-16. -->
 <!-- SOURCE: Authorized PyUtil fix and bounded-run status, conversation 2026-11-16. -->
+
+The DBT follow-up retained fail-closed authority validation while changing the host
+comparison from exact equality to seed-host subset validation. The compacted S3 source
+preflight, 59-model/85-test build, explicit DBT test, and focused 57-test Python
+regression all passed. Native-Mac testing remains deferred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/tests/test_process_entities.py §test_cumulative_observed_host_authority_is_accepted -->
+<!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
 
 ## Scope
 

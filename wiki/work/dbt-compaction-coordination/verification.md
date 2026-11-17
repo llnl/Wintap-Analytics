@@ -5756,6 +5756,24 @@ were performed; the disposable DuckDB was under `/dev/shm`.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_process_entities; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql §raw_event_input_paths -->
 <!-- SOURCE: Linux direct DBT configuration/source-preflight attempt against the isolated deletion-enabled compacted scope, conversation 2026-11-17. -->
 
+### Resolution: cumulative observed-host authority accepted — 2026-11-16
+
+The DBT authority contract was corrected without weakening fail-closed validation.
+`validate_entity_authority` now requires the immutable binding's seed hosts to be a
+subset of the current cumulative entity host set; it still validates the authority
+array type, host evidence, current snapshots, lineage, roots, identity policy and
+metrics. Additional observed hosts are therefore accepted as cumulative state.
+
+A synthetic regression with an additional observed host passed, and the real compacted
+S3 qualification then passed source preflight and the full DBT build: **59 models and
+85 data tests, 146/146 passed**, with no warnings, errors or skips. An explicit DBT
+test pass was **87/87**. Focused Python DBT/entity suites passed **57 tests**. Output
+counts in the disposable DuckDB were `process_entities=362146`,
+`stg_processing_metrics=11`, `process=331612`, and `process_summary=331612`.
+No S3 writes or deletions occurred. Native-Mac testing remains deferred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/tests/test_process_entities.py §test_cumulative_observed_host_authority_is_accepted -->
+<!-- SOURCE: Linux DBT qualification against the isolated deletion-enabled compacted scope and focused regression runs, conversation 2026-11-16. -->
+
 ### Deletion-enabled qualification — 06:00Z–07:00Z — 2026-11-16
 
 The tenth and final requested deletion-enabled tick completed successfully and
