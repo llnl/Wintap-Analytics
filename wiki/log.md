@@ -9030,3 +9030,24 @@ to the approved [[wiki/overview/test-suite-organization-and-classification]] pla
 The TODO records that implementation is next, while preserving the plan's
 no-delete and qualification-evidence review gates. No test files were moved or
 deleted.
+
+## [2026-11-17] handoff | parallel native-Mac DBT workstream activated
+
+Updated [[wiki/work/dbt-compaction-coordination/dev_handoff]] for the Mac worker
+to begin genuine reader-only DBT work in parallel with Linux/server finalization.
+The handoff selects the current PyUtil candidate, requires a fresh isolated client
+and output scope, prohibits Mac writer/deletion/ledger bypass, defines the bounded
+reader/overlap sequence, and specifies sanitized return evidence. Prior deferred
+Mac-DBT statements remain historical; no Mac execution result is claimed here.
+<!-- SOURCE: Human direction to start native-Mac DBT in parallel with Linux/server finalization, conversation 2026-11-17. -->
+
+## [2026-11-17] verification | compaction execution boundary reconciled
+
+Recorded the Linux qualification boundary at 07:00Z after ten independently
+verified deletion-enabled ticks and preserved the prior candidate-`402ead1` DBT
+result (146/146 build, 87/87 explicit tests, 57 focused regressions). The current
+verification page now states that no eleventh tick or native-Mac real-data result
+is claimed; DCC-E2E-01 remains open for genuine Mac DBT and overlap evidence.
+The attempted local rerun was not treated as qualification because the private
+runner scope is unavailable and the checked-out main PyUtil environment is stale.
+<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus local continuation checks, conversation 2026-11-17. -->

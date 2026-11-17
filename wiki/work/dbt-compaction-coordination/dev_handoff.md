@@ -52,7 +52,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_completion_history_qualification.py
 policy: agent-editable
-last_validated: 2026-11-16
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -84,8 +84,57 @@ source-change approval, or blanket remote/deletion authorization.
 
 **Use this assignment and the approved integration plan, not the historical
 recovery-first continuation below.** Own the Linux coordinator/writer, fresh entity
-cache and Linux DBT client; arrange the native-Mac client stage with the human/Mac
-operator. Linux-only success or synthetic Mac controls cannot close the milestone.
+cache and Linux DBT client; run the native-Mac client stage in parallel with the
+human/Mac operator. Linux-only success or synthetic Mac controls cannot close the
+milestone.
+
+## Parallel native-Mac DBT worker assignment — November 17
+
+The native-Mac DBT workstream is now active in parallel with the Linux server's
+remaining finalization. The earlier handoff statements that Mac DBT was deferred
+describe the prior evidence state; they are superseded for execution by this
+section, not erased as historical records.
+
+### Mac worker scope
+
+1. Use the exact PyUtil candidate delivered for this run. The current candidate
+   includes the cumulative observed-host DBT/entity fixes at `402ead1` on
+   `work/raw-sensor-compacted-union`; do not substitute the older Mac-only
+   supervision revision if the DBT authority fix is absent.
+2. Work from a fresh disposable Mac checkout/client-state/output scope. Keep the
+   local DuckDB output separate from Linux and use a distinct reader/client identity.
+   Do not copy credentials, host identifiers, Linux virtual environments, ledgers,
+   or server-local runtime state into the Mac checkout.
+3. Run the genuine reader-only Make/client path against the same approved,
+   isolated S3-backed development window that Linux is finalizing. This means
+   actual source preflight, `make dbt-build`, DBT tests and release through the
+   coordinator; the in-process restriction probe and synthetic lifecycle controls
+   are not substitutes for this stage.
+4. Do not run a Mac writer, compactor, entity publisher, source deletion, manual
+   cursor/ledger change, or admission bypass. The Mac worker is a coordinated
+   reader. Stop if the grant, source roots, identity policy, window or output scope
+   is not exact and independently visible.
+5. Begin with one bounded reader run while Linux finalization continues. If that
+   passes, exercise the approved overlap case with the Linux writer only through
+   normal grants: reader reservation, due-writer drain, verified release, and any
+   queued reader admission. Do not interfere with Linux's stop/recheck boundary.
+
+### Mac return evidence
+
+Return a sanitized report containing the exact revision, platform/runtime versions,
+window and source-mode labels, grant/release lifecycle, preflight/build/test/release
+return codes, genuine skips, local DuckDB output status, elapsed time and resource
+measurements. Keep raw reports private when they contain account paths or endpoint
+details. A successful synthetic Mac baseline remains useful context but does not
+certify this real DBT/data stage.
+
+Record the result in [[wiki/work/dbt-compaction-coordination/verification]] and
+append a concise `wiki/log.md` entry. A Mac failure must identify whether it is a
+platform/runtime, reader-lifetime, coordinator/grant, source/authority, DBT model,
+or output/release defect; preserve the Linux server's independent evidence and do
+not retry by mutating the shared ledger.
+<!-- SOURCE: Human direction to start native-Mac DBT in parallel with Linux/server finalization, conversation 2026-11-17. -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/client.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql; ../Wintap-PyUtil/Makefile -->
 
 ### Execution checkpoint — 2026-11-16
 

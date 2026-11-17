@@ -85,7 +85,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
   - ../Wintap-PyUtil/tests/test_coordination_entity_forward_history.py
 policy: agent-editable
-last_validated: 2026-11-16
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -5886,3 +5886,25 @@ raw objects are absent after deletion, with zero row delta and no deletion failu
 The hourly metrics object is present. No next hour was started before these checks.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py §Authority; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification -->
 <!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, authority/snapshot readback, metrics readback, and exact-hour S3 inventory, conversation 2026-11-16. -->
+
+## Current execution boundary — 2026-11-17
+
+The Linux live qualification is closed at **07:00Z** after ten independently
+verified deletion-enabled hourly ticks. The final tick matched source/output rows,
+confirmed raw deletion, authority/entity/metrics consistency and zero deletion
+failures; no eleventh tick was started. This is ten verified hourly operations, not
+one uninterrupted ten-hour process.
+
+The current Linux DBT evidence for PyUtil candidate `402ead1` remains the real
+isolated-window result: source preflight, full build **146/146**, explicit DBT tests
+**87/87**, and focused DBT/entity regressions **57 passed**, with no S3 writes or
+deletions. A local rerun is not claimed here because this workspace has neither the
+approved private runner manifest/access scope nor a usable main PyUtil environment.
+
+Native-Mac DBT is now an active parallel workstream under the updated handoff, but
+no native-Mac real-data execution result is available yet. The historical statements
+below that Mac testing was deferred describe the earlier evidence state and remain
+historical; they do not replace the current reader-only assignment. DCC-E2E-01
+therefore remains open until genuine Linux/native-Mac DBT runs, separate outputs,
+and the approved reader/writer overlap evidence are returned and reviewed.
+<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
