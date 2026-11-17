@@ -5,6 +5,16 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-17] docs | Add wrapper-to-dd raw process example
+
+Added a sanitized `datacrumbs_wrap` → `dd` example to
+`wiki/todo/linux-process-executable-attribution.md`. The example distinguishes
+fork, exec attempts, successful image replacement, and Stop for one PidHash, and
+connects the observations to the existing unordered `ANY_VALUE` executable
+selection risk. Also recorded a follow-up to validate apparent Start-versus-Stop
+timestamp precision differences against Linux `/proc` clock-tick normalization.
+No sensor, schema, DBT, or raw-data changes were made.
+
 ## [2026-11-16] code | experimental raw-process activity heuristic
 
 Added the user-approved, aggregate-only `raw_process` process-diversity metric

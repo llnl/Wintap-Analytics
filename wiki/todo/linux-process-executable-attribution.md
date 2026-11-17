@@ -8,7 +8,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - wiki/work/lintap-process-creation-validation/validation-harness-design.md
 policy: agent-editable
-last_validated: 2026-11-04
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -58,6 +58,66 @@ or combine a process name and path from different observations. The current
 projection therefore does not provide reliable canonical executable
 attribution for a process lifetime. This is a source-level finding; its frequency
 and impact in recorded datasets still need measurement.
+
+## Example: wrapper script followed by `dd`
+
+The following is a sanitized, reduced example from a user-provided `raw_process`
+extract. The command was:
+
+```text
+datacrumbs_wrap dd if=/dev/zero of=/tmp/<output> bs=1M count=1 status=none
+```
+
+`datacrumbs_wrap` is a shell script that sets `LD_PRELOAD` and then runs:
+
+```sh
+exec "$@"
+```
+
+The relevant observations for one process identity can be summarized as:
+
+| Source | Observed image/path | Interpretation |
+|---|---|---|
+| `sched_fork` | `bash` | Parent creates the child process and its new PID. |
+| `sched_exec` | `datacrumbs_wrap` | The child replaces its inherited image with the wrapper script; this is not a new PID. The script's shebang may cause a shell interpreter to be loaded under the same PID. |
+| `execve_or_execveat` | Several `dd` candidate paths | Exec syscall-entry observations while resolving the command through `PATH`; they do not by themselves prove successful execution. |
+| `sched_exec` | `dd` | The wrapper's `exec "$@"` replaces the wrapper image with `dd`, preserving the PID and process identity. |
+| `Stop` | Same process identity | The process lifetime ends. |
+
+All of the Start observations shared one PID, one `PidHash`, one process-birth
+`EventTime`, and one parent identity. The Stop retained the same PID and
+`PidHash` but had its own termination `EventTime`. The raw `ActivityType=Start`
+label therefore does not mean that every Start row is a distinct process birth.
+It is carrying fork, exec attempt, and successful-image observations under the
+same process-lifetime identity. The process-birth `EventTime` also cannot order
+the individual exec observations.
+
+This example makes the `ANY_VALUE` risk concrete: an unordered silver
+aggregation grouped by `pidhash` could select `bash`, `datacrumbs_wrap`, `dd`,
+or an attempted `dd` path as the representative executable. Independent
+selection of `process_name` and `process_path` could also combine values from
+different observations. A deterministic model must first define whether the
+representative means the initial image, the latest successful image, or another
+explicit process-lifetime view; this example does not select that policy.
+<!-- SYNTHESIS: user-provided sanitized raw_process example interpreted using ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs, ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracer.bpf.c, and ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql -->
+
+### Timestamp precision follow-up
+
+The same sample warrants a separate timestamp investigation. The Start rows
+repeat `134394151359900000`, which is aligned to a much coarser boundary, while
+the Stop row carries `134394151363910716` with finer 100-nanosecond FILETIME
+precision. This may be intentional rather than ordinary truncation: the Linux
+producer canonicalizes process birth times to the `/proc` clock-tick basis so
+Clone, Execve, and rundown observations produce the same identity. Stop time is
+reported as a termination/event timestamp and need not use that birth-time
+normalization.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs §TryConvertBootNsToUtc, NormalizeStartTimeUtc; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §HandleEvent -->
+
+Open validation items are the host's effective `CLK_TCK`, the exact FILETIME
+conversion for each Start source, whether the observed alignment is consistent
+across captures, and whether any downstream logic incorrectly treats Start and
+Stop timestamp precision as equivalent. Do not label this as confirmed data loss
+until those source and host details are checked.
 
 ## Modeling questions
 
