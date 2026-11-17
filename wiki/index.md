@@ -104,6 +104,8 @@ remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
 20 seconds); standard families retain the 2-million-row cap.
 
+Test-suite navigation and refactor plan: [[wiki/overview/test-suite-organization-and-classification]] — inventory of Analytics and PyUtil tests, purpose/execution taxonomy, proposed filesystem, coordination/entity overlap review, and staged move/archive rules. No test files have been moved or deleted yet.
+
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
 — current-source Accept emission and UDP memory-domain defects, live incomplete UDP
 tuples, source-aware repeated-Start accounting and five synthetic validator blind spots.
@@ -292,6 +294,9 @@ the collision impact and compatibility implications remain unverified.
 The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
 .NET gap between current merge-time partitions and the requested actual-upload
 UTC partition contract.
+The approved high-priority test maintenance item is
+[[wiki/todo/test-suite-reorganization]], which points to the staged
+[[wiki/overview/test-suite-organization-and-classification]] plan.
 
 ## Work
 

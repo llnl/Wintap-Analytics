@@ -8939,3 +8939,22 @@ snapshots, the authority object and 28 processing-metrics objects are present. T
 readback verifies object-level publication and coordination state, not row-count
 parity for this final hour; native-Mac DBT remains deferred.
 <!-- SOURCE: Resumed Linux deletion-enabled service completion evidence, local ledger readback, S3 object inventory, authority/metrics Parquet readback, conversation 2026-11-17. -->
+
+## [2026-11-16] plan | test-suite organization and classification
+
+Created [[wiki/overview/test-suite-organization-and-classification]] after
+inventorying 34 Analytics test files, 80 PyUtil Python test files, and 7 PyUtil
+DBT SQL tests. The page classifies maintained regression, contract, integration,
+qualification, live, and historical tests; proposes purpose-oriented directories;
+identifies coordination/entity, compactor-verifier, Streamlit, and local/S3
+review groups; and defines a no-delete review gate. No source or test files were
+moved or deleted.
+<!-- SOURCE: Read-only test inventory and collection review across Wintap-Analytics and Wintap-PyUtil, conversation 2026-11-16. -->
+
+## [2026-11-17] plan | approved test-suite reorganization todo
+
+Added the high-priority [[wiki/todo/test-suite-reorganization]] note pointing
+to the approved [[wiki/overview/test-suite-organization-and-classification]] plan.
+The TODO records that implementation is next, while preserving the plan's
+no-delete and qualification-evidence review gates. No test files were moved or
+deleted.

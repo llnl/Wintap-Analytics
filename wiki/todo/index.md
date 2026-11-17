@@ -54,6 +54,7 @@ recorded.
 | P2 — Medium (provisional) | [[wiki/todo/transformer-five-tuple-connection-port-key]] | Open | Investigate whether `Transformer.cs:37` passes the high endpoint port for both five-tuple key ports, causing connection-ID collisions. |
 | Untriaged | [[wiki/todo/raw-sensor-upload-time-partition]] | Open | Current .NET code partitions at merge time and retries the same S3 key; the requested UTC actual-upload partition contract needs a separate shared-uploader correction. |
 | Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Open | Investigate process-attributed listening-socket lifecycle capture and a downstream model distinct from peer-oriented connections; priority and platform scope remain open. |
+| P1 — High | [[wiki/todo/test-suite-reorganization]] | Open | Implement the approved Analytics/PyUtil test-suite classification and filesystem reorganization; preserve collection counts and review evidence before merging or archiving cases. |
 
 ## Related
 
