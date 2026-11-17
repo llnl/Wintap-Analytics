@@ -9070,17 +9070,19 @@ worksheet's existing review gate remains active for runner, private roots/access
 mutation scope and resource ceilings.
 <!-- SOURCE: Current native-Mac DBT handoff and candidate selection, conversation 2026-11-17. -->
 
-## [2026-11-17] index | compaction rollup refreshed
+## [2026-11-17] scope | Linux-only integration tranche selected
 
-Refreshed the wiki index rollup with the closed Linux ten-tick/DBT evidence and the
-active-but-unreturned native-Mac reader workstream. The index now points directly to
-the remaining M0 private scope review gate and does not imply DCC-E2E-01 acceptance.
-<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
+The human narrowed the next execution to the existing real S3 `raw_sensor` source,
+oldest-forward small chunks, server-owned compaction/coordinator/ledger and Linux
+DBT. Completed test-data deletion is allowed; Mac DBT, separate Mac output and
+reader/writer overlap are deferred. Updated the index and qualification records to
+remove the private-manifest blocker while retaining exact-prefix safety checks.
+<!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
 
 ## [2026-11-17] plan | active candidate references corrected
 
 Corrected the compaction brief and integration sequence so historical `badb67f`
-baseline references are not presented as the active candidate. The current parallel
-Mac DBT candidate is `402ead1`; its relevant cumulative-host DBT/entity gate remains
-the accepted 146/146, 87/87 and 57-test evidence already recorded.
+baseline references are not presented as the active candidate. The current Linux
+integration candidate is `402ead1`; its cumulative-host DBT/entity gate remains the
+accepted 146/146, 87/87 and 57-test evidence already recorded. Mac DBT is deferred.
 <!-- SOURCE: Current native-Mac DBT handoff and candidate selection, conversation 2026-11-17. -->

@@ -23,12 +23,15 @@ tags: [qualification, linux, s3, resources, coordination, runbook]
 
 # Development integration and broader qualification
 
-**Prepared procedure only; no environment or fixture is selected and no remote run
-is authorized by this page.** PyUtil owns execution; Analytics owns this record.
-Current development candidate for the parallel Mac DBT worker is PyUtil
-`402ead1` on `work/raw-sensor-compacted-union`, not a production release.
-<!-- REVIEW NEEDED: approve the concrete development runner, private data/root manifest, access, mutation scope and ceilings before execution. -->
-<!-- SOURCE: Current native-Mac DBT handoff and candidate selection, conversation 2026-11-17. -->
+**Current Linux integration scope is approved.** Use the existing real S3
+`raw_sensor` source and the server-owned coordinator, ledger, compactor and Linux
+DBT client. Process the oldest available date forward in small bounded chunks.
+Completed source data may be deleted because the existing dataset is explicitly
+test/development data. Mac DBT is deferred and out of scope for this tranche.
+PyUtil owns execution; Analytics owns this record. Keep credentials and exact private
+roots outside the wiki.
+<!-- REVIEW NEEDED: confirm only the exact existing S3 path and bounded oldest-forward chunk before each destructive run; do not broaden the source prefix. -->
+<!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
 
 **November 16 priority change:** the whole sensor/raw-data/ETL deployment is
 developmental and existing telemetry is expendable. Begin the finite actual-data
@@ -47,12 +50,12 @@ not this wiki. Persist only synthetic labels, aggregate results and manifest has
 
 | Required selection | Constraint |
 |---|---|
-| Linux coordinator/writer and Linux/Mac clients | Actual Linux supervision and native-Mac reader; select the development machines and separate locked main/standalone environments. Avoid disturbing an active worker's checkout or jobs; a new VM is not inherently required. |
+| Linux coordinator/writer and Linux DBT client | Run the server processes and Linux DBT client from the existing Linux environment; keep ledger/client/output state isolated from unrelated jobs. Mac DBT is deferred. |
 | Exact source revision plus overlay identities | Hash source, controls, runner, manifests and both locks before/after; preserve submitted/historical evidence. |
-| Private development root/data manifest | Select actual sensor data, hosts, event families and a small recent window; matching raw/compacted/entity/metrics and transport binding, separate local state/archive/temp/client/output roots. Fresh scope preferred; any reuse needs explicit selection and cannot bypass outstanding jobs or partial output. |
+| Existing S3 data path | Use the existing real `raw_sensor` source, oldest available date forward, in small bounded chunks; bind matching raw/compacted/entity/metrics and transport roots. Do not broaden the source prefix. |
 | Existing approved access configuration | Explicit endpoint/region/profile scope; credentials ephemeral and never retained in receipts/wiki. No implicit default production access. |
-| Real-data provenance and mutation scope | Actual sensor/upload data, optionally replayed in a fresh scope first. Explicitly select which development prefixes may be created, compacted and deleted; retain only the small comparison oracle/diagnostics needed, not a mandatory whole-deployment backup. |
-| Runtime/resource/timeout ceilings | Initial 32 GB RAM / 64 GB disk envelope, aggregate accounting; select wall-time, log/archive/fixture ceilings and stop margins before launch. |
+| Real-data provenance and mutation scope | Existing collected S3 data is the test dataset. Compaction may delete successfully completed source hours; preserve enough evidence to verify row/output/entity/metrics parity before deletion. |
+| Runtime/resource/timeout ceilings | Secondary for this tranche; retain practical stop controls and report observed resource use, but do not block initial progress on formal capacity qualification. |
 | Development runner and stop control | Bounded actual service/client launch/capture, Linux descendant shutdown and accepted native-Mac process-group release; outer timeout/root exit alone is not a certificate. |
 
 Re-read current source/verification before freezing. Reuse current unchanged green
@@ -71,9 +74,8 @@ processes cannot resume; never fabricate success or reset the old ledger to reop
    service `entities-init` with separate entity settings. Run actual hourly ticks
    through entity update, compaction, approved deletion, verification and COMMIT;
    bootstrap preserves the raw cursor and leaves `DRAINING` until catch-up.
-4. Run Linux and actual-Mac Make/client DBT builds sequentially, then with overlapping
-   reader reservations, a due writer and a third queued reader. Compare covered
-   data and local outputs; observe actual request/grant/release and shutdown.
+4. Run the Linux Make/client DBT build under the server coordinator and compare
+   covered data and local output. Mac DBT and reader/writer overlap are deferred.
 5. Continue fresh uploads and sequential hours, observe a natural UTC eligibility
    boundary and ordinary between-operation restart. Record observed coverage,
    duplicate/loss symptoms and real resource/latency use; strict upload-time UTC

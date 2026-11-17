@@ -91,12 +91,13 @@ compliance must not be assumed. The active assignment is in
 Linux live qualification is complete through 07:00Z after ten independently
 verified deletion-enabled ticks; the current candidate's isolated DBT gate remains
 146/146 build, 87/87 explicit tests and 57 focused DBT/entity regressions. Native-
-Mac DBT is active in parallel as a reader-only workstream, but its real-data result
-and the required overlap evidence have not returned. The historical deferred-Mac
-statements below are retained as evidence-state history; they do not supersede the
-current handoff. DCC-E2E-01 remains open and no additional live tick is authorized
-by this plan without a fresh approved scope.
-<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
+Mac DBT is now deferred and out of scope for this tranche. The server-owned
+coordinator, ledger, compactor and Linux DBT client will use the existing real S3
+`raw_sensor` source, oldest date forward in small bounded chunks, with completed
+test-data deletion allowed after verification. The historical parallel-Mac
+statements below are retained as evidence-state history. No new live tick is
+authorized outside this exact scope.
+<!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
 
 The first bounded real-data window exposed and authorized a local PyUtil correction for
 no-deletion checkpoint status; its affected regressions passed. The human chose deletion

@@ -39,10 +39,10 @@ verified completion and honest data-quality reporting, not a requirement to arch
 all old development data. Concrete execution/mutation scope still needs selection.
 <!-- SOURCE: Human planner-role direction and development-data clarification, conversation 2026-11-16. -->
 
-The reviewed library snapshot at `badb67f` is historical. The active PyUtil
-candidate for the parallel native-Mac DBT workstream is `402ead1` and includes the
-cumulative observed-host DBT/entity correction. Current regressions and narrower
-qualification limits are in the integration plan.
+The reviewed library snapshot at `badb67f` is historical. The current PyUtil
+candidate for the Linux integration tranche is `402ead1` and includes the
+cumulative observed-host DBT/entity correction. Mac DBT is deferred for now.
+Current regressions and narrower qualification limits are in the integration plan.
 
 The human accepted a cron-driven coordinator with S3 request/grant/release
 messages and explicitly selected **DuckDB for its local ledger**. The requested

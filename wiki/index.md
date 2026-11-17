@@ -370,11 +370,12 @@ delayed-data semantics are separate later tasks, not pilot prerequisites.
 
 **Current compaction boundary — November 17:** Linux reached 07:00Z after ten
 independently verified deletion-enabled ticks, and the current isolated DBT gate is
-146/146 build, 87/87 explicit tests and 57 focused DBT/entity regressions. Native-
-Mac DBT is now active in parallel as a reader-only workstream under the updated
-handoff, but no real-data Mac result or reader/writer overlap evidence has returned.
-DCC-E2E-01 remains open; the concrete private runner/data/access/mutation scope is
-still the M0 review gate in [[wiki/work/dbt-compaction-coordination/isolated-qualification]].
+146/146 build, 87/87 explicit tests and 57 focused DBT/entity regressions. The
+current tranche is Linux-only: server-owned compaction, coordinator, ledger and
+Linux DBT use the existing real S3 source from the oldest date forward in small
+chunks, with completed test-data deletion allowed after verification. Mac DBT is
+deferred. The M0 private-runner gate is replaced by exact-scope operational checks
+in [[wiki/work/dbt-compaction-coordination/isolated-qualification]].
 
 The plan now includes the downstream source-mode contract for raw-only,
 compacted-only, mixed, DBT DuckDB and entity-aware reads. It scopes HostActivity

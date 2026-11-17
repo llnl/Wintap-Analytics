@@ -81,12 +81,14 @@ and focused DBT/entity regressions **57 passed** against the isolated compacted
 window. These results do not satisfy the complete milestone checklist by
 themselves.
 
-Native-Mac DBT is now an active parallel reader-only workstream under the current
-handoff. Its genuine Make/client, S3, separate-output and overlap results are not
-available yet, so no exit-checklist item is marked complete and DCC-E2E-01 remains
-open. Historical references elsewhere in this page to Mac work being deferred
-describe the earlier evidence state and are retained as history.
-<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
+The current execution tranche is intentionally **Linux-only**. It uses the existing
+real S3 `raw_sensor` source, processes the oldest available date forward in small
+bounded chunks, and may delete completed source data because this is explicitly
+test/development data. The server owns compaction, coordinator, ledger and the Linux
+DBT client; Mac DBT, separate Mac output and reader/writer overlap are deferred and
+are not blockers for this tranche. Resource ceilings remain secondary to obtaining a
+robust end-to-end run, while stop and integrity checks remain mandatory.
+<!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
 
 ## Reviewed position — November 16
 
