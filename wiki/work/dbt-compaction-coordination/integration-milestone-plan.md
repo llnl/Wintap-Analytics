@@ -24,7 +24,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/SmokeTests/analysis.py
   - ../Wintap-Analytics/streamlit/projects/DataQA
 policy: agent-editable
-last_validated: 2026-11-16
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -71,6 +71,22 @@ before executing. Expendable data removes a preservation objective; it is not a
 blanket instruction to delete buckets, reset ledgers, stop collectors or change
 sibling source. The human authorized this repository's wiki commit/push only;
 production rollout, PR work and persistent scheduler installation remain outside scope.
+
+## Current execution status — 2026-11-17
+
+The Linux live qualification reached 07:00Z after ten independently verified
+deletion-enabled hourly ticks; no eleventh tick was started. The current Linux DBT
+candidate evidence is source preflight, build **146/146**, explicit tests **87/87**,
+and focused DBT/entity regressions **57 passed** against the isolated compacted
+window. These results do not satisfy the complete milestone checklist by
+themselves.
+
+Native-Mac DBT is now an active parallel reader-only workstream under the current
+handoff. Its genuine Make/client, S3, separate-output and overlap results are not
+available yet, so no exit-checklist item is marked complete and DCC-E2E-01 remains
+open. Historical references elsewhere in this page to Mac work being deferred
+describe the earlier evidence state and are retained as history.
+<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
 
 ## Reviewed position — November 16
 

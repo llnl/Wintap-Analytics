@@ -9051,3 +9051,12 @@ is claimed; DCC-E2E-01 remains open for genuine Mac DBT and overlap evidence.
 The attempted local rerun was not treated as qualification because the private
 runner scope is unavailable and the checked-out main PyUtil environment is stale.
 <!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus local continuation checks, conversation 2026-11-17. -->
+
+## [2026-11-17] plan | DCC-E2E-01 status synchronized
+
+Synchronized the integration milestone plan with the current execution boundary:
+Linux's ten verified ticks and prior DBT gate remain evidence, while native-Mac
+DBT is active in parallel but has no returned real-data result. The DCC-E2E-01
+exit checklist remains intentionally open; no additional live tick or remote
+mutation was started.
+<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
