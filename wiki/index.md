@@ -106,10 +106,12 @@ view counts distinct Start-event process names per normalized user and host in
 fixed 15-minute UTC buckets after small deny-lists; it is not session detection
 and renders a one-host user/time heatmap. It is a barely acceptable temporary
 proxy; [[wiki/todo/linux-interactive-session-feed]] tracks a real Linux
-session/logon feed. The suite now passes 56 offline tests.
+session/logon feed. The suite now passes 59 offline tests.
 Pinned local v1 Status/raw-intent Runs need no ledger/lock/SDK/data reads;
-Partitions is explicitly unavailable, not zero. Full catalog/timeline,
-compacted/entity access and managed live/coordinated lifecycles remain pending.
+Partitions now provides a read-only 42-complete-day raw/compacted hourly
+presence heatmap with a full-24-hour compaction denominator and overlap details.
+Full catalog/timeline, compacted/entity access and managed live/coordinated
+lifecycles remain pending.
 Live metadata-mode performance
 remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about

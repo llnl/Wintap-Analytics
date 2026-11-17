@@ -12,6 +12,8 @@ grounded_by:
   - streamlit/projects/HostActivity/status_source.py
   - streamlit/projects/HostActivity/status_views.py
   - streamlit/projects/HostActivity/test_status_source.py
+  - streamlit/projects/HostActivity/partition_status.py
+  - streamlit/projects/HostActivity/test_partition_status.py
   - ../Wintap-PyUtil/wintappy/coordination/service.py
   - ../Wintap-PyUtil/wintap_dbt/macros/s3.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/time.sql
@@ -22,7 +24,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/extract/SELinuxSerializer.cs
   - ../wintap/wintap/core/etl/load/RawSensorWriter.cs
 policy: agent-editable
-last_validated: 2026-11-16
+last_validated: 2026-11-17
 repo_scope: Wintap-Analytics
 implementation_area: analytics
 event_domain: cross-domain
@@ -177,9 +179,29 @@ query/resource limits. Neither strategy reduces required partition listings or
 eliminates S3 latency.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §aggregate_family -->
 
+### Partition compaction overview
+
+The **Partitions** view is a separate metadata-only diagnostic. It defaults to
+the most recent 42 complete UTC calendar days and discovers the union of event
+directories under the configured dataset's `raw_sensor/` and `compacted/`
+roots. For each event type/day cell it checks hourly prefixes only:
+
+- `compacted-present-hours / 24` is the color metric, so incomplete days are
+  deliberately penalized;
+- raw-only hours contribute zero, compacted-only hours contribute one, and
+  raw/compacted overlap contributes one while remaining visible in the tooltip;
+- cells with no hour present in either root are blank;
+- tooltips include compacted, raw, overlap, and observed-hour counts.
+
+The survey uses paginated, delimiter-scoped `ListObjectsV2` requests and never
+opens Parquet objects. It is an availability/overlap signal during potentially
+mixed-generation compaction, not proof of migration, deletion, completeness,
+or collector health.
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/partition_status.py; streamlit/projects/HostActivity/main.py §_render_partition_view/_render_partition_chart -->
+
 ## Verification status
 
-On 2026-11-16, the app-scoped suite passes 56 tests. `AppTest` verifies the
+On 2026-11-17, the app-scoped suite passes 59 tests. `AppTest` verifies the
 effective environment info box (credential values hidden), the rolling default,
 and a 25-hour inclusive custom partition range whose exact bounds reach metadata
 discovery with the expected >24-hour warning. Synthetic tests verify both
@@ -283,9 +305,9 @@ Only allowlisted mode/cursor/owner/job/raw-run/maintenance summaries are display
 Roots, authority payloads and free-form block diagnostics are withheld. Reserved is
 not grant delivered. Runs shows bounded raw intent markers, not measured bars:
 `COMPLETED` is reported disposition only, actual launch/finish/certificates are
-unavailable and continuations mean incomplete history. Partitions reports unavailable,
-not zero. Process-lock observations, inventory, progress and entity-only history
-are not exported by producer v1.
+unavailable and continuations mean incomplete history. The S3 Partitions view is a
+separate metadata-only hourly-presence diagnostic; producer v1 still exports no
+authoritative catalog, process-lock observation, progress or entity-only history.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/status_source.py §_validate/read_snapshot; streamlit/projects/HostActivity/status_views.py §render; ../Wintap-PyUtil/wintappy/coordination/service.py §status_page/export_status -->
 
 Activity is still synchronous/raw-only and always displays **Live diagnostic —

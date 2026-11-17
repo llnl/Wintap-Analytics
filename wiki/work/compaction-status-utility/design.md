@@ -4,6 +4,7 @@ type: concept
 confidence: speculative
 grounded_by:
   - streamlit/projects/HostActivity/s3_source.py
+  - streamlit/projects/HostActivity/partition_status.py
   - streamlit/projects/HostActivity/queries.py
   - streamlit/projects/HostActivity/file_metadata.py
   - streamlit/projects/HostActivity/pyproject.toml
@@ -23,7 +24,7 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entities.py
   - wiki/work/dbt-compaction-coordination/design.md
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -50,7 +51,7 @@ The full design below remains proposed except for the implemented subset describ
 next. Do not confuse recommended fields with the actual producer v1 schema.
 Requirements: [[wiki/work/compaction-status-utility/brief]].
 
-### Implemented advisory subset — November 15
+### Implemented advisory subset — November 17
 
 `status_source.py` consumes the existing `service.status_page` v1 local export;
 it never opens DuckDB, the ledger/process lock, transport or data roots. Deployment
@@ -65,8 +66,9 @@ Status renders reported mode/cursor/owner/reserved/queued summaries only. Roots,
 authority payloads and free-form diagnostics are withheld. Runs exposes sorted
 raw intent markers and reported disposition, not measured execution bars or
 completion certificates; continuations stay incomplete rather than opening the
-ledger. Partitions reports unavailable, not zero. Lock observation, delivery,
-progress, actual launch/finish, entity-only history and inventory remain unknown.
+ledger. Partitions now provides a bounded raw/compacted hourly-presence heatmap;
+the full catalog, lock observation, delivery, progress, actual launch/finish,
+entity-only history and inventory remain unknown.
 Activity remains synchronous/raw-only and visibly Live diagnostic; managed jobs,
 compacted/entity access and coordinated refresh are not integrated.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/status_source.py §read_snapshot/_read/_validate; streamlit/projects/HostActivity/status_views.py §render; streamlit/projects/HostActivity/main.py §main; ../Wintap-PyUtil/wintappy/coordination/service.py §status_page/export_status -->

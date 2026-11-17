@@ -5,6 +5,32 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-17] code | raw/compacted partition compaction heatmap
+
+Extended the HostActivity Partitions view with a metadata-only S3 survey over the
+union of event families in `raw_sensor/` and `compacted/`. The default is 42
+complete UTC days; cells use compacted-present hours divided by 24, penalize
+partial coverage, leave no-data cells blank, and expose raw/compacted overlap
+counts. Added synthetic coverage/overlap tests; the app suite passes 58 tests.
+No Parquet reads or S3 writes were added.
+<!-- SOURCE: streamlit/projects/HostActivity/partition_status.py; streamlit/projects/HostActivity/main.py; streamlit/projects/HostActivity/test_partition_status.py. -->
+
+## [2026-11-17] fix | daily partition heatmap columns
+
+Changed the Partitions heatmap x-axis from a continuous temporal encoding to
+explicit nominal UTC-day labels. Each day now renders as its own stable column,
+including distinct hover values across the selected range. Added a chart-spec
+regression test; the app suite passes 59 tests.
+<!-- SOURCE: streamlit/projects/HostActivity/main.py; streamlit/projects/HostActivity/test_partition_status.py. -->
+
+## [2026-11-17] fix | full-width partition heatmap
+
+Changed the partition chart to use the full Streamlit canvas width while
+preserving its fixed daily-cell height and nominal UTC-day columns. The chart
+test now guards the full-width rendering option; the app suite remains at 59
+passing tests.
+<!-- SOURCE: streamlit/projects/HostActivity/main.py; streamlit/projects/HostActivity/test_partition_status.py. -->
+
 ## [2026-11-17] verification | post-DBT writer continuation
 
 After the bounded Linux DBT reader passed, the primary writer completed the next

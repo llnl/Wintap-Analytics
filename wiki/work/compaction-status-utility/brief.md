@@ -5,11 +5,12 @@ confidence: speculative
 grounded_by:
   - streamlit/projects/HostActivity/README.md
   - streamlit/projects/HostActivity/main.py
+  - streamlit/projects/HostActivity/partition_status.py
   - wiki/work/dbt-compaction-coordination/design.md
   - wiki/work/compaction-status-utility/design.md
   - wiki/tool/durable-process-entity-manager.md
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -54,9 +55,10 @@ No deployment, cron installation, real-dataset mutation, commit or push is autho
 <!-- SOURCE: Human implementation approval, conversation 2026-11-15. -->
 
 **Implemented subset:** Activity/Status/Runs/Partitions navigation, pinned bounded
-local advisory v1 status, raw intent markers and an explicit unavailable catalog.
+local advisory v1 status, raw intent markers, and a bounded metadata-only
+raw/compacted hourly-presence heatmap.
 Activity stays synchronous/raw-only with its mandatory Live diagnostic warning.
-All 46 offline controls pass; full catalog/timeline, compacted/entity access and
+All 59 offline controls pass; full catalog/timeline, compacted/entity access and
 managed live/coordinated lifecycles remain pending. No utility operational acceptance.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/status_source.py; streamlit/projects/HostActivity/status_views.py; streamlit/projects/HostActivity/main.py; wiki/work/compaction-status-utility/verification.md -->
 

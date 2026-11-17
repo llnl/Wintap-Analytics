@@ -8,6 +8,8 @@ grounded_by:
   - streamlit/projects/HostActivity/status_source.py
   - streamlit/projects/HostActivity/status_views.py
   - streamlit/projects/HostActivity/test_status_source.py
+  - streamlit/projects/HostActivity/partition_status.py
+  - streamlit/projects/HostActivity/test_partition_status.py
   - ../Wintap-PyUtil/wintappy/coordination/service.py
   - ../Wintap-PyUtil/wintappy/coordination/ledger.py
   - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
@@ -15,7 +17,7 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/phase_evidence.py
   - wiki/work/compaction-status-utility/implementation_plan.md
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -26,6 +28,28 @@ tags: [feature-work, status, compaction, verification, streamlit]
 ---
 
 # Verification: Compaction Status Utility
+
+### Scoped partition-presence overview — November 17, 2026
+
+Implemented the first bounded Partitions diagnostic in HostActivity. It discovers
+the event-family union from `raw_sensor/` and `compacted/`, checks hourly prefixes
+with delimiter-scoped S3 metadata listings, and renders a 42-complete-day
+heatmap. The metric is compacted-present hours divided by 24; raw-only hours are
+zero, overlap is counted as compacted but reported, and no-data cells are blank.
+The implementation never reads Parquet objects and retains the Live diagnostic
+warning.
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/partition_status.py; streamlit/projects/HostActivity/main.py -->
+
+From `streamlit/projects/HostActivity/`:
+
+```sh
+uv run python -m unittest discover -s . -p 'test_*.py'
+```
+
+Result: **59 tests passed**. The new synthetic partition tests cover event-family
+union, raw-only/compacted-only presence, overlap, blank cells, and the full-day
+denominator. Live S3 latency and deployed endpoint compatibility remain
+unverified.
 
 ## Authorized advisory implementation — November 15
 
@@ -86,9 +110,10 @@ This qualifies advisory consumer behavior, not producer truth/authenticity or a
 consistent dataset. Same-session timestamp checks are not a monotonic sequence or
 whole-session rollback defense. V1 has no catalog, entity dispositions, delivery,
 launch/finish, progress or completion certificates. Runs is bounded raw intent
-markers only; `COMPLETED` is reported, never certified. Partitions is unavailable,
-not zero. Ordinary raw Activity stays synchronous: no managed jobs, compacted/entity
-reads, coordinated refresh or same-server slow-writer/resource pilot has run.
+markers only; `COMPLETED` is reported, never certified. The Partitions heatmap is
+metadata-only availability evidence, not a catalog or completion certificate.
+Ordinary raw Activity stays synchronous: no managed jobs, compacted/entity reads,
+coordinated refresh or same-server slow-writer/resource pilot has run.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/status_source.py; streamlit/projects/HostActivity/status_views.py; ../Wintap-PyUtil/wintappy/coordination/service.py §status_page -->
 
 Native and producer independent review results:
