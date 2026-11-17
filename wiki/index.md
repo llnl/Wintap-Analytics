@@ -349,6 +349,21 @@ The approved Linux-runner assignment is in
 the human handles delivery. Strict upload-time UTC client enforcement and downstream
 delayed-data semantics are separate later tasks, not pilot prerequisites.
 
+The plan now includes the downstream source-mode contract for raw-only,
+compacted-only, mixed, DBT DuckDB and entity-aware reads. It scopes HostActivity
+changes for source/coverage labeling, preserves SmokeTests as raw-producer-evidence
+by default, and keeps legacy DataQA/EDA consumers behind an explicit compatibility
+boundary. Synthetic raw-only, deleted-raw, compacted-only, overlap,
+cumulative-authority and duplicate-count gates are required before compacted or
+entity-aware consumer acceptance.
+
+The resumed deletion-enabled Linux scope subsequently completed the 23:00Z–00:00Z
+hour: authority generation 29 and its matching metrics generation are committed,
+nine compacted objects are present, exact-hour raw objects are absent, and the
+ledger is at 00:00Z in `DRAINING`. This is object-level operational evidence; the
+hour's row-count parity was not independently measured in that readback. Native-Mac
+DBT remains deferred.
+
 **Historical submitted review / isolated native-Mac overlay (November 15):** PyUtil `123b9d3`
 and Analytics `ee9c27a` include the Linux service/client/advisory, v4 retry and explicit-v5
 entity launch/history/clean-original service paths. Worker-reported 71 strict-service/

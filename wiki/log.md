@@ -154,6 +154,18 @@ development manifest and authorized writable ledger/client-state scope; native-M
 DBT remains deferred.
 <!-- SOURCE: Linux local coordination regression run and scope review, conversation 2026-11-16. -->
 
+## [2026-11-16] plan | downstream compacted/entity consumer integration
+
+Updated [[wiki/work/dbt-compaction-coordination/integration-milestone-plan]] with
+explicit raw-only, compacted-only, raw-plus-compacted, DBT DuckDB, entity-aware and
+authority/status modes. The plan now covers DBT source/coverage labels and
+entity-authority/processing-metrics gates; HostActivity compacted/entity discovery,
+missing-versus-zero semantics and advisory status; SmokeTests' raw producer-evidence
+boundary; and legacy DataQA/EDA compatibility adapters. Added synthetic migration,
+overlap, deleted-raw, cumulative-authority and duplicate-count verification gates.
+No application source was changed; native-Mac DBT remains deferred.
+<!-- SOURCE: DBT routing/authority/metrics sources and Analytics Streamlit consumer inventory, conversation 2026-11-16. -->
+
 ## [2026-11-16] verification | tenth deletion-enabled hour passed
 
 The 06:00Z–07:00Z tick completed successfully with deletion enabled. Committed
@@ -8915,3 +8927,15 @@ determine when the host came online. The fix must support discovered hosts and f
 entity initialization, not merely remove the allowlist guard. No host/object identifiers
 were retained, and no source/ledger changes or retries occurred. Details:
 `wiki/work/dbt-compaction-coordination/verification.md`.
+
+## [2026-11-16] verification | resumed deletion-enabled scope reached 00:00Z
+
+The resumed 23:00Z–00:00Z service tick completed with immutable evidence reporting
+exit zero and migration complete. Independent readback found nine compacted exact-hour
+objects, zero exact-hour raw objects after deletion, 172 raw objects in the next hour,
+authority generation 29 committed, and matching authority/metrics generation IDs.
+The ledger is at 00:00Z in `DRAINING` with no readers or waiting jobs. Two entity
+snapshots, the authority object and 28 processing-metrics objects are present. This
+readback verifies object-level publication and coordination state, not row-count
+parity for this final hour; native-Mac DBT remains deferred.
+<!-- SOURCE: Resumed Linux deletion-enabled service completion evidence, local ledger readback, S3 object inventory, authority/metrics Parquet readback, conversation 2026-11-17. -->

@@ -5724,6 +5724,26 @@ The hourly metrics object is present. No next hour was started before this check
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/deletion_recovery.py §deletion verification; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py §metric_rows -->
 <!-- SOURCE: Fresh isolated Linux deletion-enabled tick, immutable completion evidence, and exact-hour S3 inventory, conversation 2026-11-16. -->
 
+### Resumed-scope deletion-enabled readback — 23:00Z–00:00Z — 2026-11-16
+
+The resumed deletion-enabled service tick completed successfully with immutable
+completion evidence reporting `exit_code=0`, `migration_complete=true` and
+`status=completed`. The active ledger advanced to **00:00Z on 2026-10-28** in
+`DRAINING`, with no readers or waiting jobs; authority generation **29** is
+committed. Independent S3 inventory found nine compacted output objects for the
+exact hour and zero exact-hour raw objects after deletion. The next hour contains
+172 raw objects, so the cursor has a valid next input and was not advanced by a
+bypass.
+
+The authority Parquet readback reports generation 29 as `committed` for the exact
+23:00Z–00:00Z window. The corresponding hourly metrics row reports `completed`
+and carries the same entity generation ID. The authority object, two entity
+snapshots and 28 hourly processing-metrics objects are present. This readback
+verifies object-level publication, deletion, authority/metrics linkage and ledger
+state; it does not claim a row-count comparison for this hour.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/wintap_dbt/macros/entity_authority.sql §validate_entity_authority; ../Wintap-PyUtil/wintap_dbt/macros/process_entities.sql §validate_processing_metrics -->
+<!-- SOURCE: Resumed Linux deletion-enabled service completion evidence, local ledger readback, S3 object inventory, authority/metrics Parquet readback, conversation 2026-11-17. -->
+
 ### Deletion-enabled qualification — 00:00Z–01:00Z — 2026-11-16
 
 The next deletion-enabled tick completed successfully and advanced the ledger to
