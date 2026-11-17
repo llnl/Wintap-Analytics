@@ -5,6 +5,16 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-17] verification | post-DBT writer continuation
+
+After the bounded Linux DBT reader passed, the primary writer completed the next
+hour with 1,244,494 compacted rows from 46 raw objects, zero exact-hour raw
+objects remaining, metrics status completed and zero deletion failures. Authority
+generation 53 was committed; the primary ledger is healthy at the next 02:00Z
+cursor with no readers or waiting jobs. All-history capacity and overlap remain
+open.
+<!-- SOURCE: Private Linux primary ledger, completion evidence, S3 inventory and metrics/authority readback, conversation 2026-11-17. -->
+
 ## [2026-11-17] verification | Linux writer and DBT reader tranche
 
 The fresh primary Linux ledger advanced 30 bounded oldest-forward cursor steps to

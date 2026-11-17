@@ -76,8 +76,8 @@ production rollout, PR work and persistent scheduler installation remain outside
 
 The earlier Linux live qualification reached 07:00Z after ten independently
 verified deletion-enabled hourly ticks. A separate fresh writer ledger later
-advanced 30 bounded hourly cursor steps from 2026-10-26 19:00Z to 2026-10-28
-01:00Z, including a verified non-empty migration/deletion, empty-hour advancement
+advanced 31 bounded hourly cursor steps from 2026-10-26 19:00Z to 2026-10-28
+02:00Z, including a verified non-empty migration/deletion, empty-hour advancement
 and audited recovery of one interrupted verifier. A separate future-cursor,
 non-entity Linux reader then completed a one-hour DBT build with **140/140**
 resources complete and a readable local DuckDB output. The broader DBT attempt

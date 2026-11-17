@@ -5938,3 +5938,16 @@ reader/writer overlap claim, or all-history capacity claim follows from this
 qualification.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick/main; ../Wintap-PyUtil/wintappy/coordination/recovery.py §resolve_hour/release_reader; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/wintap_dbt/dbt_project.yml -->
 <!-- SOURCE: Private Linux primary/reader ledgers, compaction evidence, S3 inventory, DBT client observations and DuckDB readback, conversation 2026-11-17. -->
+
+### Post-DBT writer continuation — 01:00Z–02:00Z
+
+After the DBT reader evidence stabilized, the primary writer completed the next
+oldest-forward hour. Nine compacted output objects contain **1,244,494** rows,
+matching the source total from **46** raw objects; the exact-hour raw prefix is
+empty, the metrics row reports `completed` with zero deletion failures, and
+authority generation **53** is committed for the 01:00Z–02:00Z window. The primary
+ledger remains `DRAINING` with no active run, readers or waiting jobs and the next
+cursor at **02:00Z**. This continuation still does not establish all-history
+capacity or reader/writer overlap.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py -->
+<!-- SOURCE: Private Linux primary ledger, completion evidence, S3 inventory and metrics/authority Parquet readback, conversation 2026-11-17. -->

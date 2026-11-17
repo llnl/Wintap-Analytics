@@ -90,7 +90,7 @@ compliance must not be assumed. The active assignment is in
 
 The earlier ten-tick qualification remains recorded through 07:00Z. A separate
 fresh Linux live tranche then advanced a primary writer ledger from 2026-10-26
-19:00Z to 2026-10-28 01:00Z through 30 bounded service runs, including verified
+19:00Z to 2026-10-28 02:00Z through 31 bounded service runs, including verified
 deletion of completed development-data hours and audited recovery of one
 interrupted empty-hour verifier. A separate future-cursor non-entity reader
 qualified a one-hour Linux DBT build with 140/140 nodes complete and a reopened

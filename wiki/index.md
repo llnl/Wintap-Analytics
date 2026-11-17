@@ -370,7 +370,7 @@ delayed-data semantics are separate later tasks, not pilot prerequisites.
 
 **Current compaction boundary — November 17:** The earlier Linux qualification
 reached 07:00Z after ten independently verified deletion-enabled ticks. A separate
-fresh writer ledger then advanced 30 bounded cursor steps to 2026-10-28 01:00Z;
+fresh writer ledger then advanced 31 bounded cursor steps to 2026-10-28 02:00Z;
 the primary ledger is healthy in `DRAINING` with no readers or waiting jobs. A
 separate future-cursor, non-entity Linux reader completed a one-hour DBT build
 with 140/140 resources and a readable local DuckDB output; its earlier broad
