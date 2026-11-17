@@ -59,9 +59,17 @@ listing keep the first version bounded.
    where safe, filter the precise UTC time interval, then group `count(*)` by
    event family, normalized time bucket, and row hostname. Call the measure
    “raw rows”; never sum family-specific count fields into a universal total.
-   For high-volume `raw_process_file`, use an exact aggregate-only DuckDB path
-   rather than materializing or truncating raw rows; guard query time, memory/temp
-   use, intermediate group count, and final chart points.
+    For high-volume `raw_process_file`, use an exact aggregate-only DuckDB path
+    rather than materializing or truncating raw rows; guard query time, memory/temp
+    use, intermediate group count, and final chart points.
+    For `raw_process`, compute the optional experimental process-diversity series
+    in the same bounded DuckDB scan: retain only `Start` rows whose normalized
+    user and process values are outside small system/user and process deny-lists,
+    then count distinct process names per user/host/fixed 15-minute UTC bucket.
+    Render one selected host as a user-by-time heatmap. User names are an
+    explicitly authorized dashboard output; command lines, paths, and individual
+    process records remain excluded, and the result is not interactive-session
+    detection.
  5. **Bound chart density and make gaps visible.** Target approximately
     five-minute buckets initially. Widen the bucket until the selected view
     stays within a small fixed point budget; show the actual interval. For a

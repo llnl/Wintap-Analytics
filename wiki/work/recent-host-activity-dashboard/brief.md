@@ -35,6 +35,11 @@ hosts.
 - Provide a quick manually refreshed herd overview from S3 object metadata:
   file counts, object sizes, and per-host collection-time trends.
 - Keep raw Parquet row-count analysis as an optional secondary query mode.
+- Offer an explicitly experimental `raw_process` process-diversity metric:
+  distinct Start-event process names per user, host, and 15-minute UTC bucket
+  after small system/user and process deny-lists. It is a likely-user-activity
+  heuristic, not interactive-session detection; the dashboard may show verbatim
+  normalized user names, but no path/command/process detail is exposed.
 - Bound S3 listing and data reads with the existing `dayPK`/`hourPK` partitions.
 - Keep access read-only and use local AWS profile/environment credentials.
 - Make scale differences and unsupported source schemas visible rather than
@@ -80,6 +85,10 @@ hosts.
   discovered Parquet objects and applies exact event-time bounds.
 - Metadata mode charts per-host object count or object size over filename
   collect time. Raw-row mode charts rows over event time.
+- In the `raw_process` raw-row view, users can select the experimental
+  process-diversity chart and select one host for a user-by-time heatmap. It
+  shows usernames on the y-axis and aggregate distinct process-name counts in
+  each 15-minute UTC cell; the existing raw-row chart remains available.
 - Adaptive buckets start around five minutes and may widen to respect a bounded
   point/query budget; the current bucket width is displayed.
 - For each host with at least one accepted observation in the selected interval,

@@ -105,6 +105,15 @@ implemented or qualified. No recovery controls, scheduler or deployment are adde
 - **Raw Parquet rows** remains available as a separate, slower query mode. It
   requires selecting one family, inspects schemas, and applies row-level event
   time filtering. It reports physical source-row counts, not logical-event totals.
+- For `raw_process`, the chart can instead select **Experimental: likely user
+  activity**. This deliberately cheap heuristic counts distinct normalized
+  process names from `ActivityType = Start` events per user and fixed 15-minute
+  UTC bucket, after small documented system/user and process deny-lists. It is
+  a process-diversity/background-activity proxy, not interactive-session
+  detection. Select one host to see a time-scaled heatmap with usernames on the
+  y-axis and process-type diversity as cell intensity. Command lines, paths,
+  and individual process details are not shown. The existing raw-row chart
+  remains unchanged.
 - Refresh is manual; changing query mode, family, or range does not query S3.
   The rolling default can intersect 13 hourly partitions because its boundary
   hours are partial. A custom range selects complete UTC partition hours. Both
@@ -136,7 +145,8 @@ implemented or qualified. No recovery controls, scheduler or deployment are adde
   temporal shape, not volume.
 - Chart hover text stays concise: UTC bucket time, host, and only the selected
   metric. Metadata hovers show file count or object size in MiB; raw-row hovers
-  show row count or the normalized peak ratio.
+  show row count or the normalized peak ratio; the experimental heatmap also
+  shows the authorized username and process-type cell count.
 - Limits fail closed for every range: at most 10,000 discovered objects and
   1,000 chart points per view. Partition discovery is lazy (metadata listing has
   at most eight concurrent partition requests; raw-row glob scans are chunked
@@ -147,6 +157,12 @@ implemented or qualified. No recovery controls, scheduler or deployment are adde
   1 GB memory and temporary-storage limits, and a 20,000 intermediate
   host/time-group limit; its output still obeys the 1,000-point budget. Any
   exceeded limit yields no partial chart.
+  The experimental `raw_process` user heatmap also uses an aggregate-only SQL
+  scan and SQL-generated user/bucket cells. It remains available when the
+  physical raw-row count exceeds the standard 2,000,000-row chart budget; in
+  that case only the raw-row chart is withheld. Its fixed-resolution grid has a
+  separate 20,000-cell budget instead of the ordinary 1,000-point line-chart
+  budget.
 - During refresh, the status panel reports metadata listing and aggregation, or
   row-mode object listing/schema inspection/aggregation. Elapsed time is shown
   in the completed status and alongside the resulting snapshot. Budget/schema

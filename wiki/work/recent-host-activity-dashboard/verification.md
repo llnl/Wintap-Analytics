@@ -22,7 +22,7 @@ tags: [host-activity, verification, feature-work]
 ## Test Commands
 
 - `uv run python -m unittest discover -s . -p 'test_*.py' -v` from
-  `streamlit/projects/HostActivity/` — 54 tests passed in the app's locked UV
+  `streamlit/projects/HostActivity/` — 56 tests passed in the app's locked UV
   environment (DuckDB 1.5.6, Streamlit 1.67.0, Altair 6.3.0, Pandas 2.3.3,
   boto3 1.44.0).
 - `uv run python -m compileall -q .` from the app directory — passed.
@@ -60,7 +60,13 @@ file or DBT runtime is needed.
   zero-filled series under the existing chart-point budget.
 - Focused Altair chart-spec tests verify hover text contains only UTC bucket
   time, host, and the selected metric: file count/object size, raw-row count, or
-  normalized peak ratio.
+  normalized peak ratio. The process-diversity chart likewise exposes only its
+  aggregate distinct-process-type count.
+- A synthetic raw-process Parquet test verifies that only `Start` events and
+  distinct process names per user contribute to fixed 15-minute UTC buckets,
+  while the denylisted shell/system names, system user, and stop event do not.
+  The process-activity point objects contain only the authorized normalized
+  username and aggregate cell count, not raw-row fields or process details.
 - Synthetic metadata checks verified paginated `ListObjectsV2` requests scoped
   to requested event/day/hour partitions, nested `protoPK` keys, S3 `Size`
   accounting, invalid-size/object-limit failures, filename event aliases,
@@ -127,8 +133,31 @@ file or DBT runtime is needed.
 ## Results
 
 The user tested the zero-filled chart behavior on 2026-11-16 and confirmed it
-matches expectations. The behavior is accepted. Automated verification below
-remains synthetic/offline; no live S3 validation was performed for this change.
+matches expectations. The behavior is accepted. An aggregate-only live
+validation of the configured read-only `raw_process` family selected 1,176
+objects and 1,311,178 raw rows; later user-heatmap validation selected 1,226
+objects and 1,304,972 raw rows, producing 784 SQL-generated cells across 14
+display users, 231 nonzero cells, and a maximum of 17 distinct process names in
+a cell. A subsequent 24-hour aggregate validation selected 2,328 objects and
+2,617,339 raw rows: the raw-row series correctly produced zero points after its
+2,000,000-row cap, while SQL produced 2,134 heatmap cells across 18 display
+users, including 450 nonzero cells and a maximum of 17 distinct process names
+in a cell.
+No host values, process names, users, paths, commands, or raw rows were
+persisted. Custom-range live behavior remains unverified.
+
+The experimental process-diversity metric was implemented as a deliberately
+best-effort likely-user-activity heuristic at the user's request. It is not
+interactive-session detection; process-instance counts are not used as the
+signal. The bounded raw-process scan produces the raw-row and user-by-time
+process-diversity groups and SQL-generated zero-filled heatmap cells together.
+When the physical raw-process count exceeds 2,000,000, the raw-row series is
+withheld but the aggregate user heatmap remains available. Verbatim normalized
+usernames are displayed
+in the authorized dashboard heatmap, while paths, command lines, and individual
+process details are not displayed or persisted. This is accepted only as a
+barely acceptable temporary proxy; a real Linux session/logon feed is tracked
+in [[wiki/todo/linux-interactive-session-feed]].
 
 The default app mode now provides a metadata-only herd overview through S3
 object listings; optional schema-aware raw-row querying remains available. The
@@ -149,9 +178,11 @@ this is not a completeness or collector-health assertion.
   exceeded the current 2-million-row budget. The app now scans one selected
   family per explicit click. Correct decoding produces chartable `raw_host`,
   `raw_process_conn_incr`, and `raw_process_file` results; the latter now uses
-  exact aggregate-only grouping with its own resource guards. `raw_process` takes
-  about 86 seconds and retains the standard raw-row cap. Per-family query latency,
-  upload lag, performance under other source conditions, and acceptable
+   exact aggregate-only grouping with its own resource guards. `raw_process` takes
+   about 86 seconds in the earlier probe; its raw-row chart retains the standard
+   cap, while the experimental user heatmap uses the aggregate-only path when
+   that cap is exceeded. Per-family query latency, upload lag, performance under
+   other source conditions, and acceptable
   operational latency remain open.
 - Metadata mode's live listing latency, compatibility with the configured S3
   endpoint, and real-world filename alias coverage have not been measured. The

@@ -5,7 +5,7 @@ confidence: medium
 grounded_by:
   - wiki/concept/feature-work-template.md
 policy: agent-editable
-last_validated: 2026-11-08
+last_validated: 2026-11-16
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -52,6 +52,7 @@ recorded.
 | P2 — Medium (provisional) | [[wiki/todo/linux-nfs-process-network-attribution]] | Open | Qualify why Linux process contexts, including SSH, appear on a shared TCP tuple to the NFS host; distinguish causal I/O attribution from socket ownership. |
 | P2 — Medium | [[wiki/todo/canonical-process-owned-network-grains]] | Open | Reconcile documented process/network increment and connection grains; preserve metadata conflicts and process-observation semantics for reusable analytics. |
 | P2 — Medium (provisional) | [[wiki/todo/transformer-five-tuple-connection-port-key]] | Open | Investigate whether `Transformer.cs:37` passes the high endpoint port for both five-tuple key ports, causing connection-ID collisions. |
+| P2 — Medium (provisional) | [[wiki/todo/linux-interactive-session-feed]] | Open | Replace the barely acceptable Linux process-start activity proxy with a real interactive session/logon feed, preferring systemd-logind with a PAM fallback. |
 | Untriaged | [[wiki/todo/raw-sensor-upload-time-partition]] | Open | Current .NET code partitions at merge time and retries the same S3 key; the requested UTC actual-upload partition contract needs a separate shared-uploader correction. |
 | Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Open | Investigate process-attributed listening-socket lifecycle capture and a downstream model distinct from peer-oriented connections; priority and platform scope remain open. |
 

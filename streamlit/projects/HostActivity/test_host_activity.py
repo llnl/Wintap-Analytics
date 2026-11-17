@@ -422,6 +422,49 @@ class QueryTests(unittest.TestCase):
             ],
         )
 
+    def test_process_activity_uses_start_diversity_in_fixed_utc_quarter_hours(self):
+        values = ",".join(
+            f"('alpha', {filetime(START + dt.timedelta(minutes=minute))}, {sql_literal(name)}, "
+            f"{sql_literal(activity)}, {sql_literal(username)})"
+            for minute, name, activity, username in (
+                (1, "python", "Start", "alice"),
+                (2, "python", "Start", "alice"),
+                (3, "chrome", "START", "alice"),
+                (4, "bash", "Start", "alice"),
+                (16, "python", "Start", "alice"),
+                (17, "ignored", "Stop", "alice"),
+                (1, "system", "Start", "alice"),
+                (2, "python", "Start", "system"),
+            )
+        )
+        copy_values(
+            self.con,
+            self.path,
+            f"SELECT * FROM (VALUES {values}) AS t(Hostname, EventTime, ProcessName, ActivityType, UserName)",
+        )
+        projection = inspect_family(self.con, "raw_process", [str(self.path)])
+        result = aggregate_family(self.con, projection, [str(self.path)], START, END)
+
+        self.assertTrue(result.process_activity_available)
+        observed = {
+            (point["hostname"], point["bucket_utc"], point["username"], point["process_type_count"])
+            for point in result.process_activity_points
+            if point["process_type_count"]
+        }
+        self.assertEqual(
+            observed,
+            {
+                ("alpha", START.replace(tzinfo=None), "alice", 2),
+                ("alpha", (START + dt.timedelta(minutes=15)).replace(tzinfo=None), "alice", 1),
+            },
+        )
+        self.assertTrue(all("raw_rows" not in point for point in result.process_activity_points))
+
+        capped = aggregate_family(self.con, projection, [str(self.path)], START, END, max_rows=2)
+        self.assertEqual(capped.points, ())
+        self.assertTrue(capped.process_activity_available)
+        self.assertTrue(any(point["process_type_count"] for point in capped.process_activity_points))
+
     def test_filetime_exact_window_counts_raw_rows_and_blank_hostnames(self):
         values = [
             ("early", filetime(START - dt.timedelta(seconds=1))),
@@ -997,6 +1040,22 @@ class ChartTooltipTests(unittest.TestCase):
         self.assertEqual([item["title"] for item in raw_tooltip], ["UTC", "Host", "Rows"])
         self.assertEqual([item["field"] for item in relative_tooltip], ["bucket_utc", "hostname", "value"])
         self.assertEqual([item["title"] for item in relative_tooltip], ["UTC", "Host", "Peak ratio"])
+
+    def test_process_activity_hover_shows_only_aggregate_metric(self):
+        point = {
+            "bucket_utc": START.replace(tzinfo=None),
+            "hostname": "synthetic-host",
+            "username": "synthetic-user",
+            "process_type_count": 3,
+        }
+        tooltip = self._capture_tooltip(
+            lambda: self.dashboard._process_activity_chart((point,), ("synthetic-host",))
+        )
+        self.assertEqual(
+            [item["field"] for item in tooltip],
+            ["bucket_utc", "hostname", "username", "process_type_count"],
+        )
+        self.assertEqual([item["title"] for item in tooltip], ["UTC", "Host", "User", "Process types"])
 
 
 class StreamlitRenderTests(unittest.TestCase):

@@ -5,6 +5,43 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-16] code | experimental raw-process activity heuristic
+
+Added the user-approved, aggregate-only `raw_process` process-diversity metric
+to the Recent Host Activity dashboard. It counts distinct normalized process
+names from Start events per user/host and fixed 15-minute UTC bucket after small
+documented system/user and process deny-lists. The UI labels it as experimental
+likely user activity, renders an authorized one-host user/time heatmap, preserves
+the raw-row chart, and exposes no paths, command lines, or individual process
+details. Synthetic aggregation/UI tooltip tests and locked-suite verification
+were updated; S3 remains read-only and no host/user live values were persisted.
+
+## [2026-11-16] verification | raw-process 24-hour aggregate heatmap
+
+The 24-hour read-only validation selected 2,328 objects and 2,617,339 raw rows.
+The raw-row chart correctly withheld output at its 2,000,000-row budget, while
+the aggregate-only DuckDB path produced 2,134 SQL-generated heatmap cells across
+18 display users. The fixed-resolution heatmap uses a separate 20,000-cell
+budget. Offline tests, compileall, lock, and diff checks pass; no host/user live
+values were persisted.
+
+## [2026-11-16] todo | Linux interactive session/logon feed
+
+Documented that the process-start user heatmap is a barely acceptable temporary
+proxy rather than session detection. Added [[wiki/todo/linux-interactive-session-feed]]
+with quick research recommending systemd-logind `SessionNew`/`SessionRemoved`
+events first, an optional `pam_exec` session-hook fallback, and utmp/wtmp only as
+a limited reconciliation source. No sensor, schema, or source-repository code
+was changed.
+
+## [2026-11-16] intake | Lintap RPM Amazon Linux 2023 installation failure
+
+Added [[wiki/todo/lintap-rpm-amazon-linux-2023]] as a provisional P2 packaging
+intake item for the user-reported failure of the current Lintap RPM to install on
+AWS Amazon Linux 2023. The item requests sanitized reproduction evidence and
+classification before any RPM/build or source change; the TODO queue and index
+were updated. No package, source repository, AWS host, or deployment was changed.
+
 ## [2026-11-15] verification | current-revision candidate affected scope
 
 On the unchanged detached PyUtil candidate `c549424`, the corrected 15-module Linux

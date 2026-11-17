@@ -164,6 +164,16 @@ def _refresh(query_mode, event_type, start, end, range_mode, range_key):
                     "rows_without_hostname": result.rows_without_hostname,
                     "bucket_minutes": result.bucket_minutes,
                     "host_count": result.host_count,
+                    "process_activity_available": getattr(result, "process_activity_available", False),
+                    "process_activity_points": [
+                        {
+                            "bucket_utc": _iso(point["bucket_utc"]),
+                            "hostname": point["hostname"],
+                            "username": point["username"],
+                            "process_type_count": point["process_type_count"],
+                        }
+                        for point in getattr(result, "process_activity_points", ())
+                    ],
                     "points": [
                         {
                             "bucket_utc": _iso(point["bucket_utc"]),
@@ -238,6 +248,37 @@ def _chart(result, selected_hosts, normalized, log_scale):
                     title="Peak ratio" if normalized else "Rows",
                     format=".2f" if normalized else ",",
                 ),
+            ],
+        )
+        .properties(height=420)
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+
+def _process_activity_chart(points, selected_hosts):
+    """Render the aggregate, heuristic user-by-time process-diversity heatmap."""
+    points = [point for point in points if point["hostname"] in selected_hosts]
+    if not points:
+        st.info("No qualifying process-name diversity is available for this selection.")
+        return
+    frame = pd.DataFrame(points)
+    frame["bucket_utc"] = pd.to_datetime(frame["bucket_utc"], utc=True)
+    chart = (
+        alt.Chart(frame)
+        .mark_rect()
+        .encode(
+            x=alt.X("bucket_utc:T", title="Time (UTC)", timeUnit="utcyearmonthdatehoursminutes"),
+            y=alt.Y("username:N", title="User"),
+            color=alt.Color(
+                "process_type_count:Q",
+                title="Process types",
+                scale=alt.Scale(zero=True),
+            ),
+            tooltip=[
+                alt.Tooltip("bucket_utc:T", title="UTC", format="%Y-%m-%d %H:%M"),
+                alt.Tooltip("hostname:N", title="Host"),
+                alt.Tooltip("username:N", title="User"),
+                alt.Tooltip("process_type_count:Q", title="Process types", format=",.0f"),
             ],
         )
         .properties(height=420)
@@ -521,8 +562,20 @@ def main():
     if family is None:
         st.warning("No chart was produced for the selected family. See its processing details above.")
         return
-    if not family["points"]:
-        if family["rows_without_hostname"]:
+    activity_points = family.get("process_activity_points", ())
+    if not family["points"] and not activity_points:
+        if family["rows"] > 2_000_000:
+            if family.get("process_activity_available"):
+                st.info(
+                    f"The raw-row chart exceeds its 2,000,000-row budget ({family['rows']:,} rows). "
+                    "No qualifying user heatmap cells were returned within the aggregate heatmap budget."
+                )
+            else:
+                st.info(
+                    f"The raw-row chart exceeds its 2,000,000-row budget ({family['rows']:,} rows); "
+                    "no aggregate process heatmap is available for this schema."
+                )
+        elif family["rows_without_hostname"]:
             st.info(
                 f"No host-attributed series is available. {family['rows_without_hostname']:,} "
                 "in-window rows had a missing or blank hostname."
@@ -533,8 +586,50 @@ def main():
                 "This is not a zero-activity or completeness assertion."
             )
         return
-    host_names = sorted({point["hostname"] for point in family["points"]})
+    host_names = sorted({point["hostname"] for point in family["points"]} | {
+        point["hostname"] for point in activity_points
+    })
     selected_hosts = host_selector.multiselect("Hosts", host_names, default=host_names)
+    process_metric = "Raw Parquet rows"
+    if event_type == "raw_process" and family.get("process_activity_available"):
+        process_metric = st.radio(
+            "Process metric",
+            ("Raw Parquet rows", "Experimental: likely user activity"),
+            horizontal=True,
+            help=(
+                "Best-effort process-name diversity proxy. It is not interactive-session detection "
+                "and excludes a small documented system/collector denylist."
+            ),
+        )
+    if process_metric == "Experimental: likely user activity":
+        if len(selected_hosts) != 1:
+            st.info("Select exactly one host to display the user activity heatmap.")
+            return
+        st.caption(
+            "Heuristic only: distinct process names from Start events in fixed 15-minute UTC buckets. "
+            "Usernames are shown because identifying active users is the purpose of this view; command lines, "
+            "paths, and individual process details are not shown."
+        )
+        _process_activity_chart(family.get("process_activity_points", ()), selected_hosts)
+        st.caption("Y-axis: normalized username; color: distinct qualifying process names per 15-minute UTC bucket.")
+        return
+    if not family["points"]:
+        if family["rows"] > 2_000_000:
+            st.info(
+                f"The raw-row chart exceeds its 2,000,000-row budget ({family['rows']:,} rows). "
+                "Select the experimental user activity heatmap for the aggregate SQL result."
+            )
+        elif family["rows_without_hostname"]:
+            st.info(
+                f"No host-attributed series is available. {family['rows_without_hostname']:,} "
+                "in-window rows had a missing or blank hostname."
+            )
+        else:
+            st.info(
+                "No rows with a usable event timestamp fell in this exact interval. "
+                "This is not a zero-activity or completeness assertion."
+            )
+        return
     st.caption("Missing time buckets for hosts with returned data are plotted as zero. This helps show gaps but does not prove complete collection.")
     if normalized:
         st.caption("Relative values are each host's raw-row count divided by its own maximum; volume comparisons are intentionally removed.")
@@ -567,6 +662,16 @@ def main():
                     "raw_rows": point["raw_rows"],
                 }
                 for point in family["points"]
+            ),
+            process_activity_available=family.get("process_activity_available", False),
+            process_activity_points=tuple(
+                {
+                    "bucket_utc": dt.datetime.fromisoformat(point["bucket_utc"]),
+                    "hostname": point["hostname"],
+                    "username": point["username"],
+                    "process_type_count": point["process_type_count"],
+                }
+                for point in family.get("process_activity_points", ())
             ),
         )
         _chart(result, selected_hosts, normalized, log_scale)

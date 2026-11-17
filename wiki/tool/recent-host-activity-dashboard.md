@@ -92,6 +92,21 @@ Wintappy's DBT S3 contract.
 - **Raw Parquet rows** is an optional secondary mode. It selects one family,
   inspects supported row-level host/time columns, and counts physical source
   rows—not deduplicated logical events or a universal cross-family total.
+- For `raw_process`, an explicit experimental metric can replace the raw-row
+  chart with **likely user activity — process diversity**. It filters to
+  `ActivityType = Start`, lowercases/trims process names, trims user names,
+  removes small documented system/user and process deny-lists, and counts
+  distinct remaining process names per user, host, and fixed 15-minute UTC
+  bucket. This is a best-effort background-activity heuristic, not
+  interactive-session detection. Select one host to render a time-scaled
+  heatmap with usernames on the y-axis and process-type diversity as cell
+  intensity. Command lines, paths, and individual process details are not
+  displayed. This is a barely acceptable temporary proxy; a real Linux
+  session/logon feed is needed for session claims. The raw-row chart remains
+  available and unchanged.
+  [[wiki/todo/linux-interactive-session-feed]]
+  <!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §_process_activity_expression/_process_activity_user_expression/aggregate_family -->
+  <!-- GROUND_TRUTH: streamlit/projects/HostActivity/main.py §_process_activity_chart -->
 - Host columns are selected case-insensitively from `Hostname`, `ComputerName`,
   `Computer` (confirmed hostname alias), `HostHame`, and `host_name`. When
   schema drift yields more than one available alias, nonblank values are
@@ -129,7 +144,8 @@ Wintappy's DBT S3 contract.
   shape comparison, not a volume comparison.
 - Chart hovers show only UTC bucket time, host, and the metric used by that
   chart: file count or object size (MiB) in metadata mode; raw-row count or
-  normalized peak ratio in row mode.
+  normalized peak ratio in row mode; distinct process-type count for the
+  experimental process-diversity metric.
 
 Fail-closed limits include 10,000 discovered objects and 1,000 chart points per
 view. Standard row-mode families also have a 2,000,000 timestamped in-window raw-row
@@ -138,8 +154,13 @@ directly in DuckDB, without sampling or materializing raw rows in Python, under 
 120-second query timeout, 1 GB DuckDB memory limit, 1 GB temporary-storage limit,
 and 20,000 intermediate host/time-group limit. All paths fail closed and produce
 no partial chart when a limit is exceeded.
+The experimental `raw_process` user heatmap also uses an aggregate-only SQL scan
+and SQL-generated user/bucket cells. It remains available when the physical
+raw-row count exceeds the standard 2,000,000-row chart budget; only the raw-row
+chart is withheld in that case. Its fixed-resolution grid has a separate
+20,000-cell budget, rather than the ordinary 1,000-point line-chart budget.
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/s3_source.py §MAX_S3_FILES/discover_files -->
-<!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §MAX_ROWS_PER_FAMILY/choose_bucket_minutes/zero_fill_time_buckets/aggregate_family -->
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §MAX_ROWS_PER_FAMILY/MAX_PROCESS_ACTIVITY_CELLS/choose_bucket_minutes/zero_fill_time_buckets/aggregate_family -->
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/queries.py §MAX_AGGREGATE_GROUPS/PROCESS_FILE_QUERY_TIMEOUT_SECONDS/PROCESS_FILE_MEMORY_LIMIT/PROCESS_FILE_TEMP_LIMIT/_aggregate_process_file -->
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/main.py §main/_refresh -->
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/file_metadata.py §parse_file_metadata/aggregate_file_metadata; streamlit/projects/HostActivity/queries.py §zero_fill_time_buckets -->
@@ -158,16 +179,23 @@ eliminates S3 latency.
 
 ## Verification status
 
-On 2026-11-16, the app-scoped suite passes 54 tests. `AppTest` verifies the
+On 2026-11-16, the app-scoped suite passes 56 tests. `AppTest` verifies the
 effective environment info box (credential values hidden), the rolling default,
 and a 25-hour inclusive custom partition range whose exact bounds reach metadata
 discovery with the expected >24-hour warning. Synthetic tests verify both
 metadata and raw-row charts zero-fill missing per-host buckets across the full
 selected interval; duration-aware buckets continue to respect chart budgets.
 Focused chart-spec tests verify concise hover fields for both metadata metrics,
-raw-row counts, and normalized peak ratios. Multi-day tests cover lazy/chunked
+raw-row counts, normalized peak ratios, and the experimental process-diversity
+user heatmap. Synthetic process tests verify Start-only distinct-name counting
+per user in fixed 15-minute UTC buckets. Multi-day tests cover lazy/chunked
 partition enumeration and retained row/object budgets. Live S3 custom-range
-behavior remains unverified.
+behavior remains unverified. An aggregate-only live validation of the configured
+read-only `raw_process` family selected 2,328 objects and 2,617,339 raw rows;
+the 24-hour user heatmap produced 2,134 SQL-generated cells across 18 display
+users, with 450 nonzero cells. The raw-row chart correctly remained withheld by
+its 2,000,000-row budget. No host values, process names, users, paths, commands,
+or raw rows were persisted.
 The user tested the zero-filled chart behavior and accepted it on 2026-11-16.
 
 On 2026-11-11, 27 focused tests passed in the app-scoped UV environment
@@ -202,7 +230,10 @@ then returned the full exact result: 7,923,378 host-attributed rows, 5 hosts,
 479 chart points, no hostless rows, and a five-minute bucket in about 20 seconds
 over 513 discovered objects. The group counts sum to the exact row count. Query
 timeout, memory/temp, intermediate-group, and chart-point limits are enforced;
-the standard-family 2-million raw-row cap remains intact. The earlier 15.5-second
+the standard-family 2-million raw-row cap remains intact for ordinary raw-row
+charts; the experimental `raw_process` user heatmap uses aggregate-only SQL and
+can remain available when that raw-row chart cap is exceeded. The earlier
+15.5-second
 empty chart was a timestamp-decoding error, not evidence of zero file activity.
 The earlier all-family
 dashboard refresh took at least five minutes; its `pidstat` result exceeded the

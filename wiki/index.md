@@ -101,8 +101,12 @@ as collect time,
 and reports per-host counts and sizes; missing per-host buckets are zero-filled
 in both chart modes, but zeros are not completeness evidence. Raw-row DuckDB
 analysis remains optional. Chart hovers show UTC time, host, and the selected
-metric. The current app suite passes 54 offline tests, including real Streamlit
-controls.
+metric. For `raw_process`, an explicitly experimental likely-user-activity
+view counts distinct Start-event process names per normalized user and host in
+fixed 15-minute UTC buckets after small deny-lists; it is not session detection
+and renders a one-host user/time heatmap. It is a barely acceptable temporary
+proxy; [[wiki/todo/linux-interactive-session-feed]] tracks a real Linux
+session/logon feed. The suite now passes 56 offline tests.
 Pinned local v1 Status/raw-intent Runs need no ledger/lock/SDK/data reads;
 Partitions is explicitly unavailable, not zero. Full catalog/timeline,
 compacted/entity access and managed live/coordinated lifecycles remain pending.
@@ -296,6 +300,9 @@ network-observed process identity semantics for reusable analytics.
 [[wiki/todo/transformer-five-tuple-connection-port-key]] tracks the suspected
 high-endpoint-port argument duplication in Wintap's five-tuple connection key;
 the collision impact and compatibility implications remain unverified.
+The provisional P2 [[wiki/todo/lintap-rpm-amazon-linux-2023]] tracks the reported
+failure of the current Lintap RPM to install on AWS Amazon Linux 2023; artifact,
+error classification, and target-support boundary remain to be established.
 The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
 .NET gap between current merge-time partitions and the requested actual-upload
 UTC partition contract.

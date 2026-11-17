@@ -79,7 +79,12 @@ references.
     budgets, use a zero-compatible symmetric-log absolute row scale, and state
     that zero-filled results are not completeness evidence.
 14. [x] Add concise chart hover details with UTC bucket time, host, and only the
-    selected metric; test metadata, raw-row, and normalized chart specifications.
+     selected metric; test metadata, raw-row, and normalized chart specifications.
+15. [x] Add the explicitly experimental `raw_process` process-diversity metric:
+     Start events only, distinct normalized process names per user/host, fixed
+     15-minute UTC buckets, small documented system/user and process deny-lists,
+     SQL-generated user-by-time heatmap output, preserved raw-row chart behavior,
+     and heatmap availability when the raw-row budget is exceeded.
 
 ## Files Likely To Change
 
@@ -154,4 +159,9 @@ required.
   hosts across the selected interval; tests verify zero counts and preserved
   chart budgets, and UI text distinguishes zero results from collection proof.
 - [x] User tested the zero-filled chart behavior and accepted it (2026-11-16).
+- [x] Implemented and synthetically tested the experimental process-diversity
+  metric; its chart shows authorized normalized usernames and SQL-generated
+  aggregate cell counts only, has a separate 20,000-cell budget, remains
+  available above the raw-row cap, and is labeled as a likely-user-activity
+  heuristic rather than session detection.
 - [x] Verification, index, canonical usage docs, and operation log are updated.
