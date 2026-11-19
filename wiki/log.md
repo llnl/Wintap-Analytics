@@ -22,6 +22,13 @@ one metrics object were published, the shared entity cache remained intact, and 
 ledger advanced to 04:00Z with no active run.
 <!-- SOURCE: Coordinator tick log, ledger readback and live object inventory, conversation 2026-11-18. -->
 
+## [2026-11-18] verification | full coordination regression closure
+
+The approved full `tests/test_coordination*.py` run completed with **1,184 passed and
+12 skipped** in **6,410.69 seconds** using the isolated `/data` temporary filesystem.
+No coordination assertions failed.
+<!-- SOURCE: Retained full coordination pytest report, conversation 2026-11-18. -->
+
 ## [2026-11-17] todo | daily compacted storage tier
 
 Added a low-priority intake item for a future `compacted2/dayPK` daily roll-up

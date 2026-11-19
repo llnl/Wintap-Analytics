@@ -1028,8 +1028,8 @@ not regression or Linux acceptance. Entity-only ownership remains separate.
   bounded predecessor-linked history. Shared entity cache remains outside the purge
   scope; deletion follows normal verified completion only.
 - [x] Run the focused interrupted-retry/history/entity-service gate: **89 passed**;
-  Ruff 0.17.5 and Python 3.13 compilation pass. The full coordination glob timed out
-  in the harness and is not represented as a full-suite pass.
+  Ruff 0.17.5 and Python 3.13 compilation pass. The later complete coordination glob
+  passes **1,184 tests with 12 skips**.
 - [ ] General partial-publication repair, missing-original recovery, endpoint/resource
   qualification and representative-scale acceptance remain separate work.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->

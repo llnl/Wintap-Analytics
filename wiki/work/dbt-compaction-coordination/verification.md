@@ -5972,10 +5972,10 @@ after verified migration and completion.
 
 The focused bounded gate passed **89 tests** across interrupted retry, retained retry
 history and entity-service controls. Pinned Ruff **0.17.5** checks and Python
-3.13 compilation passed. The complete coordination glob was attempted but exceeded
-the 600-second harness timeout at 12%; that incomplete run is not counted as a full
-suite result. Broader partial-publication repair, missing-original recovery, actual
-endpoint/resource qualification and all-history capacity remain open.
+3.13 compilation passed. The later complete coordination glob passed **1,184 tests
+with 12 skips** in **6,410.69 seconds**. Broader partial-publication repair,
+missing-original recovery, actual endpoint/resource qualification and all-history
+capacity remain open.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py §verify_interrupted_prepared/retry_interrupted_and_complete_prepared; ../Wintap-PyUtil/wintappy/coordination/completion.py §validate_completion_proof/_recheck_retry_completion; ../Wintap-PyUtil/wintappy/coordination/service.py §main; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->
 <!-- SOURCE: Read-only preflight, coordinated retry log, coordinator ledger, live object inventory and focused test/lint/compile results, conversation 2026-11-18. -->
 
