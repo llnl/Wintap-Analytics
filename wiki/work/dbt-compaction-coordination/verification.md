@@ -5978,3 +5978,18 @@ suite result. Broader partial-publication repair, missing-original recovery, act
 endpoint/resource qualification and all-history capacity remain open.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py §verify_interrupted_prepared/retry_interrupted_and_complete_prepared; ../Wintap-PyUtil/wintappy/coordination/completion.py §validate_completion_proof/_recheck_retry_completion; ../Wintap-PyUtil/wintappy/coordination/service.py §main; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->
 <!-- SOURCE: Read-only preflight, coordinated retry log, coordinator ledger, live object inventory and focused test/lint/compile results, conversation 2026-11-18. -->
+
+### Coordinated continuation — 03:00Z–04:00Z — 2026-11-18
+
+After a fresh read-only scope check found **430** raw objects and no selected-hour
+compacted or metrics outputs, the approved coordinator `service tick` processed the
+next hour. It completed with **10** compacted objects and **one** processing-metrics
+object; the selected-hour raw prefix is now empty. The shared **six-object** process
+entity cache remains present and was updated through normal coordinated publication,
+not purged.
+
+The latest completion is `COMPLETED`, the ledger cursor is **04:00Z**, and the ledger
+remains `DRAINING` with no active run, readers, waiting jobs or block reason. This was
+run through the coordinator service path; the standalone compactor was not invoked.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick/main; ../Wintap-PyUtil/wintappy/coordination/completion.py §_complete_live_prepared; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py -->
+<!-- SOURCE: Read-only 03:00Z preflight, coordinated tick log, coordinator ledger and live object inventory, conversation 2026-11-18. -->

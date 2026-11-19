@@ -16,6 +16,12 @@ cache was preserved. Focused controls passed 89 tests; the complete coordination
 was attempted but timed out and is not claimed as green.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->
 
+The following coordinated 03:00Z–04:00Z continuation also completed after a fresh
+read-only preflight: raw input was deleted only after verification, 10 compacted and
+one metrics object were published, the shared entity cache remained intact, and the
+ledger advanced to 04:00Z with no active run.
+<!-- SOURCE: Coordinator tick log, ledger readback and live object inventory, conversation 2026-11-18. -->
+
 ## [2026-11-17] todo | daily compacted storage tier
 
 Added a low-priority intake item for a future `compacted2/dayPK` daily roll-up
