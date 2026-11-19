@@ -85,7 +85,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
   - ../Wintap-PyUtil/tests/test_coordination_entity_forward_history.py
 policy: agent-editable
-last_validated: 2026-11-17
+last_validated: 2026-11-18
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -4760,7 +4760,7 @@ These are published-source observations, not execution on the actual Mac. Instal
 DBT selects a spawn context and constructs multiprocessing locks; thread-pool model
 work does not imply zero child processes. Sources and unresolved candidate contracts:
 [[wiki/tension/native-macos-readers-vs-descendant-shutdown]].
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/mp_context.py; ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/contracts/graph/manifest.py §Manifest._lock; ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/adapters/base/connections.py §BaseConnectionManager.__init__; ../Wintap-PyUtil/uv.lock §dbt-core/dbt-adapters/dbt-duckdb -->
+<!-- SOURCE: Installed dependency inspection for the pinned dbt-core/dbt-adapters/dbt-duckdb versions; dependency pins are recorded in ../Wintap-PyUtil/uv.lock. -->
 
 Three fresh isolated dependency commands ran with the existing Linux supervisor,
 credential-free workload environments, no source-data access and private immutable
@@ -5951,3 +5951,30 @@ cursor at **02:00Z**. This continuation still does not establish all-history
 capacity or reader/writer overlap.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py -->
 <!-- SOURCE: Private Linux primary ledger, completion evidence, S3 inventory and metrics/authority Parquet readback, conversation 2026-11-17. -->
+
+### Audited interrupted pre-publication retry — 02:00Z–03:00Z — 2026-11-18
+
+The interrupted entity-enabled/deletion-enabled writer was qualified read-only before
+any retry or deletion. The retained original stayed `BLOCKED`; its archive contained
+exactly the `run_intent` and `entities_intent` records, supervised termination was
+`SIGTERM` with exit `-15`, both captured streams were empty, and the entity authority
+high-water was unchanged. A fresh authority observation and unchanged ledger snapshot
+were required before committing the successor disposition.
+
+The coordinated `retry-interrupted-hour` operation then created a distinct owner while
+retaining the original blocked history. The normal entity publication, independent
+completion verification and deletion checks completed successfully. The ledger advanced
+to **03:00Z** in `DRAINING` with no active run. Independent live inventory found **zero**
+raw objects for the selected hour, **10** compacted objects, **one** processing-metrics
+object, and all **six** shared process-entity objects still present. No entity cache
+purge or broad output deletion was performed; the 02:00Z raw input was removed only
+after verified migration and completion.
+
+The focused bounded gate passed **89 tests** across interrupted retry, retained retry
+history and entity-service controls. Pinned Ruff **0.17.5** checks and Python
+3.13 compilation passed. The complete coordination glob was attempted but exceeded
+the 600-second harness timeout at 12%; that incomplete run is not counted as a full
+suite result. Broader partial-publication repair, missing-original recovery, actual
+endpoint/resource qualification and all-history capacity remain open.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py §verify_interrupted_prepared/retry_interrupted_and_complete_prepared; ../Wintap-PyUtil/wintappy/coordination/completion.py §validate_completion_proof/_recheck_retry_completion; ../Wintap-PyUtil/wintappy/coordination/service.py §main; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->
+<!-- SOURCE: Read-only preflight, coordinated retry log, coordinator ledger, live object inventory and focused test/lint/compile results, conversation 2026-11-18. -->

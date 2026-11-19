@@ -52,7 +52,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_completion_history_qualification.py
 policy: agent-editable
-last_validated: 2026-11-17
+last_validated: 2026-11-18
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -1013,6 +1013,26 @@ not regression or Linux acceptance. Entity-only ownership remains separate.
   reports; new entity-only source work needs separate active controls/regressions.
 - [ ] Implement distinct entity-only ownership and qualification afterward; obtain
   approved isolated S3 inputs and representative resource evidence separately.
+
+#### Interrupted pre-publication recovery slice — scoped implementation complete
+
+- [x] Add a separate Linux `retry-interrupted-hour` dispatch rather than widening
+  raw-only `retry-hour`; require explicit cannot-resume confirmation/reason before
+  configuration loading and preserve the blocked original as immutable history.
+- [x] Qualify only the exact retained pre-publication shape: two chained intent
+  records, empty supervised SIGTERM output, unchanged authority high-water and
+  unchanged ledger ownership. Refuse partial archives, non-empty output or changed
+  authority before mutation.
+- [x] Bind the successor disposition, fresh prelaunch authority observation, normal
+  entity/deletion completion evidence and interrupted-retry completion identity under
+  bounded predecessor-linked history. Shared entity cache remains outside the purge
+  scope; deletion follows normal verified completion only.
+- [x] Run the focused interrupted-retry/history/entity-service gate: **89 passed**;
+  Ruff 0.17.5 and Python 3.13 compilation pass. The full coordination glob timed out
+  in the harness and is not represented as a full-suite pass.
+- [ ] General partial-publication repair, missing-original recovery, endpoint/resource
+  qualification and representative-scale acceptance remain separate work.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py -->
 
 #### Entity-only ownership slice — active, not accepted

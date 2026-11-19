@@ -5,6 +5,26 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-18] code/verification | audited interrupted telemetry retry
+
+Added and exercised a narrowly scoped `retry-interrupted-hour` path in the PyUtil
+coordination layer. It preserves the blocked original, requires exact retained
+pre-publication evidence plus fresh authority verification, and reuses normal entity
+publication/completion/deletion controls. The selected live hour completed safely:
+zero raw objects remain, compacted/metrics outputs are present, and the shared entity
+cache was preserved. Focused controls passed 89 tests; the complete coordination glob
+was attempted but timed out and is not claimed as green.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->
+
+## [2026-11-17] todo | daily compacted storage tier
+
+Added a low-priority intake item for a future `compacted2/dayPK` daily roll-up
+over verified hourly compacted data. The TODO records disjoint raw/hourly/daily
+reader precedence, cumulative entity-cache boundaries, publication readiness,
+late-arrival handling, and downstream DBT/dashboard qualification. No source or
+S3 data was changed.
+<!-- SOURCE: Human-requested design follow-up, conversation 2026-11-17; ../Wintap-PyUtil/extras/raw-sensor-compact; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql. -->
+
 ## [2026-11-17] code | raw/compacted partition compaction heatmap
 
 Extended the HostActivity Partitions view with a metadata-only S3 survey over the

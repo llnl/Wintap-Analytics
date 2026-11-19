@@ -310,6 +310,9 @@ error classification, and target-support boundary remain to be established.
 The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
 .NET gap between current merge-time partitions and the requested actual-upload
 UTC partition contract.
+The low-priority [[wiki/todo/daily-compacted-tier]] tracks a future verified
+`compacted2/dayPK` roll-up, disjoint reader precedence, and late-arrival
+handling; it is separate from the current hourly historical catch-up.
 The approved high-priority test maintenance item is
 [[wiki/todo/test-suite-reorganization]], which points to the staged
 [[wiki/overview/test-suite-organization-and-classification]] plan.
