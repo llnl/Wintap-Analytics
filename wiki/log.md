@@ -5,23 +5,110 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
-## [2026-11-17] docs | Reconcile open to-do queue
+## [2026-11-19] code/verification | direct raw-only DBT route
 
-Audited all 11 intake pages under `wiki/todo/`; each was already listed in
-`wiki/todo/index.md`. Added the previously orphaned open OS-family correction
-from `wiki/diagnostic/duplicate-agent-id-and-os-family.md` to the priority queue
-and updated the master index summary. No source, schema, database, or raw-data
-changes were made.
+Added and committed `657a37c` in `../Wintap-PyUtil`: an explicit
+`make dbt-build-direct` path for remote raw datasets before compaction or
+coordination initialization. It runs the existing source preflight and DBT
+build without opening coordination state, disables compacted-prefix probing,
+and refuses process-entity enrichment; coordinated remote builds remain the
+default. Best-effort offline verification passed 108 tests with 1 skip plus
+formatting, compilation, diff, and Make dry-run checks. No live S3 or private
+dataset was accessed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintappy/coordination/client.py; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql -->
 
-## [2026-11-17] docs | Add wrapper-to-dd raw process example
+## [2026-11-19] intake | periodic process refresh listing
 
-Added a sanitized `datacrumbs_wrap` → `dd` example to
-`wiki/todo/linux-process-executable-attribution.md`. The example distinguishes
-fork, exec attempts, successful image replacement, and Stop for one PidHash, and
-connects the observations to the existing unordered `ANY_VALUE` executable
-selection risk. Also recorded a follow-up to validate apparent Start-versus-Stop
-timestamp precision differences against Linux `/proc` clock-tick normalization.
-No sensor, schema, DBT, or raw-data changes were made.
+Added the human-requested P1 TODO for implementing bounded periodic running-process
+Refresh listings on both Windows and Linux. The intake records the current
+startup-only behavior, the requested default hourly cadence at approximately five
+minutes after the hour, schedule/configuration questions, collection-time
+observability requirements, identity-safe deduplication, and qualification gates.
+No Wintap source, schema, or deployed data was changed.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs -->
+<!-- HUMAN-REQUESTED: conversation 2026-11-19. -->
+
+## [2026-11-18] code/verification | audited interrupted telemetry retry
+
+Added and exercised a narrowly scoped `retry-interrupted-hour` path in the PyUtil
+coordination layer. It preserves the blocked original, requires exact retained
+pre-publication evidence plus fresh authority verification, and reuses normal entity
+publication/completion/deletion controls. The selected live hour completed safely:
+zero raw objects remain, compacted/metrics outputs are present, and the shared entity
+cache was preserved. Focused controls passed 89 tests; the complete coordination glob
+was attempted but timed out and is not claimed as green.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->
+
+The following coordinated 03:00Z–04:00Z continuation also completed after a fresh
+read-only preflight: raw input was deleted only after verification, 10 compacted and
+one metrics object were published, the shared entity cache remained intact, and the
+ledger advanced to 04:00Z with no active run.
+<!-- SOURCE: Coordinator tick log, ledger readback and live object inventory, conversation 2026-11-18. -->
+
+## [2026-11-18] verification | full coordination regression closure
+
+The approved full `tests/test_coordination*.py` run completed with **1,184 passed and
+12 skipped** in **6,410.69 seconds** using the isolated `/data` temporary filesystem.
+No coordination assertions failed.
+<!-- SOURCE: Retained full coordination pytest report, conversation 2026-11-18. -->
+
+## [2026-11-17] todo | daily compacted storage tier
+
+Added a low-priority intake item for a future `compacted2/dayPK` daily roll-up
+over verified hourly compacted data. The TODO records disjoint raw/hourly/daily
+reader precedence, cumulative entity-cache boundaries, publication readiness,
+late-arrival handling, and downstream DBT/dashboard qualification. No source or
+S3 data was changed.
+<!-- SOURCE: Human-requested design follow-up, conversation 2026-11-17; ../Wintap-PyUtil/extras/raw-sensor-compact; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql. -->
+
+## [2026-11-17] code | raw/compacted partition compaction heatmap
+
+Extended the HostActivity Partitions view with a metadata-only S3 survey over the
+union of event families in `raw_sensor/` and `compacted/`. The default is 42
+complete UTC days; cells use compacted-present hours divided by 24, penalize
+partial coverage, leave no-data cells blank, and expose raw/compacted overlap
+counts. Added synthetic coverage/overlap tests; the app suite passes 58 tests.
+No Parquet reads or S3 writes were added.
+<!-- SOURCE: streamlit/projects/HostActivity/partition_status.py; streamlit/projects/HostActivity/main.py; streamlit/projects/HostActivity/test_partition_status.py. -->
+
+## [2026-11-17] fix | daily partition heatmap columns
+
+Changed the Partitions heatmap x-axis from a continuous temporal encoding to
+explicit nominal UTC-day labels. Each day now renders as its own stable column,
+including distinct hover values across the selected range. Added a chart-spec
+regression test; the app suite passes 59 tests.
+<!-- SOURCE: streamlit/projects/HostActivity/main.py; streamlit/projects/HostActivity/test_partition_status.py. -->
+
+## [2026-11-17] fix | full-width partition heatmap
+
+Changed the partition chart to use the full Streamlit canvas width while
+preserving its fixed daily-cell height and nominal UTC-day columns. The chart
+test now guards the full-width rendering option; the app suite remains at 59
+passing tests.
+<!-- SOURCE: streamlit/projects/HostActivity/main.py; streamlit/projects/HostActivity/test_partition_status.py. -->
+
+## [2026-11-17] verification | post-DBT writer continuation
+
+After the bounded Linux DBT reader passed, the primary writer completed the next
+hour with 1,244,494 compacted rows from 46 raw objects, zero exact-hour raw
+objects remaining, metrics status completed and zero deletion failures. Authority
+generation 53 was committed; the primary ledger is healthy at the next 02:00Z
+cursor with no readers or waiting jobs. All-history capacity and overlap remain
+open.
+<!-- SOURCE: Private Linux primary ledger, completion evidence, S3 inventory and metrics/authority readback, conversation 2026-11-17. -->
+
+## [2026-11-17] verification | Linux writer and DBT reader tranche
+
+The fresh primary Linux ledger advanced 30 bounded oldest-forward cursor steps to
+2026-10-28 01:00Z. The first non-empty hour produced 889,436 compacted rows with
+verified raw deletion, metrics and entity/authority readback; one interrupted
+empty-hour verifier was recovered through the audited resolution path. A separate
+future-cursor, non-entity reader qualified a one-hour Linux DBT build with 140/140
+resources complete and a readable DuckDB output. A broader DBT attempt failed on
+local disk capacity; its reader reservation was explicitly released and the
+temporary database/WAL removed. Mac DBT, entity-mode DBT, overlap and all-history
+capacity remain open.
+<!-- SOURCE: Private Linux primary/reader ledgers, compaction evidence, S3 inventory, DBT observations and DuckDB readback, conversation 2026-11-17. -->
 
 ## [2026-11-16] code | experimental raw-process activity heuristic
 
@@ -9070,14 +9157,66 @@ The attempted local rerun was not treated as qualification because the private
 runner scope is unavailable and the checked-out main PyUtil environment is stale.
 <!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus local continuation checks, conversation 2026-11-17. -->
 
-## [2026-11-17] verification | native-Mac DBT prepared; private binding needed
+## [2026-11-17] plan | DCC-E2E-01 status synchronized
+
+Synchronized the integration milestone plan with the current execution boundary:
+Linux's ten verified ticks and prior DBT gate remain evidence, while native-Mac
+DBT is active in parallel but has no returned real-data result. The DCC-E2E-01
+exit checklist remains intentionally open; no additional live tick or remote
+mutation was started.
+<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
+
+## [2026-11-17] plan | candidate and execution status synchronized
+
+Updated the implementation plan and qualification worksheet to identify PyUtil
+`402ead1` as the current parallel Mac DBT candidate and to distinguish the closed
+Linux ten-tick/DBT evidence from the still-open real Mac and overlap gates. The
+worksheet's existing review gate remains active for runner, private roots/access,
+mutation scope and resource ceilings.
+<!-- SOURCE: Current native-Mac DBT handoff and candidate selection, conversation 2026-11-17. -->
+
+## [2026-11-17] scope | Linux-only integration tranche selected
+
+The human narrowed the next execution to the existing real S3 `raw_sensor` source,
+oldest-forward small chunks, server-owned compaction/coordinator/ledger and Linux
+DBT. Completed test-data deletion is allowed; Mac DBT, separate Mac output and
+reader/writer overlap are deferred. Updated the index and qualification records to
+remove the private-manifest blocker while retaining exact-prefix safety checks.
+<!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
+
+## [2026-11-17] plan | active candidate references corrected
+
+Corrected the compaction brief and integration sequence so historical `badb67f`
+baseline references are not presented as the active candidate. The current Linux
+integration candidate is `402ead1`; its cumulative-host DBT/entity gate remains the
+accepted 146/146, 87/87 and 57-test evidence already recorded. Mac DBT is deferred.
+<!-- SOURCE: Current native-Mac DBT handoff and candidate selection, conversation 2026-11-17. -->
+
+## [2026-11-17] docs | Reconcile open to-do queue
+
+Audited all 11 intake pages under `wiki/todo/`; each was already listed in
+`wiki/todo/index.md`. Added the previously orphaned open OS-family correction
+from `wiki/diagnostic/duplicate-agent-id-and-os-family.md` to the priority queue
+and updated the master index summary. No source, schema, database, or raw-data
+changes were made.
+
+## [2026-11-17] docs | Add wrapper-to-dd raw process example
+
+Added a sanitized `datacrumbs_wrap` → `dd` example to
+`wiki/todo/linux-process-executable-attribution.md`. The example distinguishes
+fork, exec attempts, successful image replacement, and Stop for one PidHash, and
+connects the observations to the existing unordered `ANY_VALUE` executable
+selection risk. Also recorded a follow-up to validate apparent Start-versus-Stop
+timestamp precision differences against Linux `/proc` clock-tick normalization.
+No sensor, schema, DBT, or raw-data changes were made.
+
+## [2026-11-17] verification | native-Mac DBT preparation
 
 Prepared a fresh disposable PyUtil checkout at `402ead1` and installed its locked
-main environment offline. Runtime import passes on macOS 26.7.3 arm64/Python
-3.12.12/DuckDB 1.5.6/dbt-core 1.12.3; the lock and tracked checkout remain unchanged.
-The available private configuration lacks isolated compacted/entity/metrics roots
-and coordinator binding; the historical 21:00Z–06:00Z report does not establish
-exact Mac date bounds or access scope. Stopped before any S3 request/reservation or
-DBT execution. Requested the approved private run manifest and resource ceilings;
-no Linux evidence, source data or ledger was changed. Details:
-[[wiki/work/dbt-compaction-coordination/verification]].
+main environment offline. Native runtime import passed on macOS arm64 with the
+locked Python/DuckDB/dbt dependencies. The available private configuration lacked
+the isolated output roots and coordination binding needed for a live run, so work
+stopped before any S3 request, DBT execution, publication, deletion or ledger
+operation. Later scope synchronization deferred Mac DBT in favor of the Linux-only
+tranche; this was preparation evidence, not native-Mac qualification.
+<!-- SOURCE: Native-Mac worker checkout/runtime preparation and private configuration key-inventory review, conversation 2026-11-17. -->

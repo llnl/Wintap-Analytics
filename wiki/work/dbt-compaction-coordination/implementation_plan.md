@@ -52,7 +52,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/entity_resolution.py
   - ../Wintap-PyUtil/tests/test_coordination_entity_completion_history_qualification.py
 policy: agent-editable
-last_validated: 2026-11-16
+last_validated: 2026-11-18
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -85,6 +85,22 @@ handoff. Strict upload-time UTC client enforcement and downstream delayed-data
 implications are separate later tasks, not pilot prerequisites; current uploader
 compliance must not be assumed. The active assignment is in
 [[wiki/work/dbt-compaction-coordination/dev_handoff#Active Linux-runner assignment — DCC-E2E-01]].
+
+## Current execution status — 2026-11-17
+
+The earlier ten-tick qualification remains recorded through 07:00Z. A separate
+fresh Linux live tranche then advanced a primary writer ledger from 2026-10-26
+19:00Z to 2026-10-28 02:00Z through 31 bounded service runs, including verified
+deletion of completed development-data hours and audited recovery of one
+interrupted empty-hour verifier. A separate future-cursor non-entity reader
+qualified a one-hour Linux DBT build with 140/140 nodes complete and a reopened
+DuckDB output. The broad-window DBT attempt is retained as a disk-capacity
+failure, not relabeled as a pass. Native-Mac DBT remains deferred and out of scope
+for this tranche; the historical parallel-Mac statements below remain evidence-
+state history. No all-history, entity-mode DBT, overlap or production-acceptance
+claim follows.
+<!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
+
 The first bounded real-data window exposed and authorized a local PyUtil correction for
 no-deletion checkpoint status; its affected regressions passed. The human chose deletion
 over repair: all data and run state for [19:00Z, 22:00Z) were removed and verified
@@ -997,6 +1013,26 @@ not regression or Linux acceptance. Entity-only ownership remains separate.
   reports; new entity-only source work needs separate active controls/regressions.
 - [ ] Implement distinct entity-only ownership and qualification afterward; obtain
   approved isolated S3 inputs and representative resource evidence separately.
+
+#### Interrupted pre-publication recovery slice — scoped implementation complete
+
+- [x] Add a separate Linux `retry-interrupted-hour` dispatch rather than widening
+  raw-only `retry-hour`; require explicit cannot-resume confirmation/reason before
+  configuration loading and preserve the blocked original as immutable history.
+- [x] Qualify only the exact retained pre-publication shape: two chained intent
+  records, empty supervised SIGTERM output, unchanged authority high-water and
+  unchanged ledger ownership. Refuse partial archives, non-empty output or changed
+  authority before mutation.
+- [x] Bind the successor disposition, fresh prelaunch authority observation, normal
+  entity/deletion completion evidence and interrupted-retry completion identity under
+  bounded predecessor-linked history. Shared entity cache remains outside the purge
+  scope; deletion follows normal verified completion only.
+- [x] Run the focused interrupted-retry/history/entity-service gate: **89 passed**;
+  Ruff 0.17.5 and Python 3.13 compilation pass. The later complete coordination glob
+  passes **1,184 tests with 12 skips**.
+- [ ] General partial-publication repair, missing-original recovery, endpoint/resource
+  qualification and representative-scale acceptance remain separate work.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_coordination_intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py -->
 
 #### Entity-only ownership slice — active, not accepted

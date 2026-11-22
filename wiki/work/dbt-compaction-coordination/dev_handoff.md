@@ -83,17 +83,33 @@ source-change approval, or blanket remote/deletion authorization.
 ## Active Linux-runner assignment — DCC-E2E-01
 
 **Use this assignment and the approved integration plan, not the historical
-recovery-first continuation below.** Own the Linux coordinator/writer, fresh entity
-cache and Linux DBT client; run the native-Mac client stage in parallel with the
-human/Mac operator. Linux-only success or synthetic Mac controls cannot close the
-milestone.
+recovery-first continuation below.** Own the Linux coordinator/writer, entity cache
+and Linux DBT client against the existing real S3 `raw_sensor` source. Process the
+oldest available date forward in small bounded chunks; completed source deletion is
+allowed because this is test/development data. The Mac DBT client is currently out
+of scope and must not block or be launched for this tranche.
 
-## Parallel native-Mac DBT worker assignment — November 17
+### Current Linux-only execution tranche — November 17
 
-The native-Mac DBT workstream is now active in parallel with the Linux server's
-remaining finalization. The earlier handoff statements that Mac DBT was deferred
-describe the prior evidence state; they are superseded for execution by this
-section, not erased as historical records.
+The server-side worker controls compaction, coordinator, ledger and the Linux DBT
+client from the existing Linux environment. Use the existing S3 path rather than
+creating a copied dataset. Start with the oldest available settled hour/date and
+advance in small chunks, verifying output rows, schemas, entity/authority/metrics
+state and completion before deleting that hour's raw objects. Keep the source prefix
+exact; do not broaden cleanup to unrelated data. Resource measurements are useful
+but secondary to robust completion, fail-closed behavior and clear evidence.
+
+Mac DBT, separate Mac output, coordinated Mac reader admission and reader/writer
+overlap are deferred follow-on work. The earlier parallel-Mac assignment below is
+historical and superseded for execution; it remains only to preserve the prior
+handoff record.
+<!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
+
+## Historical parallel native-Mac DBT worker assignment — November 17
+
+The native-Mac DBT workstream was activated in parallel before the current scope
+clarification. The current Linux-only tranche supersedes that execution direction;
+the requirements below are retained as a historical handoff, not an active task.
 
 ### Mac worker scope
 

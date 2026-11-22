@@ -79,13 +79,21 @@ producer normally publishes the export with mode `0600`.
   Actual launch/finish and completion certificates are unavailable. `COMPLETED` is
   reported disposition only; maintenance `FINISHED` does not authorize reopening.
   Continuations mean incomplete history, not a seven-day or latest-run selection.
-- **Partitions** reports inventory unavailable, not zero; no survey has run.
+- **Partitions** is a metadata-only raw/compacted hourly-presence overview. It
+  defaults to the most recent 42 complete UTC days and discovers the union of
+  event-family directories under `raw_sensor/` and `compacted/`. Each heatmap
+  cell is `compacted-present-hours / 24`; raw-only hours contribute zero,
+  compacted/raw overlap counts as compacted, and a cell is blank only when no
+  hour is present in either root. Hover details include raw, compacted, overlap,
+  and observed-hour counts. The view performs bounded S3 `ListObjectsV2`
+  prefix/delimiter requests only; it does not read Parquet or claim migration
+  completeness. A Live diagnostic warning remains visible.
 
 Advisory status is never permission to read, complete, delete, repair or reopen.
 Its pins identify only the status source; Activity keeps its separately configured
-raw root. Activity remains synchronous/raw-only. Compacted/entity reads, full
-catalog/timeline, managed live jobs and optional coordinated refresh are not yet
-implemented or qualified. No recovery controls, scheduler or deployment are added.
+raw root. Activity remains synchronous/raw-only. Full catalog/timeline, managed
+live jobs and optional coordinated refresh are not yet implemented or qualified.
+ No recovery controls, scheduler or deployment are added.
 
 ## Dashboard semantics and limits
 

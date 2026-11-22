@@ -85,7 +85,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/coordination/MACOS.md
   - ../Wintap-PyUtil/tests/test_coordination_entity_forward_history.py
 policy: agent-editable
-last_validated: 2026-11-17
+last_validated: 2026-11-18
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -4760,7 +4760,7 @@ These are published-source observations, not execution on the actual Mac. Instal
 DBT selects a spawn context and constructs multiprocessing locks; thread-pool model
 work does not imply zero child processes. Sources and unresolved candidate contracts:
 [[wiki/tension/native-macos-readers-vs-descendant-shutdown]].
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/mp_context.py; ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/contracts/graph/manifest.py §Manifest._lock; ../Wintap-PyUtil/.venv/lib/python3.11/site-packages/dbt/adapters/base/connections.py §BaseConnectionManager.__init__; ../Wintap-PyUtil/uv.lock §dbt-core/dbt-adapters/dbt-duckdb -->
+<!-- SOURCE: Installed dependency inspection for the pinned dbt-core/dbt-adapters/dbt-duckdb versions; dependency pins are recorded in ../Wintap-PyUtil/uv.lock. -->
 
 Three fresh isolated dependency commands ran with the existing Linux supervisor,
 credential-free workload environments, no source-data access and private immutable
@@ -5901,40 +5901,107 @@ isolated-window result: source preflight, full build **146/146**, explicit DBT t
 deletions. A local rerun is not claimed here because this workspace has neither the
 approved private runner manifest/access scope nor a usable main PyUtil environment.
 
-Native-Mac DBT is now an active parallel workstream under the updated handoff, but
-no native-Mac real-data execution result is available yet. The historical statements
-below that Mac testing was deferred describe the earlier evidence state and remain
-historical; they do not replace the current reader-only assignment. DCC-E2E-01
-therefore remains open until genuine Linux/native-Mac DBT runs, separate outputs,
-and the approved reader/writer overlap evidence are returned and reviewed.
-<!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
+The current execution tranche is Linux-only: server-owned compaction, coordinator,
+ledger and Linux DBT use the existing real S3 `raw_sensor` source, oldest date
+forward in small bounded chunks, with deletion of completed test-data hours allowed
+after verification. Mac DBT and reader/writer overlap are deferred and are not
+blockers for this tranche. The earlier parallel-Mac statements remain historical.
+<!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
 
-## Native-Mac live DBT preparation — private run binding unavailable — 2026-11-17
+### Historical native-Mac DBT preparation — 2026-11-17
 
-The assigned Mac worker prepared a fresh disposable Git-only checkout at exact
-PyUtil revision `402ead1aebdd5b1fa67a4c33d662389642868e55`, separate from the shared
-checkout and Linux state. No credentials, private environment files, server state
-or host identifiers were copied into it. `uv sync --locked --offline --dev --python
-3.12` exited zero. Native runtime import passed on macOS **26.7.3 arm64**, Python
-**3.12.12**, DuckDB **1.5.6**, dbt-core **1.12.3**, dbt-duckdb **1.9.6**. The tracked
-lock remained unchanged, SHA-256
-`61912ee3abb9e095b46e03fba4a021272d77bed9f1235a8901e92a92a5d9d367`;
-the fresh checkout's tracked status is clean.
-
-The available private environment file's key inventory contains raw source/access
-and date/hour settings, but no selected isolated compacted/entity/metrics roots,
-entity namespace/seed policy or coordination dataset/transport binding. No inherited
-AWS/Wintap settings provide that missing scope. The historical Linux report names
-**21:00Z–06:00Z**, but does not specify the complete private execution manifest or
-exact date bounds for the Mac reader. Do not substitute the general raw source or
-infer a transport namespace from data prefixes.
-
-**Stopped before live access:** no S3 calls, reader request/grant/reservation,
-preflight/build/test/release, writer, publication, deletion or ledger operation was
-performed. All real-data stages remain **not run**, not passed or skipped. Await
-the private approved Linux-run binding/configuration reference, exact UTC window,
-coordinator availability and agreed Mac resource/timeout ceilings. The existing
-Linux evidence is unchanged; this is successful local preparation, not native-Mac
-DBT/data qualification.
+Before the later Linux-only scope was selected, a fresh disposable PyUtil checkout
+at candidate `402ead1` was prepared and its locked environment was installed
+offline. Native runtime import passed on macOS arm64 with the locked Python,
+DuckDB, dbt-core and dbt-duckdb dependencies. The available private configuration
+did not provide the isolated compacted/entity/metrics roots or coordination binding
+needed for a live reader run. Work stopped before S3 access, DBT execution,
+publication, deletion or ledger activity. This records successful local preparation
+only; it is not native-Mac DBT/data qualification.
 <!-- SOURCE: Native-Mac worker checkout/runtime preparation and private configuration key-inventory review, conversation 2026-11-17. -->
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/client.py §binding_from_environment/main/_window; ../Wintap-PyUtil/Makefile §dbt-build/dbt-test -->
+
+### Second Linux-only live tranche — 2026-11-17
+
+The fresh primary writer ledger advanced the oldest-forward cursor from
+**2026-10-26 19:00Z** to **2026-10-28 01:00Z** through 30 bounded service runs.
+The first non-empty hour completed with nine compacted output objects and
+**889,436** output rows; the exact-hour raw prefix was empty after deletion, the
+processing-metrics row was present, and the authority/entity snapshots were read
+back with the committed completion. The following hour and the intervening empty
+gap were processed under the same writer-priority ledger. An outer timeout
+interrupted one final empty-hour verifier; the retained run was recovered through
+the audited `resolve-hour` operation, and the next hour completed normally. The
+primary ledger now reports `DRAINING`, no readers or waiting jobs, no block reason,
+and the next cursor above. This is a bounded development run, not all-history
+completion.
+
+A separate future-cursor, non-entity reader ledger qualified the Linux DBT client
+without bypassing or advancing the primary writer backlog. Its first broad-window
+attempt reached **121 passes, 4 errors and 15 skips** before DuckDB exhausted local
+disk while writing its database/WAL; the reader reservation was explicitly
+released and the failed temporary database/WAL was removed. A one-hour retry over
+the verified compacted hour then passed source preflight and the complete DBT
+build: **33 table models, 21 view models, 84 data tests and two hooks**, with
+`PASS=140`, `ERROR=0`, `SKIP=0`, no warnings, and client `exit_code=0`. The local
+DuckDB output reopened successfully with DuckDB **1.5.6**, 54 relations and an
+approximately 72 MiB database. The reader ledger ingested the release and ended
+with zero readers and zero waiting jobs. No entity-mode DBT claim, Mac execution,
+reader/writer overlap claim, or all-history capacity claim follows from this
+qualification.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick/main; ../Wintap-PyUtil/wintappy/coordination/recovery.py §resolve_hour/release_reader; ../Wintap-PyUtil/wintappy/coordination/client.py §run_reader; ../Wintap-PyUtil/wintap_dbt/dbt_project.yml -->
+<!-- SOURCE: Private Linux primary/reader ledgers, compaction evidence, S3 inventory, DBT client observations and DuckDB readback, conversation 2026-11-17. -->
+
+### Post-DBT writer continuation — 01:00Z–02:00Z
+
+After the DBT reader evidence stabilized, the primary writer completed the next
+oldest-forward hour. Nine compacted output objects contain **1,244,494** rows,
+matching the source total from **46** raw objects; the exact-hour raw prefix is
+empty, the metrics row reports `completed` with zero deletion failures, and
+authority generation **53** is committed for the 01:00Z–02:00Z window. The primary
+ledger remains `DRAINING` with no active run, readers or waiting jobs and the next
+cursor at **02:00Z**. This continuation still does not establish all-history
+capacity or reader/writer overlap.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/entity_authority.py -->
+<!-- SOURCE: Private Linux primary ledger, completion evidence, S3 inventory and metrics/authority Parquet readback, conversation 2026-11-17. -->
+
+### Audited interrupted pre-publication retry — 02:00Z–03:00Z — 2026-11-18
+
+The interrupted entity-enabled/deletion-enabled writer was qualified read-only before
+any retry or deletion. The retained original stayed `BLOCKED`; its archive contained
+exactly the `run_intent` and `entities_intent` records, supervised termination was
+`SIGTERM` with exit `-15`, both captured streams were empty, and the entity authority
+high-water was unchanged. A fresh authority observation and unchanged ledger snapshot
+were required before committing the successor disposition.
+
+The coordinated `retry-interrupted-hour` operation then created a distinct owner while
+retaining the original blocked history. The normal entity publication, independent
+completion verification and deletion checks completed successfully. The ledger advanced
+to **03:00Z** in `DRAINING` with no active run. Independent live inventory found **zero**
+raw objects for the selected hour, **10** compacted objects, **one** processing-metrics
+object, and all **six** shared process-entity objects still present. No entity cache
+purge or broad output deletion was performed; the 02:00Z raw input was removed only
+after verified migration and completion.
+
+The focused bounded gate passed **89 tests** across interrupted retry, retained retry
+history and entity-service controls. Pinned Ruff **0.17.5** checks and Python
+3.13 compilation passed. The later complete coordination glob passed **1,184 tests
+with 12 skips** in **6,410.69 seconds**. Broader partial-publication repair,
+missing-original recovery, actual endpoint/resource qualification and all-history
+capacity remain open.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py §verify_interrupted_prepared/retry_interrupted_and_complete_prepared; ../Wintap-PyUtil/wintappy/coordination/completion.py §validate_completion_proof/_recheck_retry_completion; ../Wintap-PyUtil/wintappy/coordination/service.py §main; ../Wintap-PyUtil/tests/test_coordination_interrupted_retry.py -->
+<!-- SOURCE: Read-only preflight, coordinated retry log, coordinator ledger, live object inventory and focused test/lint/compile results, conversation 2026-11-18. -->
+
+### Coordinated continuation — 03:00Z–04:00Z — 2026-11-18
+
+After a fresh read-only scope check found **430** raw objects and no selected-hour
+compacted or metrics outputs, the approved coordinator `service tick` processed the
+next hour. It completed with **10** compacted objects and **one** processing-metrics
+object; the selected-hour raw prefix is now empty. The shared **six-object** process
+entity cache remains present and was updated through normal coordinated publication,
+not purged.
+
+The latest completion is `COMPLETED`, the ledger cursor is **04:00Z**, and the ledger
+remains `DRAINING` with no active run, readers, waiting jobs or block reason. This was
+run through the coordinator service path; the standalone compactor was not invoked.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/service.py §service_tick/main; ../Wintap-PyUtil/wintappy/coordination/completion.py §_complete_live_prepared; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/processing_metrics.py -->
+<!-- SOURCE: Read-only 03:00Z preflight, coordinated tick log, coordinator ledger and live object inventory, conversation 2026-11-18. -->

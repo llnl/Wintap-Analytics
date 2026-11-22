@@ -9,6 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from file_metadata import aggregate_file_metadata
+from partition_status import discover_partition_status
 from queries import EVENT_LABELS, aggregate_family, inspect_family
 from s3_source import (
     RAW_EVENT_TYPES,
@@ -65,6 +66,131 @@ def _render_environment_info(settings):
         "- Credential values: hidden",
     ]
     st.info("\n".join(lines))
+
+
+def _render_partition_chart(cells, event_types, days):
+    event_labels = [EVENT_LABELS.get(event, event) for event in event_types]
+    rows = pd.DataFrame([
+        {
+            "Event type": EVENT_LABELS.get(cell.event_type, cell.event_type),
+            "event_type": cell.event_type,
+            "Day": cell.day.isoformat(),
+            "Compaction": cell.compaction_ratio,
+            "Compacted hours": cell.compacted_hours,
+            "Raw hours": cell.raw_hours,
+            "Overlap hours": cell.overlap_hours,
+            "Observed hours": cell.observed_hours,
+        }
+        for cell in cells
+    ])
+    chart = (
+        alt.Chart(rows)
+        .transform_filter("datum['Observed hours'] > 0")
+        .mark_rect(stroke="#ffffff", strokeWidth=1)
+        .encode(
+            x=alt.X(
+                "Day:N",
+                title="UTC day",
+                sort=[day.isoformat() for day in days],
+                scale=alt.Scale(domain=[day.isoformat() for day in days]),
+            ),
+            y=alt.Y(
+                "Event type:N",
+                title="Event type",
+                scale=alt.Scale(domain=event_labels),
+            ),
+            color=alt.Color(
+                "Compaction:Q",
+                title="Compacted / 24 hours",
+                scale=alt.Scale(domain=[0, 1], range=["#d73027", "#1a9850"]),
+                legend=alt.Legend(format=".0%"),
+            ),
+            tooltip=[
+                alt.Tooltip("Event type:N"),
+                alt.Tooltip("Day:N"),
+                alt.Tooltip("Compaction:Q", format=".1%"),
+                alt.Tooltip("Compacted hours:Q"),
+                alt.Tooltip("Raw hours:Q"),
+                alt.Tooltip("Overlap hours:Q"),
+                alt.Tooltip("Observed hours:Q"),
+            ],
+        )
+        .properties(height=max(180, len(event_types) * 28), width=max(720, len(days) * 22))
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+
+def _render_partition_view(settings):
+    st.subheader("Partition compaction overview")
+    st.warning(
+        "Live diagnostic — S3 presence can change during compaction. This is an availability overview, "
+        "not migration or completeness evidence."
+    )
+    now = dt.datetime.now(UTC)
+    default_end = now.date() - dt.timedelta(days=1)
+    default_start = default_end - dt.timedelta(days=41)
+    with st.sidebar:
+        st.subheader("Partition overview")
+        start_day = st.date_input("First UTC day", value=default_start, key="partition_start_day")
+        end_day = st.date_input("Last UTC day", value=default_end, key="partition_end_day")
+        if end_day < start_day:
+            st.error("The last UTC day must not be before the first")
+            return
+        start = dt.datetime.combine(start_day, dt.time.min, tzinfo=UTC)
+        end = dt.datetime.combine(end_day + dt.timedelta(days=1), dt.time.min, tzinfo=UTC)
+        range_key = f"{start.isoformat()}/{end.isoformat()}"
+        refresh = st.button("Refresh partition overview", type="primary", use_container_width=True)
+
+    if refresh:
+        refresh_started = time.perf_counter()
+        status = st.status("Refreshing partition overview", expanded=True)
+        client = None
+        try:
+            status.write("Listing event families under raw_sensor/ and compacted/…")
+            client = open_metadata_client(settings)
+            cells = discover_partition_status(client, settings, start, end)
+            event_types = tuple(dict.fromkeys(cell.event_type for cell in cells))
+            st.session_state["partition_snapshot"] = {
+                "settings_fingerprint": settings.fingerprint,
+                "range_key": range_key,
+                "start": start.isoformat(),
+                "end": end.isoformat(),
+                "event_types": event_types,
+                "cells": cells,
+                "elapsed_seconds": time.perf_counter() - refresh_started,
+                "error": None,
+            }
+            status.update(label="Partition overview ready", state="complete")
+        except Exception:
+            st.session_state.pop("partition_snapshot", None)
+            status.update(label="Partition overview failed", state="error")
+            st.error("S3 partition survey failed; check read/list access and narrow the date range if needed.")
+        finally:
+            if client is not None:
+                client.close()
+
+    snapshot = st.session_state.get("partition_snapshot")
+    if snapshot is None:
+        st.info("Select a UTC day range and click **Refresh partition overview**.")
+        return
+    if snapshot.get("settings_fingerprint") != settings.fingerprint or snapshot.get("range_key") != range_key:
+        st.info("The selected source or date range changed. Refresh the partition overview.")
+        return
+    cells = snapshot["cells"]
+    event_types = snapshot["event_types"]
+    days = tuple(start.date() + dt.timedelta(days=offset) for offset in range((end.date() - start.date()).days))
+    st.caption(
+        f"UTC days: {start:%Y-%m-%d} – {(end - dt.timedelta(days=1)):%Y-%m-%d} · "
+        f"{len(event_types)} event types · refreshed in {snapshot['elapsed_seconds']:.1f}s"
+    )
+    if not event_types:
+        st.info("No event-type partitions were found in either raw_sensor/ or compacted/ for this range.")
+        return
+    _render_partition_chart(cells, event_types, days)
+    st.caption(
+        "Color is compacted hours / 24. Raw-only hours count as 0%; compacted/raw overlap counts as compacted "
+        "and is shown in the tooltip. Blank cells have no raw or compacted hour present."
+    )
 
 
 def _refresh(query_mode, event_type, start, end, range_mode, range_key):
@@ -384,7 +510,10 @@ def main():
             settings = None
         with st.sidebar:
             _render_environment_info(settings)
-        render_status_view(view, st)
+        if view == "Partitions" and settings is not None:
+            _render_partition_view(settings)
+        else:
+            render_status_view(view, st)
         return
     st.warning(LIVE_WARNING)
     st.caption("Existing raw-only viewer; managed live jobs, compacted/entity reads and coordinated refresh are not yet implemented or qualified.")

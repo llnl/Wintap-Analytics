@@ -51,7 +51,7 @@ grounded_by:
   - wiki/work/raw-sensor-file-aggregation/implementation_plan.md
   - ../Lintap/teletap/README.md
 policy: agent-editable
-last_validated: 2026-11-16
+last_validated: 2026-11-18
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -291,13 +291,19 @@ Conflicting checkpoint replacement needs separate confirmation and retains prior
 rows. Failed/crashed maintenance stays pending until audited cannot-resume
 abandonment, which also preserves the original block. Missing original phases,
 unqualified incomplete deletion and unresolved entity publication remain blocked.
-Raw-only intentional retry has separate closed local regressions. Explicit-v5 Linux
-entity init/replay and clean-original resolution are implemented below; interrupted
-publication, missing-original recovery and endpoint/resource qualification remain open.
+Raw-only intentional retry has separate closed local regressions. A narrower Linux
+`retry-interrupted-hour` path now covers an entity-enabled/deletion-enabled run
+interrupted before publication evidence: it requires the retained exact two-record
+pre-publication archive, empty supervised SIGTERM capture, unchanged authority and
+explicit cannot-resume confirmation. The original remains blocked history and the
+new owner uses the normal coordinated publication/completion path. General partial
+publication repair, missing-original recovery and endpoint/resource qualification
+remain open. Explicit-v5 Linux entity init/replay and clean-original resolution are
+implemented below.
 The retry slice is described in
 [[wiki/work/dbt-compaction-coordination/verification#Intentional-retry ownership — active, not accepted]],
 not accepted by the earlier repair regressions.
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/recovery.py; ../Wintap-PyUtil/wintappy/coordination/maintenance.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/recovery.py; ../Wintap-PyUtil/wintappy/coordination/maintenance.py; ../Wintap-PyUtil/wintappy/coordination/completion.py; ../Wintap-PyUtil/wintappy/coordination/ledger.py; ../Wintap-PyUtil/wintappy/coordination/intentional_retry.py; ../Wintap-PyUtil/wintappy/coordination/service.py; ../Wintap-PyUtil/extras/raw-sensor-compact/src/raw_sensor_compact/completion.py -->
 
 **Original-bound deletion disposition (local regressions closed):** `repair-deletions` adds a narrow
 path for an already blocked original exit-2 deletion failure with complete retained

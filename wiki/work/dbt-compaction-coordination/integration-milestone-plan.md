@@ -24,7 +24,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/SmokeTests/analysis.py
   - ../Wintap-Analytics/streamlit/projects/DataQA
 policy: agent-editable
-last_validated: 2026-11-16
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -71,6 +71,27 @@ before executing. Expendable data removes a preservation objective; it is not a
 blanket instruction to delete buckets, reset ledgers, stop collectors or change
 sibling source. The human authorized this repository's wiki commit/push only;
 production rollout, PR work and persistent scheduler installation remain outside scope.
+
+## Current execution status — 2026-11-17
+
+The earlier Linux live qualification reached 07:00Z after ten independently
+verified deletion-enabled hourly ticks. A separate fresh writer ledger later
+advanced 31 bounded hourly cursor steps from 2026-10-26 19:00Z to 2026-10-28
+02:00Z, including a verified non-empty migration/deletion, empty-hour advancement
+and audited recovery of one interrupted verifier. A separate future-cursor,
+non-entity Linux reader then completed a one-hour DBT build with **140/140**
+resources complete and a readable local DuckDB output. The broader DBT attempt
+that exhausted local disk remains a failure record. These results do not satisfy
+the complete milestone checklist by themselves.
+
+The current execution tranche is intentionally **Linux-only**. It uses the existing
+real S3 `raw_sensor` source, processes the oldest available date forward in small
+bounded chunks, and may delete completed source data because this is explicitly
+test/development data. The server owns compaction, coordinator, ledger and the Linux
+DBT client; Mac DBT, separate Mac output and reader/writer overlap are deferred and
+are not blockers for this tranche. Resource ceilings remain secondary to obtaining a
+robust end-to-end run, while stop and integrity checks remain mandatory.
+<!-- SOURCE: Human scope clarification to use existing S3 test data, allow deletion, run server processes and Linux DBT, and defer Mac DBT, conversation 2026-11-17. -->
 
 ## Reviewed position — November 16
 
@@ -176,10 +197,12 @@ the historical 128 GB/256 GB bootstrap are neither accepted pilot capacities nor
 reasons to silently change limits. Start with bounded real data, measure and adjust
 only the agreed development scope/budgets.
 
-Reuse the current green Linux regression and Mac lifecycle evidence at `badb67f`;
-check source/runtime identity and run short launch/config smoke if needed. Do not
-repeat unchanged multi-hour full suites before the first data run. A changed
-candidate needs the relevant regression controls, not unconditional acceptance.
+Reuse the reviewed Linux regression and Mac lifecycle evidence at historical
+baseline `badb67f` where applicable, but run the current candidate's relevant
+controls. The active candidate is PyUtil `402ead1`, which includes the cumulative
+observed-host DBT/entity correction. Do not repeat unchanged multi-hour full suites
+before the first data run. A changed candidate needs the relevant regression
+controls, not unconditional acceptance.
 Drive real service ticks manually or through a bounded development runner at the
 normal minute cadence; retain ten-second client polling. Do not install production
 cron or replace the service with a mocked clock/permission callback.
@@ -265,8 +288,8 @@ or ten-minute grace already resolves current behavior. Follow
 
 Freeze the final candidate after integration repairs, run affected regressions and
 the final platform/runtime suites once, and inspect their complete results. If the
-candidate remains `badb67f`, authenticate and reuse its already completed suites
-rather than demanding identical repeats. Add new integration reports to
+candidate remains `402ead1`, authenticate and reuse its already completed relevant
+suites rather than demanding identical repeats. Add new integration reports to
 [[wiki/work/dbt-compaction-coordination/verification]], with declared window,
 families, limits, elapsed phases and defect dispositions.
 

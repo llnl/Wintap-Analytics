@@ -7,11 +7,12 @@ grounded_by:
   - wiki/work/compaction-status-utility/design.md
   - wiki/work/dbt-compaction-coordination/implementation_plan.md
   - streamlit/projects/HostActivity/test_host_activity.py
+  - streamlit/projects/HostActivity/partition_status.py
   - streamlit/projects/HostActivity/status_source.py
   - streamlit/projects/HostActivity/status_views.py
   - ../Wintap-PyUtil/wintappy/coordination/service.py
 policy: agent-editable
-last_validated: 2026-11-15
+last_validated: 2026-11-17
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -173,8 +174,11 @@ Preserve local-only DBT and optional compaction/entities throughout.
   utility and scoped native-Mac PyUtil work; no deployment or commit/push.
 - [x] Qualify existing producer v1 advisory shape/pins and bounded consumer negatives;
   real separate-runtime export read passes with synthetic lock held and files unchanged.
-- [x] Implement navigation, advisory Status/raw intent Runs and unavailable Partitions;
-  46 combined offline controls pass with all ten source/lock identities unchanged.
+- [x] Implement navigation, advisory Status/raw intent Runs and the initial Partitions
+  shell; 46 combined offline controls pass with all ten source/lock identities unchanged.
+- [x] Add the scoped metadata-only raw/compacted partition-presence heatmap: unioned
+  event families, 42 complete UTC-day default, full 24-hour denominator, overlap
+  tooltip counts, and no Parquet reads.
 - [x] Promote only implemented advisory-subset facts to canonical dashboard/README;
   preserve full catalog/timeline and job-lifetime limitations.
 - [x] Audit all tracked/untracked changes, retain original source/report identities

@@ -106,10 +106,12 @@ view counts distinct Start-event process names per normalized user and host in
 fixed 15-minute UTC buckets after small deny-lists; it is not session detection
 and renders a one-host user/time heatmap. It is a barely acceptable temporary
 proxy; [[wiki/todo/linux-interactive-session-feed]] tracks a real Linux
-session/logon feed. The suite now passes 56 offline tests.
+session/logon feed. The suite now passes 59 offline tests.
 Pinned local v1 Status/raw-intent Runs need no ledger/lock/SDK/data reads;
-Partitions is explicitly unavailable, not zero. Full catalog/timeline,
-compacted/entity access and managed live/coordinated lifecycles remain pending.
+Partitions now provides a read-only 42-complete-day raw/compacted hourly
+presence heatmap with a full-24-hour compaction denominator and overlap details.
+Full catalog/timeline, compacted/entity access and managed live/coordinated
+lifecycles remain pending.
 Live metadata-mode performance
 remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
@@ -311,9 +313,16 @@ error classification, and target-support boundary remain to be established.
 The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
 .NET gap between current merge-time partitions and the requested actual-upload
 UTC partition contract.
+The low-priority [[wiki/todo/daily-compacted-tier]] tracks a future verified
+`compacted2/dayPK` roll-up, disjoint reader precedence, and late-arrival
+handling; it is separate from the current hourly historical catch-up.
 The approved high-priority test maintenance item is
 [[wiki/todo/test-suite-reorganization]], which points to the staged
 [[wiki/overview/test-suite-organization-and-classification]] plan.
+The new P1 [[wiki/todo/periodic-process-refresh-listing]] tracks the requested
+periodic running-process Refresh listing on both Windows and Linux, including the
+default hourly schedule, collection-time observability, and identity-safe
+deduplication.
 
 ## Work
 
@@ -370,6 +379,20 @@ The approved Linux-runner assignment is in
 [[wiki/work/dbt-compaction-coordination/dev_handoff#Active Linux-runner assignment — DCC-E2E-01]];
 the human handles delivery. Strict upload-time UTC client enforcement and downstream
 delayed-data semantics are separate later tasks, not pilot prerequisites.
+
+**Current compaction boundary — November 17:** The earlier Linux qualification
+reached 07:00Z after ten independently verified deletion-enabled ticks. A separate
+fresh writer ledger then advanced 31 bounded cursor steps to 2026-10-28 02:00Z;
+the primary ledger is healthy in `DRAINING` with no readers or waiting jobs. A
+separate future-cursor, non-entity Linux reader completed a one-hour DBT build
+with 140/140 resources and a readable local DuckDB output; its earlier broad
+window failed on local disk capacity and remains recorded as such. The current
+tranche is Linux-only: server-owned compaction, coordinator, ledger and Linux DBT
+use the existing real S3 source from the oldest date forward in small chunks, with
+completed test-data deletion allowed after verification. Mac DBT is deferred. The
+M0 private-runner gate is replaced by exact-scope operational checks in
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]] and the detailed
+[[wiki/work/dbt-compaction-coordination/verification#Second Linux-only live tranche — 2026-11-17]].
 
 The plan now includes the downstream source-mode contract for raw-only,
 compacted-only, mixed, DBT DuckDB and entity-aware reads. It scopes HostActivity

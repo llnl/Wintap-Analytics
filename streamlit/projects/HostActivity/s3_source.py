@@ -56,6 +56,10 @@ class S3Settings:
                            self.endpoint_url, str(self.use_ssl)))
         return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
+    @property
+    def compacted_root(self) -> str:
+        return self.dataset_root + "/compacted"
+
 
 @dataclass(frozen=True)
 class S3ObjectMetadata:
