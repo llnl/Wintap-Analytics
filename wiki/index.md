@@ -316,6 +316,10 @@ handling; it is separate from the current hourly historical catch-up.
 The approved high-priority test maintenance item is
 [[wiki/todo/test-suite-reorganization]], which points to the staged
 [[wiki/overview/test-suite-organization-and-classification]] plan.
+The new P1 [[wiki/todo/periodic-process-refresh-listing]] tracks the requested
+periodic running-process Refresh listing on both Windows and Linux, including the
+default hourly schedule, collection-time observability, and identity-safe
+deduplication.
 
 ## Work
 

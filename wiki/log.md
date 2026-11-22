@@ -5,6 +5,29 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-19] code/verification | direct raw-only DBT route
+
+Added and committed `657a37c` in `../Wintap-PyUtil`: an explicit
+`make dbt-build-direct` path for remote raw datasets before compaction or
+coordination initialization. It runs the existing source preflight and DBT
+build without opening coordination state, disables compacted-prefix probing,
+and refuses process-entity enrichment; coordinated remote builds remain the
+default. Best-effort offline verification passed 108 tests with 1 skip plus
+formatting, compilation, diff, and Make dry-run checks. No live S3 or private
+dataset was accessed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintappy/coordination/client.py; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql -->
+
+## [2026-11-19] intake | periodic process refresh listing
+
+Added the human-requested P1 TODO for implementing bounded periodic running-process
+Refresh listings on both Windows and Linux. The intake records the current
+startup-only behavior, the requested default hourly cadence at approximately five
+minutes after the hour, schedule/configuration questions, collection-time
+observability requirements, identity-safe deduplication, and qualification gates.
+No Wintap source, schema, or deployed data was changed.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs -->
+<!-- HUMAN-REQUESTED: conversation 2026-11-19. -->
+
 ## [2026-11-18] code/verification | audited interrupted telemetry retry
 
 Added and exercised a narrowly scoped `retry-interrupted-hour` path in the PyUtil

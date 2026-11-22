@@ -7,7 +7,7 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/check_dbt_config.py
   - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
 policy: agent-editable
-last_validated: 2026-11-11
+last_validated: 2026-11-19
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -27,6 +27,21 @@ regressions, `.venv/bin/python -m pytest tests -q` passes **286 tests** in 37.31
 The separate config run passes **4 tests**; the historical config failure below
 does not reproduce in this existing environment. Dependencies were unchanged.
 No private configurations/datasets or live S3 were used for this rerun.
+
+## Direct raw-only route (2026-11-19)
+
+Implemented in `../Wintap-PyUtil` commit `657a37c`. The new
+`make dbt-build-direct` target explicitly bypasses coordination, disables
+compacted-input probing, runs the existing source preflight, and then runs the
+DBT build. Direct mode refuses process-entity enrichment; the normal remote
+`make dbt-build` route remains coordinated.
+
+Best-effort offline verification passed **108 tests with 1 skip**, including
+the loopback S3 preflight, raw-only request assertions, direct-route routing,
+compacted-input regressions, and existing coordination-client coverage. Black,
+isort, Python compilation, `git diff --check`, and a Make dry run also passed.
+No live S3 or private dataset test was performed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintappy/coordination/client.py; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql; ../Wintap-PyUtil/tests/test_dbt_source_validation.py; ../Wintap-PyUtil/tests/test_coordination_local_route.py -->
 
 The user selected expansion of existing PR #43 to include both branch histories.
 Required review and full representative split-local/authenticated-S3 builds remain

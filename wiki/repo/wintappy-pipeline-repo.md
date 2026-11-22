@@ -35,7 +35,7 @@ grounded_by:
   - ../Wintap-Analytics/streamlit/projects/common/dqautil.py
   - ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py
 policy: agent-editable
-last_validated: 2026-11-12
+last_validated: 2026-11-19
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -177,6 +177,14 @@ prints the raw root/type and hour window without credentials. `qa-dashboard` and
 or dates; querying S3-backed bronze views still needs S3 access. Regression scope
 and limits: [[wiki/work/dbt-source-validation/verification]].
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintap_dbt/README.md -->
+
+For a new remote raw dataset before compaction/coordination initialization,
+`make dbt-build-direct` is an explicit read-only, raw-only route. It runs the
+same source preflight and DBT build without opening coordination state, refuses
+process-entity enrichment, and does not replace the coordinated default for
+remote inputs. `WINTAP_DBT_INCLUDE_COMPACTED=false` suppresses compacted-prefix
+probes; the operator must ensure that no compactor or other writer is active.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintappy/coordination/client.py; ../Wintap-PyUtil/wintappy/coordination/inputs.py; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql -->
 
 ## Unioned raw/compacted input (2026-11-12 candidate)
 
