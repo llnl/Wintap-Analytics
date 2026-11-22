@@ -121,6 +121,8 @@ Active iterative workflow: [[wiki/work/implement-sensor-fixes-and-cleanup-test-c
 
 Wintap test extension: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis]] and [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]] — approved static draft adds unit/synthetic traits and five moves in the shared feature checkout; unchanged bodies, 63-file inventory, fixture access, and build inputs are source-checked. The human explicitly deferred the Windows baseline; no managed build/discovery/run is claimed. See [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]]. Platform-project ownership remains open in [[wiki/tension/wintap-test-platform-boundaries]].
 
+New-system continuation: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]] — reviewed Analytics `0f8b414`, Wintap `123bd70`, and PyUtil `564ec43`; separate test-cleanup and sensor-preparation prompts, commit/evidence transfer checks, pending Windows gate, and next TC-03 capture handoff. Use the latest Analytics feature-branch tip for the updated handoff; git-ignored audits still need separate transfer.
+
 Test-suite navigation and refactor plan: [[wiki/overview/test-suite-organization-and-classification]] — inventory, purpose/execution taxonomy, proposed filesystem, coordination/entity overlap review, and staged move/archive rules. Partial first-cut moves are implemented; no assertions or historical evidence have been deleted.
 
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]

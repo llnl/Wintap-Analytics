@@ -3,6 +3,10 @@ title: "Dev Handoff: Wintap TODO Review and Linux Implementation Continuation"
 type: concept
 confidence: medium
 grounded_by:
+  - wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md
+  - streamlit/projects/HostActivity/tests/README.md
+  - ../wintap/tests/Wintap.Tests/README.md
+  - ../Wintap-PyUtil/tests/README.md
   - wiki/todo/index.md
   - wiki/todo/periodic-process-refresh-listing.md
   - wiki/todo/linux-process-name-exe-fallback.md
@@ -34,7 +38,36 @@ tags: [feature-work, dev-handoff, linux, wintap, todo, sensor-fixes, iterative-d
 
 # Dev Handoff: Wintap TODO Review and Linux Implementation Continuation
 
-## Copy/Paste Prompt
+## Test-Cleanup Copy/Paste Prompt
+
+```text
+Resume the test-cleanup workstream using:
+wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff.md
+
+Read the destination AGENTS.md files and applicable Wintap rules, this handoff,
+the implementation plan, verification record, and Wintap test plan. Verify that
+Analytics 0f8b414, Wintap 123bd70, and PyUtil 564ec43 are present in the intended
+feature checkouts; retain any newer work. Do not repeat the completed moves.
+
+Analytics has 59 passing offline cases; PyUtil has 17 passing representative
+cases and 224 preserved collected identities. Wintap's five moves/traits are
+static-checked only: Windows SDK 10.0.402 build/discovery/filtering/runtime
+acceptance remains pending. Source expectations of 77/84 cases are not passes.
+
+Coordinate ownership with the separate sensor worker in the shared Wintap
+checkout. Check the new host's actual OS, tools, and separate Python environments;
+report missing prerequisites without installing/upgrading or retargeting tests.
+When existing environments are ready, rerun only the documented lightweight
+checks, record destination results separately, and retain the 120-second ceiling.
+
+Next: obtain the sensor worker's exact fix/build, authorized read-only capture,
+UTC workload interval, relevant event families, independent expected observations,
+and limitations (TC-03). Then select and run the bounded dataset check and refine
+only the affected test slice. Do not invent a sensor fix, broaden data access,
+weaken an oracle, or treat the nine TODO candidates as an approved work queue.
+```
+
+## Sensor-Preparation Copy/Paste Prompt
 
 ```text
 Resume Wintap implementation preparation on Linux using:
@@ -73,9 +106,33 @@ Instructions/audits stay in Wintap `developer_docs/`; shared knowledge stays her
 ## Commit/Transfer Checkpoint — 2026-11-22
 
 The human subsequently authorized committing both sessions' feature work across
-the three repositories. Wintap test cleanup is committed as `123bd70`; PyUtil
-test cleanup as `564ec43`. Analytics test cleanup, wiki work, and this handoff are
-included in the commit containing this checkpoint. No push was performed.
+the three repositories. A later read-only commit review confirms:
+
+| Repository | Reviewed commit | Preserved state / evidence |
+|---|---|---|
+| Wintap-Analytics | `0f8b414` | Three HostActivity modules relocated, discovery/path fixes, wiki and original Linux handoff. Latest recorded rerun: 59 passed. |
+| Wintap | `123bd70` | Five approved moves and two class traits per file, plus test README. No production/project/dependency change; static checks only. |
+| Wintap-PyUtil | `564ec43` | Configuration relocation, unit/contract markers, partial inventories. Latest recorded rerun: 17 passed; 224 selected identities preserved (4 unit / 220 contract), not 224 executed passes. |
+
+All three are checked out on
+`feature/implement-sensor-fixes-and-cleanup-test-code`. At pre-edit review,
+Wintap was clean; Analytics and PyUtil had no tracked changes and retained
+excluded unrelated local artifacts.
+No new sensor implementation, dataset capture, or Windows runtime result appears
+in these commits. Recorded passes belong to the source Mac environment, not the
+destination. Read the verification page for commands and limits.
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/tests/README.md; ../wintap/tests/Wintap.Tests/README.md; ../Wintap-PyUtil/tests/README.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md §Commit Preparation Checkpoint -->
+<!-- SOURCE: Read-only git log/show/status review of Analytics 0f8b414, Wintap 123bd70, and PyUtil 564ec43, conversation 2026-11-22. -->
+
+At the read-only review, no cached remote-tracking ref contained these commits
+and remote availability had not been checked. The human subsequently authorized
+committing and pushing the feature work. Wintap `123bd70` and PyUtil `564ec43`
+are now pushed to `origin/feature/implement-sensor-fixes-and-cleanup-test-code`.
+This updated handoff is included in the follow-up Analytics feature commit,
+not in `0f8b414`; use the latest feature-branch tip and verify all three reviewed
+commits are present on the destination. The Analytics publication result is
+reported after the accompanying commit/push completes.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — commit and push all feature changes; preserve the previously excluded local artifacts. -->
 
 The human explicitly excluded the local HostActivity binary, PyUtil keystroke
 logs, and environment-config variants; they remain untouched. Wintap's two
@@ -83,6 +140,41 @@ logs, and environment-config variants; they remain untouched. Wintap's two
 existing convention and need separate transfer. Verify destination commit
 availability rather than assuming these local branches have been published.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — commit all feature changes, including the other session's test refactors; exclude unrelated local artifacts. -->
+
+The private temporary Wintap source/hash manifest and one-off checker, and the
+Python identity manifests, are not committed. Do not make their presence a
+destination prerequisite or copy a Mac virtual environment onto another platform.
+The five Wintap bodies can be compared against original paths in `123bd70^`
+using git objects, removing only the two introduced trait lines for comparison.
+If sensor code has advanced, use identical production sources on both sides of
+any runtime organization baseline in separately approved storage; never reset
+the shared worker checkout. Transfer the local audits separately if detailed
+evidence is needed, but do not copy source into `raw/`.
+
+## Test-Workstream Continuation Order
+
+1. Confirm transferred commits, current dirty state, and worker ownership. The
+   approved Wintap sharing arrangement is one feature checkout, not permission
+   to switch branches or overwrite another worker's tests or sensor files.
+2. In separate ready environments, use HostActivity's `tests/README.md` and
+   PyUtil's `tests/README.md` for the 59-case app and 17-case representative checks;
+   compare selected collection/marker identities where relevant. Do not substitute
+   broad collection or the full coordination/compactor suite. Record any absent
+   environment as a blocker; environment setup is a separately scoped step.
+3. Keep the Windows gate open unless an appropriate Windows/SDK 10.0.402 runner
+   actually builds, lists, filters, and executes the focused slice plus
+   `WindowsFilePathEmissionTests`. The explicit static-draft exception is not a
+   Linux pass or authority to split/retarget the assembly.
+4. Obtain TC-03's concrete sensor/capture handoff before real-data validation.
+   Run TC-04/TC-05 in small rounds with independent negative controls, and record
+   producer, test/oracle, downstream, environment, or missing-evidence failures.
+5. Later organization work remains bounded: Wintap execution tiers/harness controls
+   or Analytics/PyUtil's remaining slices require the relevant plan and execution
+   boundary review. No test deletion, assertion rewrite, full-suite selection
+   change, or platform-project split is authorized by this transfer.
+
+The sensor worker can use the separate prompt/backlog below; the test worker
+should not select its TODO or start a collector on its behalf.
 
 ## Reviewed Nine-Item Backlog
 

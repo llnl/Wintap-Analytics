@@ -9313,3 +9313,32 @@ verification record. No push, sensor change, deployment, or capture occurred;
 Windows runtime acceptance remains pending. Git-ignored Wintap audits still need
 separate transfer.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — commit all feature changes, including the other session's refactors; leave unrelated local artifacts out. -->
+
+## [2026-11-22] review/handoff | committed cleanup and new-system continuation
+
+Reviewed Analytics `0f8b414`, Wintap `123bd70`, and PyUtil `564ec43` through
+read-only git history/diffs/status and the existing workflow records. The commits
+preserve the expected cleanup; no sensor fix, capture, or Windows runtime proof
+was added. Reused and updated
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]] rather than
+creating a duplicate: exact revision table, separate test/sensor resume prompts,
+bounded checks, missing private-temporary evidence, and shared-worker boundaries.
+No cached remote ref contains the commits; actual remote/destination availability
+is unverified without a network check. Wintap is clean; unrelated local artifacts
+in Analytics/PyUtil remain untouched. New handoff changes require transfer too.
+Updated the index; no source/test edits, builds/reruns, data reads, branch changes,
+commits, pushes, or tool installations were performed in this review.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — review recent commits and prepare any needed handoff for continuing on another system. -->
+
+## [2026-11-22] commit/publication | new-system handoff follow-up
+
+The human authorized committing and pushing the feature work. Published Wintap
+`123bd70` and PyUtil `564ec43` on their matching feature branches, with upstreams
+set to origin. A stale GitHub credential-helper executable blocked the first
+attempts; the existing authenticated helper succeeded via a per-command override,
+without changing persistent Git configuration. This entry and the updated handoff/
+index accompany the Analytics follow-up commit; its publication result is reported
+after the commit/push completes. Previously excluded local binary/log/config
+artifacts and git-ignored Wintap audits remain untouched. No test/source change,
+build/test rerun, collector, capture, dependency installation, or force-push.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — commit and push all feature changes. -->
