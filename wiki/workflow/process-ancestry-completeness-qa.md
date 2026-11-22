@@ -20,9 +20,12 @@ tags: [process-tree, qa, ancestry, breakpoints, research-workflows]
 
 # Measure context, not merely parent joins
 
-This is a proposed reusable QA contract, illustrated by
-[[wiki/diagnostic/process-tree-context-completeness]]. It is **not implemented as
-a new DBT test or dashboard**. Wintappy owns canonical downstream transformations;
+This reusable QA contract is illustrated by
+[[wiki/diagnostic/process-tree-context-completeness]]. A first-round subset is now
+implemented by [[wiki/tool/durable-process-entity-manager]]: DBT emits per-window-seed
+terminal root/gap/conflict/cycle verdicts and context-origin flags, with key-integrity
+tests. The independent concentration/K95 audit and a dedicated dashboard remain
+guidance, not newly implemented features. Wintap-PyUtil owns downstream transformations;
 Wintap-Analytics hosts this analysis guidance. Lintap is supporting infrastructure.
 
 ## Declare the graph and denominator

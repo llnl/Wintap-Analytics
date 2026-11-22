@@ -7,7 +7,7 @@ grounded_by:
   - ../Wintap-PyUtil/scripts/check_dbt_config.py
   - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
 policy: agent-editable
-last_validated: 2026-11-11
+last_validated: 2026-11-19
 repo_scope: Wintappy
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -33,6 +33,7 @@ then confirmed the checks work and authorized topic commits on
 - [x] Keep dashboard prerequisites independent of raw-source reachability/dates.
 - [x] Test local/split input, S3 protocol, hour narrowing, aliases and failures.
 - [x] Update PyUtil README and canonical wiki guidance.
+- [x] Add an explicit raw-only direct DBT route for remote datasets before coordination initialization; retain coordinated remote builds as the default.
 - [x] Revalidate combined source-validation/SELinux branch with the existing environment (286 tests pass).
 - [ ] Qualify full combined-revision split-local and authenticated-S3 builds/tests.
 - [ ] Obtain required approving review and merge expanded PR #43 normally.

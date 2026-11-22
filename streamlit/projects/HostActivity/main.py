@@ -9,6 +9,7 @@ import pandas as pd
 import streamlit as st
 
 from file_metadata import aggregate_file_metadata
+from partition_status import discover_partition_status
 from queries import EVENT_LABELS, aggregate_family, inspect_family
 from s3_source import (
     RAW_EVENT_TYPES,
@@ -17,8 +18,9 @@ from s3_source import (
     load_settings,
     open_connection,
     open_metadata_client,
-    partition_hours,
+    partition_count,
 )
+from status_views import LIVE_WARNING, render as render_status_view
 
 
 UTC = dt.timezone.utc
@@ -28,7 +30,170 @@ def _iso(value):
     return value.isoformat() if hasattr(value, "isoformat") else value
 
 
-def _refresh(query_mode, event_type):
+def _window_bounds(range_mode, *, now=None, start_day=None, start_hour=None, end_day=None, end_hour=None):
+    if range_mode == "Last 12 hours":
+        end = now or dt.datetime.now(UTC)
+        return end - dt.timedelta(hours=12), end
+    if range_mode != "Custom dayPK/hourPK range":
+        raise ValueError("Select a supported time range")
+    if start_day is None or start_hour is None or end_day is None or end_hour is None:
+        raise ValueError("Select both the first and last UTC dayPK/hourPK partitions")
+    start = dt.datetime.combine(start_day, dt.time(int(start_hour), tzinfo=UTC))
+    last_hour = dt.datetime.combine(end_day, dt.time(int(end_hour), tzinfo=UTC))
+    if last_hour < start:
+        raise ValueError("The last dayPK/hourPK partition must not be before the first")
+    # The selected end partition is inclusive; all processing uses [start, end).
+    try:
+        return start, last_hour + dt.timedelta(hours=1)
+    except OverflowError:
+        raise ValueError("The selected last partition is outside the supported UTC date range") from None
+
+
+def _render_environment_info(settings):
+    st.subheader("Activity source environment")
+    if settings is None:
+        st.info("Source settings are unavailable or invalid.")
+        return
+    region_name = settings.region_env_name
+    if region_name == "(unset)":
+        region_name = "AWS_DEFAULT_REGION / AWS_REGION"
+    lines = [
+        f"- `{settings.dataset_env_name}`: `{settings.dataset_root}`",
+        f"- `AWS_PROFILE`: `{settings.profile or '(default credential chain)'}`",
+        f"- `{region_name}`: `{settings.region or '(unset)'}`",
+        f"- `AWS_ENDPOINT_URL`: `{settings.endpoint_url or '(AWS default endpoint)'}`",
+        f"- `DUCKDB_USE_SSL`: `{str(settings.use_ssl).lower()}`",
+        "- Credential values: hidden",
+    ]
+    st.info("\n".join(lines))
+
+
+def _render_partition_chart(cells, event_types, days):
+    event_labels = [EVENT_LABELS.get(event, event) for event in event_types]
+    rows = pd.DataFrame([
+        {
+            "Event type": EVENT_LABELS.get(cell.event_type, cell.event_type),
+            "event_type": cell.event_type,
+            "Day": cell.day.isoformat(),
+            "Compaction": cell.compaction_ratio,
+            "Compacted hours": cell.compacted_hours,
+            "Raw hours": cell.raw_hours,
+            "Overlap hours": cell.overlap_hours,
+            "Observed hours": cell.observed_hours,
+        }
+        for cell in cells
+    ])
+    chart = (
+        alt.Chart(rows)
+        .transform_filter("datum['Observed hours'] > 0")
+        .mark_rect(stroke="#ffffff", strokeWidth=1)
+        .encode(
+            x=alt.X(
+                "Day:N",
+                title="UTC day",
+                sort=[day.isoformat() for day in days],
+                scale=alt.Scale(domain=[day.isoformat() for day in days]),
+            ),
+            y=alt.Y(
+                "Event type:N",
+                title="Event type",
+                scale=alt.Scale(domain=event_labels),
+            ),
+            color=alt.Color(
+                "Compaction:Q",
+                title="Compacted / 24 hours",
+                scale=alt.Scale(domain=[0, 1], range=["#d73027", "#1a9850"]),
+                legend=alt.Legend(format=".0%"),
+            ),
+            tooltip=[
+                alt.Tooltip("Event type:N"),
+                alt.Tooltip("Day:N"),
+                alt.Tooltip("Compaction:Q", format=".1%"),
+                alt.Tooltip("Compacted hours:Q"),
+                alt.Tooltip("Raw hours:Q"),
+                alt.Tooltip("Overlap hours:Q"),
+                alt.Tooltip("Observed hours:Q"),
+            ],
+        )
+        .properties(height=max(180, len(event_types) * 28), width=max(720, len(days) * 22))
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+
+def _render_partition_view(settings):
+    st.subheader("Partition compaction overview")
+    st.warning(
+        "Live diagnostic — S3 presence can change during compaction. This is an availability overview, "
+        "not migration or completeness evidence."
+    )
+    now = dt.datetime.now(UTC)
+    default_end = now.date() - dt.timedelta(days=1)
+    default_start = default_end - dt.timedelta(days=41)
+    with st.sidebar:
+        st.subheader("Partition overview")
+        start_day = st.date_input("First UTC day", value=default_start, key="partition_start_day")
+        end_day = st.date_input("Last UTC day", value=default_end, key="partition_end_day")
+        if end_day < start_day:
+            st.error("The last UTC day must not be before the first")
+            return
+        start = dt.datetime.combine(start_day, dt.time.min, tzinfo=UTC)
+        end = dt.datetime.combine(end_day + dt.timedelta(days=1), dt.time.min, tzinfo=UTC)
+        range_key = f"{start.isoformat()}/{end.isoformat()}"
+        refresh = st.button("Refresh partition overview", type="primary", use_container_width=True)
+
+    if refresh:
+        refresh_started = time.perf_counter()
+        status = st.status("Refreshing partition overview", expanded=True)
+        client = None
+        try:
+            status.write("Listing event families under raw_sensor/ and compacted/…")
+            client = open_metadata_client(settings)
+            cells = discover_partition_status(client, settings, start, end)
+            event_types = tuple(dict.fromkeys(cell.event_type for cell in cells))
+            st.session_state["partition_snapshot"] = {
+                "settings_fingerprint": settings.fingerprint,
+                "range_key": range_key,
+                "start": start.isoformat(),
+                "end": end.isoformat(),
+                "event_types": event_types,
+                "cells": cells,
+                "elapsed_seconds": time.perf_counter() - refresh_started,
+                "error": None,
+            }
+            status.update(label="Partition overview ready", state="complete")
+        except Exception:
+            st.session_state.pop("partition_snapshot", None)
+            status.update(label="Partition overview failed", state="error")
+            st.error("S3 partition survey failed; check read/list access and narrow the date range if needed.")
+        finally:
+            if client is not None:
+                client.close()
+
+    snapshot = st.session_state.get("partition_snapshot")
+    if snapshot is None:
+        st.info("Select a UTC day range and click **Refresh partition overview**.")
+        return
+    if snapshot.get("settings_fingerprint") != settings.fingerprint or snapshot.get("range_key") != range_key:
+        st.info("The selected source or date range changed. Refresh the partition overview.")
+        return
+    cells = snapshot["cells"]
+    event_types = snapshot["event_types"]
+    days = tuple(start.date() + dt.timedelta(days=offset) for offset in range((end.date() - start.date()).days))
+    st.caption(
+        f"UTC days: {start:%Y-%m-%d} – {(end - dt.timedelta(days=1)):%Y-%m-%d} · "
+        f"{len(event_types)} event types · refreshed in {snapshot['elapsed_seconds']:.1f}s"
+    )
+    if not event_types:
+        st.info("No event-type partitions were found in either raw_sensor/ or compacted/ for this range.")
+        return
+    _render_partition_chart(cells, event_types, days)
+    st.caption(
+        "Color is compacted hours / 24. Raw-only hours count as 0%; compacted/raw overlap counts as compacted "
+        "and is shown in the tooltip. Blank cells have no raw or compacted hour present."
+    )
+
+
+def _refresh(query_mode, event_type, start, end, range_mode, range_key):
     try:
         settings = load_settings()
     except ValueError as exc:
@@ -36,8 +201,6 @@ def _refresh(query_mode, event_type):
         st.error(str(exc))
         return
 
-    end = dt.datetime.now(UTC)
-    start = end - dt.timedelta(hours=12)
     refresh_started = time.perf_counter()
     if event_type == "__all__":
         status_label = "all-family file metadata"
@@ -50,10 +213,12 @@ def _refresh(query_mode, event_type):
         "settings_fingerprint": settings.fingerprint,
         "query_mode": query_mode,
         "event_type": event_type,
+        "range_mode": range_mode,
+        "range_key": range_key,
         "start": start.isoformat(),
         "end": end.isoformat(),
         "refreshed": end.isoformat(),
-        "partition_count": len(partition_hours(start, end)),
+        "partition_count": partition_count(start, end),
         "results": {},
         "skipped": {},
         "file_count": 0,
@@ -125,6 +290,16 @@ def _refresh(query_mode, event_type):
                     "rows_without_hostname": result.rows_without_hostname,
                     "bucket_minutes": result.bucket_minutes,
                     "host_count": result.host_count,
+                    "process_activity_available": getattr(result, "process_activity_available", False),
+                    "process_activity_points": [
+                        {
+                            "bucket_utc": _iso(point["bucket_utc"]),
+                            "hostname": point["hostname"],
+                            "username": point["username"],
+                            "process_type_count": point["process_type_count"],
+                        }
+                        for point in getattr(result, "process_activity_points", ())
+                    ],
                     "points": [
                         {
                             "bucket_utc": _iso(point["bucket_utc"]),
@@ -188,14 +363,48 @@ def _chart(result, selected_hosts, normalized, log_scale):
             y=alt.Y(
                 f"{value_column}:Q",
                 title=title,
-                scale=alt.Scale(type="log" if log_scale and not normalized else "linear", zero=False),
+                scale=alt.Scale(type="symlog" if log_scale and not normalized else "linear", zero=True),
             ),
             color=alt.Color("hostname:N", title="Hostname"),
             tooltip=[
-                alt.Tooltip("bucket_utc:T", title="Bucket (UTC)"),
-                alt.Tooltip("hostname:N", title="Hostname"),
-                alt.Tooltip(f"{value_column}:Q", title=title, format=".4g"),
-                alt.Tooltip("raw_rows:Q", title="Raw rows", format=","),
+                alt.Tooltip("bucket_utc:T", title="UTC", format="%Y-%m-%d %H:%M"),
+                alt.Tooltip("hostname:N", title="Host"),
+                alt.Tooltip(
+                    f"{value_column}:Q",
+                    title="Peak ratio" if normalized else "Rows",
+                    format=".2f" if normalized else ",",
+                ),
+            ],
+        )
+        .properties(height=420)
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+
+def _process_activity_chart(points, selected_hosts):
+    """Render the aggregate, heuristic user-by-time process-diversity heatmap."""
+    points = [point for point in points if point["hostname"] in selected_hosts]
+    if not points:
+        st.info("No qualifying process-name diversity is available for this selection.")
+        return
+    frame = pd.DataFrame(points)
+    frame["bucket_utc"] = pd.to_datetime(frame["bucket_utc"], utc=True)
+    chart = (
+        alt.Chart(frame)
+        .mark_rect()
+        .encode(
+            x=alt.X("bucket_utc:T", title="Time (UTC)", timeUnit="utcyearmonthdatehoursminutes"),
+            y=alt.Y("username:N", title="User"),
+            color=alt.Color(
+                "process_type_count:Q",
+                title="Process types",
+                scale=alt.Scale(zero=True),
+            ),
+            tooltip=[
+                alt.Tooltip("bucket_utc:T", title="UTC", format="%Y-%m-%d %H:%M"),
+                alt.Tooltip("hostname:N", title="Host"),
+                alt.Tooltip("username:N", title="User"),
+                alt.Tooltip("process_type_count:Q", title="Process types", format=",.0f"),
             ],
         )
         .properties(height=420)
@@ -212,10 +421,12 @@ def _metadata_chart(points, selected_hosts, metric):
     frame["bucket_utc"] = pd.to_datetime(frame["bucket_utc"], utc=True)
     if metric == "File size (MiB)":
         frame["metric_value"] = frame["size_bytes"] / (1024 * 1024)
-        title = "S3 object size (MiB)"
+        title = "Object size (MiB)"
+        value_format = ",.2f"
     else:
         frame["metric_value"] = frame["file_count"]
-        title = "Parquet object count"
+        title = "Files"
+        value_format = ",.0f"
     chart = (
         alt.Chart(frame)
         .mark_line(point=False)
@@ -224,10 +435,9 @@ def _metadata_chart(points, selected_hosts, metric):
             y=alt.Y("metric_value:Q", title=title, scale=alt.Scale(zero=True)),
             color=alt.Color("hostname:N", title="Hostname"),
             tooltip=[
-                alt.Tooltip("bucket_utc:T", title="Collect time (UTC)"),
-                alt.Tooltip("hostname:N", title="Hostname"),
-                alt.Tooltip("file_count:Q", title="Files", format=","),
-                alt.Tooltip("size_bytes:Q", title="Size (bytes)", format=","),
+                alt.Tooltip("bucket_utc:T", title="UTC", format="%Y-%m-%d %H:%M"),
+                alt.Tooltip("hostname:N", title="Host"),
+                alt.Tooltip("metric_value:Q", title=title, format=value_format),
             ],
         )
         .properties(height=420)
@@ -263,7 +473,8 @@ def _render_file_metadata(metadata, host_selector):
     selected_hosts = host_selector.multiselect("Hosts", host_names, default=host_names)
     st.caption(
         f"Filename FILETIME is the collect-time basis; S3 LastModified/upload time is ignored. "
-        f"Bucket width: {metadata['bucket_minutes']} minutes. S3 object sizes are reported in MiB (1 MiB = 1,048,576 bytes)."
+        f"Bucket width: {metadata['bucket_minutes']} minutes. Missing buckets for observed hosts are plotted as zero; this is not a completeness assertion. "
+        "S3 object sizes are reported in MiB (1 MiB = 1,048,576 bytes)."
     )
     visible_summary = [host for host in summary if host["hostname"] in selected_hosts]
     summary_frame = pd.DataFrame([
@@ -290,10 +501,28 @@ def main():
     st.title("Recent Host Activity")
     st.caption("S3 bronze raw_sensor • read-only • metadata mode lists object keys and sizes; it does not read Parquet contents")
 
+    with st.sidebar:
+        view = st.selectbox("View", ("Activity", "Status", "Runs", "Partitions"))
+    if view != "Activity":
+        try:
+            settings = load_settings()
+        except ValueError:
+            settings = None
+        with st.sidebar:
+            _render_environment_info(settings)
+        if view == "Partitions" and settings is not None:
+            _render_partition_view(settings)
+        else:
+            render_status_view(view, st)
+        return
+    st.warning(LIVE_WARNING)
+    st.caption("Existing raw-only viewer; managed live jobs, compacted/entity reads and coordinated refresh are not yet implemented or qualified.")
+
     try:
         settings = load_settings()
         fingerprint = settings.fingerprint
     except ValueError as exc:
+        settings = None
         fingerprint = None
         st.error(str(exc))
 
@@ -301,6 +530,51 @@ def main():
         st.subheader("Source")
         st.caption("Uses DBT dataset/AWS variables and the standard AWS credential chain.")
         query_mode = st.radio("Query mode", ("File metadata", "Raw Parquet rows"), index=0)
+        range_mode = st.radio("Time range", ("Last 12 hours", "Custom dayPK/hourPK range"), index=0)
+        range_values = {}
+        now = dt.datetime.now(UTC)
+        if range_mode == "Custom dayPK/hourPK range":
+            hour_options = tuple(f"{hour:02d}" for hour in range(24))
+            default_end_hour = now.replace(minute=0, second=0, microsecond=0)
+            default_start_hour = default_end_hour - dt.timedelta(hours=11)
+            range_values["start_day"] = st.date_input(
+                "First dayPK (UTC)",
+                value=default_start_hour.date(),
+                min_value=dt.date.min,
+                max_value=dt.date.max,
+                key="custom_start_day",
+            )
+            range_values["start_hour"] = st.selectbox(
+                "First hourPK (UTC)", hour_options, index=default_start_hour.hour, key="custom_start_hour"
+            )
+            range_values["end_day"] = st.date_input(
+                "Last dayPK (UTC)",
+                value=default_end_hour.date(),
+                min_value=dt.date.min,
+                max_value=dt.date.max,
+                key="custom_end_day",
+            )
+            range_values["end_hour"] = st.selectbox(
+                "Last hourPK (UTC)", hour_options, index=default_end_hour.hour, key="custom_end_hour"
+            )
+        range_error = None
+        try:
+            start, end = _window_bounds(range_mode, now=now, **range_values)
+            range_key = (
+                "last_12_hours"
+                if range_mode == "Last 12 hours"
+                else f"{start.isoformat()}/{end.isoformat()}"
+            )
+        except (TypeError, ValueError) as exc:
+            start = end = None
+            range_key = None
+            range_error = str(exc)
+        if range_error:
+            st.error(range_error)
+        elif range_mode == "Custom dayPK/hourPK range":
+            if end - start > dt.timedelta(hours=24):
+                st.warning("Ranges over 24 hours may take longer and can hit existing query limits.")
+            st.caption("The selected first and last UTC dayPK/hourPK partitions are both included.")
         family_names = {label: event for event, label in EVENT_LABELS.items()}
         family_labels = sorted(family_names)
         if query_mode == "File metadata":
@@ -313,19 +587,31 @@ def main():
             default_index = family_labels.index(default_label)
             selected_label = st.selectbox("Event family", family_labels, index=default_index)
             selected_event = family_names[selected_label]
-        refresh = st.button("Refresh last 12 hours", type="primary", use_container_width=True)
-        st.caption("Changing query/family selection does not access S3; click Refresh to load a new snapshot.")
+        refresh_label = "Refresh last 12 hours" if range_mode == "Last 12 hours" else "Refresh selected range"
+        refresh = st.button(
+            refresh_label,
+            type="primary",
+            use_container_width=True,
+            disabled=range_error is not None,
+        )
+        st.caption("Changing query/family/range selection does not access S3; click Refresh to load a new snapshot.")
         st.divider()
         host_selector = st.empty()
         if query_mode == "Raw Parquet rows":
             normalized = st.checkbox("Normalize each host to its own peak", value=False)
-            log_scale = st.checkbox("Logarithmic absolute scale", value=False, disabled=normalized)
+            log_scale = st.checkbox(
+                "Symmetric logarithmic absolute scale",
+                value=False,
+                disabled=normalized,
+                help="Zero-compatible scale keeps zero-filled gap buckets visible.",
+            )
         else:
             normalized = False
             log_scale = False
+        _render_environment_info(settings)
 
     if refresh:
-        _refresh(query_mode, selected_event)
+        _refresh(query_mode, selected_event, start, end, range_mode, range_key)
 
     snapshot = st.session_state.get("host_activity_snapshot")
     if snapshot is None:
@@ -333,13 +619,17 @@ def main():
             selection_text = "all event families"
         else:
             selection_text = EVENT_LABELS[selected_event]
-        st.info(f"Select **Refresh last 12 hours** to load **{selection_text}** in **{query_mode}** mode.")
+        st.info(f"Select **{refresh_label}** to load **{selection_text}** in **{query_mode}** mode.")
         return
     if fingerprint is None or snapshot["settings_fingerprint"] != fingerprint:
         st.warning("The source configuration changed since this snapshot. Refresh before viewing its results.")
         return
-    if snapshot.get("query_mode") != query_mode or snapshot.get("event_type") != selected_event:
-        st.info("This snapshot does not match the selected query/family. Click **Refresh last 12 hours** to load it.")
+    if (
+        snapshot.get("query_mode") != query_mode
+        or snapshot.get("event_type") != selected_event
+        or snapshot.get("range_key") != range_key
+    ):
+        st.info(f"This snapshot does not match the selected query/family/range. Click **{refresh_label}** to load it.")
         return
     if snapshot.get("error"):
         st.error(snapshot["error"])
@@ -358,7 +648,7 @@ def main():
     if query_mode == "File metadata":
         st.caption(
             f"S3 metadata listing: {snapshot['partition_count']} overlapping UTC day/hour partitions; "
-            "the filename FILETIME is then filtered to the exact rolling 12-hour interval."
+            "the filename FILETIME is then filtered to the exact selected interval."
         )
         if snapshot["file_count"] == 0:
             st.info("No Parquet objects were found for the selected family set in the relevant day/hour partitions.")
@@ -369,7 +659,7 @@ def main():
 
     st.caption(
         f"Coarse S3 scan: {snapshot['partition_count']} overlapping UTC day/hour partitions; "
-        "event timestamps are then filtered to the exact rolling 12-hour interval."
+        "event timestamps are then filtered to the exact selected interval."
     )
     timestamp_sources = snapshot.get("timestamp_sources", ())
     if timestamp_sources:
@@ -401,8 +691,20 @@ def main():
     if family is None:
         st.warning("No chart was produced for the selected family. See its processing details above.")
         return
-    if not family["points"]:
-        if family["rows_without_hostname"]:
+    activity_points = family.get("process_activity_points", ())
+    if not family["points"] and not activity_points:
+        if family["rows"] > 2_000_000:
+            if family.get("process_activity_available"):
+                st.info(
+                    f"The raw-row chart exceeds its 2,000,000-row budget ({family['rows']:,} rows). "
+                    "No qualifying user heatmap cells were returned within the aggregate heatmap budget."
+                )
+            else:
+                st.info(
+                    f"The raw-row chart exceeds its 2,000,000-row budget ({family['rows']:,} rows); "
+                    "no aggregate process heatmap is available for this schema."
+                )
+        elif family["rows_without_hostname"]:
             st.info(
                 f"No host-attributed series is available. {family['rows_without_hostname']:,} "
                 "in-window rows had a missing or blank hostname."
@@ -413,12 +715,57 @@ def main():
                 "This is not a zero-activity or completeness assertion."
             )
         return
-    host_names = sorted({point["hostname"] for point in family["points"]})
+    host_names = sorted({point["hostname"] for point in family["points"]} | {
+        point["hostname"] for point in activity_points
+    })
     selected_hosts = host_selector.multiselect("Hosts", host_names, default=host_names)
+    process_metric = "Raw Parquet rows"
+    if event_type == "raw_process" and family.get("process_activity_available"):
+        process_metric = st.radio(
+            "Process metric",
+            ("Raw Parquet rows", "Experimental: likely user activity"),
+            horizontal=True,
+            help=(
+                "Best-effort process-name diversity proxy. It is not interactive-session detection "
+                "and excludes a small documented system/collector denylist."
+            ),
+        )
+    if process_metric == "Experimental: likely user activity":
+        if len(selected_hosts) != 1:
+            st.info("Select exactly one host to display the user activity heatmap.")
+            return
+        st.caption(
+            "Heuristic only: distinct process names from Start events in fixed 15-minute UTC buckets. "
+            "Usernames are shown because identifying active users is the purpose of this view; command lines, "
+            "paths, and individual process details are not shown."
+        )
+        _process_activity_chart(family.get("process_activity_points", ()), selected_hosts)
+        st.caption("Y-axis: normalized username; color: distinct qualifying process names per 15-minute UTC bucket.")
+        return
+    if not family["points"]:
+        if family["rows"] > 2_000_000:
+            st.info(
+                f"The raw-row chart exceeds its 2,000,000-row budget ({family['rows']:,} rows). "
+                "Select the experimental user activity heatmap for the aggregate SQL result."
+            )
+        elif family["rows_without_hostname"]:
+            st.info(
+                f"No host-attributed series is available. {family['rows_without_hostname']:,} "
+                "in-window rows had a missing or blank hostname."
+            )
+        else:
+            st.info(
+                "No rows with a usable event timestamp fell in this exact interval. "
+                "This is not a zero-activity or completeness assertion."
+            )
+        return
+    st.caption("Missing time buckets for hosts with returned data are plotted as zero. This helps show gaps but does not prove complete collection.")
     if normalized:
         st.caption("Relative values are each host's raw-row count divided by its own maximum; volume comparisons are intentionally removed.")
     else:
-        st.caption("Y-axis: raw Parquet rows per time bucket. No rows are synthesized for gaps.")
+        st.caption("Y-axis: raw Parquet rows per time bucket.")
+        if log_scale:
+            st.caption("The symmetric logarithmic scale is zero-compatible, so zero-filled gaps remain visible.")
     st.caption(
         f"Bucket width: {family['bucket_minutes']} minutes  •  "
         f"Hostnames: {family['host_count']:,}  •  "
@@ -445,10 +792,20 @@ def main():
                 }
                 for point in family["points"]
             ),
+            process_activity_available=family.get("process_activity_available", False),
+            process_activity_points=tuple(
+                {
+                    "bucket_utc": dt.datetime.fromisoformat(point["bucket_utc"]),
+                    "hostname": point["hostname"],
+                    "username": point["username"],
+                    "process_type_count": point["process_type_count"],
+                }
+                for point in family.get("process_activity_points", ())
+            ),
         )
         _chart(result, selected_hosts, normalized, log_scale)
 
-    st.caption("Missing partitions, late arrivals, and rows without usable timestamps are not interpreted as zero activity or collector health.")
+    st.caption("Hosts with no usable timestamp in this interval cannot be plotted. A zero-filled bucket means no qualifying rows were returned for that observed host and bucket; it is not a collector-health or completeness assertion.")
 
 
 if __name__ == "__main__":

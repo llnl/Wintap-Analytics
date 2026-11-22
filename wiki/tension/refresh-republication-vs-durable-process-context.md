@@ -34,3 +34,15 @@ retention horizon, schema change, or implementation has been approved.
 Keep research-selectable windows and incomplete evidence visible. Resolve only
 after a human selects recovery/coverage goals and measured operational costs;
 do not turn a suggested refresh pilot into a universal completeness claim.
+
+The human has now selected a first-round persistence mechanism: S3 Parquet entities
+updated by hourly compaction and used for infrequent DBT enrichment. See
+[[wiki/work/durable-process-entity-manager/brief]]. This narrows infrastructure
+choices but does not yet settle snapshot reconciliation, retention or coverage
+goals, so this tension remains open rather than implying a sensor refresh decision.
+
+The first round is now implemented after explicit human authorization:
+[[wiki/tool/durable-process-entity-manager]]. Fixed per-host snapshots, conservative
+conflict reduction and no initial GC are selected for this delivery. The broader
+sensor-refresh/collection-coverage and production-scale retention/cost tradeoff
+remains open; the isolated fixture proof is not a universal ancestry claim.

@@ -10,8 +10,8 @@ grounded_by:
   - ../Wintap-PyUtil/pyproject.toml
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
 policy: agent-editable
-last_validated: 2026-11-10
-repo_scope: Wintap-Analytics
+last_validated: 2026-11-12
+repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: mixed
@@ -28,8 +28,8 @@ Hosts produce many small event-type Parquet objects in S3. The current
 five-minute upload cadence is useful for low latency, but the resulting object
 count makes multi-hour and longer downstream reads expensive. The sensor-side
 merge does not consolidate all direct-to-`raw_sensor` producer output. This
-feature proposes a separate, scheduled S3 compaction path without changing the
-original raw objects.
+feature provides a separate S3 compaction path, with optional validated source
+prefix deletion and unioned raw/compacted DBT input. Scheduling remains deferred.
 
 ## Goals
 
@@ -37,7 +37,8 @@ original raw objects.
   manual operation is stable.
 - Use DuckDB 2.0.0 as the core engine for direct S3 Parquet reads and `COPY`
   output and validation, in an isolated environment. Parquet is the input/output
-  interchange format; this feature does not require a cross-version DBT test.
+  interchange format; the newly approved consumer tests retain PyUtil's DuckDB
+  1.5.6 environment rather than upgrading it.
 - Compact a selected completed UTC hour across hosts, separately for each event
   type and exact hive leaf partition (including network `protoPK`).
 - Preserve every source row and field. Union missing columns by name as NULL;
@@ -45,12 +46,17 @@ original raw objects.
 - Treat compaction as a name-aligned `UNION ALL`. For development and operational
   validation, compare total source rows with total merged rows in each partition.
 - Write one or a few target-size shards to a separate dataset root mirroring
-  `raw_sensor/<event_type>/dayPK=YYYYMMDD/hourPK=HH[/protoPK=...]/`.
+  `<event_type>/dayPK=YYYYMMDD/hourPK=HH[/protoPK=...]/`, specifically
+  `lintap/compacted/` beside `lintap/raw_sensor/`. No generation/run-ID directory
+  and no extra `raw_sensor/` level in the destination.
 - Compacted object filenames may change; source-to-output filename consistency
   is not required. Preserve the existing partition scheme.
-- Retain all source objects. Consumers switch explicitly to the output dataset
-  after validation; do not co-locate source and compacted Parquet under one
-  scanned `raw_sensor` root.
+- Retain source by default; explicit `--delete-source` validates the whole event/hour
+  then deletes its prefix after the UTC grace (default 10 minutes, minimum 5).
+- DBT reads remaining raw_sensor plus compacted with name alignment and UNION ALL.
+  Temporary/failure overlap is accepted; no reader deduplication/preference rule.
+- For each event/day/hour, skip an existing destination hour; otherwise merge.
+  Failed/partial output is manually cleaned. Row order is immaterial; do not sort.
 - Measure representative data before selecting a configurable target shard
   size.
 
@@ -58,7 +64,8 @@ original raw objects.
 
 - Changing Wintap/Lintap sensor upload cadence, collector behavior, or raw event
   schema as part of this feature.
-- Replacing or deleting source S3 objects.
+- Deleting original live source objects during testing or rolling out production
+  deletion without a separately scoped cutover. Tests delete only isolated copies.
 - Upgrading Wintappy's canonical DBT environment from DuckDB 1.5.6, or changing
   the broader DuckDB 2 upgrade plan. This is a separate tool environment.
 - Daily compaction in the first milestone.
@@ -77,11 +84,14 @@ original raw objects.
 - Count all rows in that partition's source files and all rows in its output
   shards. Report both totals and their difference; a mismatch fails the partition.
   The same check is available as a read-only operational verification command.
-- Output is staged and published only after the entire partition succeeds;
-  repeat runs replace/rebuild derived output rather than append duplicate rows.
-  The exact safe S3 publication mechanism remains a design question.
-- A later operator may point Wintappy's `WINTAP_DBT_RAW_SENSOR_DATASET` at the
-  destination dataset root. Existing input remains unchanged.
+- Write directly into an absent destination hour. Repeat runs skip existing
+  event/day/hour prefixes, including partial failures; cleanup/rebuild is manual.
+  One writer per destination and no readers of an hour during its merge are
+  operating assumptions, not a distributed lock or atomic publication guarantee.
+- PyUtil resolves `<WINTAP_DBT_RAW_SENSOR_DATASET>/raw_sensor` and its sibling
+  `compacted`; `WINTAP_DBT_COMPACTED_ROOT` optionally overrides the direct event
+  root. Both participate in partition/event/optional-column discovery. DBT builds
+  follow successful migration or manual failure reconciliation, not active overlap.
 
 ## Acceptance Criteria
 
@@ -92,13 +102,16 @@ original raw objects.
    per-partition check in development and operation; report a nonzero difference
    as failure. Compaction uses `UNION ALL` semantics, retaining duplicate rows.
 3. All source columns are preserved; missing columns across files are
-   name-aligned with NULLs; incompatible types fail clearly without publishing
-   a partial partition.
+   name-aligned with NULLs; incompatible types fail clearly before writing that
+   event/hour. Runtime write/validation failures may leave partial derived output.
 4. Network protocol partitions remain distinct. No files from different event
    types or hive leaves are combined.
-5. Original source objects remain byte-for-byte untouched.
-6. Failed runs do not expose incomplete output. Re-running an hour is
-   idempotent and does not duplicate prior aggregates.
+5. Default mode preserves source byte-for-byte. Deletion mode removes only the
+   validated closed event/hour prefix after grace; no deletion after merge/schema/
+   validation failure. Isolated-copy tests preserve original live source hashes.
+6. Existing destination event/day/hour prefixes are skipped, not overwritten or
+   appended. Failed merges can leave directly visible partial output and require
+   manual cleanup before rerun; existence is not a completion/validation marker.
 7. Output sharding uses a configurable target-size policy. The initial default
    is selected from a representative S3 benchmark and documented with observed
    event-family sizes and runtime.
@@ -117,10 +130,12 @@ original raw objects.
 
 ## Affected Areas
 
-- Wintap-Analytics: standalone utility, tests, and feature documentation.
+- Wintap-PyUtil: standalone utility/tests in `extras/raw-sensor-compact/` and
+  the dual-root DBT consumer; separate DuckDB 2.0.0 and 1.5.6 environments.
+- Wintap-Analytics: shared wiki, feature documentation and verification records.
 - S3 source and destination dataset roots; no in-place rewrite.
-- Wintappy only as an optional later consumer/dataset-root configuration;
-  compaction and validation use DuckDB 2.0.0 with Parquet input/output.
+- Wintappy/PyUtil: shared dual-root DBT macros/config/preflight and migration tests;
+  its engine stays DuckDB 1.5.6, the compactor stays DuckDB 2.0.0.
 - Wintap shared .NET upload code is a separate TODO and requires separate code
   authorization before modification.
 
@@ -131,8 +146,9 @@ record in [[wiki/work/raw-sensor-file-aggregation/interview]].
 
 The reviewed [[wiki/work/raw-sensor-file-aggregation/implementation_plan]] maps
 delivery steps and tests to these acceptance criteria. Runtime evidence will be
-recorded in [[wiki/work/raw-sensor-file-aggregation/verification]]. Its proposed
-publication, CLI, and schema policies remain implementation decisions to settle.
+recorded in [[wiki/work/raw-sensor-file-aggregation/verification]]. The explicit
+fixed-root/skip-hour correction supersedes immutable generation roots:
+[[wiki/decision/raw-sensor-compaction-fixed-hours-and-manual-cleanup]].
 
 ## Open Questions
 
@@ -148,10 +164,9 @@ an explicit decision.
   CLI binary?
 - What DuckDB 2.0.0 S3 credential/endpoint and extension setup is supported in
   the intended runtime?
-- What staging/manifest/publication protocol provides partition-level safety
-  under S3 object semantics? See
-  [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] and the plan's
-  proposed immutable-window dataset roots with explicit consumer selection.
+- Source-prefix deletion and dual-root consumer tests are now authorized on isolated
+  copies. Original live cutover remains separate. Fixed output/skip/manual cleanup
+  is the chosen contract, not a pending staging/manifest decision.
 - What target shard size best balances fewer files with scan parallelism and
   memory/runtime limits?
 - The current .NET producer/uploader does not yet implement the intended
@@ -164,7 +179,10 @@ an explicit decision.
 - DuckDB 2.0.0 per-partition source/output row-count and repeat-run tests against
   temporary input/output roots, plus small fixtures for name alignment and fields.
 - S3 tests against an isolated test bucket/prefix: bounded object discovery,
-  staged publication, injected failures, retries, and source immutability.
+  direct merge, rerun skip, manual failure cleanup, and source immutability.
+- Isolated copied-input migration: raw-only baseline, mixed input, fully compacted;
+  validate/delete source prefixes and compare fresh DBT model results. Genuine
+  duplicates, NULL/missing columns, rollover/protocols and deletion faults included.
 - Representative S3 benchmark across event families to select a configurable
   shard target.
 - Reopen completed Parquet through the preserved raw-source partition layout

@@ -92,13 +92,32 @@ UDP and endpoint observations; dedicated native clone passes with the optional h
 
 Recent Host Activity dashboard: [[wiki/tool/recent-host-activity-dashboard]] —
 standalone Streamlit direct-S3 view using DBT's existing dataset/AWS environment
-variables, without invoking DBT. The default file-metadata mode lists object
-keys/sizes (no Parquet reads), parses filename Win32 FILETIME as collect time,
-and reports per-host counts and sizes; raw-row DuckDB analysis remains optional.
-27 offline tests and metadata-mode AppTest pass; live metadata-mode performance
+variables, without invoking DBT. It defaults to a rolling 12-hour range and now
+supports arbitrary inclusive UTC `dayPK/hourPK` ranges (warning above 24 hours),
+with lazy/chunked listing and the existing fail-closed budgets. A bottom-of-sidebar
+box shows effective non-secret environment settings. The default file-metadata
+mode lists object keys/sizes (no Parquet reads), parses filename Win32 FILETIME
+as collect time,
+and reports per-host counts and sizes; missing per-host buckets are zero-filled
+in both chart modes, but zeros are not completeness evidence. Raw-row DuckDB
+analysis remains optional. Chart hovers show UTC time, host, and the selected
+metric. For `raw_process`, an explicitly experimental likely-user-activity
+view counts distinct Start-event process names per normalized user and host in
+fixed 15-minute UTC buckets after small deny-lists; it is not session detection
+and renders a one-host user/time heatmap. It is a barely acceptable temporary
+proxy; [[wiki/todo/linux-interactive-session-feed]] tracks a real Linux
+session/logon feed. The suite now passes 59 offline tests.
+Pinned local v1 Status/raw-intent Runs need no ledger/lock/SDK/data reads;
+Partitions now provides a read-only 42-complete-day raw/compacted hourly
+presence heatmap with a full-24-hour compaction denominator and overlap details.
+Full catalog/timeline, compacted/entity access and managed live/coordinated
+lifecycles remain pending.
+Live metadata-mode performance
 remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
 20 seconds); standard families retain the 2-million-row cap.
+
+Test-suite navigation and refactor plan: [[wiki/overview/test-suite-organization-and-classification]] — inventory of Analytics and PyUtil tests, purpose/execution taxonomy, proposed filesystem, coordination/entity overlap review, and staged move/archive rules. No test files have been moved or deleted yet.
 
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
 — current-source Accept emission and UDP memory-domain defects, live incomplete UDP
@@ -148,11 +167,16 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/tension/research-flexibility-vs-production-hardening]] | medium | Explains the research-first posture and flags hardening gaps such as unrestricted proof-of-concept MCP SQL access. |
 | [[wiki/tension/etw-ebpf-and-cross-platform-compatibility]] | medium | Captures tradeoffs between Windows ETW, Linux eBPF/sysdig support paths, raw sensor Parquet, and cross-platform semantics. |
 | [[wiki/tension/dbt-duckdb-output-vs-legacy-stdview-parquet]] | medium | Captures the open mismatch between Wintappy's canonical DuckDB-only DBT output and Wintap-Analytics' documented expectations of published stdview-* parquet datasets. |
-| [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] | high | Open multi-shard S3 publication conflict: existing recursive readers ignore completion manifests; explicit immutable-window root selection is proposed. |
+| [[wiki/tension/raw-sensor-compaction-publication-vs-glob-readers]] | high | Resolved by scope change: fixed-hour writes and manual cleanup accept visible partial output; atomic publication is not required. |
+| [[wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint]] | high | Dissolved: ignored conditional PUT remains an endpoint observation, but reservations/manifests were removed. |
+| [[wiki/tension/dbt-arbitrary-representatives-vs-compaction-equivalence]] | high | Resolved by human acceptance: existing ANY_VALUE quality debt is non-blocking for compaction; bronze/schema/build gates remain and affected downstream drift is reported. |
+| [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] | medium | Human accepts best-effort native-Mac process-group release for normal completion, with escaped-descendant risk explicit and reservation retention on timeout/supervisor death/uncertain group state; no VM/Docker prerequisite. An isolated candidate passes 12 actual-Mac synthetic lifecycle controls; broader DBT/data/S3/service platform acceptance remains open. |
 ## Decision
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/decision/raw-sensor-compaction-fixed-hours-and-manual-cleanup]] | high | Accepted fixed hours/skip/manual cleanup; subsequently approved optional validated UTC-prefix deletion and unioned raw/compacted DBT input. |
+| [[wiki/decision/raw-sensor-compaction-immutable-window-roots]] | high | Historical UUID-generation approval, explicitly superseded by fixed hours and manual cleanup. |
 | [[wiki/decision/wiki-scope-cross-repo-wintap-focused]] | high | Records the decision that the wiki is cross-repo but prioritizes Wintap sensor internals, WintapAPI, Esper, and Wintap data analysis. |
 | [[wiki/decision/feature-work-artifacts]] | medium | Defines the optional feature-work module: store LLM-assisted feature briefs/design/verification under `wiki/work/<feature>/` and promote durable facts into canonical pages. |
 | [[wiki/decision/process-identity-attribution-contract]] | high | Migrated Wintap ADR locking the process identity and attribution contract: core-owned PidHash/ParentPidHash, flat event-time fields, durable Stop/parent backfill, and DuckDB as the starting substrate. |
@@ -178,8 +202,13 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/concept/agentic-ebpf-probe-development]] | low | Unverified brainstorming survey of agentic eBPF probe tooling (MCPtrace, GPTtrace, eunomia-bpf) and additional EDR reference projects (Sysmon for Linux, Bombini). |
 | [[wiki/concept/lintap-cpu-unit-conventions]] | high | Defines raw pidstat CPU as core-summed percent, normalized DBT aliases and dashboard labels, host normalization formula, and raw-schema compatibility rule. |
 | [[wiki/concept/telemetry-identity-and-endpoint-orientation]] | high | Foundational agent_id, pid_hash and canonical five-tuple conn_id scopes; identity versus direction, socket roles and connection lifetimes. |
-| [[wiki/concept/durable-process-context-and-stream-table-enrichment]] | medium | Durable entity state, snapshot plus changelog, Kafka/Splunk comparisons, historical ancestry and refresh-cadence proposals; not implemented. |
+| [[wiki/concept/durable-process-context-and-stream-table-enrichment]] | medium | Durable entity state/stream-table concepts; first-round S3 Parquet hourly writer and DBT context implemented, broader refresh/changelog proposals remain open. |
 | [[wiki/work/raw-sensor-file-aggregation/process-context-options]] | speculative | Optional compactor-fed process state for ground-truth datasets: runtime-spanning inputs, live/recent references plus ancestor closure, reachability GC and dataset checkpoints; no experiment-specific retention or approved scope expansion. |
+| [[wiki/work/durable-process-entity-manager/brief]] | medium | Accepted first-round S3/hourly/DBT direction; implementation authorized with synthetic orphan-breakpoint tests. |
+| [[wiki/work/durable-process-entity-manager/design]] | speculative | Historical design record plus concrete implementation choices; no initial GC, entity-before-delete ordering, JSON evidence and separate DBT context. |
+| [[wiki/work/durable-process-entity-manager/implementation_plan]] | speculative | DPE-01–05 first-round slices completed on synthetic local/S3 fixtures; production capacity/bootstrap/exclusion still gates. |
+| [[wiki/work/durable-process-entity-manager/verification]] | medium | Two isolated three-day rounds reproduce the DuckDB 2.0.0 SQL reducer, seven-snapshot bootstrap, SQL verification, DBT pass results and row/count compatibility. Each finds only 2 root-reached seeds; historical ancestry completeness and production rollout remain unqualified. |
+| [[wiki/work/durable-process-entity-manager/dev_handoff]] | medium | Intermediate handoff for on-prem continuation: measure laptop/VPN versus on-prem performance; keep Garage debug-log reproduction optional; preserve unknown deletion cause and historical/entity/production gates. |
 ## Component
 
 | Page | Confidence | Summary |
@@ -220,14 +249,15 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/tool/wintap-workbench]] | high | Summarizes the Angular Workbench UI, feature routes, SignalR/EPL query path, and query-state boundary. |
-| [[wiki/tool/recent-host-activity-dashboard]] | high | Standalone manually refreshed 12-hour UTC S3 metadata-first dashboard (keys/sizes and filename collect-time series, no Parquet reads), with optional DuckDB raw-row mode; 27 offline tests pass, but live metadata-mode performance remains unverified. |
+| [[wiki/tool/durable-process-entity-manager]] | high | Optional fixed-host snapshots/no GC, hourly checkpoints and DBT ancestry; submitted explicit-v5 Linux entity launch/history/clean-original recovery preserves raw cursor and DRAINING. Interrupted-publication repair and broader qualification remain open. |
+| [[wiki/tool/recent-host-activity-dashboard]] | high | Raw metadata/optional row viewer plus pinned manual advisory v1 Status/raw intent Runs; 46 offline tests pass. Partitions/history/certificates unavailable; full catalog and managed jobs pending, no deployment. |
 ## Workflow
 
 | Page | Confidence | Summary |
 |------|------------|---------|
-| [[wiki/workflow/wintap-etl-data-flow]] | high | Editable data ETL diagram: Wintap/Lintap host-local raw Parquet → S3 → Wintap-PyUtil `make dbt-build` → bronze/silver/gold in local DuckDB, with core Makefile validation targets and scope limits. |
+| [[wiki/workflow/wintap-etl-data-flow]] | high | Local-only raw Parquet → DBT quick start, detailed editable shared-S3 ETL diagram and large-type CONOPS infographic: optional compaction, raw_sensor + compacted UNION ALL, four storage concepts, separate durable process entities, bronze/silver/gold and Makefile targets. |
 | [[wiki/workflow/future-experiment-analysis-workflows]] | high | Tracks first-class analytics topics including ACME4 Explore, DuckDB view construction, process trees/paths, process-centric SQL, and network joins. |
-| [[wiki/workflow/process-ancestry-completeness-qa]] | medium | Proposed root-reachable fraction, immediate-parent gaps, first-unresolved-ancestor impacts, concentration/K95 and independent validity checks. |
+| [[wiki/workflow/process-ancestry-completeness-qa]] | medium | First-round DBT terminal/context QA implemented; broader root fraction, concentration/K95 and independent validity-audit guidance remains separate. |
 | [[wiki/workflow/lintap-dev-field-workflow]] | high | The Lintap dev/field split: field-host clones are read-only by policy (reviews transcribed dev-side), diagnostics bundles must be self-sufficient, deploys pull and rebuild tracers on-host, pushes require the human's credentials, and agent memory must mirror into the wiki. |
 | [[wiki/workflow/rhel8-rpm-build-prerequisites]] | high | Preflight and software prerequisites for a native RHEL 8 x86_64 Lintap RPM build, including exact .NET SDK 10.0.402 and the current BTF/CO-RE limitation. |
 ## Repo
@@ -262,7 +292,10 @@ on validating and fixing reported Linux process names labeled `exe`;
 [[wiki/todo/linux-process-executable-attribution]], on nondeterministic Linux
 process executable attribution in Wintappy's silver model; and
 [[wiki/todo/lintap-linux-process-command-line-quality]], on source capture,
-provenance, and deterministic dbt command-line semantics. The P2
+provenance, and deterministic dbt command-line semantics. The P1 OS metadata
+correction in [[wiki/diagnostic/duplicate-agent-id-and-os-family]] tracks removal
+of hardcoded `windows` labels and platform-derived, backward-compatible family
+handling. The P2
 [[wiki/todo/linux-nfs-process-network-attribution]] intake tracks the observed
 SSH-on-NFS-tuple example, likely process-context attribution, and the need to
 verify NFS-backed home and deployed tracer semantics. An untriaged enhancement,
@@ -274,11 +307,461 @@ network-observed process identity semantics for reusable analytics.
 [[wiki/todo/transformer-five-tuple-connection-port-key]] tracks the suspected
 high-endpoint-port argument duplication in Wintap's five-tuple connection key;
 the collision impact and compatibility implications remain unverified.
+The provisional P2 [[wiki/todo/lintap-rpm-amazon-linux-2023]] tracks the reported
+failure of the current Lintap RPM to install on AWS Amazon Linux 2023; artifact,
+error classification, and target-support boundary remain to be established.
 The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
 .NET gap between current merge-time partitions and the requested actual-upload
 UTC partition contract.
+The low-priority [[wiki/todo/daily-compacted-tier]] tracks a future verified
+`compacted2/dayPK` roll-up, disjoint reader precedence, and late-arrival
+handling; it is separate from the current hourly historical catch-up.
+The approved high-priority test maintenance item is
+[[wiki/todo/test-suite-reorganization]], which points to the staged
+[[wiki/overview/test-suite-organization-and-classification]] plan.
+The new P1 [[wiki/todo/periodic-process-refresh-listing]] tracks the requested
+periodic running-process Refresh listing on both Windows and Linux, including the
+default hourly schedule, collection-time observability, and identity-safe
+deduplication.
 
 ## Work
+
+Compaction status utility follow-on:
+[[wiki/work/compaction-status-utility/brief]],
+[[wiki/work/compaction-status-utility/design]],
+[[wiki/work/compaction-status-utility/implementation_plan]] and
+[[wiki/work/compaction-status-utility/verification]] — human-authorized isolated
+implementation from Analytics `ee9c27a` / PyUtil `123b9d3`. Navigation, pinned bounded
+manual advisory Status/raw intent Runs and explicit unavailable Partitions pass
+46 offline controls/zero skips; separate-runtime genuine export read passes while
+the synthetic producer lock stays held and fixture files remain unchanged. Activity
+is still synchronous/raw-only and always Live diagnostic — uncoordinated. Reserved
+is not delivery, `COMPLETED` is not certified, launch/finish/progress/entity history
+are unknown and continuations are incomplete history. Full catalog/timeline,
+compacted/entity reads and managed live/optional coordinated refresh remain pending.
+The diagnostic exception never relaxes DBT, authoritative verification, ledger or
+maintenance. No deployment, scheduling, real-dataset mutation, commit or push.
+
+Scheduled DBT/compaction coordination:
+
+**Approved priority — development end-to-end milestone (November 16):**
+[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]] — reviewed Linux
+service/writer/entities and native-Mac reader are ready for an actual-data integration
+attempt. The human clarifies that all sensor/raw/ETL deployments are developmental;
+existing telemetry is expendable. Approved DCC-E2E-01 targets real delivery, cache
+creation, hourly compaction and Linux/Mac DBT clients over successive hours, with
+impact-based defect triage. Comprehensive recovery/old-data preservation and unchanged
+full-suite repeats no longer precede the pilot; ownership/privacy/correctness stay.
+Concrete runner/data/access/mutation scope remains to be selected in
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]]. The plan itself does
+not claim execution or production acceptance. The confirmed 2026-10-25 22:00Z–
+2026-10-26 01:00Z block has completed entity initialization and three no-deletion
+hourly compactions; entity-aware Linux DBT passed against an immutable local snapshot
+through a read-only localhost mirror (59 models/85 tests). This is offline replay only.
+The two no-deletion continuation hours (01:00Z–03:00Z), followed by independently
+verified deletion-enabled compaction through 19:00Z, have completed. The raw-only DBT
+baseline for 04:00Z–05:00Z passed, with coarse and monotonic processing-throughput
+samples recorded. The attempted 19:00Z tick left the ledger BLOCKED with an unresolved
+writer after an observed-host/entity-expectation mismatch; the raw hour remains and no
+retry or authority bypass occurred. The human clarified that any host with data in the
+hour is valid, so the fixed expected-host rejection is a deterministic
+implementation/requirements mismatch, not invalid input or a transient failure. Read-only review
+confirmed two hosts in the failed raw hour; the additional host has process-event times
+from the hour's beginning plus older history, not a demonstrated mid-hour arrival. The
+PyUtil dynamic first-seen entity fix is implemented and fully tested; the blocked-run
+recovery path remains unresolved. Coordinated DBT
+awaits supported resolution and native-Mac DBT remains deferred. See
+[[wiki/work/dbt-compaction-coordination/verification#Confirmed next block and entity-aware Linux DBT snapshot replay — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Linux-only one-hour continuation — 01:00Z–02:00Z — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Second Linux-only one-hour continuation — 02:00Z–03:00Z — 2026-11-16]] and
+[[wiki/work/dbt-compaction-coordination/verification#Production-path runtime and throughput accounting — 2026-11-16]].
+The approved Linux-runner assignment is in
+[[wiki/work/dbt-compaction-coordination/dev_handoff#Active Linux-runner assignment — DCC-E2E-01]];
+the human handles delivery. Strict upload-time UTC client enforcement and downstream
+delayed-data semantics are separate later tasks, not pilot prerequisites.
+
+**Current compaction boundary — November 17:** The earlier Linux qualification
+reached 07:00Z after ten independently verified deletion-enabled ticks. A separate
+fresh writer ledger then advanced 31 bounded cursor steps to 2026-10-28 02:00Z;
+the primary ledger is healthy in `DRAINING` with no readers or waiting jobs. A
+separate future-cursor, non-entity Linux reader completed a one-hour DBT build
+with 140/140 resources and a readable local DuckDB output; its earlier broad
+window failed on local disk capacity and remains recorded as such. The current
+tranche is Linux-only: server-owned compaction, coordinator, ledger and Linux DBT
+use the existing real S3 source from the oldest date forward in small chunks, with
+completed test-data deletion allowed after verification. Mac DBT is deferred. The
+M0 private-runner gate is replaced by exact-scope operational checks in
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]] and the detailed
+[[wiki/work/dbt-compaction-coordination/verification#Second Linux-only live tranche — 2026-11-17]].
+
+The plan now includes the downstream source-mode contract for raw-only,
+compacted-only, mixed, DBT DuckDB and entity-aware reads. It scopes HostActivity
+changes for source/coverage labeling, preserves SmokeTests as raw-producer-evidence
+by default, and keeps legacy DataQA/EDA consumers behind an explicit compatibility
+boundary. Synthetic raw-only, deleted-raw, compacted-only, overlap,
+cumulative-authority and duplicate-count gates are required before compacted or
+entity-aware consumer acceptance.
+
+The resumed deletion-enabled Linux scope subsequently completed the 23:00Z–00:00Z
+hour: authority generation 29 and its matching metrics generation are committed,
+nine compacted objects are present, exact-hour raw objects are absent, and the
+ledger is at 00:00Z in `DRAINING`. This is object-level operational evidence; the
+hour's row-count parity was not independently measured in that readback. Native-Mac
+DBT remains deferred.
+
+**Historical submitted review / isolated native-Mac overlay (November 15):** PyUtil `123b9d3`
+and Analytics `ee9c27a` include the Linux service/client/advisory, v4 retry and explicit-v5
+entity launch/history/clean-original service paths. Worker-reported 71 strict-service/
+307 service-affected Linux passes retain their narrow scopes. Independent submitted
+source/report review authenticates 365 hashes; native portable smoke passes 76/zero
+skips and a separately provisioned five-module rerun passes 169/25 reviewed Linux-only
+skips with 83 unchanged identities. Native kqueue `NOTE_TRACK` returns `ENOTSUP`; the
+restriction probe's prestarted helper enables a tiny genuine build/test but does not
+qualify the client launcher. Separately, an isolated native process-group candidate is
+wired to the coordinated client in local commit `c549424` (based on `1f4897a`);
+12 actual-Mac synthetic lifecycle controls pass, as
+do bounded 50-normal-exit and 20-same-group-child stress runs. This remains limited
+lifecycle evidence, not real DBT/data, actual S3, service, representative-resource or
+platform acceptance. Its focused Linux supervisor/client/lifecycle/local-route
+cross-check passes 90 with 12 native-Mac-only skips and observes no Linux behavior
+change; the prior service-affected gate was not rerun. Pending publication stays
+producer-worker-owned; no new full latest-HEAD/S3/resource/dcc-02–05 acceptance.
+[[wiki/work/dbt-compaction-coordination/verification#Native macOS process-group prototype — actual-Mac synthetic lifecycle]] and
+[[wiki/work/dbt-compaction-coordination/verification#Independent submitted review and native-Mac feasibility — November 15]].
+Prepared gated Linux/S3/resource procedure:
+[[wiki/work/dbt-compaction-coordination/isolated-qualification]] — concrete private
+environment/fixture/root/access/runner/ceiling approval is still required; no remote run.
+
+**Historical implementation/qualification chronology:** the entries below preserve
+their original frozen revision/scope, not claims that later interfaces remain absent.
+[[wiki/work/dbt-compaction-coordination/brief]],
+[[wiki/work/dbt-compaction-coordination/design]] and
+[[wiki/work/dbt-compaction-coordination/dev_handoff]] — proposed once-per-minute Python
+coordinator, local DuckDB ledger and S3 request/grant/release messages; S3-backed
+DBT builds yield to an exclusive hourly writer. Local-only builds retain direct
+execution with compaction and durable entity state optional. Companion design
+includes an editable two-page draw.io sequence, cron/config, proposed code/runtime
+artifacts, client wrapper and restart/recovery behavior. Developer handoff adds
+five implementation units and acceptance checks, including the nominal 70-second
+startup / 60-second release-observation polling budget.
+Post-pull [[wiki/work/dbt-compaction-coordination/implementation-review]] records
+four-root/checkpoint recovery requirements, snapshot validation/provenance findings,
+and fresh focused regressions (38 standalone; 63 main passed, 1 skipped).
+Initial worker feedback corroborated SQL validation/provenance defects and
+recommended a repair milestone before ledger/protocol implementation.
+Worker [[wiki/work/dbt-compaction-coordination/implementation_plan]] adds safety
+prerequisites before real writer integration, followed by the five handoff units;
+[[wiki/work/dbt-compaction-coordination/verification]] distinguishes independent
+baseline reruns from imported probes and future concurrency evidence. Authorized
+integrity/provenance work now repairs active SQL validation and original bootstrap
+retention: 75 pre-fix regression failures, then 94 new tests pass; full suites pass
+234 standalone and 315 main tests with opt-in skips. Local milestone commits are
+PyUtil `7d2b7f8` and Analytics `739e64f`. Subsequent receipt-backed freshness is
+implemented with rollback/forward-lineage and publication-intent regressions;
+full R1 gates pass 266 standalone and 335 main tests. R4 adds immutable local phase
+archives and original-generation exclusive checkpoint repair; 307 standalone tests
+pass (two skips) and real cross-runtime repair passes DBT. R5's active-root routing
+passes seven cases including direct full local `make dbt-build` with an unused remote
+metrics override. Combined main passes 343 tests (three skips); final affected
+cross-runtime checks pass 51 tests (one skip) including the directory-link durability
+fix. R1–R5/dcc-00 prerequisites are regression accepted. Protocol/ledger library
+passes 54 tests including abrupt-process WAL recovery; full main passes 397
+(three skips), accepting dcc-01. The first controlled-clock tick slice passes
+100 focused tests, including atomic message conflict handling and a child surviving
+abrupt tick death; full main passes 443 tests (three skips). The subsequent Linux
+supervision/evolving-clock focus passes 142 tests; full main passes 485 (three skips). dcc-02
+remains open: integrated verified completion/cursor advancement, advisory status,
+client and real-writer/runtime gates remain. Collaborative review reproduces a
+grace-boundary admission defect during ingestion; slice A subsequently repairs it. The human
+confirms atomic completion-evidence/run/cursor/admission-state COMMIT before grants.
+The review also requires an allowlisted, non-secret effective execution/configuration
+receipt bound to writer intent; local launch and separate verification now enforce
+identity/privacy checks; local v3 normal completion exists, with service integration
+still pending.
+The earlier committed implementation snapshot is PyUtil `fe7fcb5`; its coordination-only
+rerun passes 142 tests, without covering the known ingestion/grace defect. Both
+repository snapshots were subsequently pushed and pulled for maintainer review
+(Analytics `660b5a8`, PyUtil `fe7fcb5`). The updated implementation review confirms
+R1–R5 repairs and records R6–R8 follow-through: independently reproduced grace
+admission, authority-masked SQL regression tests and unguarded Linux assumptions.
+Fresh macOS results: standalone 305 passed/2 failed/2 skipped; focused main
+196 passed/3 failed/35 skipped. All five suite failures are platform-specific tests;
+dcc-02–05 remain open in the plan.
+November 14 completion planning selects Linux/macOS readers, a Linux writer,
+fresh isolated actual-endpoint fixtures and initial 32 GB RAM / 64 GB disk sizing.
+The [[wiki/work/dbt-compaction-coordination/implementation_plan#Completion plan — November 14]]
+orders review repairs, receipts/platform feasibility, independent completion,
+service/client, audited recovery and qualification; reduced budgets require a
+separate measured rerun, and implementation/acceptance remains pending.
+Slice A's review follow-through passes 150 affected main and 215 affected standalone
+tests; all 80 new SQL negatives fail when validation is disabled. Full standalone
+passes 387 tests (two skips); full main passes 493 (three skips), before receipt implementation. Portable fsync
+observations/platform guards do not establish macOS reader support. Slice B starts
+with 23 missing-execution-API failures and eight active-path hardening failures.
+The repaired receipt-bound revision passes 194 coordination tests, including real
+local empty/destructive synthetic runs; all still block. Full main passes 537
+tests (three skips). Partial slice C supplies separate read-only verification and
+receipt/intent/shutdown authentication: 259 standalone and 204 main affected tests
+pass after eight active-path repairs. Frozen verifier-foundation full regressions
+pass 547 main tests (three skips) and 431 standalone tests (two skips), before ledger
+integration. Ledger v2 now retains authority proofs, explicitly upgrades compatible
+v1 state and requires verified initialization/fresh same-session checks before entity
+admission or writer intent. Main entity verification uses the retained anchor without
+changing it or permissions. Latest focus passes 236 main / 299 standalone tests;
+frozen full authority regressions pass 579 main tests (three skips) and 439 standalone
+tests (two skips), before completion/history work.
+The ledger-v3 retained-history/normal-completion prototype passes 46 repaired
+completion/upgrade and 24 additional semantic/compatibility/paging/secret controls,
+before three final budget/clock red/green controls. Ten active failures precede
+repairs. Full standalone passes 439 tests (two skips) on that final revision;
+combined main focus passes 298 tests; full main passes 641 (three skips). Both full
+regressions completed on the unchanged revision. This does not accept the service.
+dcc-02–05 stay open.
+**dcc-mac-baseline-01 passes** (corrective PyUtil `fab647f`, actual macOS arm64):
+169 main passed/129 reviewed Linux-only skips; 267 standalone passed/zero skipped;
+both exit 0, no timeout. All 22 pre/post-run identities, separate locked native
+runtimes and 18 harness controls pass. Manifest/runtime hashes are unchanged.
+Original `8ee714c` was blocked before both stages by the omitted main lockfile;
+its evidence remains separate. R9's repair disposition and fresh results are in
+[[wiki/work/dbt-compaction-coordination/implementation-review]] and verification.
+Later reader-backend acceptance is separate:
+[[wiki/work/dbt-compaction-coordination/macos-qualification]].
+Finalized worker continuation:
+[[wiki/work/dbt-compaction-coordination/dev_handoff#Worker continuation after the Mac review]].
+Human subsequently authorizes Linux-first completion; native-Mac solution remains
+with the native worker:
+[[wiki/tension/native-macos-readers-vs-descendant-shutdown]] — 34 Linux supervision
+tests and three dependency controls pass; no actual-Mac backend is established.
+Injected SDK scope/secret-exclusion tests make no endpoint requests; supported Mac
+reader shutdown, S3, representative resource and integrated service gates remain open.
+The then-uncommitted Linux overlay (now submitted in `123b9d3`) integrates service/client/root-aware
+Makefile routing, same-lock verified completion and bounded atomic advisory exports.
+Reader invocation/launch/shutdown and resolved transport repairs have 49 then 142
+affected passes; the original two-request startup timeout remains historically
+unattributed, with its ten-second wait unchanged. Narrow checkpoint maintenance
+retains original exit-2 evidence, keeps repair blocked and requires independently
+verified repaired resolution; intentional retry and general entity maintenance
+remain unfinished. Intermediate controls pass 32 main/66 standalone plus nine extended
+tests. The latest 261-identity source freeze has a full standalone pass of 460 tests/
+two skips (191.79 s); affected main finishes with 303 passes/one missing-cursor
+test-wrapper failure. The wrapper-only repair passes its real paging/corruption
+control; combined rerun passes 304 tests in 715.34 s with all 261 identities unchanged.
+Full main passes 755 tests/three skips in 1156.34 s; all 261 identities match after
+notification, closing this revision's local regression, not broader Linux acceptance.
+Current scope/results: [[wiki/work/dbt-compaction-coordination/verification#Checkpoint maintenance — narrow repaired-phase path, regressions pending]].
+The subsequent deletion-only slice closes local regressions: real partial-deletion controls expose
+exact-type/order, traversal, checkpoint-interference and retained-capture defects;
+repairs now pass 33 main / 49 standalone focused tests with all 265 identities unchanged.
+Renewed source/wiki/privacy audits pass. Affected standalone passes 203 tests with
+all identities unchanged; full standalone passes 509 tests/two opt-in S3 skips with
+all 265 identities unchanged. Affected main passes 515 tests/one explicit isolated-local
+migration skip; full main passes 788 tests/three skips in 1492.66 s, with complete
+reports inspected and all 265 identities unchanged after notifications. Retain this
+baseline; new retry/entity source changes require separate evidence, tracked in
+[[wiki/work/dbt-compaction-coordination/verification#Original-bound deletion recovery]].
+Retry work now adds a narrow read-only raw-only prerequisite, without any permission
+or cursor transition. Fixture-scope-masked results are disclaimed; corrected main
+passes nine controls and standalone's late-prefix repair passes 45 extended controls.
+Extended main exposes three accepted count-corruption defects; exact original-intent
+totals are now bound, with repaired and frozen 33-main/45-standalone passes,
+completed scoped review and a separate 269-identity freeze. Affected standalone
+passes 248 tests; full standalone passes 554/two opt-in S3 skips, with all 269
+identities unchanged after notification. Affected main passes 548 tests/one
+isolated-local migration opt-in skip; full main passes 821 tests/three skips in
+1602.08 s. Complete reports inspected and all 269 identities unchanged after each
+notification; each full began only after its own affected checks. Combined read-only
+preflight local gate closed, without retry permission or Linux acceptance:
+[[wiki/work/dbt-compaction-coordination/verification#Retry preflight — prerequisite only, integration pending]].
+The successor intentional-retry v4 ownership slice is active but not accepted;
+retained red/capture failures and an interrupted extended run remain separate from
+that closed baseline. The two resumed acceptance failures are repaired; all 13
+controls pass. Extended controls retain four missing-service-dispatch failures/37
+passes; strict Linux `retry-hour` dispatch now passes the repaired 42-control run.
+History/exclusion retains its ordering failure; corrected rerun passes 13 and actual
+v3 upgrade crash/lost-ack controls pass three; local credential-reuse controls pass two.
+Separate 275-identity successor freeze created/checked. Frozen standalone focus passes
+45 and affected passes 248; main focus passes 119, with all identities unchanged after
+each result. Standalone full passes 554/two opt-in S3 skips with unchanged identities.
+Main affected passes 607/one isolated-local migration opt-in skip; full main passes
+880/three opt-in skips, with complete reports and unchanged identities after each
+result. Combined intentional-retry local gate closed, not Linux acceptance:
+[[wiki/work/dbt-compaction-coordination/verification#Intentional-retry ownership — active, not accepted]].
+Durable implemented semantics, without full acceptance:
+[[wiki/workflow/wintap-etl-data-flow#Linux shared-reader and hourly-writer integration]].
+Stabilized retry invariants:
+[[wiki/workflow/wintap-etl-data-flow#Audited raw-only intentional retry]].
+Entity-only controls retain 22 missing-API failures (35.05 s), with all 749 report
+lines inspected and all 275 accepted identities unchanged. No entity crash boundary
+has executed. Standalone verifier retains 64 missing-module failures (29.53 s), with
+all 2,972 report lines inspected and accepted identities unchanged. Distinct receipts
+retain 26 first-red failures (0.51 s) and now pass 26 controls (6.16 s); complete
+reports inspected and accepted identities unchanged. Separate standalone verifier
+passes its initial 64 controls (36.47 s), with complete report/identity checks. Genuine
+corrected review red retains 21 failures/two passes (6.94 s), with complete report
+and identity checks. Streaming SQL/configuration/historical-publication repairs pass
+fresh scoped lint/format. Both repair reruns retain 12 failures/75 passes, fully
+reviewed with accepted identities unchanged. Bounded SQL staging avoids the missing
+optional UDF dependency; expanded first red retains 35 failures/9 passes with complete
+report/identity review. Repaired Inventory-count defect; combined run passes 131 controls.
+Ten expanded controls retain five fixture failures/five passes; fixture-only corrections
+pass ten, with complete reports/identity checks. Expanded combined rerun passes 141
+controls (97.91 s), complete report reviewed and all 275 accepted identities unchanged.
+Standalone verifier focused evidence is closed; durable publication authentication
+and ownership remain open.
+Latest opt-in-v5 controls retain seven unsupported-argument failures (35.10 s);
+post-verifier ownership rerun retains 22 missing-module failures (44.08 s). Both
+complete reports reviewed and all 275 accepted identities unchanged before coding;
+no upgrade or entity crash boundary executed.
+Subsequent explicit-v5 schema staging passes seven actual upgrade crash/lost-ack
+controls, then 37 expanded compatibility controls. Default v4 is preserved; new
+entity history remains fail-closed. The 43-control history focus passes (109.80 s),
+complete report reviewed and all 286 identities match. Existing-ledger first
+compatibility retains two failures/149 passes (401.75 s), complete report/identities
+reviewed; actual COMMIT/lost-ack/row checks precede a default-v4 diagnostic mismatch.
+Restored original wording without test/refusal changes. Separate 286-identity repair
+freeze binds repaired 46-/151-control runs. Focus passes 46 (127.49 s), complete
+report/identities reviewed; compatibility passes 151 (399.51 s), complete report and
+all repair identities reviewed. Schema compatibility is closed, not entity permission
+or successor full gates. At schema closure only `ledger.py` differed from the accepted
+retry baseline; the later input adapter and controls are separate additions.
+Ownership/publication remain unfinished.
+Receipt preparation grants no launch:
+[[wiki/work/dbt-compaction-coordination/verification#Entity-only ownership — active, not accepted]].
+Main-side input-observation first red retains 21 missing-module failures (16.90 s),
+complete report/identity review done. First adapter rerun retains one command-byte
+acceptance failure/20 passes (65.77 s); complete report/identities reviewed. Exact-byte
+repair/expanded rerun passes 27 (83.28 s), complete report reviewed and all 288 frozen
+identities match. Artifact focus is closed; expanded qualification retains nine
+failures/22 passes (102.92 s), complete report/identities reviewed. Adapter-only exact
+totals/early-clock repair passes the combined 58 controls (185.12 s), complete report
+reviewed and all 289 contract-repair identities match. Main-side input-authentication
+focus is closed; explicit-v5 typed intent/restart exclusion has separate focused evidence.
+Separate typed first run retains 34 import-masked failures (47.41 s), complete report/
+290 identities reviewed, without ownership/crash acceptance:
+[[wiki/work/dbt-compaction-coordination/verification#Typed entity intent and restart exclusion — no launch]].
+Typed implementation retains 33 upgrade-masked failures/one v4 pass (34.61 s); complete
+report/291 identities reviewed, without typed assertions or crash-child launch.
+Same-transaction keyset/budget-before-owner repair passes the unchanged 34 controls
+(125.03 s), complete report/all 291 identities reviewed. Separate staged-history/
+budget/paging/semantic focus passes 24 (79.82 s), complete report/all 292 identities
+reviewed, preserving all repair identities. Combined main typed/input/schema/receipt/
+original-ledger compatibility focus passes 336 (884.70 s); standalone passes 141
+(105.56 s), complete reports/all 292 identities reviewed on the unchanged successor
+freeze. Exclusion-only focus is closed; next add genuine main completion-observation
+authentication without permission/authority transitions. Entity launch/completion/
+publication/recovery and wider acceptance remain open.
+Separate 44-control main completion-observation first run retains 44 import-masked
+failures (342.12 s); complete lossless report/all 293 identities reviewed,
+preserving the 292-identity focused baseline; test-only CLI fixtures confer no service
+permission. Separate read-only completion adapter's unchanged 44-control rerun retains
+two helper failures / 42 passes (470.91 s); complete report/all 294 identities reviewed.
+Two refusals remain masked in that report; exact two-line helper-only successor passes
+44 (471.51 s), complete report/all 294 identities reviewed. Runtime/assertions unchanged;
+both refusals now execute without launch/mutation. Initial focus closed, not expanded
+completion/affected/full; no permission transition or historical fallback:
+[[wiki/work/dbt-compaction-coordination/verification#Main current-generation completion observations — read-only, active]].
+Separate artifact/data/non-mutation qualification passes 67 (353.73 s), complete report/
+all 295 identities reviewed. Expanded read-only focus closed; unchanged combined
+standalone passes 141 (110.49 s), complete report/identities reviewed; 447-main focus
+passes (1729.40 s), complete nine-line report/all 295 identities reviewed. Combined
+read-only focus closed, not affected/full or entity writer/service acceptance. Separate
+original-generation publication-retention red controls grant no permission transitions.
+Separate 46-control retention module is reviewed/lint/format-clean and collected on a
+296-identity successor preserving all 295 closed-focus identities. First red retains
+46 import-masked failures (402.36 s); complete 1,772-line report, both child diagnostics
+and all unchanged identities reviewed. Children exit 1 at import, not 87; no publication
+COMMIT or semantic refusal executes. Separate bounded retention/accessor/history source
+passes all unchanged 46 controls (629.02 s), exit 0; complete three-line report/all 297
+frozen identities reviewed. Initial publication focus closed, not expanded/combined/affected/
+full or entity writer/service acceptance. Current-only adapters/controls/standalone runtime
+and no-transition boundaries unchanged. Separate 77-control envelope/audit/SQL-byte/keyset
+qualification plus two unchanged original crash controls pass 79 (100.90 s) on a distinct
+298-identity successor. Complete report/sidecar, both retained actual exit-87 diagnostics and
+all source/runner/operator identities reviewed. Expanded publication focus closed, not entity
+permission or wider Linux acceptance. Complete expanded-green wiki/privacy/scoped checks
+pass; distinct unchanged source/runner freezes bind the separate combined focus. Standalone
+passes 141 (109.28 s); main passes 570 (2430.83 s). Complete reports/sidecars, actual retained
+publication crash diagnostics and all source/runner/operator identities reviewed. Combined
+focused gate closed, not affected/full, entity permission or wider Linux:
+[[wiki/work/dbt-compaction-coordination/verification#Durable original-generation publication retention — active, not accepted]].
+The next 22-control writer red has local explicit-v5 fixtures and separately frozen actual
+diagnostic retention; assertions/shared helpers remain unchanged. The separate red completes
+with 22 import-masked failures (45.76 s); complete report/four exit-1 child diagnostics and
+all identities reviewed. No writer boundary executed in that red. The subsequent five-file
+Linux writer runtime was reviewed/formatted but initially unqualified; retained-completion
+acknowledgment resolution then refused. The first frozen 22+20 runtime run retains 40/two failures (244.11 s);
+complete report/seven genuine child diagnostics/all 301 identities reviewed. Clock-fixture
+correction and immutable committed-ack resolution were its open follow-through:
+[[wiki/work/dbt-compaction-coordination/verification#Entity writer explicit-v5 continuation — no launch acceptance]].
+Historical source-only status:
+[[wiki/work/dbt-compaction-coordination/verification#Linux entity writer runtime successor — unqualified]].
+The separate 29-control immutable-resolution successor and scoped synthetic history-clock
+correction were reviewed/frozen with runtime unchanged before the 49-control red:
+[[wiki/work/dbt-compaction-coordination/verification#Immutable acknowledgment-resolution controls — prepared, runtime unchanged]].
+That red retains 25 passes/nine failures/15 setup errors: late rollback refusal, missing immutable
+resolution and original-clean recovery's unsafe after-COMMIT DRAINING state. Full evidence and
+all identities were reviewed before runtime repair; Linux acceptance remains open.
+The immutable-resolution/early-clock/conservative-uncertainty source successor was reviewed
+and frozen before its distinct first 71-control run:
+[[wiki/work/dbt-compaction-coordination/verification#Immutable resolution runtime successor — unqualified]].
+That run finishes with 69 passes/two test-contract failures after successful resolution;
+full evidence/all identities reviewed. Failed evidence is preserved; the positive test contract
+was corrected without changing the runtime. Original controls are preserved and the narrow
+contract-only correction is reviewed/frozen; all runtime and other controls remain unchanged:
+[[wiki/work/dbt-compaction-coordination/verification#Resolution command-contract control successor — prepared]].
+The distinct frozen all-71 rerun passes (521.59 s); full retained evidence and unchanged
+identities reviewed. Initial writer/history/resolution focus is closed. The separate unchanged
+123-control publication affected rerun now passes (708.64 s); complete report/actual COMMIT
+diagnostics and all frozen identities reviewed. Only publication follow-through closes;
+expanded entity/Linux qualification remains open. Retained evidence:
+[[wiki/work/dbt-compaction-coordination/verification#Publication affected rerun after resolution — prepared]].
+Separate genuine typed completion-process-death controls pass all 12 (283.57 s), with complete
+actual diagnostics/hash-bound captures/artifacts and all 304 frozen identities authenticated.
+Only this focused gate closes; runtime and existing controls remain unchanged. Retained evidence:
+[[wiki/work/dbt-compaction-coordination/verification#Genuine typed completion-process-death controls — prepared]].
+Separate completion/resolution SQL-budget/keyset-tail successor is reviewed/
+frozen/collected (44), adding only the new module while preserving all 304 predecessors:
+[[wiki/work/dbt-compaction-coordination/verification#Completion/resolution SQL-budget and keyset-tail qualification — prepared]].
+The frozen run passes all 44 (62.53 s); full report/sidecar and independent original/artifact/
+archive/ledger review authenticate. Inspection-only table/count mistakes are retained and
+corrected; all 84 retained files/one symlink and 305 identities unchanged. No test active;
+only this focused history gate closes. Separate frozen raw-cursor/authority forward-history
+controls now pass all 23 (87.45 s); complete independent inspection authenticates original
+chains, 16 verifier groups/four CLI completions/34 archives and all 306 identities, preserving
+305 predecessors and 150 retained files/one symlink. Guessed final-mode inspection failure is
+retained; actual raw proof requires OPEN at the advanced cursor, without queued-reader grant
+or live authority. At forward closure no test/runtime change was active; only that focus closes. Retained evidence:
+[[wiki/work/dbt-compaction-coordination/verification#Raw-cursor/authority forward-history successor — prepared]].
+The first strict service red retains 71 missing-seam failures (135.78 s), with full report/
+diagnostic/307-identity review; both crash children stopped at argument parsing, not COMMIT.
+Only the two service/original-loader runtime seams now change in a separate reviewed/frozen
+successor; all controls/305 other identities remain unchanged. Its unchanged 71-control rerun
+passes (251.19 s); independent read-only inspection authenticates 32 verifier groups/ten clean
+CLI captures/60 archives, atomic typed completion/resolution/crash and exclusion boundaries.
+Both inspector assumption failures/sources, actual damaged originals and real blocking clocks
+are preserved. All 439 green files/eight symlinks, 310 red entries, accepted forward evidence
+and 307 identities remain unchanged; no test was active at that focus closure. Only
+strict-service focus closes:
+[[wiki/work/dbt-compaction-coordination/verification#Executed strict entity service result — focused gate closed]].
+Original-bound maintenance and broader both-runtime integration remain open; the separately
+completed 307-control service-affected result is recorded below.
+Separate service-affected scope passes **307 controls in 2,036.10 s** on the unchanged
+307-identity runtime. Complete report/sidecar, two actual crash diagnostics, all 5,982 fixture
+entries and prior green/red/accepted-forward evidence authenticate. Independent read-only
+inspection validates 170 ledgers and maps 18 expected corruption refusals; post-COMMIT typed
+completion/authority remain `DRAINING` with no raw-cursor advance. The accepted forward fixture
+was preserved, not rerun. Only the service-affected gate closes; pending-publication/missing-
+original repair, broader both-runtime/Linux/S3/resources/native-Mac and dcc-02–05 gates remain open:
+[[wiki/work/dbt-compaction-coordination/verification#Service-affected Linux result — 307-control affected gate closed]].
+Read-only pending-publication control planning keeps partial originals out of clean resolution;
+genuine original eligibility and a separate bounded repair contract remain unqualified:
+[[wiki/work/dbt-compaction-coordination/implementation_plan#Original-bound pending-publication controls — source planning only]].
+The prior input slice preserved all 286 schema identities and conferred no durable publication:
+[[wiki/work/dbt-compaction-coordination/verification#Main-side entity input observations — no permission]].
+dcc-02–05, actual isolated S3/resource qualification and native-Mac shutdown stay open.
+The historical producer pass authorized no utility work; the later isolated Analytics/
+native implementation authorization is recorded above. No deployment, scheduling,
+real-dataset mutation, commit or push is authorized by the current pass.
 
 Historical PowerShell ETW POC: [[wiki/work/powershell-sensor/brief]],
 [[wiki/work/powershell-sensor/dev_handoff]], [[wiki/work/powershell-sensor/implementation_plan]],
@@ -289,17 +772,45 @@ collection traffic/loss unchanged. Focused rerun works by operator report. These
 preserve the POC's evidence and limits; the later integrated sensor is documented in
 [[wiki/component/powershell-sensor]] and [[wiki/event_type/powershell-events]]. Its
 PowerShell 7/live ETW qualification and downstream DBT modeling remain open.
-Raw sensor S3 compaction proposal:
+Raw sensor S3 compaction development:
 [[wiki/work/raw-sensor-file-aggregation/brief]],
 [[wiki/work/raw-sensor-file-aggregation/interview]],
 [[wiki/work/raw-sensor-file-aggregation/implementation_plan]],
 [[wiki/work/raw-sensor-file-aggregation/verification]], and
 [[wiki/work/raw-sensor-file-aggregation/references]] — standalone DuckDB 2.0.0
-utility, manual hourly compaction across hosts into a separate `raw_sensor`
-dataset root. Processing is a name-aligned union-all; development and operational
-validation use DuckDB 2.0.0 to require equal source/merged row counts per partition.
-Plan also covers S3 failures/reruns and a shard-size benchmark; runtime tests are pending.
-Immutable-window publication remains proposed; object filenames may change while
+utility owned by PyUtil at `../Wintap-PyUtil/extras/raw-sensor-compact/` (wiki/evidence
+remain in Analytics), manual hourly compaction across hosts from `lintap/raw_sensor/<event>/...`
+into `lintap/compacted/<event>/...`. Existing destination event/hours are skipped;
+otherwise merge all files per exact optional protocol leaf, without row sorting.
+`plan`/`compact`/`verify` and per-leaf count validation implemented; 137 local tests
+pass with 2 opt-in skips. Initial fixed-root live S3 test passes: 897,395 rows preserved,
+29 → 2 objects, unchanged source hashes, rerun skips with unchanged output hashes.
+See [[wiki/tool/raw-sensor-compaction]] and the accepted
+[[wiki/decision/raw-sensor-compaction-fixed-hours-and-manual-cleanup]]. No run IDs,
+manifests or conditional writes; partial failures need manual cleanup. Optional
+`--delete-source` now validates then deletes a closed source-hour prefix after
+grace (default 10 minutes, minimum 5), with bounded post-delete confirmation and
+diagnostics; hourly deletion is separate from event compaction and
+`reconcile-delete --confirm-delete` handles explicit cleanup. PyUtil scans raw_sensor + compacted without
+overlap masking. Full synthetic raw/mixed/compacted DBT tests match all 54 models
+with 139 gates per state; copied-live host/pidstat tests match 4 models across
+897,395 rows, delete 29 copied objects and preserve all original hashes. Suites:
+107 compactor and 299 PyUtil passes, with 2 opt-in skips each. Existing ANY_VALUE
+quality debt is explicitly non-blocking. Full copied-live migration passes:
+54 models/139 gates in each state, exact bronze/schemas/unaffected results,
+2,668,265 rows conserved, 399 copied objects → 10 outputs, all original hashes
+unchanged. Affected downstream differences are reported. The S3 fixtures and two
+initial retain-source outputs were subsequently cleaned up at the human's request
+(445 objects); all 399 original hashes still match. Local evidence is preserved;
+no surviving full-build fixture is claimed. A Nov 7 on-prem sequential day run
+measured 436.168 s copy/setup plus 612.17 s hourly compaction; 18/24 hours
+completed and six deletion-check failures were preserved with partial outputs.
+The mitigated fresh-copy rerun then completed all 24/24 hours with zero deletion
+failures, 240/240 partitions and a zero-delta 57,047,250-row immutable-baseline
+verification; copy took 443.653 s and hourly processing 731.664 s.
+Broad transport/fault coverage and the representative shard/performance benchmark
+remain pending.
+Object filenames may change while
 the partition scheme is preserved. Daily rollup and cron are deferred; the
 upload-time partition TODO is [[wiki/todo/raw-sensor-upload-time-partition]].
 
