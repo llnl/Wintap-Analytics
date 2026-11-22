@@ -5908,3 +5908,33 @@ historical; they do not replace the current reader-only assignment. DCC-E2E-01
 therefore remains open until genuine Linux/native-Mac DBT runs, separate outputs,
 and the approved reader/writer overlap evidence are returned and reviewed.
 <!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus human direction to activate native-Mac DBT in parallel, conversation 2026-11-17. -->
+
+## Native-Mac live DBT preparation — private run binding unavailable — 2026-11-17
+
+The assigned Mac worker prepared a fresh disposable Git-only checkout at exact
+PyUtil revision `402ead1aebdd5b1fa67a4c33d662389642868e55`, separate from the shared
+checkout and Linux state. No credentials, private environment files, server state
+or host identifiers were copied into it. `uv sync --locked --offline --dev --python
+3.12` exited zero. Native runtime import passed on macOS **26.7.3 arm64**, Python
+**3.12.12**, DuckDB **1.5.6**, dbt-core **1.12.3**, dbt-duckdb **1.9.6**. The tracked
+lock remained unchanged, SHA-256
+`61912ee3abb9e095b46e03fba4a021272d77bed9f1235a8901e92a92a5d9d367`;
+the fresh checkout's tracked status is clean.
+
+The available private environment file's key inventory contains raw source/access
+and date/hour settings, but no selected isolated compacted/entity/metrics roots,
+entity namespace/seed policy or coordination dataset/transport binding. No inherited
+AWS/Wintap settings provide that missing scope. The historical Linux report names
+**21:00Z–06:00Z**, but does not specify the complete private execution manifest or
+exact date bounds for the Mac reader. Do not substitute the general raw source or
+infer a transport namespace from data prefixes.
+
+**Stopped before live access:** no S3 calls, reader request/grant/reservation,
+preflight/build/test/release, writer, publication, deletion or ledger operation was
+performed. All real-data stages remain **not run**, not passed or skipped. Await
+the private approved Linux-run binding/configuration reference, exact UTC window,
+coordinator availability and agreed Mac resource/timeout ceilings. The existing
+Linux evidence is unchanged; this is successful local preparation, not native-Mac
+DBT/data qualification.
+<!-- SOURCE: Native-Mac worker checkout/runtime preparation and private configuration key-inventory review, conversation 2026-11-17. -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/coordination/client.py §binding_from_environment/main/_window; ../Wintap-PyUtil/Makefile §dbt-build/dbt-test -->

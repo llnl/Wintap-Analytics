@@ -5,6 +5,14 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-17] docs | Reconcile open to-do queue
+
+Audited all 11 intake pages under `wiki/todo/`; each was already listed in
+`wiki/todo/index.md`. Added the previously orphaned open OS-family correction
+from `wiki/diagnostic/duplicate-agent-id-and-os-family.md` to the priority queue
+and updated the master index summary. No source, schema, database, or raw-data
+changes were made.
+
 ## [2026-11-17] docs | Add wrapper-to-dd raw process example
 
 Added a sanitized `datacrumbs_wrap` → `dd` example to
@@ -9061,3 +9069,15 @@ is claimed; DCC-E2E-01 remains open for genuine Mac DBT and overlap evidence.
 The attempted local rerun was not treated as qualification because the private
 runner scope is unavailable and the checked-out main PyUtil environment is stale.
 <!-- SOURCE: Linux ten-tick completion and DBT qualification evidence, plus local continuation checks, conversation 2026-11-17. -->
+
+## [2026-11-17] verification | native-Mac DBT prepared; private binding needed
+
+Prepared a fresh disposable PyUtil checkout at `402ead1` and installed its locked
+main environment offline. Runtime import passes on macOS 26.7.3 arm64/Python
+3.12.12/DuckDB 1.5.6/dbt-core 1.12.3; the lock and tracked checkout remain unchanged.
+The available private configuration lacks isolated compacted/entity/metrics roots
+and coordinator binding; the historical 21:00Z–06:00Z report does not establish
+exact Mac date bounds or access scope. Stopped before any S3 request/reservation or
+DBT execution. Requested the approved private run manifest and resource ceilings;
+no Linux evidence, source data or ledger was changed. Details:
+[[wiki/work/dbt-compaction-coordination/verification]].

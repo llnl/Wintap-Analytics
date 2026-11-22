@@ -290,7 +290,10 @@ on validating and fixing reported Linux process names labeled `exe`;
 [[wiki/todo/linux-process-executable-attribution]], on nondeterministic Linux
 process executable attribution in Wintappy's silver model; and
 [[wiki/todo/lintap-linux-process-command-line-quality]], on source capture,
-provenance, and deterministic dbt command-line semantics. The P2
+provenance, and deterministic dbt command-line semantics. The P1 OS metadata
+correction in [[wiki/diagnostic/duplicate-agent-id-and-os-family]] tracks removal
+of hardcoded `windows` labels and platform-derived, backward-compatible family
+handling. The P2
 [[wiki/todo/linux-nfs-process-network-attribution]] intake tracks the observed
 SSH-on-NFS-tuple example, likely process-context attribution, and the need to
 verify NFS-backed home and deployed tracer semantics. An untriaged enhancement,
