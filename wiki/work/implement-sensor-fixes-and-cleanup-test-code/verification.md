@@ -15,6 +15,7 @@ grounded_by:
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis.md
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan.md
   - ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md
+  - ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md
   - validation/dataset-smoke/smoke_dataset.py
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -671,3 +672,40 @@ and `live-02` is the repaired-output evidence. Native Windows SDK 10.0.402 execu
 remains open; Linux acceptance does not substitute for that platform gate or imply
 deployment/historical repair. No commit or push occurred. Full details:
 `../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md`.
+
+## sfx-03 Linux Command-Line Provenance — 2026-11-22
+
+The next bounded sensor unit adds `CommandLineSource` and
+`CommandLineCaptureStatus`, classifies procfs outcomes, limits reads to 256 KiB,
+and removes clone's parent-command-line fallback. It retains the rendered string
+contract and does not change birth/hash, resolver, executable-name/path evidence,
+observation timing or `PROC_START_SRC` semantics. Structured argv, BPF argv,
+exec-result correlation, PyUtil/DBT and historical repair remain deferred.
+The implementation is committed locally in Wintap as `2d304d1`; nothing was pushed.
+<!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs -->
+
+| Gate | Result |
+|---|---|
+| Preserved baseline | **65/65** `sfx-01|sfx-02`. |
+| Focused command-line contracts | **6/6**. |
+| Final combined sensor-fix suite | **71/71**, no failures/skips. |
+| Non-incremental Linux Release build | **0 errors / 173 warnings** with SDK 10.0.402. |
+| Bounded process-only live gate | Exec/clone/rundown registered, two periodic inventories completed, graceful shutdown, no owned process left. |
+| Live acceptance | **28/28** aggregate assertions across 5,937 process rows and 113 files. |
+| Controlled command lines | **8/8** repeated-exec cases preserve captured space-bearing values at both image stages; all **24/24** cleared-argv children are `empty`, with zero parent-sentinel values. |
+| Quality/schema | Every row has `procfs-cmdline` and an allowed status; value/status consistency passes; all 113 files carry command-line/source/status and optional timing fields. |
+| Compatibility | Birth/hash/run scope, executable name/path, Start timing and Refresh timing remain valid. |
+
+Four status classes occurred live: 2,990 captured, 1,189 empty, 1,687 unavailable
+and 71 read-error; bounded truncation is covered synthetically. One first-batch
+file omitted the pre-existing nullable `Process_Arguments` column, removing source
+breadcrumbs from three observations in one repeated-exec case. Source-specific
+ordering is therefore available for 7/8 cases, while all five Start rows, image
+ordering, identity/timing/name/path and the new fields remain valid in 8/8. That
+generic first-row schema limitation is not silently treated as command-line failure
+or expanded into a broad repair in this unit.
+
+Private capture, raw identifiers, generated run IDs and hashes remain under the
+approved `/data` evidence root. No network, S3, DBT, deployment, dependency
+installation, historical-data mutation or push occurred. Full evidence:
+`../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md`.

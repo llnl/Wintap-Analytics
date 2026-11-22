@@ -117,7 +117,7 @@ remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
 20 seconds); standard families retain the 2-million-row cap.
 
-Active iterative workflow: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]] and [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]] — Phase 1 relocates HostActivity/configuration tests and classifies PyUtil SQL contracts; 59 app/17 representative PyUtil cases pass and all 224 selected PyUtil identities are preserved. The committed sensor milestone repairs Linux process names, adds observation timing, and schedules periodic Linux/Windows Refresh. Bounded Linux `live-01` passed 8/8 multi-exec checks and exposed a direct-Parquet null defect; repaired-binary `live-02` passes 18/18 aggregate checks, including null timing for all 1,312 Refresh rows. The repair also passes 65/65 Linux/synthetic tests, 1,300/1,300 repeat executions, one Windows periodic synthetic case plus 30/30 repeats, and both Release builds. Bounded Linux acceptance is complete; native Windows remains open in [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
+Active iterative workflow: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]] and [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]] — Phase 1 relocates HostActivity/configuration tests and classifies PyUtil SQL contracts; 59 app/17 representative PyUtil cases pass and all 224 selected PyUtil identities are preserved. The committed sensor milestone repairs Linux process names, adds observation timing, and schedules periodic Linux/Windows Refresh. Repaired-binary `live-02` passes 18/18 timing checks. The next Linux unit adds bounded procfs command-line source/status and child-only clone attribution: 6/6 focused, 71/71 combined and 28/28 live aggregate assertions pass, including 24/24 empty-child controls. Immutable exec argv and deterministic DBT selection remain deferred. Bounded Linux acceptance is complete; native Windows remains open in [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
 
 Linux test continuation: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan#Current Linux Tranche — Test Development While Captures Are Pending]] — destination passes 59 HostActivity/7 parser controls; approved isolated uv environment passes 17 PyUtil cases and preserves 224 identities (4 unit / 220 contract). The opt-in bounded readiness helper passes 18 synthetic controls; the existing RHEL database is readable while raw is empty. That path was a one-time bootstrap sample and is not a future raw-data gate. Three SmokeTests cleanup slices preserve query/quality, analysis/store and transport-free S3-source identities; the classified contract package passes 69/69. Later cleanup slices remain open, with no historical-data repair or sensor-correctness claim.
 
@@ -301,8 +301,9 @@ whose uncommitted source repair is focused-test qualified while live/data lineag
 remains open;
 [[wiki/todo/linux-process-executable-attribution]], on nondeterministic Linux
 process executable attribution in Wintappy's silver model; and
-[[wiki/todo/lintap-linux-process-command-line-quality]], on source capture,
-provenance, and deterministic dbt command-line semantics. The P1 OS metadata
+[[wiki/todo/lintap-linux-process-command-line-quality]], whose bounded Linux
+source/status and clone-attribution slice is accepted while immutable exec argv
+and deterministic DBT command-line semantics remain. The P1 OS metadata
 correction in [[wiki/diagnostic/duplicate-agent-id-and-os-family]] tracks removal
 of hardcoded `windows` labels and platform-derived, backward-compatible family
 handling. The P2

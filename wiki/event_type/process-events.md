@@ -23,6 +23,7 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs
   - ../wintap/tests/Lintap.Tests/ProcessObservationTimingTests.cs
   - ../wintap/tests/Lintap.Tests/PeriodicProcessRefreshSchedulerTests.cs
+  - ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
 last_validated: 2026-11-22
@@ -85,7 +86,7 @@ decorating CommandLine. Validation scope and remaining risks:
 [[wiki/work/improve-lintap-data-quality/clone-validation-results]].
 <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/ProcessResolver.cs §UpsertProcessStart; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent -->
 
-The current uncommitted sensor-fix candidate selects Linux process names from
+The committed sensor-fix milestone selects Linux process names from
 resolved executable evidence, otherwise observed `comm`, otherwise `unknown`.
 An unresolved `/proc/<pid>/exe` alias is not executable evidence, and producers
 do not infer paths from flattened command lines. A real executable named `exe`,
@@ -94,6 +95,15 @@ bounded Linux `live-01` executable-name evidence passed all 8/8 multi-exec cases
 Historical affected-row lineage remains open, and the repaired binary still needs
 a fresh capture for the independent direct-Parquet timing gate.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcessSensorHelper.cs; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs -->
+
+Linux command-line capture now labels the existing rendered value with
+`CommandLineSource=procfs-cmdline` and one of `captured`, `empty`, `unavailable`,
+`read-error`, or `truncated`. Reads are bounded at 256 KiB; truncated strings end
+at a complete NUL-delimited argument. Exec and Refresh carry their own procfs
+observation, and clone never substitutes parent text for missing/empty child data.
+These fields describe observation quality, not immutable syscall-entry argv or
+successful image replacement.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs §ReadCommandLineFile; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §SelectCommandLineMetadata; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §CreateRefreshMessage -->
 
 Process events are normalized as `WintapMessage` records with `MessageType = Process` and a nested `ProcessObject` containing process identity, parent identity, path, command line, user, exit/resource fields, and hashes. The schema and the PidHash formula (PID + create-time FileTime) were unchanged by the 2026-08 collection overhaul — all improvements below are population-rate and correctness improvements of existing fields.
 <!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject -->
@@ -176,7 +186,7 @@ timestamps, CommandLine and Stop projection are unchanged. Older parquet without
 the column remains unknown unless an actual Arguments breadcrumb is present.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §ApplyStartProvenance, handleStartEvent; ../wintap/wintap/core/etl/model/ProcessObjectModel.cs §ProcessStartSource; ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs -->
 
-The uncommitted additive timing candidate preserves canonical birth in
+The committed additive timing implementation preserves canonical birth in
 `EventTime`/`StartTime` and adds `ObservationTimeFileTimeUtc`,
 `ObservationTimeMonotonicNanoseconds`, `ObservationClockDomain`,
 `ObservationRunId`, plus the existing envelope `ReceiveTime`, to normal process
@@ -191,6 +201,13 @@ retains absent timing keys, and schema inference explicitly recognizes both norm
 and `Process_`-prefixed timing fields; synthetic first-row-order regressions pass.
 <!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject; ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs §ApplyKernelProcessObservation; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent; ../wintap/wintap/core/etl/load/ParquetWriter.cs §DetermineSchemaFromExpando; ../wintap/wintap/core/etl/load/DirectParquetSink.cs §DirectParquetProjection -->
 
+Normal process ETL persists command-line source/status. Direct Parquet carries the
+same nested fields as `Process_CommandLineSource` and
+`Process_CommandLineCaptureStatus` through its reflection projection. The bounded
+Linux gate found both fields in all 113 files and preserved all 24 deliberately
+empty child observations without parent text.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent; ../wintap/wintap/core/etl/model/ProcessObjectModel.cs §ProcessStartData; ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs -->
+
 ## Analysis Implications
 
 - Process lineage is keyed by `PidHash`/`ParentPidHash`, not PID alone; PID reuse is handled by mixing PID with create time and by `ProcessResolver`'s time-windowed instance resolution.
@@ -204,6 +221,10 @@ and `Process_`-prefixed timing fields; synthetic first-row-order regressions pas
   a valid userspace Refresh monotonic timestamp. Repaired-binary `live-02` confirms
   all 1,312 Refresh rows remain null while all 4,988 kernel-timed Start rows remain
   populated and nonzero; both fields are optional in all 124 Parquet files.
+- Treat command-line status as part of the observation. Do not fill `empty`,
+  `unavailable` or `read-error` rows from parent/neighbor events, and do not parse
+  the flattened string as executable path evidence. Process-lifetime DBT selection
+  remains a separate unresolved contract.
 
 See also [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]], [[wiki/workflow/future-experiment-analysis-workflows]], and [[wiki/repo/wintappy-pipeline-repo]] (downstream `process`/`process_summary`/`process_uber_summary` DBT models).
 

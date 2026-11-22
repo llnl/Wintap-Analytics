@@ -9556,3 +9556,22 @@ the moved cases exactly once. No HTTP test, network request, live S3, AWS profil
 private dataset, collector, durable-producer test, DBT, dependency installation,
 assertion change or push occurred. Private hashes and logs remain under `/data`.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_s3_source.py; streamlit/projects/SmokeTests/tests/contract/test_analysis.py -->
+
+## [2026-11-22] implementation/acceptance | Linux command-line provenance
+
+Completed bounded `sfx-03`: Linux process rows add procfs command-line source and
+capture status, reads stop at 256 KiB with complete-argument truncation, and clone
+never substitutes parent text for child data. Focused tests pass 6/6, the combined
+sensor-fix suite passes 71/71, and the non-incremental Release build has zero errors.
+
+The isolated process-only gate passes 28/28 aggregate assertions across 5,937 rows
+and 113 files. All eight repeated-exec cases retain captured space-bearing values
+for both image stages; all 24 cleared-argv children remain empty with no parent
+sentinel. Existing birth/hash/name/path and Start/Refresh observation timing remain
+valid. One first-batch file omitted the older nullable `Process_Arguments` column,
+so source-specific ordering is available for 7/8 cases; all new fields and image
+ordering remain 8/8. Structured argv, successful-exec correlation, DBT selection,
+historical repair and native Windows acceptance remain open. Raw telemetry and
+identifiers stay outside Git. Wintap committed the implementation locally as
+`2d304d1`; no network, S3, DBT, install, deployment or push occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md; ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs -->
