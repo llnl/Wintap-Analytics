@@ -9,12 +9,14 @@ network access, and it does not qualify sensor capture.
 
 | File under `contract/` | Cases | Coverage |
 |---|---:|---|
+| `test_analysis.py` | 22 | Canary-round analysis, runtime context, budgets, and local/fake-S3 summary persistence. |
 | `test_queries.py` | 12 | Manifest loading, schema normalization, bounded selectors and endpoint evaluation. |
 | `test_quality.py` | 22 | Adversarial file, process-lifecycle and network quality contracts. |
-| **Total** | **34** | Whole files moved; assertions, fixtures and test names unchanged. |
+| **Total** | **56** | Whole files moved; assertions, fixtures and test names unchanged. |
 
-The remaining root-level files cover analysis, persistence, S3, HTTP and Streamlit
-pages/app behavior. They are intentionally outside this mechanical slice.
+The remaining root-level files cover the cross-repo durable producer contract,
+S3 source/HTTP behavior, and Streamlit pages/app behavior. They are intentionally
+outside these mechanical slices.
 
 ## Commands
 

@@ -9527,3 +9527,17 @@ Updated the feature brief, implementation checklist, verification, handoff and
 index accordingly. This does not change the accepted `live-02` Linux sensor result,
 authorize another data source, or make a completeness/DBT/parity claim.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — the one-time RHEL sample will not be updated and is not a gate. -->
+
+## [2026-11-22] refactor/verification | SmokeTests analysis-store slice
+
+Moved the complete synthetic round-analysis/summary-store module into the
+SmokeTests `tests/contract/` package. Its 22/22 cases pass before and after
+(1.882/1.759 seconds); all normalized identities match with no duplicates, and
+the moved test plus five immediate source/import files are byte-for-byte unchanged.
+The complete classified contract package now passes **56/56** in 3.032 seconds.
+
+Focused legacy root discovery finds the moved module exactly once. The cross-repo
+durable producer contract, S3 source/HTTP tests and Streamlit app/page tests remain
+at the project root. No network, live S3, collector, private dataset, producer,
+DBT, dependency installation, assertion change, commit or push occurred.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_analysis.py -->

@@ -55,8 +55,9 @@ future gate. A subsequently approved isolated uv
 environment now passes 17 PyUtil cases and preserves all 224 selected identities
 (4 unit / 220 contract); its old `.venv` remains unusable and untouched. Windows
 managed acceptance remains deferred. The opt-in helper and first bounded
-SmokeTests query/quality cleanup slice are implemented; see the verification record
-before selecting another mechanical slice.
+SmokeTests query/quality cleanup slice are implemented. A second whole-file move
+adds analysis/store controls; the classified package passes 56 cases. See the
+verification record before selecting another mechanical slice.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — the RHEL sample will not be updated; do not wait for raw files there. -->
 
 ## Test-Cleanup Copy/Paste Prompt

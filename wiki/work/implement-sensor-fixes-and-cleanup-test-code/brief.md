@@ -115,6 +115,8 @@ complete, and Windows acceptance remains separate. HostActivity passes 59
 destination tests; an approved isolated uv environment passes 17 PyUtil cases and
 preserves 224 selected identities. The read-only dataset helper passes its
 synthetic controls, and the first SmokeTests query/quality move preserves 34 cases.
+The second whole-file move adds 22 synthetic analysis/store cases, bringing the
+classified contract package to 56 passing cases.
 The existing RHEL path was only a one-time sample and will not receive raw files;
 its empty raw directory is not a gate. Continue later bounded cleanup slices under
 the implementation plan without inventing a replacement data requirement.

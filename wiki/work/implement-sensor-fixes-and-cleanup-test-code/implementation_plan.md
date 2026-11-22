@@ -454,7 +454,9 @@ with explicit environments and budgets, not prerequisites for every draft iterat
 - [x] TC-05 first sensor round: `live-01` defect, narrow repair, repeat stress and
   repaired `live-02` acceptance recorded.
 - [x] TC-06 first SmokeTests slice: query/quality contract inventory and focused
-  command documented; HTTP, S3, persistence, analysis and UI modules remain separate.
+  command documented; durable producer, S3/HTTP and UI modules remain separate.
+- [x] TC-06 second SmokeTests slice: the complete synthetic analysis/summary-store
+  module moved whole; 22/22 pass before/after and the contract package passes 56/56.
 - [ ] TC-06: remaining organization slices completed with scoped discovery proof.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
   gates and unresolved limitations recorded; durable facts promoted to canonical pages.

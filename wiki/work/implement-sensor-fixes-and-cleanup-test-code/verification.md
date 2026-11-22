@@ -551,6 +551,35 @@ a separately approved compatible project environment. No network, private datase
 collector, S3, DBT, dependency installation, assertion weakening, commit or push
 occurred.
 
+## SmokeTests Analysis/Store Mechanical Slice — 2026-11-22
+
+Completed the second TC-06 SmokeTests slice by moving the complete synthetic
+round-analysis and summary-store module into
+`streamlit/projects/SmokeTests/tests/contract/`. The test inventory and project
+README now describe a 56-case contract package. The cross-repo durable producer
+contract and root-level S3 source/HTTP and Streamlit app/page modules remain
+untouched. No assertion, fixture, class/method name, production source, dependency
+or project-wide default command changed.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_analysis.py -->
+
+The selected before/after execution again used the existing DuckDB/Boto3-capable
+HostActivity interpreter as a bounded dependency control, not a provisioned
+SmokeTests environment or full-project run. Temporary files and reports stayed
+under `/data`; both commands had a 120-second ceiling.
+
+| Gate | Before | After |
+|---|---:|---:|
+| Analysis/store module | **22 passed**, 1.882 s | **22 passed**, 1.759 s |
+| Selected identities | 22 unique | 22 unique; normalized set/order identical |
+| Duplicate selected identities | 0 | 0 |
+| Test plus five immediate source/import files | Frozen SHA-256 | Byte-for-byte identical |
+| Classified contract package | 34 cases in prior slice | **56 passed**, 3.032 s |
+
+Focused legacy project-root discovery finds the moved module's 22 cases exactly
+once, without a forwarding copy. No network request, live S3, collector, private
+dataset, producer execution, DBT, dependency installation, assertion change,
+commit or push occurred.
+
 ## First Sensor-Fix Batch Source Qualification — 2026-11-22
 
 The uncommitted Wintap candidate on

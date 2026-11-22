@@ -315,8 +315,8 @@ from the SmokeTests project directory:
 python -m unittest discover -s tests -t . -p 'test_*.py' -v
 ```
 
-See `tests/README.md` for its 34-case inventory. Root-level analysis, persistence,
-S3/HTTP and Streamlit app/page tests remain outside that focused slice.
+See `tests/README.md` for its 56-case inventory. Root-level durable-producer,
+S3/HTTP and Streamlit app/page tests remain outside that focused package.
 
 Tests exercise empty UI, repeated run selection, uploaded portable manifests,
 host/PID/path/time isolation, timestamp formats, normal and direct schemas, and
