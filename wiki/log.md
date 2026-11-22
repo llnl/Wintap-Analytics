@@ -9220,3 +9220,96 @@ stopped before any S3 request, DBT execution, publication, deletion or ledger
 operation. Later scope synchronization deferred Mac DBT in favor of the Linux-only
 tranche; this was preparation evidence, not native-Mac qualification.
 <!-- SOURCE: Native-Mac worker checkout/runtime preparation and private configuration key-inventory review, conversation 2026-11-17. -->
+
+## [2026-11-22] feature-start | sensor fixes and test cleanup workflow stub
+
+Created [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]] at human
+request. Phase 1 follows the approved Analytics/PyUtil test reorganization plan;
+Wintap .NET test restructuring is excluded from that phase. Another session will
+supply sensor-fix scope and remaining workflow details. Created matching local
+`feature/implement-sensor-fixes-and-cleanup-test-code` branches in Analytics,
+PyUtil, and Wintap, and switched only Analytics. Existing work and sibling
+checkouts were preserved. No test moves, code changes, live verification, commit,
+or push were performed.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — approved-plan-only Phase 1; create a stub for another session to populate. -->
+
+## [2026-11-22] code/verification | iterative test-cleanup first cut
+
+Expanded [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]]
+for the human's iterative loop: lightweight test drafts, separate small sensor
+changes/captures, explicit dataset checks, repairs/refinement, and repetition.
+Relocated three HostActivity modules intact under `tests/contract/` and PyUtil
+configuration under `tests/unit/config/`; added partial inventories, discovery
+commands, and PyUtil unit/contract markers. Updated current wiki source citations
+and promoted the maintenance TODO; historical commands/results remain intact.
+HostActivity passes 59 cases before/after; PyUtil passes 17 representative cases
+before/after and preserves all 224 selected identities (4 unit/220 contract).
+Exact source comparison confirms unchanged assertion/fixture bodies. No full-suite,
+compactor, live-S3, sensor, or fresh-dataset acceptance is claimed. Both test repos
+are on their feature branches; no commit/push or dependency update was performed.
+Results and next capture handoff:
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/tests/README.md; ../Wintap-PyUtil/tests/README.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-22] analysis/plan | Wintap test-cleanup extension
+
+The human expanded the workflow to Wintap tests and requested initial analysis
+and planning. Added
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis]] and
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]]:
+63 C# files in one Windows-qualified project, seven Python control files, mixed
+source/native/global-state boundaries, and a proposed additive-trait/five-file
+move with an actual Windows baseline still required. Corrected combined-attribute
+scan finds 26 files without Category; static method/theory figures are not runs.
+Updated workflow scope, verification boundary, overview, index, and the historical
+bootstrap ADR's current-implementation note. Created
+[[wiki/tension/wintap-test-platform-boundaries]]; recorded the soft historical/current
+scope distinction without superseding the accepted per-target convention.
+Wintap checkout and branch refs remained unchanged; no source/test edits, restores,
+builds, test runs, native workloads, data access, commits, or pushes were performed.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — include Wintap repo tests; prepare initial analysis and plan. -->
+<!-- GROUND_TRUTH: ../Wintap/tests/Wintap.Tests/Wintap.Tests.csproj; ../Wintap/devtools; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-22] handoff | Wintap TODO review and Linux continuation
+
+Created [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]]
+at human request, preserving the nine reviewed Wintap-related TODOs in the existing
+iterative feature folder. Added destination/transfer checks for uncommitted test
+work, source ownership, the Windows-qualified managed-test boundary, and the
+human-approved small-unit/fresh-capture loop. Updated the master index. No first
+sensor fix was selected; no source, tests, branches, deployments, or telemetry
+datasets were changed, and no build/test/capture, commit, or push was performed.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — retain the reviewed list and prepare a dev_handoff.md before moving to Linux. -->
+
+## [2026-11-22] code/static-verification | Wintap first-slice test cleanup
+
+The human approved implementation, explicitly deferred the unavailable Windows
+baseline for a static draft, and authorized sharing Wintap's feature checkout with
+the sensor worker. Switched its clean checkout to the existing feature branch at
+`a418aa4`; added unit/synthetic class traits, five approved mechanical moves, a
+partial test README, and two local git-ignored static audits. Exact source comparison confirms
+unchanged assertions/fixtures/names/data/historical Categories; the emission
+consumer and all 58 unmoved C# files remain byte-identical. The 63-file inventory
+and all 33 frozen build/dependency/CI inputs are preserved; XML/JSON/path and diff
+checks pass. The 77 classified/84 focused figures remain lexical expectations.
+Updated workflow checklists, current path citations, overview and index.
+Only SDK 8.0.122 is available on this Mac; no restore, build, discovery, managed
+execution, sensor change, dataset read, commit, or push occurred. Windows runtime
+acceptance and fresh-capture validation remain pending in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
+<!-- HUMAN-DECISION: conversation 2026-11-22 — implement the static draft and share the feature checkout; defer Windows runtime acceptance. -->
+<!-- GROUND_TRUTH: ../Wintap/tests/Wintap.Tests/README.md; ../Wintap/developer_docs/audits/wtc-01-first-slice-labels.md; ../Wintap/developer_docs/audits/wtc-02-five-mechanical-moves.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-22] commit/verification | test cleanup and Linux handoff checkpoint
+
+The human authorized committing both sessions' feature work across Analytics,
+Wintap, and PyUtil, excluding unrelated local binary/log/config artifacts. Wintap
+test cleanup is committed as `123bd70`; PyUtil cleanup as `564ec43`; the Analytics
+test moves, wiki work, and Linux handoff accompany this entry in their feature
+commit. Fresh lightweight reruns pass 59 HostActivity and 17 representative PyUtil
+cases. Staged whitespace, exact Wintap source-body preservation, wiki frontmatter/
+links, and privacy checks pass. Updated the handoff's transfer checkpoint and
+verification record. No push, sensor change, deployment, or capture occurred;
+Windows runtime acceptance remains pending. Git-ignored Wintap audits still need
+separate transfer.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — commit all feature changes, including the other session's refactors; leave unrelated local artifacts out. -->

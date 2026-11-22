@@ -991,7 +991,7 @@ class DashboardControlTests(unittest.TestCase):
 
 class ChartTooltipTests(unittest.TestCase):
     def setUp(self):
-        app_file = Path(__file__).with_name("main.py")
+        app_file = Path(__file__).resolve().parents[2] / "main.py"
         spec = importlib.util.spec_from_file_location("host_activity_tooltip_test_main", app_file)
         self.dashboard = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.dashboard)
@@ -1062,7 +1062,7 @@ class StreamlitRenderTests(unittest.TestCase):
     def test_real_streamlit_renders_without_refreshing_s3(self):
         from streamlit.testing.v1 import AppTest
 
-        app_file = Path(__file__).with_name("main.py")
+        app_file = Path(__file__).resolve().parents[2] / "main.py"
         configured_env = {
             "WINTAP_DBT_RAW_SENSOR_DATASET": "",
             "WINTAP_DBT_DATASET": "s3://example.invalid/test-dataset",

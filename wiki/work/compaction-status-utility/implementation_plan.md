@@ -6,7 +6,7 @@ grounded_by:
   - wiki/work/compaction-status-utility/brief.md
   - wiki/work/compaction-status-utility/design.md
   - wiki/work/dbt-compaction-coordination/implementation_plan.md
-  - streamlit/projects/HostActivity/test_host_activity.py
+  - streamlit/projects/HostActivity/tests/contract/test_host_activity.py
   - streamlit/projects/HostActivity/partition_status.py
   - streamlit/projects/HostActivity/status_source.py
   - streamlit/projects/HostActivity/status_views.py

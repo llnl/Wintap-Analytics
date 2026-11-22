@@ -8,12 +8,12 @@ grounded_by:
   - streamlit/projects/HostActivity/queries.py
   - streamlit/projects/HostActivity/s3_source.py
   - streamlit/projects/HostActivity/file_metadata.py
-  - streamlit/projects/HostActivity/test_host_activity.py
+  - streamlit/projects/HostActivity/tests/contract/test_host_activity.py
   - streamlit/projects/HostActivity/status_source.py
   - streamlit/projects/HostActivity/status_views.py
-  - streamlit/projects/HostActivity/test_status_source.py
+  - streamlit/projects/HostActivity/tests/contract/test_status_source.py
   - streamlit/projects/HostActivity/partition_status.py
-  - streamlit/projects/HostActivity/test_partition_status.py
+  - streamlit/projects/HostActivity/tests/contract/test_partition_status.py
   - ../Wintap-PyUtil/wintappy/coordination/service.py
   - ../Wintap-PyUtil/wintap_dbt/macros/s3.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/time.sql
@@ -266,7 +266,7 @@ window. The metadata mode has only synthetic/mocked S3 evidence so far: live
 listing latency, deployed-endpoint compatibility, and filename alias coverage
 remain unverified. Broader family coverage and operational acceptance also
 remain open.
-<!-- GROUND_TRUTH: streamlit/projects/HostActivity/test_host_activity.py -->
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/tests/contract/test_host_activity.py -->
 
 ## Known limits
 
@@ -280,6 +280,14 @@ chart coverage.
 Run tests and launch instructions are maintained in the app's README and the
 feature record:
 [[wiki/work/recent-host-activity-dashboard/verification]].
+
+The November 22 first-cut test reorganization moves the 59 existing offline cases
+intact into `tests/contract/`. From the app directory, use
+`python -m unittest discover -s tests -t . -p 'test_*.py'` in the app environment;
+legacy project-root discovery still works. These synthetic application checks are
+not validation of a fresh sensor capture. Inventory and iteration results:
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/tests/README.md -->
 
 ## Advisory compaction/status subset and pending extensions
 

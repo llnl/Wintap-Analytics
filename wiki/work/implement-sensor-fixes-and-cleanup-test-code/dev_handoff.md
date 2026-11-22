@@ -1,0 +1,214 @@
+---
+title: "Dev Handoff: Wintap TODO Review and Linux Implementation Continuation"
+type: concept
+confidence: medium
+grounded_by:
+  - wiki/todo/index.md
+  - wiki/todo/periodic-process-refresh-listing.md
+  - wiki/todo/linux-process-name-exe-fallback.md
+  - wiki/todo/lintap-linux-process-command-line-quality.md
+  - wiki/todo/linux-process-executable-attribution.md
+  - wiki/todo/transformer-five-tuple-connection-port-key.md
+  - wiki/todo/linux-nfs-process-network-attribution.md
+  - wiki/todo/linux-interactive-session-feed.md
+  - wiki/todo/listening-socket-capture-and-modeling.md
+  - wiki/todo/raw-sensor-upload-time-partition.md
+  - wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief.md
+  - wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan.md
+  - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan.md
+  - ../wintap/AGENTS.md
+  - ../wintap/CLAUDE.md
+  - ../wintap/global.json
+  - ../wintap/wintap/Makefile
+  - ../wintap/tests/Wintap.Tests/Wintap.Tests.csproj
+policy: agent-editable
+last_validated: 2026-11-22
+repo_scope: cross-repo
+implementation_area: dev-environment
+event_domain: cross-domain
+audience: llm-agent
+status: draft
+source_paths: wiki/todo; wiki/work/implement-sensor-fixes-and-cleanup-test-code; ../wintap/wintap/platform/linux/sensor; ../wintap/wintap/core/etl
+tags: [feature-work, dev-handoff, linux, wintap, todo, sensor-fixes, iterative-development]
+---
+
+# Dev Handoff: Wintap TODO Review and Linux Implementation Continuation
+
+## Copy/Paste Prompt
+
+```text
+Resume Wintap implementation preparation on Linux using:
+wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff.md
+
+Read the destination repositories' AGENTS.md and Wintap CLAUDE.md, then this
+handoff and the existing feature brief, implementation plan, verification,
+and Wintap test plan. Preserve all existing test-cleanup work.
+
+The human reviewed nine Wintap-related TODOs and requested this machine-transfer
+handoff. No sensor fix, schema change, build/capture scope, deployment, or
+cross-repo code-edit authorization was selected in that review.
+
+Verify destination revisions, dirty/untracked work, Linux prerequisites, and
+available test boundaries. Report readiness and ask which TODO and first small
+slice to implement. Follow the human-approved Wintap instruction/role workflow;
+do not start implementing all nine items or dispatch another agent yourself.
+```
+
+## Handoff Summary and Current Authority
+
+The development team is moving from TODO review to a Linux implementation
+system. Preserve the following list as the candidate backlog, not an approved
+implementation sequence. Handoff preparation was documentation only; it did not
+change sensor code, run builds/tests/captures, or access telemetry datasets.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — retain the reviewed Wintap TODO list and prepare a Linux continuation dev_handoff.md. -->
+
+The existing feature folder hosts the iterative test-cleanup/sensor-capture loop.
+Its test session has separate authorization and work already in progress; that
+does not automatically select or authorize these sensor fixes. Under Wintap's
+standing methodology, the Engineer prepares instructions/wiki, the human approves
+and dispatches one unit, and the Developer implements/tests and writes its audit.
+Instructions/audits stay in Wintap `developer_docs/`; shared knowledge stays here.
+<!-- GROUND_TRUTH: ../wintap/CLAUDE.md §The Methodology — Three Roles; wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan.md §Scope and Ownership -->
+
+## Commit/Transfer Checkpoint — 2026-11-22
+
+The human subsequently authorized committing both sessions' feature work across
+the three repositories. Wintap test cleanup is committed as `123bd70`; PyUtil
+test cleanup as `564ec43`. Analytics test cleanup, wiki work, and this handoff are
+included in the commit containing this checkpoint. No push was performed.
+
+The human explicitly excluded the local HostActivity binary, PyUtil keystroke
+logs, and environment-config variants; they remain untouched. Wintap's two
+`developer_docs/audits/wtc-*` records remain git-ignored local evidence under the
+existing convention and need separate transfer. Verify destination commit
+availability rather than assuming these local branches have been published.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — commit all feature changes, including the other session's test refactors; exclude unrelated local artifacts. -->
+
+## Reviewed Nine-Item Backlog
+
+Priorities below follow the individual intake pages; several are provisional.
+Findings are recorded evidence/design candidates, not newly reproduced defects.
+
+| Priority | TODO | Wintap work and boundary |
+|---|---|---|
+| P1 | [[wiki/todo/periodic-process-refresh-listing]] | Hourly running-process Refresh inventories, approximately `HH:05`, with observable collection time and stable identities. Linux can be implemented/qualified here; Windows parity requires its own runner. Settle timezone, offset, missed-tick, and disable semantics first. |
+| P1 provisional | [[wiki/todo/linux-process-name-exe-fallback]] | Reproduce unresolved `/proc/<pid>/exe` fallbacks in exec/clone/rundown; choose trustworthy name/unknown semantics without fabricating paths. Historical repair is separate. |
+| P1 provisional | [[wiki/todo/lintap-linux-process-command-line-quality]] | Improve bounded argument capture and provenance; distinguish unavailable/empty/truncated data and inherited parent context. Canonical argv/string contract and downstream DBT changes need review. |
+| P1 provisional | [[wiki/todo/linux-process-executable-attribution]] | Distinguish fork, exec attempts, and successful image changes; preserve per-observation ordering. Deterministic paired name/path selection is PyUtil-owned, not solely a sensor fix. |
+| P2 provisional | [[wiki/todo/transformer-five-tuple-connection-port-key]] | Investigate duplicated high-port input in shared `Transformer` connection-key generation. Prove port sensitivity/orientation and review persisted-ID compatibility before changing keys. |
+| P2 provisional | [[wiki/todo/linux-nfs-process-network-attribution]] | Qualify initiating-task versus socket-owner meaning with controlled file/network observations. The observed NFS association is not yet a confirmed sensor bug. |
+| P2 provisional | [[wiki/todo/linux-interactive-session-feed]] | Prototype a genuine Linux session lifecycle feed using logind, with optional PAM fallback. Event/API/schema, login-stack changes, and downstream consumption are not approved yet. |
+| Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Define listener lifecycle/ownership and capture support; keep peerless listeners distinct from connected flows. Platform scope and shared/API/DBT contracts remain undecided. |
+| Untriaged; deferred | [[wiki/todo/raw-sensor-upload-time-partition]] | Retry-safe current-UTC upload partitions in shared .NET uploader code, preserving rows and avoiding ambiguous-success duplicates. Separate later task, not a prerequisite to DCC-E2E-01. |
+
+The Linux sensor implementation is owned by Wintap, even where the intake title
+says Lintap. Lintap owns supporting packaging; PyUtil/Wintappy owns canonical DBT;
+Analytics owns this wiki and capture-analysis tools. Do not infer sibling-repo
+write permission from a cross-repo dependency.
+
+Excluded from this nine-item list: packaging-only and Analytics/PyUtil-only TODOs.
+The OS-family queue item is primarily downstream, with a related Wintap Linux
+host-metadata follow-up; it was not selected as a tenth item.
+
+## Destination Startup and Transfer Checklist
+
+1. Locate the actual Wintap, Analytics, and optional PyUtil/Lintap checkouts; do
+   not assume path capitalization or historical sibling names on Linux. Read
+   their current instructions before using repository commands.
+2. Confirm revisions, active branches, tracked changes, and untracked files.
+   The shared local branch is `feature/implement-sensor-fixes-and-cleanup-test-code`.
+   Its original Wintap starting revision was `a418aa4`, not a requirement to
+   reset or downgrade the destination. Do not switch/reset another worker's checkout.
+3. Preserve existing work during transfer. At pre-commit handoff inspection,
+   Wintap's five old top-level test paths appeared deleted
+   with replacements under `tests/Wintap.Tests/Unit/` and a new README untracked.
+   Analytics/PyUtil also have first-cut cleanup work. These are intended moves,
+   not permission to discard files. The later commit checkpoint above supersedes
+   that uncommitted feature state; untracked/ignored evidence still needs explicit
+   transfer, and a fresh clone cannot see commits that have not been published.
+4. Check the Linux distribution, architecture, kernel/BTF, .NET SDK, native
+   filesystem output, and required eBPF tools against the selected build target.
+   Wintap's declared baseline is SDK **10.0.402**. Do not install/upgrade tools or
+   regenerate lockfiles as an implicit migration step.
+5. Before a collector/workload run, obtain the concrete disposable host/process,
+   privilege, duration, data/runtime/output roots, and read/mutation scope. Use
+   explicit isolated roots; do not inherit operator data, S3 configuration, or
+   a running collector's state. A field host is not automatically a dev checkout.
+6. Re-read the selected TODO's live sources on the destination. The earlier review
+   was a backlog review, not proof that its suspected defect exists in that revision.
+<!-- GROUND_TRUTH: wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief.md §Branches; ../wintap/global.json; ../wintap/BUILD_AND_TEST.md §Recommended Commands -->
+<!-- SOURCE: Read-only branch/status inspection during handoff preparation, 2026-11-22; destination and transfer have not been verified. -->
+
+## Primary Sources and Linux Execution Boundaries
+
+- Start with Wintap `AGENTS.md`, `CLAUDE.md`, `BUILD_AND_TEST.md`,
+  `devtools/README.md`, and current `wintap/Makefile`.
+- Process: `wintap/platform/linux/sensor/ProcessRundownSensor.cs`,
+  `ebpf/{ExecveSensor,CloneSensor}.cs`, `ebpf/helpers/{ProcReader,ProcessSensorHelper}.cs`,
+  and the exec tracer files under that sensor tree. Read exact paths from the TODO.
+- Network: `wintap/platform/linux/sensor/ebpf/NetworkSensor.cs` and
+  `tracers/network_ops_tracer.bpf.c`.
+- Shared keys/upload: `wintap/core/etl/transform/{Transformer,LoHi5Tuple,IdGenerator}.cs`
+  and the load/adapter paths cited in the upload TODO.
+- Shared event contract: `shared/WintapAPI/WintapMessage.cs`.
+
+From the **Wintap repository root**, the current Makefile is `wintap/Makefile`:
+`make -C wintap build_dotnet` builds `Lintap.csproj`, and
+`make -C wintap build_ebpf` builds native tracers. These are proposed commands
+for an authorized slice, not commands run in this handoff. Verify current targets
+and dependencies first. `run-env` also depends on a build; it is not read-only
+preflight. Use the Makefile's native-filesystem safeguards on shared mounts.
+<!-- GROUND_TRUTH: ../wintap/wintap/Makefile §DOTNET_PROJ, build_dotnet, build_ebpf, run-env, shared-mount output handling -->
+
+**Do not treat the current managed test project as a native Linux suite.**
+`tests/Wintap.Tests/Wintap.Tests.csproj` targets a Windows-qualified TFM and
+references `Wintap.csproj`, even though it links some Linux helpers. Linux
+source/build checks cannot close the pending Windows build/discovery/runtime gate.
+Do not retarget it, add projects, alter skips, or weaken assertions merely to
+produce a Linux pass; agree the smallest appropriate test boundary first.
+<!-- GROUND_TRUTH: ../wintap/tests/Wintap.Tests/Wintap.Tests.csproj §TargetFramework, ProjectReference, Compile; wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan.md §Approved First Draft and Deferred Gate -->
+
+## First Small Slice and Evidence Loop
+
+No first TODO has been chosen. Ask the human to select one and agree its scope,
+compatibility constraints, test runner, budgets, and capture permissions. Prefer
+one independently testable fix; coordinate overlapping process-name/arguments/
+exec-provenance work without turning them into an unapproved combined rewrite.
+
+Follow TC-03 through TC-05 in the existing implementation plan:
+
+1. Establish the intended semantic contract and a focused negative regression.
+2. Prepare one self-contained Wintap instruction for human approval, with exact
+   files, test commands, and acceptance criteria; declare an unused unit abbreviation.
+3. After approved implementation, run affected checks and capture a small fresh
+   dataset with independent named-workload expectations.
+4. Bind evidence to exact source/build/config, platform/enabled sensors, UTC
+   interval, event families, schema/source layer, and explicit capture location.
+   Keep normal ETL output distinct from diagnostic direct-Parquet bypass output.
+5. Give the test session a sanitized TC-03 capture handoff. Separate producer,
+   test/oracle, downstream, environment, and insufficient-evidence failures.
+   Preserve the negative control and obtain a fresh capture after producer changes.
+
+Existing test-cleanup results and deferred gates are in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]] and
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]].
+Do not replace another session's round records or infer fresh capture acceptance
+from earlier synthetic/static checks.
+
+## Closeout and Remaining Decisions
+
+- Record each approved unit's audit in Wintap; the Engineer updates the shared
+  verification page, plan checklist, and `wiki/log.md` with scoped results/limits.
+- Update only the selected TODO's disposition and promote durable semantics to
+  canonical pages after qualification. Unselected TODOs remain open.
+- Preserve process identity/birth time separately from observation time, existing
+  payloads unless an explicit contract change is approved, and independent evidence.
+- Dataset repairs, package changes, service deployment, PAM configuration, S3
+  writes/deletion, new dependencies, commits/pushes, and broader platform acceptance
+  need their own applicable authorization; none were performed by this handoff.
+- Apply the canonical privacy rule in Analytics `AGENTS.md` to every persisted
+  result; keep identifying raw output out of wiki artifacts.
+
+Outstanding: first TODO/unit, destination revisions and transferred work,
+development-host permissions, Linux test execution boundary, Windows parity plan
+where needed, and any explicit PyUtil/Lintap implementation scope.

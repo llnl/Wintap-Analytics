@@ -5,7 +5,7 @@ confidence: medium
 grounded_by:
   - streamlit/projects/HostActivity/s3_source.py
   - streamlit/projects/HostActivity/queries.py
-  - streamlit/projects/HostActivity/test_host_activity.py
+  - streamlit/projects/HostActivity/tests/contract/test_host_activity.py
   - ../Wintap-PyUtil/wintap_dbt/README.md
   - ../Wintap-PyUtil/wintap_dbt/macros/paths.sql
 policy: agent-editable

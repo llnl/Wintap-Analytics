@@ -58,7 +58,7 @@ recorded.
 | P3 — Low | [[wiki/todo/daily-compacted-tier]] | Open | Evaluate a verified `compacted2/dayPK` daily roll-up over completed hourly compacted data, with disjoint reader precedence and explicit late-data handling. |
 | Untriaged | [[wiki/todo/raw-sensor-upload-time-partition]] | Open | Current .NET code partitions at merge time and retries the same S3 key; the requested UTC actual-upload partition contract needs a separate shared-uploader correction. |
 | Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Open | Investigate process-attributed listening-socket lifecycle capture and a downstream model distinct from peer-oriented connections; priority and platform scope remain open. |
-| P1 — High | [[wiki/todo/test-suite-reorganization]] | Open | Implement the approved Analytics/PyUtil test-suite classification and filesystem reorganization; preserve collection counts and review evidence before merging or archiving cases. |
+| P1 — High | [[wiki/todo/test-suite-reorganization]] | Promoted | Phase 1 of [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]]; first draft checked, broader cleanup and fresh-capture iterations remain open. Preserve collection counts and review evidence before merging or archiving cases. |
 | P1 — High | [[wiki/todo/periodic-process-refresh-listing]] | Open | Implement bounded hourly running-process Refresh listings on Windows and Linux, approximately five minutes after the hour by default, with observable collection time and identity-safe deduplication. |
 
 ## Related

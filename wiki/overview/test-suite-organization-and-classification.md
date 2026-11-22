@@ -11,8 +11,11 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/tests
   - ../Wintap-PyUtil/wintap_dbt/tests
   - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
+  - ../Wintap/tests/Wintap.Tests/Wintap.Tests.csproj
+  - ../Wintap/tests/Wintap.Tests/README.md
+  - ../Wintap/devtools
 policy: agent-editable
-last_validated: 2026-11-17
+last_validated: 2026-11-22
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -30,7 +33,56 @@ first refactor should make purpose and execution boundary visible in the
 filesystem; stale or duplicative cases are reviewed only after that boundary is
 recorded.
 
-## Current snapshot
+## Wintap Extension — Static-Checked First Draft
+
+On November 22 the human expanded this workflow to Wintap repository tests,
+requesting initial analysis/planning, not a filesystem change in that pass.
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis]]
+records 63 C# files in one Windows-qualified xUnit project (including linked Linux
+helpers), plus seven Python test-control files. Static attributes/methods are not
+runtime collection or execution results. Native command/traffic workloads, source
+guards, and process-wide integration require separate named gates.
+
+The human subsequently approved
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]] and
+explicitly deferred the unavailable Windows baseline for a static draft on the
+shared feature checkout. Five reviewed classes now have `TestKind=unit` and
+`Execution=synthetic` and reside under `Unit/Api`, `Unit/Shared`, and
+`Unit/Windows/File` / `Unit/Linux/File`. Existing `Category` tags, source bodies,
+fixture access, dependencies, and full-suite/CI selection are unchanged. The test
+README records partial inventory and focused Windows commands; actual build,
+discovery/filtering, and execution remain pending. Platform-project splitting
+remains a later human decision in
+[[wiki/tension/wintap-test-platform-boundaries]]. The Analytics/PyUtil inventory
+and historical verification below retain their original scope.
+<!-- GROUND_TRUTH: ../Wintap/tests/Wintap.Tests/Wintap.Tests.csproj; ../Wintap/tests/Wintap.Tests/README.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## Iterative Implementation — November 22
+
+The human selected this plan as Phase 1 of
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]], then authorized
+small first-draft changes with lightweight affected checks and later validation
+against fresh small sensor captures from a separate session. The detailed loop is
+in [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]].
+
+The first cut relocates all three HostActivity modules intact to
+`tests/contract/` and PyUtil configuration to `tests/unit/config/`. PyUtil's four
+synthetic SQL modules remain in place with explicit `contract` markers because
+they have shared relative-import dependents. Partial per-suite READMEs record
+counts, execution boundaries, and mixed coverage still awaiting separation.
+HostActivity passes 59 cases; PyUtil preserves 224 selected identities and passes
+17 representative cases. Full-suite defaults are unchanged; no assertions or
+historical evidence were removed. Remaining suite restructuring and dataset
+validation are open in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/tests/README.md; ../Wintap-PyUtil/tests/README.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+The current tracked file inventory is 11 Analytics application test files, 10
+validation files, 14 feature-work files, 60 PyUtil main files, 20 compactor files,
+and seven DBT SQL files. No refreshed full-suite collection is claimed. The
+original snapshot below is retained as historical context, not today's baseline.
+
+## Historical Snapshot — November 17
 
 The inventory excludes dependency `site-packages`, virtual environments, and
 untracked run data/configuration.
@@ -102,7 +154,7 @@ wiki/work/host-process-identity-patch/
 ```
 
 The Analytics moves should be mechanical first. Splitting a large file such as
-`HostActivity/test_host_activity.py` or `SmokeTests/test_analysis.py` is a
+`HostActivity/tests/contract/test_host_activity.py` or `SmokeTests/test_analysis.py` is a
 separate change because it changes imports and makes duplicate assertion review
 harder.
 

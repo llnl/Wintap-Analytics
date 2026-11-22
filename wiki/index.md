@@ -117,7 +117,11 @@ remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
 20 seconds); standard families retain the 2-million-row cap.
 
-Test-suite navigation and refactor plan: [[wiki/overview/test-suite-organization-and-classification]] — inventory of Analytics and PyUtil tests, purpose/execution taxonomy, proposed filesystem, coordination/entity overlap review, and staged move/archive rules. No test files have been moved or deleted yet.
+Active iterative workflow: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]] and [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]] — Phase 1 first cut relocates HostActivity/configuration tests and classifies PyUtil SQL contracts. Lightweight checks pass 59 app/17 representative PyUtil cases and preserve all 224 selected PyUtil identities. Fresh small sensor captures, dataset validation, and further refinement remain open in [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
+
+Wintap test extension: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis]] and [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]] — approved static draft adds unit/synthetic traits and five moves in the shared feature checkout; unchanged bodies, 63-file inventory, fixture access, and build inputs are source-checked. The human explicitly deferred the Windows baseline; no managed build/discovery/run is claimed. See [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]]. Platform-project ownership remains open in [[wiki/tension/wintap-test-platform-boundaries]].
+
+Test-suite navigation and refactor plan: [[wiki/overview/test-suite-organization-and-classification]] — inventory, purpose/execution taxonomy, proposed filesystem, coordination/entity overlap review, and staged move/archive rules. Partial first-cut moves are implemented; no assertions or historical evidence have been deleted.
 
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
 — current-source Accept emission and UDP memory-domain defects, live incomplete UDP
@@ -325,6 +329,8 @@ default hourly schedule, collection-time observability, and identity-safe
 deduplication.
 
 ## Work
+
+Linux implementation continuation: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]] — preserves nine reviewed Wintap-related TODOs, destination/transfer checks, existing test-cleanup work, Linux/Windows execution boundaries, and the small approved-unit/capture loop. First sensor fix and concrete execution scope remain unselected; no code or deployment authorization is implied.
 
 Compaction status utility follow-on:
 [[wiki/work/compaction-status-utility/brief]],
