@@ -5,10 +5,11 @@ confidence: medium
 grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c
+  - ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - wiki/work/lintap-process-creation-validation/validation-harness-design.md
 policy: agent-editable
-last_validated: 2026-11-17
+last_validated: 2026-11-22
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -34,9 +35,10 @@ process lifetime. Syscall-entry observations record a requested executable
 before the syscall outcome is known; `sched_process_exec` records a successful
 image installation. Those are different facts and need to remain distinguishable.
 
-The Wintap callback currently emits both observation types as process `Start`
-messages and tags their provenance in `Process.Arguments`. It uses process start
-time as `EventTime`, rather than the individual exec-observation timestamp.
+The Wintap callback emits both observation types as process `Start` messages and
+tags their provenance in `Process.Arguments`. It keeps process birth as
+`EventTime`; the uncommitted additive candidate now preserves the individual raw
+kernel observation and converted UTC value separately.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §OnStarting, HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c §trace_execve_entry, trace_execveat_entry, trace_sched_process_exec -->
 
 The Wintappy silver process model groups observations by `pidhash` and uses
@@ -102,6 +104,14 @@ explicit process-lifetime view; this example does not select that policy.
 <!-- SYNTHESIS: user-provided sanitized raw_process example interpreted using ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs, ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracer.bpf.c, and ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql -->
 
 ### Timestamp precision follow-up
+
+The explicit requirement and implemented additive candidate now live in
+[[wiki/todo/process-observation-time-separate-from-birth]]. Preserve canonical
+birth for identity independently of the finest available occurrence time;
+additive timing preservation and migration of legacy `EventTime` semantics are
+separate scopes. Exec/clone kernel timestamps now reach separate normal-ETL
+observation fields in the source candidate; live qualification and the broader
+executable-selection model remain open.
 
 The same sample warrants a separate timestamp investigation. The Start rows
 repeat `134394151359900000`, which is aligned to a much coarser boundary, while

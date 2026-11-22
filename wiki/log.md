@@ -9342,3 +9342,138 @@ after the commit/push completes. Previously excluded local binary/log/config
 artifacts and git-ignored Wintap audits remain untouched. No test/source change,
 build/test rerun, collector, capture, dependency installation, or force-push.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — commit and push all feature changes. -->
+
+## [2026-11-22] plan/verification | Linux test continuation and existing-data readiness
+
+Updated [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]]
+with a bounded Linux tranche: destination regression checks, a proposed explicit
+read-only dataset smoke helper with synthetic negative controls, next small test
+cleanup, and later fresh-capture validation. Destination HostActivity passes 59
+tests; Wintap's stdlib parser controls pass 7. Existing RHEL dataset DB opens
+read-only with DuckDB 1.5.6 (24 catalog objects, one empty bounded base-table sample,
+unchanged file metadata); local raw directory is empty. PyUtil's executable is
+unavailable and Windows managed acceptance remains deferred. Recorded scoped
+evidence and updated the index. No code/test edits, dataset repair, DBT/S3/collector,
+installation, branch change, commit or push.
+Updated the brief and handoff next steps to distinguish permitted existing-data
+readiness checks from the still-required fresh-capture correctness gate.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — prepare a test-engineering implementation plan; allow no-heroics existing-data smoke while waiting for the sensor engineer. -->
+
+## [2026-11-22] environment | uv Python readiness follow-up
+
+uv 0.13.5 finds compatible installed Python 3.12.15/3.11.13. The documented offline
+no-sync PyUtil launch selects 3.12 but fails on permission denial while attempting
+to recreate its unusable `.venv`. Separate no-project interpreter probes work but
+lack the required test dependencies. Updated the plan/verification: propose a
+separately approved isolated locked environment, not repair/removal of the old one.
+No dependency install/download, permission change, test run, dataset access or
+tracked PyUtil change.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — try uv for Python. -->
+
+## [2026-11-22] environment/verification | isolated uv PyUtil gate passes
+
+Human-approved isolated Python 3.12.15 uv environment uses cached locked
+dependencies, without project installation or lockfile changes. Copy-based setup
+failed on root disk space; removed only this session's partial temporary venv and
+retried with cache symlinks (small footprint). An initial temporary checker rootdir
+error was retained and corrected without test edits. PyUtil now passes 17
+representative cases and preserves 224 pre/post collected identities, with a
+disjoint 4 unit / 220 contract partition. Five source bodies match their originals;
+all 375 checked inputs remain unchanged. Closed the selected Linux gate and updated
+plan/verification, brief, handoff and index. No dataset access, source/test changes,
+broader suite, DBT/S3, commit or push; old `.venv` received no further repair.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — approve isolated uv environment and bounded tests. -->
+
+## [2026-11-22] review | Streamlit app focus, duplication and maintenance
+
+Created [[wiki/tool/streamlit-app-review]] from Analytics `e6ff8ed` app/page/helper
+sources, dependency/configuration files, tracked-path/symlink checks and scoped
+history. Five app entry points: HostActivity availability, SmokeTests validation,
+DataQA lifecycle/DLL QA, EDA process/network graphs, CALDERA report hierarchy.
+Confirmed identical DataQA/EDA shell files, incomplete dependency recipes, EDA
+logo mismatch and unwired controls, unused DLL prototype and CALDERA launch/default
+path discrepancy. Shared helpers/symlinks are not duplicate copies or missing pages.
+Recommended reviewing legacy-shell consolidation while preserving unique research
+functions; age is not abandonment evidence. Updated repo/pipeline/workflow scope,
+both modern dashboard cross-links and index. Clarified the older broad Streamlit
+dependency framing; no hard contradiction or new retirement decision. Existing
+DBT/stdview compatibility tension remains open. No app launch, dataset/S3 access,
+dependency installation, test rerun, source/app deletion, commit or push.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — review Streamlit apps and summarize focus, duplication and possible staleness. -->
+
+## [2026-11-22] feasibility/intake | process occurrence time versus canonical birth
+
+Added [[wiki/todo/process-observation-time-separate-from-birth]] at human request
+and linked it from both indexes, executable-attribution and periodic-Refresh
+intakes. Source review confirms existing exec/clone kernel nanoseconds, birth-time
+Start/Refresh envelopes, ETL's EventTime/StartTime conflation and missing receive
+propagation, resolver creation-time dependence, PyUtil's eventtime-derived birth,
+and null-first numeric schema risk. Recommend a bounded additive preservation
+slice for the first batch; defer full EventTime semantic migration to coordinated
+resolver/ETL/consumer work. Field contracts, implementation approval and live
+qualification remain open. No timestamp/source/test change, build/test rerun,
+collector/workload, dataset access, commit or push occurred in this review;
+existing sensor-name and separate test/wiki work are preserved.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — retain finest occurrence timing independently of coarse birth/hash; assess first-batch feasibility or preserve in backlog. -->
+
+## [2026-11-22] code/verification | first sensor-fix batch source candidate
+
+The uncommitted Wintap candidate now combines the `sfx-01` Linux executable-name
+repair with additive observation timing and UTC-aligned periodic process Refresh
+on Linux and Windows. Birth `EventTime`, resolver behavior and `PID_HASH` remain
+unchanged; exec/clone retain raw kernel nanoseconds, failed conversion leaves UTC
+absent, and Refresh records userspace UTC scan start. Normal/direct Parquet carry
+the new fields with stable nullable numeric schema. The scheduler defaults to
+hourly `HH:05`, skips missed ticks/overlaps and waits for active inventory during
+shutdown; Windows periodic inventory never performs startup reconciliation.
+
+Focused Linux/synthetic tests pass **63/63** after preserved 60/3 and 62/1 repair
+runs. The new Windows periodic synthetic case passes **1/1** on Linux. Locked
+non-incremental Release builds pass with zero errors (Linux 173 warnings; Windows
+cross-build 87). A broader Linux-hosted Windows run is explicitly non-acceptance
+evidence at 103/13; native Windows and bounded live capture remain pending. Full
+diff/privacy review and `git diff --check` pass. Updated the feature plan and
+verification, process semantics, three promoted TODOs and indexes; added the local
+Wintap `sfx-02` audit. No collector, BPF attachment, live workload/data read,
+commit or push occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md; ../wintap/wintap/core/infrastructure/PeriodicProcessRefreshScheduler.cs; ../wintap/shared/WintapAPI/WintapMessage.cs -->
+
+## [2026-11-22] live/repair-verification | first sensor-fix Linux gate
+
+Recorded the separately authorized bounded `live-01` process-only gate. Rundown,
+exec and clone registered; two periodic inventories began; capture and graceful
+shutdown completed with no gate-owned process left. All 8/8 multi-exec cases passed
+stable birth/hash/run scope, complete UTC/raw timing, strict observation ordering
+and executable-derived-name checks. Three stable-process Refresh rows retained
+one identity and three UTC scan observations, but one absent monotonic value became
+numeric `0` in a kernel-led direct-Parquet batch.
+
+Retained `live-01` as immutable defect evidence. The narrow direct projection and
+prefixed nullable-schema repair passes 8/8 observation tests, 65/65 expanded
+Linux/synthetic tests, and a non-incremental Release build with zero errors. Updated
+the Wintap audit, feature verification/checklist, canonical process semantics,
+promoted TODOs and indexes. A separately authorized operator-assisted `live-02`
+must prove null output from the repaired binary; native Windows also remains open.
+Raw telemetry and identifiers remain outside Git. No network, S3, DBT, commit or
+push occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md; ../wintap/wintap/core/etl/load/DirectParquetSink.cs; ../wintap/wintap/core/etl/load/ParquetWriter.cs; ../wintap/tests/Lintap.Tests/ProcessObservationTimingTests.cs -->
+
+## [2026-11-22] live/acceptance | repaired sensor-fix Linux gate
+
+Completed the separately authorized process-only `live-02` with the repaired
+Release binary. Rundown, exec and clone registered; two UTC-aligned periodic
+inventories completed; graceful shutdown left no gate-owned process. All 18/18
+aggregate acceptance checks pass. The stable anchor retains one birth/hash/run
+scope and three scan observations with null—not zero—monotonic timing; all six
+multi-exec summaries remain 8/8.
+
+Across the capture, all 1,312 Refresh rows have userspace UTC and null monotonic
+timing, while all 4,988 Start rows have UTC plus nonzero kernel monotonic timing.
+Both timing fields are optional `INT64`/`BIGINT` in all 124 Parquet files. No
+unfinished/zero-byte output, error/fatal/drop/backlog entry, or artifact hash
+change was found. Additional process-isolated stress passes total 1,300/1,300
+Linux/synthetic executions and 30/30 Linux-hosted Windows periodic synthetic
+executions. `live-01` remains immutable defect evidence; bounded Linux acceptance
+is complete and native Windows remains open. Raw telemetry and identifiers remain
+outside Git. No network, S3, DBT, commit or push occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md; ../wintap/wintap/core/etl/load/DirectParquetSink.cs; ../wintap/wintap/core/etl/load/ParquetWriter.cs -->

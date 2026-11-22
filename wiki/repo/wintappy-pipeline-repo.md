@@ -283,9 +283,15 @@ Pre-DBT Python/DuckDB console commands (`rawtorolling`, `rawtostdview`, `ubersum
 
 ## Code Dependency From Wintap-Analytics
 
-Wintap-Analytics does not just consume Wintappy's *output* files — its Streamlit apps import the `wintappy` Python package directly. `streamlit/projects/common/dqautil.py` imports `wintappy.datautils.rawutil`, and `streamlit/projects/DataQA/pages/raw_events.py` imports `wintappy.datautils.stdview_duckdb`. This makes `wintappy` a runtime code dependency of Wintap-Analytics' DataQA/eda tooling, not merely a producer of data those tools happen to read.
+Wintap-Analytics does not just consume Wintappy's *output* files — its legacy DataQA/EDA Streamlit apps import the `wintappy` Python package directly. `streamlit/projects/common/dqautil.py` imports `wintappy.datautils.rawutil`, and `streamlit/projects/DataQA/pages/raw_events.py` imports `wintappy.datautils.stdview_duckdb`. This makes `wintappy` a runtime code dependency of Wintap-Analytics' DataQA/eda tooling, not merely a producer of data those tools happen to read.
 <!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/common/dqautil.py §import wintappy.datautils.rawutil -->
 <!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py §import wintappy.datautils.stdview_duckdb -->
+
+This dependency does not apply to the standalone HostActivity and SmokeTests
+dashboards, which read S3 metadata/raw Parquet or portable smoke evidence without
+importing Wintappy. See [[wiki/tool/streamlit-app-review]] for the scoped 2026-11-22
+app inventory and legacy/current data-contract distinction.
+<!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/HostActivity/README.md; ../Wintap-Analytics/streamlit/projects/SmokeTests/README.md -->
 
 ## Known Limitations
 

@@ -111,6 +111,10 @@ for the detailed slices, capture handoff, and validation loop, and
 ## Next Step
 
 The Analytics/PyUtil first draft is checked; the Wintap first slice is implemented
-with static checks only. Obtain Windows acceptance and, independently, the first
-sensor-change/capture handoff; then select its dataset checks. The sensor session
-should supply its scope without overwriting test implementation/round records.
+with static checks only. The current Linux continuation re-establishes destination
+confidence and plans an opt-in read-only dataset-readiness helper while awaiting
+fresh captures. HostActivity passes 59 destination tests; an approved isolated uv
+environment passes 17 PyUtil cases and preserves 224 selected identities. Real raw
+reads are blocked, and Windows acceptance remains separate. Follow the
+implementation plan's TC-LNX tranche; obtain TC-03 before sensor-correctness checks.
+The sensor session should supply its scope without overwriting test round records.

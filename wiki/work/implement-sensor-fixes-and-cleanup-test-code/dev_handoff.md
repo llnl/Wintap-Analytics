@@ -38,6 +38,25 @@ tags: [feature-work, dev-handoff, linux, wintap, todo, sensor-fixes, iterative-d
 
 # Dev Handoff: Wintap TODO Review and Linux Implementation Continuation
 
+## Current Test-Engineering Assignment — Linux Destination
+
+The human has now assigned this session test implementation/testing and requested
+the bounded continuation plan in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan#Current Linux Tranche — Test Development While Captures Are Pending]].
+Lightweight existing-data readiness checks may precede TC-03; fresh-fix correctness
+still requires the sensor engineer's independent capture handoff. The prompts
+below preserve the transfer checkpoint; use the current tranche for test next steps.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — prepare the test plan and permit no-heroics existing-data smoke while fresh captures are pending. -->
+
+Destination checks pass 59 HostActivity/7 stdlib parser controls. The authorized
+RHEL dataset is under PyUtil's `data/wintap-analysis/rhel8/`; DB read-only readiness
+passes, but the local raw directory is empty. A subsequently approved isolated uv
+environment now passes 17 PyUtil cases and preserves all 224 selected identities
+(4 unit / 220 contract); its old `.venv` remains unusable and untouched. Windows
+managed acceptance remains deferred. Next implementation:
+small opt-in read-only smoke helper with synthetic negative controls, then bounded
+test cleanup. See the verification record; no helper or new sensor check exists yet.
+
 ## Test-Cleanup Copy/Paste Prompt
 
 ```text

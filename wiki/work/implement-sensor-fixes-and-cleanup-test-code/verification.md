@@ -3,9 +3,9 @@ title: "Verification: Implement sensor fixes and cleanup test code"
 type: concept
 confidence: medium
 grounded_by:
-  - ../Wintap/tests/Wintap.Tests/README.md
-  - ../Wintap/developer_docs/audits/wtc-01-first-slice-labels.md
-  - ../Wintap/developer_docs/audits/wtc-02-five-mechanical-moves.md
+  - ../wintap/tests/Wintap.Tests/README.md
+  - ../wintap/developer_docs/audits/wtc-01-first-slice-labels.md
+  - ../wintap/developer_docs/audits/wtc-02-five-mechanical-moves.md
   - streamlit/projects/HostActivity/tests/README.md
   - streamlit/projects/HostActivity/tests/contract
   - ../Wintap-PyUtil/tests/README.md
@@ -14,6 +14,7 @@ grounded_by:
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan.md
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis.md
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan.md
+  - ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md
 policy: agent-editable
 last_validated: 2026-11-22
 repo_scope: cross-repo
@@ -124,11 +125,11 @@ fallback broad run substituted.
 
 ## Next Iteration
 
-Receive the sensor session's exact fix/revision, relevant event families, bounded
-read-only capture, independent workload expectations, and known limitations. Then
-select the corresponding validator/SmokeTests analysis check, run it explicitly
-against the fresh data, classify failures, and refine tests in a recorded small
-round. See TC-03 through TC-05 in
+The current Linux tranche below permits destination checks and a small opt-in
+dataset-readiness helper while the sensor capture is pending. For correctness,
+receive the sensor session's exact fix/revision, relevant event families, bounded
+read-only capture, independent workload expectations, and known limitations before
+selecting the affected validator. See TC-LNX-01 through TC-LNX-04 and TC-03 through TC-05 in
 [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]].
 
 ## Wintap Extension / Initial Analysis — 2026-11-22
@@ -225,8 +226,8 @@ git diff --check
 Static source preservation is useful draft evidence, but does not establish that
 the Windows assembly builds or that the adapter discovers/filters/executes it.
 Both wtc units remain open for runtime acceptance. Audits:
-`../Wintap/developer_docs/audits/wtc-01-first-slice-labels.md` and
-`../Wintap/developer_docs/audits/wtc-02-five-mechanical-moves.md`.
+`../wintap/developer_docs/audits/wtc-01-first-slice-labels.md` and
+`../wintap/developer_docs/audits/wtc-02-five-mechanical-moves.md`.
 
 Documentation checks passed across 19 changed/new wiki Markdown files: 17 required
 YAML frontmatters, grounding paths, 470 resolving wikilinks, and whitespace.
@@ -278,3 +279,263 @@ explicitly excluded and preserved.
 - Wintap static audits remain git-ignored local evidence; transfer them separately.
   Windows runtime acceptance and fresh sensor captures remain open.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — commit both sessions' feature changes across the three repos, excluding unrelated local artifacts. -->
+
+## Linux Destination Readiness and Existing-Data Smoke — 2026-11-22
+
+The human assigned test implementation/testing to this session, requested an
+implementation plan and allowed no-heroics smoke reads of the existing RHEL 8
+dataset while awaiting fresh sensor captures. No source/test implementation or
+dependency installation was performed in this planning round.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — test-engineering continuation; bounded existing-data smoke, not dataset repair or sensor acceptance. -->
+
+### Destination and Commands
+
+Read-only `git status --short --branch` and `git log -1` checks confirm Analytics
+`e6ff8ed`, Wintap `123bd70`, PyUtil `564ec43`, on matching feature branches.
+Analytics's reviewed `0f8b414` is in its history. Analytics/Wintap are clean;
+unrelated PyUtil untracked data/config artifacts were preserved. No switch/fetch.
+
+Linux x86_64, kernel 4.18-series. System Python is 3.6.8. An explicit existing
+HostActivity interpreter reports Python 3.13.13, DuckDB 1.5.6, Streamlit 1.67.0,
+pandas 2.3.3, Altair 6.3.0 and boto3 1.44.0. PyUtil's expected `.venv/bin/python`
+is unavailable despite the environment directory/config existing. Its declared
+Python range excludes 3.13; no interpreter substitution or environment repair.
+`dotnet` is not on PATH; no managed build/discovery/runtime gate was attempted.
+
+HostActivity, from its project directory:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 TMPDIR=/tmp/opencode \
+  .venv/bin/python -B -m unittest discover -s tests -t . -p 'test_*.py'
+```
+
+The command ran through a stdlib subprocess wrapper with a 119-second deadline
+and private temporary report. **59 tests passed in 6.535 s**, exit 0; no skips.
+This is fresh destination evidence for the affected synthetic app slice, not a
+new sensor or real-Parquet check. Existing non-failing Streamlit warnings remain
+in the private report; no failures were suppressed.
+
+Wintap, from its repository root:
+
+```sh
+env PYTHONDONTWRITEBYTECODE=1 TMPDIR=/tmp/opencode \
+  python3 -m unittest discover -s devtools -p test_event_name_contracts.py
+```
+
+**7 tests passed in 0.002 s**, exit 0. This selection parses supplied strings,
+not the live sensor tree or a running collector. It does not validate the five
+relocated C# classes, Windows filtering or their 77/84 lexical expectations.
+
+### Existing Dataset — Bounded Read-Only Probe
+
+The human's relative path resolves under PyUtil:
+`../Wintap-PyUtil/data/wintap-analysis/rhel8/`, containing `raw_sensor/` and
+`duckdb/wintap.duckdb`. The local **raw directory has zero entries**. No broader
+dataset search, download, sync or raw-Parquet query followed that finding.
+
+A one-off `python -B -c` probe used the existing DuckDB 1.5.6 interpreter, with:
+
+- `duckdb.connect(<existing-db>, read_only=True)`; missing DB/WAL checked first.
+- External access, extension autoload and extension installation disabled;
+  256 MB memory, one thread, no disk spill; 15-second interrupt timer and
+  120-second command ceiling.
+- `SELECT 1`; catalog query limited to 33 objects to detect a 32-object cap;
+  `DESCRIBE` and `SELECT 1 ... LIMIT 128` on one process-related base table.
+  No view, stored macro, raw row value, full-table count or join executed/printed.
+
+| Observation | Result / limit |
+|---|---|
+| Read-only DB open and engine query | Passed with DuckDB 1.5.6. |
+| Catalog | 24 objects: 14 base tables, 10 views; views not executed. |
+| One selected base-table schema/sample | 6 columns, 0 sampled rows; readable but empty, not event evidence. |
+| Input file check | Size/mtime/inode unchanged; WAL absent before/after. Not a full-file hash or snapshot guarantee. |
+| Probe elapsed | 0.379 s. |
+| Raw Parquet readiness | Unavailable: local raw directory empty. No schema/event validation occurred. |
+
+The empty sample is not a statement about all database tables. Database lineage,
+DBT correctness, raw/database parity, process/file/network semantics, producer
+completeness and new-fix acceptance remain untested. Stop here rather than repair
+or extensively audit the historical copy.
+
+### Next Work and Blockers
+
+The updated implementation plan selects TC-LNX-02's dependency-light opt-in smoke
+helper and synthetic negative controls as the next implementation slice. It can
+be developed without raw data or a sensor capture. PyUtil reruns require an
+approved compatible environment; raw smoke requires available authorized files;
+Windows acceptance requires its own SDK 10.0.402 runner. No S3, DBT build, collector,
+workload, source/schema edit, dataset write, install, commit or push occurred.
+
+Planning checks: `git diff --check` passes; Analytics ancestor check confirms
+`0f8b414`. Stdlib checks find all required frontmatter fields on four changed
+feature pages and 420 resolving wikilinks across six changed wiki files. The
+complete diff was reviewed for unauthorized identifiers; added-content address,
+account-path and email scans report none. The private test report was read fully.
+
+## uv Readiness Follow-up — 2026-11-22
+
+At the human's request, tried uv rather than assuming the missing PyUtil executable
+meant a compatible Python was unavailable. `uv --version` reports **0.13.5**;
+`uv python list --only-installed` finds installed **3.12.15** and **3.11.13**, both
+within PyUtil's declared range, as well as the previously observed interpreters.
+
+From PyUtil, with downloads disabled:
+
+```sh
+UV_PYTHON_DOWNLOADS=never PYTHONDONTWRITEBYTECODE=1 \
+  uv run --locked --offline --no-sync --dev python -B -c \
+  'import sys; print(sys.version.split()[0]); import duckdb, pytest'
+```
+
+**Blocked, exit 2:** uv selected Python 3.12.15, then attempted to recreate the
+existing project environment and encountered permission denial at `.venv/lib`.
+The Python/import check did not execute. No retry, deletion, ownership/permission
+change, download or dependency installation followed. `--no-sync` is not a
+guarantee that uv leaves an unusable interpreter environment untouched.
+
+Separate `uv run --no-project --offline --no-sync --python <installed-python>`
+checks successfully launch Python 3.12.15 and 3.11.13. Both lack `duckdb`, `pytest`,
+`jinja2`, `yaml` and `dynaconf` by `importlib.util.find_spec`; no modules installed.
+uv warns that `--no-sync` has no effect with `--no-project`; no dependency requests
+were supplied. PyUtil's tracked status and unrelated untracked artifacts remain
+unchanged; no claim is made about unfrozen ignored environment internals.
+
+The blocker is now **project environment/dependencies**, not availability of a
+compatible Python. Proposed next step: separately approved isolated uv environment
+under `/tmp/opencode/`, using the existing lockfile and installed Python 3.12;
+leave the old `.venv` untouched, then run the documented bounded PyUtil checks.
+
+## Isolated uv Environment and PyUtil Destination Gate — 2026-11-22
+
+The human approved a separate environment under `/tmp/opencode/`, using the
+existing lockfile and leaving PyUtil's unusable `.venv` alone. The environment
+uses installed Python **3.12.15**, DuckDB **1.5.6**, pytest **9.1.1**, Jinja2
+**3.1.6** and Dynaconf **3.3.5**. Provisioning was offline from cached packages;
+no Python download, dependency upgrade, editable project install, lockfile change,
+repository source/test edit or dataset access.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — approve isolated uv environment and bounded PyUtil tests. -->
+
+Provisioning command, from PyUtil (generic temporary environment path):
+
+```sh
+UV_PROJECT_ENVIRONMENT=<private-temp>/venv UV_PYTHON_DOWNLOADS=never \
+  uv sync --locked --offline --python /usr/bin/python3.12 --dev \
+  --no-install-project --link-mode symlink
+```
+
+The first attempt without `--link-mode symlink` fell back to copies across
+filesystems and failed with no space left on the root filesystem. It created
+about 477 MiB of partial temporary files. Removed **only this session's newly
+created temporary venv**, not the old environment/cache or any system/user data.
+The symlink retry installed 171 locked packages in 1.14 s with about 6.7 MiB of
+environment metadata. Approximately 468 MiB of root space remained at readback;
+do not use this as permission for large temporary artifacts. Cache symlinks make
+this a local, cache-dependent environment, not a portable transfer artifact.
+
+### Isolation and Identity Comparison
+
+A one-off checker reconstructed the five original test files from `564ec43^` in
+temporary storage, with symlinks to the unchanged current production SQL/package
+sources. It verified exact source-body equality after removing only the added
+module-marker lines, then ran pre/post collection in separate subprocesses.
+Assertions, fixtures, parameters and production code were not modified.
+
+Execution used a clean temporary working directory to avoid loading private
+`wintappy_settings.toml`; any `WINTAPPY_*` variables were removed from child
+environments. Explicit source `PYTHONPATH`, `-c <pyutil-root>/pyproject.toml`,
+`--rootdir <selected-tree>`, `--strict-markers`, disabled external pytest plugin
+autoload and `-p no:cacheprovider` kept the run small and isolated. Bytecode writes
+were disabled. Each subprocess had a 119-second ceiling; no broad collection.
+
+The first checker attempt collected 224 cases on both sides but omitted an
+explicit baseline rootdir, causing pytest to display pathless snapshot identities.
+The identity parser correctly refused that evidence before executing tests.
+Preserved those reports; fixed only the temporary runner's rootdir and reran into
+separate reports. This was a checker failure, not lost test coverage or a test fix.
+
+### Results
+
+| Gate | Result |
+|---|---|
+| Original five-module collection | 224 collected, 0.52 s. |
+| Current five-module collection | 224 collected, 0.53 s; all normalized identities identical, no duplicates. |
+| Unit marker collection | 4 selected / 220 deselected, 0.52 s. |
+| Contract marker collection | 220 selected / 4 deselected, 0.53 s; disjoint union equals all 224 identities. |
+| Documented representative execution | **17 passed**, 3.45 s, exit 0; no skips/failures. |
+| Test/source/dependency freeze | All 375 checked inputs unchanged; includes selected tests, SQL sources, config/package entry points, lockfile and project manifest. |
+
+Per-module collection is configuration **4**, FILETIME SQL **127**, network SQL
+**76**, process-gold SQL **8**, SELinux SQL **9**. The 17-case selection is the
+existing verification command's configuration and representative consumer nodes,
+using the isolated interpreter and working-directory controls above. Private
+identity/hash manifests and original/corrected reports remain temporary, not wiki
+source copies or destination prerequisites. The complete execution report and
+collection/partition manifests were reviewed.
+
+PyUtil's tracked status and unrelated untracked data/config artifacts are
+unchanged; lockfile/project git hashes equal their pre-provisioning values. The
+old `.venv` received no further repair attempt. TC-LNX-01's selected Linux gate
+is closed; **224 collected is not 224 executed passes**. Windows managed execution,
+real raw reads, fresh sensor captures, broader suites and DBT/S3 remain open.
+
+## First Sensor-Fix Batch Source Qualification — 2026-11-22
+
+The uncommitted Wintap candidate on
+`feature/implement-sensor-fixes-and-cleanup-test-code` combines:
+
+- `sfx-01` Linux executable-name repair and normal-ETL selected-name projection;
+- additive process observation UTC/raw-monotonic/clock/run fields plus propagated
+  envelope `ReceiveTime`, without changing birth `EventTime` or `PID_HASH`; and
+- UTC-aligned periodic Linux/Windows Refresh, enabled by default hourly at `HH:05`,
+  with missed-tick/overlap suppression and disposal synchronization.
+
+Windows scheduling starts only after startup bootstrap/replay/snapshot-delta has
+been attempted and periodic inventory never clears or reconciles startup state.
+Linux scheduling starts after successful rundown. Full `EventTime` migration,
+argv/lifecycle redesign, historical repair and PyUtil changes remain deferred.
+<!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs; ../wintap/wintap/core/infrastructure/PeriodicProcessRefreshScheduler.cs; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs -->
+
+All build, scratch, log and result files for this batch are outside Git under
+`/data/lintap-compactor/sensor-fixes/sfx-batch-20261122/`. SDK 10.0.402 was invoked
+explicitly.
+
+| Gate | Result |
+|---|---|
+| Pre-live focused Linux/synthetic suite | **63 passed / 0 failed / 0 skipped** (`lintap-focused-final.trx`). |
+| Preserved earlier focused results | 60/3, then 62/1; retained as non-acceptance evidence before the final fix. |
+| New Windows periodic synthetic case | **1 passed / 0 failed** (`wintap-periodic-synthetic.trx`) on Linux. |
+| Authorized bounded Linux `live-01` | All three process sensors registered; two periodic inventories began; capture and graceful shutdown completed; no gate-owned process remained. |
+| Multi-exec live assertions | **8/8** for paired clone/exec observations, stable birth/hash/run scope, complete UTC/raw timing, strict observation ordering, and executable-derived names. |
+| Stable-process Refresh assertions | Three rows retained one birth/hash/run scope and three UTC scan observations; one absent monotonic value incorrectly materialized as `0`, retaining `live-01` as defect evidence. |
+| Post-live direct-Parquet repair | Focused observation tests **8/8** and expanded Linux/synthetic suite **65/65** (`lintap-focused-after-live-repair.trx`). |
+| Repaired-binary Linux `live-02` | **18/18** aggregate acceptance checks pass; all three sensors registered, two periodic inventories completed, graceful shutdown completed, and no gate-owned process remained. |
+| Repaired timing output | All 1,312 Refresh rows have userspace UTC and null monotonic timing; all 4,988 Start rows have UTC and nonzero kernel-monotonic timing. Stable anchor is 3/3 null, never numeric zero; multi-exec remains 8/8 across all six gates. |
+| Per-file direct schema | Both timing fields are optional `INT64`/`BIGINT` in **124/124** Parquet files; no active/zero-byte output, error/fatal/drop/backlog entry, or artifact hash change was found. |
+| Repeat stress | Linux/synthetic suite **1,300/1,300** across 20 isolated runs; Linux-hosted Windows periodic synthetic contract **30/30** across isolated runs. |
+| Repaired Linux non-incremental Release build | 0 errors / 173 warnings. |
+| Windows-targeted non-incremental Release cross-build | 0 errors / 87 warnings with `EnableWindowsTargeting=true`; compile evidence only. |
+| Broader Linux-hosted `Category=wpc-10` | 103 passed / 13 failed of 116; **not acceptance evidence**. Nine failures are replay-overlap identity expectations, three are other replay/lifecycle expectations, and one is unsupported Windows SID functionality on Linux. |
+| Source checks | `git diff --check` passes; full tracked/new-file scope and privacy review completed. |
+
+The focused tests cover name evidence and ETL projection, sub-FILETIME raw
+ordering, honest UTC-conversion failure, repeated Refresh identity/scan timing,
+normal/direct Parquet projection, null-first/populated-first schema stability,
+UTC boundary/custom interval/disabled scheduling, overlap suppression and shutdown
+waiting. Synthetic identifiers only are present in Git-bound additions. Generated
+TRX runner identifiers remain in the external evidence root and were not copied
+into persistent documentation.
+
+The separately authorized `live-01` gate read 5,254 process rows from its isolated
+direct-Parquet output. It loaded only process rundown/exec/clone, used a local
+synthetic workload, and performed no network, S3, or DBT activity. The retained
+defect showed that a null Refresh monotonic value could become numeric `0` when a
+kernel-timed row established the batch schema. The repair keeps absent direct
+timing keys and recognizes both normal and `Process_`-prefixed nullable timing
+fields during schema inference.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/DirectParquetSink.cs §DirectParquetProjection; ../wintap/wintap/core/etl/load/ParquetWriter.cs §DetermineSchemaFromExpando; ../wintap/tests/Lintap.Tests/ProcessObservationTimingTests.cs -->
+
+Bounded Linux acceptance is complete: `live-01` remains immutable defect evidence
+and `live-02` is the repaired-output evidence. Native Windows SDK 10.0.402 execution
+remains open; Linux acceptance does not substitute for that platform gate or imply
+deployment/historical repair. No commit or push occurred. Full details:
+`../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md`.

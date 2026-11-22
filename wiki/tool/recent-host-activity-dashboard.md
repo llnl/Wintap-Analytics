@@ -36,6 +36,10 @@ tags: [host-activity, streamlit, duckdb, s3, raw_sensor, read-only]
 
 # Recent Host Activity Dashboard
 
+App-role comparison: [[wiki/tool/streamlit-app-review]] — activity/availability
+diagnostics complement SmokeTests validation and do not replace legacy graph or
+lifecycle exploration. The comparison is source-only, not a new runtime gate.
+
 Standalone, manually refreshed Streamlit application for a quick view of the
 last 12 hours of Wintap `raw_sensor` file activity. The default metadata mode
 reports S3 object counts and sizes by host over filename collect time without

@@ -18,9 +18,14 @@ grounded_by:
   - ../wintap/shared/WintapAPI/WintapMessage.cs
   - ../wintap/wintap/core/etl/extract/ProcessSerializer.cs
   - ../wintap/wintap/core/etl/model/ProcessObjectModel.cs
+  - ../wintap/wintap/core/infrastructure/PeriodicProcessRefreshScheduler.cs
+  - ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs
+  - ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs
+  - ../wintap/tests/Lintap.Tests/ProcessObservationTimingTests.cs
+  - ../wintap/tests/Lintap.Tests/PeriodicProcessRefreshSchedulerTests.cs
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
-last_validated: 2026-10-26
+last_validated: 2026-11-22
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: process
@@ -80,6 +85,16 @@ decorating CommandLine. Validation scope and remaining risks:
 [[wiki/work/improve-lintap-data-quality/clone-validation-results]].
 <!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/ProcessResolver.cs §UpsertProcessStart; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent -->
 
+The current uncommitted sensor-fix candidate selects Linux process names from
+resolved executable evidence, otherwise observed `comm`, otherwise `unknown`.
+An unresolved `/proc/<pid>/exe` alias is not executable evidence, and producers
+do not infer paths from flattened command lines. A real executable named `exe`,
+case and embedded spaces remain valid. Focused synthetic/ETL coverage passes;
+bounded Linux `live-01` executable-name evidence passed all 8/8 multi-exec cases.
+Historical affected-row lineage remains open, and the repaired binary still needs
+a fresh capture for the independent direct-Parquet timing gate.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcessSensorHelper.cs; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs -->
+
 Process events are normalized as `WintapMessage` records with `MessageType = Process` and a nested `ProcessObject` containing process identity, parent identity, path, command line, user, exit/resource fields, and hashes. The schema and the PidHash formula (PID + create-time FileTime) were unchanged by the 2026-08 collection overhaul — all improvements below are population-rate and correctness improvements of existing fields.
 <!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject -->
 
@@ -95,10 +110,23 @@ Real-time lifecycle comes from classic NT Kernel Logger ProcessStart/ProcessStop
 The **ETW ProcessStart timestamp is canonical** for live Start create time and therefore for `PidHash` — no per-Start `OpenProcess`/`GetProcessTimes` handle lookup (Architect decision 2026-08-17; ETW has been Wintap's process-start ground truth for over a decade). Stops resolve identity through `ProcessResolver` (the sole hot-path identity store — no sensor-owned PID map); resolver misses are counted. The `pid-v2` patch replaces the earlier hash-from-stop-time fallback with the explicit unknown identity: Stop time is not process-start time.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §EmitStart; §EmitStop -->
 
-### Refresh — live snapshot with dedup
+### Refresh — startup reconciliation and periodic inventory
 
-At startup the sensor preserves the `ClearProcessDB()`-then-Refresh contract, then emits Refresh events from a live process snapshot with exact create times (`GetProcessTimes`), oldest-first with parents before children, seeding the same synthetic system processes as before. Start-vs-Refresh duplicates are suppressed by resolver-backed PID + create-time-tolerance dedup (Start wins).
-<!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §InitializeSnapshotRefresh -->
+At startup the Windows sensor preserves its bootstrap/replay/snapshot-delta
+reconciliation contract. Snapshot Refresh uses exact create times
+(`GetProcessTimes`), oldest-first with parents before children; startup
+Start-vs-Refresh duplicates are suppressed by resolver-backed PID plus
+create-time-tolerance dedup (Start wins).
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §InitializeStartupBootstrap/InitializeSnapshotDelta -->
+
+The uncommitted periodic candidate starts scheduling only after that startup
+attempt. Linux starts scheduling after startup rundown succeeds. A shared
+UTC-aligned one-shot scheduler defaults to hourly `HH:05`, skips missed ticks and
+overlaps, and waits for an active inventory on disposal. Periodic Windows
+inventory emits current live instances without clearing or reconciling startup
+state. Configuration keys are `ProcessRefreshEnabled`,
+`ProcessRefreshIntervalMinutes`, and `ProcessRefreshOffsetMinutes`.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/infrastructure/PeriodicProcessRefreshScheduler.cs; ../wintap/wintap/platform/windows/infrastructure/WindowsSubscriptionManager.cs; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §StartPeriodicRefresh/RunPeriodicRefreshSnapshot; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §Start/RunSnapshot -->
 
 This replaced the old since-boot Security-log tree reconstruction; the log-wrap "reboot required" failure mode is gone.
 
@@ -148,22 +176,46 @@ timestamps, CommandLine and Stop projection are unchanged. Older parquet without
 the column remains unknown unless an actual Arguments breadcrumb is present.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §ApplyStartProvenance, handleStartEvent; ../wintap/wintap/core/etl/model/ProcessObjectModel.cs §ProcessStartSource; ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs -->
 
+The uncommitted additive timing candidate preserves canonical birth in
+`EventTime`/`StartTime` and adds `ObservationTimeFileTimeUtc`,
+`ObservationTimeMonotonicNanoseconds`, `ObservationClockDomain`,
+`ObservationRunId`, plus the existing envelope `ReceiveTime`, to normal process
+ETL. Linux exec/clone retain raw `bpf_ktime_get_ns()`; failed UTC conversion leaves
+UTC absent. Refresh rows use userspace UTC scan start and have no kernel monotonic
+value. Optional numeric Parquet fields have a stable nullable `long` schema
+independent of first-row population. Direct Parquet also carries `ReceiveTime` and
+the nested process fields through its scalar projection. The bounded Linux
+`live-01` run found that an absent Refresh monotonic value could materialize as
+numeric `0` when a kernel-timed row led the direct batch. The repaired projection
+retains absent timing keys, and schema inference explicitly recognizes both normal
+and `Process_`-prefixed timing fields; synthetic first-row-order regressions pass.
+<!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject; ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs §ApplyKernelProcessObservation; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent; ../wintap/wintap/core/etl/load/ParquetWriter.cs §DetermineSchemaFromExpando; ../wintap/wintap/core/etl/load/DirectParquetSink.cs §DirectParquetProjection -->
+
 ## Analysis Implications
 
 - Process lineage is keyed by `PidHash`/`ParentPidHash`, not PID alone; PID reuse is handled by mixing PID with create time and by `ProcessResolver`'s time-windowed instance resolution.
 - Create times are true ETW/process create times, not event-log record times — cross-source joins on PidHash are more stable than under the Security-log era.
 - Security-log retention/log-wrap no longer matters for process telemetry, and hosts with audit policy disabled now produce full process telemetry.
 - Stop records are first-class again (coverage restored), with resource metrics best-effort per the correlation-window semantics above — treat metric-defaulted stops (`manifest_metric_misses`) as valid terminations, not data errors.
+- Compare raw monotonic observation nanoseconds only within their capture-run and
+  clock domain. They preserve producer ordering evidence but do not guarantee
+  nanosecond accuracy or replace birth-based identity.
+- Treat numeric `0` from `live-01` as retained serialization-defect evidence, not
+  a valid userspace Refresh monotonic timestamp. Repaired-binary `live-02` confirms
+  all 1,312 Refresh rows remain null while all 4,988 kernel-timed Start rows remain
+  populated and nonzero; both fields are optional in all 124 Parquet files.
 
 See also [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]], [[wiki/workflow/future-experiment-analysis-workflows]], and [[wiki/repo/wintappy-pipeline-repo]] (downstream `process`/`process_summary`/`process_uber_summary` DBT models).
 
 ### Refresh is context, not a new creation (2026-11-12)
 
-The inspected Linux rundown emits Refresh at canonical birth time; Windows
-startup snapshot dedup can suppress known nonsynthetic instances. A restart or
-repeated inventory therefore does not guarantee complete historical republication.
-Live-only inventory also cannot recover exited ancestors with surviving descendants.
-<!-- GROUND_TRUTH: ../Wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §Start/CreateRefreshMessage; ../Wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §InitializeSnapshotRefresh -->
+Linux and Windows Refresh continue to use canonical process birth as `EventTime`;
+the additive observation fields identify when each inventory scan began. Repeated
+periodic rows are therefore repeated context observations of the same identity,
+not new births. Live-only inventory still cannot recover exited ancestors with
+surviving descendants, and startup dedup/reconciliation remains distinct from
+periodic republication.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §RunSnapshot/CreateRefreshMessage; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §RunPeriodicRefreshSnapshot/CreateRefreshMessage -->
 
 Current downstream `num_process_start` counts Start **and** Refresh observations;
 it must not be interpreted as distinct new creations when evaluating refresh noise.
