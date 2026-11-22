@@ -14,6 +14,8 @@ grounded_by:
   - ../wintap/devtools/test_event_name_contracts.py
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md
   - ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md
+  - validation/dataset-smoke/README.md
+  - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
 last_validated: 2026-11-22
 repo_scope: cross-repo
@@ -21,7 +23,7 @@ implementation_area: analytics
 event_domain: cross-domain
 audience: mixed
 status: draft
-source_paths: streamlit/projects/HostActivity; ../Wintap-PyUtil/tests; wiki/work/implement-sensor-fixes-and-cleanup-test-code
+source_paths: streamlit/projects/HostActivity; streamlit/projects/SmokeTests/tests; validation/dataset-smoke; ../Wintap-PyUtil/tests; wiki/work/implement-sensor-fixes-and-cleanup-test-code
 tags: [feature-work, testing, test-organization, iterative-development, verification]
 ---
 
@@ -183,7 +185,7 @@ streamlit/projects/HostActivity/.venv/bin/python -B -m unittest discover \
   -s validation/dataset-smoke -p test_smoke_dataset.py
 ```
 
-Proposed opt-in command (flags to be implemented; not an existing interface):
+Accepted opt-in command:
 
 ```sh
 streamlit/projects/HostActivity/.venv/bin/python -B \
@@ -194,8 +196,9 @@ streamlit/projects/HostActivity/.venv/bin/python -B \
 
 **Acceptance:** synthetic positive/negative controls pass and the bounded CLI
 reports the current snapshot honestly. Raw-empty status does not block helper
-development, but the real-Parquet smoke remains open until files are available.
-No manifestless sensor-completeness assertion is added.
+development. The RHEL path was a one-time existing sample to bootstrap readiness
+work; it will not be populated and is not a recurring raw-data gate. No
+manifestless sensor-completeness assertion is added.
 
 ### TC-LNX-03 — Next Mechanical Cleanup Slice, Without Waiting for Data
 
@@ -433,10 +436,12 @@ with explicit environments and budgets, not prerequisites for every draft iterat
   two periodic inventories, and retained direct-Parquet null defect evidence.
 - [x] TC-05 first repair: direct projection/schema null handling repaired and
   covered in both first-row orders; focused observation tests pass 8/8.
-- [ ] TC-LNX-02: opt-in read-only smoke helper and synthetic refusal/budget controls.
-- [ ] TC-LNX-02 real raw input: bounded Parquet read when authorized files are available;
-  current local raw directory is empty.
-- [ ] TC-LNX-03: next small Analytics cleanup slice with pre/post discovery proof.
+- [x] TC-LNX-02: opt-in read-only smoke helper and 18 synthetic refusal/budget
+  controls pass; the existing database is readable without observed file change.
+- [x] TC-LNX-02 sample disposition: the existing RHEL sample was read once, its raw
+  directory is empty by design, and no future raw-file arrival is expected or gated.
+- [x] TC-LNX-03 first slice: SmokeTests query/quality modules moved whole into
+  `tests/contract`; 34/34 pass before/after with identical normalized identities.
 - [x] TC-LNX-04: repaired `live-02` capture checked with 18/18 aggregate assertions
   and per-file nullable timing-schema coverage.
 - [ ] Wintap extension: native Windows baseline/discovery/filtering and focused
@@ -448,6 +453,8 @@ with explicit environments and budgets, not prerequisites for every draft iterat
   capture/validation hashes recorded outside Git.
 - [x] TC-05 first sensor round: `live-01` defect, narrow repair, repeat stress and
   repaired `live-02` acceptance recorded.
+- [x] TC-06 first SmokeTests slice: query/quality contract inventory and focused
+  command documented; HTTP, S3, persistence, analysis and UI modules remain separate.
 - [ ] TC-06: remaining organization slices completed with scoped discovery proof.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
   gates and unresolved limitations recorded; durable facts promoted to canonical pages.

@@ -15,6 +15,8 @@ grounded_by:
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis.md
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan.md
   - ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md
+  - validation/dataset-smoke/smoke_dataset.py
+  - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
 last_validated: 2026-11-22
 repo_scope: cross-repo
@@ -22,7 +24,7 @@ implementation_area: analytics
 event_domain: cross-domain
 audience: mixed
 status: draft
-source_paths: streamlit/projects/HostActivity/tests; ../Wintap-PyUtil/tests; wiki/work/implement-sensor-fixes-and-cleanup-test-code
+source_paths: streamlit/projects/HostActivity/tests; streamlit/projects/SmokeTests/tests; validation/dataset-smoke; ../Wintap-PyUtil/tests; wiki/work/implement-sensor-fixes-and-cleanup-test-code
 tags: [feature-work, testing, test-organization, verification, iterative-development]
 ---
 
@@ -475,8 +477,79 @@ collection/partition manifests were reviewed.
 PyUtil's tracked status and unrelated untracked data/config artifacts are
 unchanged; lockfile/project git hashes equal their pre-provisioning values. The
 old `.venv` received no further repair attempt. TC-LNX-01's selected Linux gate
-is closed; **224 collected is not 224 executed passes**. Windows managed execution,
-real raw reads, fresh sensor captures, broader suites and DBT/S3 remain open.
+is closed; **224 collected is not 224 executed passes**. At that checkpoint no raw
+read, broader suite or DBT/S3 operation was performed. The RHEL path was later
+confirmed as a one-time readiness sample, not a future raw-data acceptance gate.
+
+## Bounded Dataset Readiness Helper — 2026-11-22
+
+Implemented the explicit, opt-in TC-LNX-02 helper in
+`validation/dataset-smoke/`. It requires a local dataset root and an existing
+contained database, reports raw and database readiness independently, emits only
+sanitized statuses/counts, and has no persistence output. Raw discovery is bounded
+to 128 entries and one hour partition; selection is capped at three 32 MiB files
+and 128 constant sample rows per file. Database access is read-only with external
+access, automatic extension loading/installation and disk spill disabled; catalog,
+memory, thread and query budgets are fixed. Stored views/macros are catalogued but
+never executed.
+<!-- GROUND_TRUTH: validation/dataset-smoke/smoke_dataset.py; validation/dataset-smoke/README.md -->
+
+The synthetic command used the existing HostActivity DuckDB 1.5.6 interpreter,
+an approved `/data` temporary root and a 120-second process timeout. **18/18**
+controls pass in 2.484 seconds. They cover known readable/empty fixtures,
+independent missing database/raw states, corrupt Parquet, external view/macro
+non-execution, WAL refusal, escaping local paths and remote URLs, unchanged inputs,
+sanitized output, explicit-hour/family/row selection, and shared command plus
+discovery/file/catalog/query budgets.
+Default discovery references synthetic fixtures only.
+<!-- GROUND_TRUTH: validation/dataset-smoke/test_smoke_dataset.py -->
+
+The separately invoked helper reported the authorized RHEL snapshot honestly:
+
+| Input | Bounded result |
+|---|---|
+| Raw Parquet | `empty`: zero finalized files selected; process, file and network explicitly missing. |
+| Built DuckDB | `readable`: 24 catalog objects, 14 base tables, 28 inspected columns and 5 constant sample rows from one deterministic base table. |
+| Mutation check | Database size, mtime and SHA-256 unchanged before/after; no WAL was present. |
+
+Private command logs and hashes remain outside Git under the approved sensor-fix
+evidence root. The empty raw result is not event evidence. The human confirmed this
+was strictly an existing sample directory used to bootstrap implementation; it
+will not be updated, and no future raw-Parquet read from it is required. The
+database sample does not
+claim sensor completeness, DBT correctness, raw/database parity, data quality or
+historical repair. No network, S3, DBT, deployment, dependency installation or
+dataset mutation occurred.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — the existing RHEL sample directory will not be updated and must not remain an acceptance gate. -->
+
+## SmokeTests Query/Quality Mechanical Slice — 2026-11-22
+
+Completed the first TC-LNX-03/TC-06 SmokeTests slice. The two complete offline
+query/quality modules moved from the project root into
+`streamlit/projects/SmokeTests/tests/contract/`; package markers and a focused
+inventory/command README were added. The project README now points to that focused
+34-case command. No assertion, fixture, test/class name, production query, package
+dependency or project-wide default command changed. Root-level analysis,
+persistence, S3, HTTP and Streamlit app/page modules remain untouched.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_queries.py; streamlit/projects/SmokeTests/tests/contract/test_quality.py -->
+
+The bounded before/after command used the existing DuckDB 1.5.6-capable
+HostActivity interpreter only for these dependency-light modules, with temporary
+files and logs under `/data` and a 120-second ceiling. This was not a SmokeTests
+project environment or full-project execution; no environment was provisioned.
+
+| Gate | Before | After |
+|---|---:|---:|
+| Focused execution | **34 passed**, 2.920 s | **34 passed**, 2.629 s |
+| Selected identities | 34 unique | 34 unique; normalized set/order identical |
+| Duplicate selected identities | 0 | 0 |
+| Moved bodies and `queries.py` | Frozen SHA-256 | Byte-for-byte identical |
+
+Focused legacy project-root discovery also finds the 34 moved cases exactly once;
+there are no forwarding copies. Full SmokeTests discovery/execution still requires
+a separately approved compatible project environment. No network, private dataset,
+collector, S3, DBT, dependency installation, assertion weakening, commit or push
+occurred.
 
 ## First Sensor-Fix Batch Source Qualification — 2026-11-22
 

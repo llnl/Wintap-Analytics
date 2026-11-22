@@ -308,6 +308,16 @@ observations are not original dev-time harness re-validation or historical-loss 
 python3 -m unittest discover -s streamlit/projects/SmokeTests -p 'test_*.py' -v
 ```
 
+The mechanically classified offline query/quality slice can be run separately
+from the SmokeTests project directory:
+
+```bash
+python -m unittest discover -s tests -t . -p 'test_*.py' -v
+```
+
+See `tests/README.md` for its 34-case inventory. Root-level analysis, persistence,
+S3/HTTP and Streamlit app/page tests remain outside that focused slice.
+
 Tests exercise empty UI, repeated run selection, uploaded portable manifests,
 host/PID/path/time isolation, timestamp formats, normal and direct schemas, and
 exact HOST receipt matching, plus live-producer parquet schema, revision/conflict/

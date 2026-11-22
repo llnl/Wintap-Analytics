@@ -50,12 +50,14 @@ below preserve the transfer checkpoint; use the current tranche for test next st
 
 Destination checks pass 59 HostActivity/7 stdlib parser controls. The authorized
 RHEL dataset is under PyUtil's `data/wintap-analysis/rhel8/`; DB read-only readiness
-passes, but the local raw directory is empty. A subsequently approved isolated uv
+passes, and its empty raw directory is a final one-time sample result rather than a
+future gate. A subsequently approved isolated uv
 environment now passes 17 PyUtil cases and preserves all 224 selected identities
 (4 unit / 220 contract); its old `.venv` remains unusable and untouched. Windows
-managed acceptance remains deferred. Next implementation:
-small opt-in read-only smoke helper with synthetic negative controls, then bounded
-test cleanup. See the verification record; no helper or new sensor check exists yet.
+managed acceptance remains deferred. The opt-in helper and first bounded
+SmokeTests query/quality cleanup slice are implemented; see the verification record
+before selecting another mechanical slice.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — the RHEL sample will not be updated; do not wait for raw files there. -->
 
 ## Test-Cleanup Copy/Paste Prompt
 

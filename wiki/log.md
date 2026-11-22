@@ -9477,3 +9477,53 @@ executions. `live-01` remains immutable defect evidence; bounded Linux acceptanc
 is complete and native Windows remains open. Raw telemetry and identifiers remain
 outside Git. No network, S3, DBT, commit or push occurred.
 <!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md; ../wintap/wintap/core/etl/load/DirectParquetSink.cs; ../wintap/wintap/core/etl/load/ParquetWriter.cs -->
+
+## [2026-11-22] implementation/verification | bounded dataset readiness smoke
+
+Implemented TC-LNX-02 under `validation/dataset-smoke/`: an explicit local-only
+CLI, synthetic controls and usage/budget documentation. The helper independently
+reports raw and database readiness; rejects remote/escaping/missing paths and WAL;
+bounds discovery, files, rows, catalog, memory, threads and query time; opens the
+database read-only with external/automatic extension access and spill disabled;
+and never executes stored views/macros or emits names, paths, rows, SQL or exception
+details.
+
+All **18/18** synthetic controls pass with DuckDB 1.5.6. The authorized snapshot
+reports raw `empty` with zero files and all three preferred families missing, while
+the database reports `readable` with 24 catalog objects, 14 base tables and five
+constant sample rows from one table. Database size, mtime and hash are unchanged.
+Real raw-Parquet readiness remains open; no completeness, DBT, parity, quality or
+historical-repair claim is made. Private evidence stays under `/data`. No network,
+S3, DBT, deployment, dependency installation, dataset mutation, commit or push
+occurred.
+<!-- GROUND_TRUTH: validation/dataset-smoke/smoke_dataset.py; validation/dataset-smoke/test_smoke_dataset.py; validation/dataset-smoke/README.md -->
+
+## [2026-11-22] refactor/verification | SmokeTests query-quality slice
+
+Moved the two complete offline SmokeTests query/quality modules into a discoverable
+`tests/contract/` package and documented the focused inventory/command. All 34/34
+selected cases pass before and after (2.920/2.629 seconds); all 34 normalized
+identities match with no duplicates. SHA-256 comparison confirms both test bodies
+and `queries.py` are byte-for-byte unchanged, and focused legacy root discovery
+finds every moved case exactly once without forwarding copies.
+
+Used an existing DuckDB-capable interpreter for this dependency-light selected
+slice only; no SmokeTests environment was provisioned and no project-wide suite was
+claimed. Analysis, persistence, S3, HTTP and Streamlit app/page tests remain at the
+project root. No network, private dataset, collector, S3, DBT, dependency install,
+assertion change, commit or push occurred.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_queries.py; streamlit/projects/SmokeTests/tests/contract/test_quality.py -->
+
+## [2026-11-22] decision/scope | existing RHEL sample is not a gate
+
+The human clarified that the existing RHEL sample directory was supplied strictly
+to bootstrap readiness implementation and will not be updated. Its empty raw
+directory is therefore a completed observation, not a blocker or future
+raw-Parquet acceptance gate. The generic opt-in helper and synthetic controls
+remain useful for separately authorized datasets, but this workflow must not wait
+for files to appear in the sample path or invent a replacement dataset requirement.
+
+Updated the feature brief, implementation checklist, verification, handoff and
+index accordingly. This does not change the accepted `live-02` Linux sensor result,
+authorize another data source, or make a completeness/DBT/parity claim.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — the one-time RHEL sample will not be updated and is not a gate. -->

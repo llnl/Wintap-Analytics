@@ -1,0 +1,1 @@
+"""Discoverable SmokeTests test package."""

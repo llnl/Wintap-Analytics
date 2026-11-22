@@ -110,11 +110,12 @@ for the detailed slices, capture handoff, and validation loop, and
 
 ## Next Step
 
-The Analytics/PyUtil first draft is checked; the Wintap first slice is implemented
-with static checks only. The current Linux continuation re-establishes destination
-confidence and plans an opt-in read-only dataset-readiness helper while awaiting
-fresh captures. HostActivity passes 59 destination tests; an approved isolated uv
-environment passes 17 PyUtil cases and preserves 224 selected identities. Real raw
-reads are blocked, and Windows acceptance remains separate. Follow the
-implementation plan's TC-LNX tranche; obtain TC-03 before sensor-correctness checks.
-The sensor session should supply its scope without overwriting test round records.
+The Analytics/PyUtil first draft is checked, bounded Linux sensor acceptance is
+complete, and Windows acceptance remains separate. HostActivity passes 59
+destination tests; an approved isolated uv environment passes 17 PyUtil cases and
+preserves 224 selected identities. The read-only dataset helper passes its
+synthetic controls, and the first SmokeTests query/quality move preserves 34 cases.
+The existing RHEL path was only a one-time sample and will not receive raw files;
+its empty raw directory is not a gate. Continue later bounded cleanup slices under
+the implementation plan without inventing a replacement data requirement.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — do not retain the one-time RHEL sample as a raw-data gate. -->
