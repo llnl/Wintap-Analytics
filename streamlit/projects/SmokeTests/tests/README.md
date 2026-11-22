@@ -1,9 +1,10 @@
-# SmokeTests test inventory — query/quality slice
+# SmokeTests contract test inventory
 
 Primary class: **contract**. Execution is offline and synthetic, using temporary
-local Parquet, in-memory DuckDB and synthetic manifests/rows. This focused slice
-does not require Streamlit, Boto3, an AWS profile, a collector, a real dataset or
-network access, and it does not qualify sensor capture.
+local Parquet, in-memory DuckDB, mocked SDK objects and synthetic manifests/rows.
+It requires the installed DuckDB/Boto3 dependencies but does not require
+Streamlit, an AWS profile, a collector, a real dataset or network access, and it
+does not qualify sensor capture.
 
 ## Frozen slice (2026-11-22)
 
@@ -12,11 +13,12 @@ network access, and it does not qualify sensor capture.
 | `test_analysis.py` | 22 | Canary-round analysis, runtime context, budgets, and local/fake-S3 summary persistence. |
 | `test_queries.py` | 12 | Manifest loading, schema normalization, bounded selectors and endpoint evaluation. |
 | `test_quality.py` | 22 | Adversarial file, process-lifecycle and network quality contracts. |
-| **Total** | **56** | Whole files moved; assertions, fixtures and test names unchanged. |
+| `test_s3_source.py` | 13 | Config validation, mocked listings/connections, and transport-free local source parity. |
+| **Total** | **69** | Whole files moved; assertions, fixtures and test names unchanged. |
 
 The remaining root-level files cover the cross-repo durable producer contract,
-S3 source/HTTP behavior, and Streamlit pages/app behavior. They are intentionally
-outside these mechanical slices.
+opt-in loopback HTTP behavior, and Streamlit pages/app behavior. They are
+intentionally outside these mechanical slices.
 
 ## Commands
 

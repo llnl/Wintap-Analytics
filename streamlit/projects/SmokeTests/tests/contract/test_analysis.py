@@ -15,7 +15,7 @@ from queries import evaluate_run
 from result_store import (MAX_RESULT_BYTES, load_latest, load_result, location,
                           save_result)
 from s3_source import discover_host_files
-from test_s3_source import Paginator
+from .test_s3_source import Paginator
 
 
 def run(test='canary-process', run_id='fixture', host='fixture.example.invalid'):

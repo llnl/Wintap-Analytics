@@ -457,6 +457,8 @@ with explicit environments and budgets, not prerequisites for every draft iterat
   command documented; durable producer, S3/HTTP and UI modules remain separate.
 - [x] TC-06 second SmokeTests slice: the complete synthetic analysis/summary-store
   module moved whole; 22/22 pass before/after and the contract package passes 56/56.
+- [x] TC-06 third SmokeTests slice: synthetic S3 configuration/listing/source
+  contracts moved whole; 13/13 pass before/after and the package passes 69/69.
 - [ ] TC-06: remaining organization slices completed with scoped discovery proof.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
   gates and unresolved limitations recorded; durable facts promoted to canonical pages.

@@ -580,6 +580,36 @@ once, without a forwarding copy. No network request, live S3, collector, private
 dataset, producer execution, DBT, dependency installation, assertion change,
 commit or push occurred.
 
+## SmokeTests Synthetic S3-Source Mechanical Slice — 2026-11-22
+
+Completed the third TC-06 SmokeTests slice by moving the complete synthetic S3
+configuration/listing/source module into
+`streamlit/projects/SmokeTests/tests/contract/`. Its existing local publish helper
+continues to create only temporary synthetic Parquet. The dependent analysis test
+received one package-relative `Paginator` import adjustment. The inventory and
+project README now describe a 69-case package. The root-level durable-producer,
+opt-in loopback HTTP and Streamlit app/page test modules remain separate.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_s3_source.py; streamlit/projects/SmokeTests/tests/contract/test_analysis.py -->
+
+The before/after runs used the existing HostActivity interpreter as a bounded
+dependency control. `SMOKE_S3_HTTP_TEST` was explicitly unset, all temporary files
+and reports stayed under `/data`, and each test command had a 120-second ceiling.
+
+| Gate | Before | After |
+|---|---:|---:|
+| Synthetic S3-source module | **13 passed**, 2.561 s | **13 passed**, 1.893 s |
+| Selected identities | 13 unique | 13 unique; normalized set/order identical |
+| Duplicate selected identities | 0 | 0 |
+| Moved test body | Frozen SHA-256 | Byte-for-byte identical |
+| Four supporting source files | Frozen SHA-256 | Byte-for-byte identical |
+| Dependent analysis module | Frozen SHA-256 | Only package-relative helper import changed |
+| Classified contract package | 56 cases in prior slice | **69 passed**, 3.487 s |
+
+Focused legacy project-root discovery finds all 13 moved cases exactly once,
+without a forwarding copy. No HTTP test, socket request, live S3, AWS profile,
+private dataset, collector, durable-producer test, DBT, dependency installation,
+assertion change or push occurred.
+
 ## First Sensor-Fix Batch Source Qualification — 2026-11-22
 
 The uncommitted Wintap candidate on

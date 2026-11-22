@@ -9541,3 +9541,18 @@ durable producer contract, S3 source/HTTP tests and Streamlit app/page tests rem
 at the project root. No network, live S3, collector, private dataset, producer,
 DBT, dependency installation, assertion change, commit or push occurred.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_analysis.py -->
+
+## [2026-11-22] refactor/verification | SmokeTests synthetic S3-source slice
+
+Moved the complete 13-case synthetic S3 configuration/listing/source module into
+the SmokeTests `tests/contract/` package and changed the analysis module's helper
+import to its package-relative path. The selected module passes 13/13 before and
+after (2.561/1.893 seconds); normalized identities match without duplicates, the
+moved test is byte-identical, and four supporting source files are unchanged.
+The full classified package passes **69/69** in 3.487 seconds.
+
+The opt-in HTTP variable was explicitly unset, and legacy root discovery finds
+the moved cases exactly once. No HTTP test, network request, live S3, AWS profile,
+private dataset, collector, durable-producer test, DBT, dependency installation,
+assertion change or push occurred. Private hashes and logs remain under `/data`.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_s3_source.py; streamlit/projects/SmokeTests/tests/contract/test_analysis.py -->

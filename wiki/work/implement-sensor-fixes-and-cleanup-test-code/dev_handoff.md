@@ -56,8 +56,10 @@ environment now passes 17 PyUtil cases and preserves all 224 selected identities
 (4 unit / 220 contract); its old `.venv` remains unusable and untouched. Windows
 managed acceptance remains deferred. The opt-in helper and first bounded
 SmokeTests query/quality cleanup slice are implemented. A second whole-file move
-adds analysis/store controls; the classified package passes 56 cases. See the
-verification record before selecting another mechanical slice.
+adds analysis/store controls, and a third adds mocked, transport-free S3 source
+contracts; the classified package passes 69 cases. Loopback HTTP, durable-producer
+and UI tests remain separate. See the verification record before selecting another
+mechanical slice.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — the RHEL sample will not be updated; do not wait for raw files there. -->
 
 ## Test-Cleanup Copy/Paste Prompt
