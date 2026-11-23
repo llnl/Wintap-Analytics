@@ -24,6 +24,7 @@ grounded_by:
   - ../wintap/tests/Lintap.Tests/ProcessObservationTimingTests.cs
   - ../wintap/tests/Lintap.Tests/PeriodicProcessRefreshSchedulerTests.cs
   - ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs
+  - ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
 last_validated: 2026-11-22
@@ -104,6 +105,15 @@ observation, and clone never substitutes parent text for missing/empty child dat
 These fields describe observation quality, not immutable syscall-entry argv or
 successful image replacement.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs §ReadCommandLineFile; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §SelectCommandLineMetadata; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §CreateRefreshMessage -->
+
+Linux exec rows now distinguish request from installed image explicitly.
+`ExecutionObservationKind=exec_attempt` marks execve/execveat syscall entry and
+does not assert an outcome. `exec_success` marks `sched_process_exec`, which is
+emitted after successful image installation. Clone, Refresh and unsupported
+producers leave the field null. Both remain existing Start observations under one
+birth-based identity; the field does not create a new lifecycle or executable
+selection policy.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §GetExecutionObservationKind, HandleEvent; ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject -->
 
 Process events are normalized as `WintapMessage` records with `MessageType = Process` and a nested `ProcessObject` containing process identity, parent identity, path, command line, user, exit/resource fields, and hashes. The schema and the PidHash formula (PID + create-time FileTime) were unchanged by the 2026-08 collection overhaul — all improvements below are population-rate and correctness improvements of existing fields.
 <!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject -->
@@ -208,6 +218,13 @@ Linux gate found both fields in all 113 files and preserved all 24 deliberately
 empty child observations without parent text.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent; ../wintap/wintap/core/etl/model/ProcessObjectModel.cs §ProcessStartData; ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs -->
 
+Normal ETL also persists `ExecutionObservationKind`. Direct Parquet retains a
+stable optional `Process_ExecutionObservationKind` column even when a null
+clone/Refresh row establishes the batch schema. The bounded gate found the field
+in all 98 files and exact fork → attempt → success → attempt → success ordering in
+all eight repeated-exec controls.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent; ../wintap/wintap/core/etl/load/DirectParquetSink.cs §AddScalarProperties; ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs -->
+
 ## Analysis Implications
 
 - Process lineage is keyed by `PidHash`/`ParentPidHash`, not PID alone; PID reuse is handled by mixing PID with create time and by `ProcessResolver`'s time-windowed instance resolution.
@@ -225,6 +242,9 @@ empty child observations without parent text.
   `unavailable` or `read-error` rows from parent/neighbor events, and do not parse
   the flattened string as executable path evidence. Process-lifetime DBT selection
   remains a separate unresolved contract.
+- Filter executable success using `ExecutionObservationKind=exec_success`, not
+  `ActivityType=Start` alone. Preserve attempts as intent evidence, keep name/path
+  from the same row, and do not infer a process-lifetime initial/latest policy.
 
 See also [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]], [[wiki/workflow/future-experiment-analysis-workflows]], and [[wiki/repo/wintappy-pipeline-repo]] (downstream `process`/`process_summary`/`process_uber_summary` DBT models).
 

@@ -15,6 +15,7 @@ grounded_by:
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md
   - ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md
   - ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md
+  - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
   - validation/dataset-smoke/README.md
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -463,6 +464,9 @@ with explicit environments and budgets, not prerequisites for every draft iterat
 - [x] `sfx-03`: bounded Linux procfs command-line provenance/status and child-only
   clone attribution implemented; 6/6 focused, 71/71 combined and 28/28 live
   aggregate assertions pass. Structured argv and deterministic DBT selection remain.
+- [x] `sfx-04`: exec syscall attempts and successful scheduler image transitions
+  receive distinct additive semantics; 7/7 focused, 78/78 combined and 26/26 live
+  aggregate assertions pass. Process-lifetime executable selection remains open.
 - [ ] TC-06: remaining organization slices completed with scoped discovery proof.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
   gates and unresolved limitations recorded; durable facts promoted to canonical pages.

@@ -9575,3 +9575,21 @@ historical repair and native Windows acceptance remain open. Raw telemetry and
 identifiers stay outside Git. Wintap committed the implementation locally as
 `2d304d1`; no network, S3, DBT, install, deployment or push occurred.
 <!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md; ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs -->
+
+## [2026-11-22] implementation/acceptance | Linux exec observation semantics
+
+Completed bounded `sfx-04`: process exec rows add nullable
+`ExecutionObservationKind`; syscall entry is `exec_attempt`, and
+`sched_process_exec` is `exec_success`. Existing Start, identity, executable
+evidence, command-line quality, timing and source breadcrumbs remain unchanged.
+
+Focused tests pass 7/7, combined sensor fixes pass 78/78, and the non-incremental
+Release build has zero errors. The process-only gate passes 26/26 assertions over
+5,938 rows and 98 files. All eight repeated-exec cases have one null fork, two
+attempts and two successes with exact stage/path pairing and strict ordering; all
+24 fork-only children and all Refresh rows remain null. The optional field is
+present in every file, including null-first batches. Raw identifiers remain
+outside Git; no network, S3, DBT, dependency installation, deployment, historical
+mutation or Windows acceptance occurred. Wintap committed the implementation
+locally as `e93c77b`; nothing was pushed.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md; ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs -->

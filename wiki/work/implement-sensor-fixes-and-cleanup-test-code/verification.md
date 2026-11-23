@@ -16,6 +16,7 @@ grounded_by:
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan.md
   - ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md
   - ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md
+  - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
   - validation/dataset-smoke/smoke_dataset.py
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -709,3 +710,32 @@ Private capture, raw identifiers, generated run IDs and hashes remain under the
 approved `/data` evidence root. No network, S3, DBT, deployment, dependency
 installation, historical-data mutation or push occurred. Full evidence:
 `../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md`.
+
+## sfx-04 Linux Exec Observation Kind — 2026-11-22
+
+The bounded next sensor unit adds nullable `ExecutionObservationKind` without
+changing existing Start rows or identity. Linux exec syscall entry is
+`exec_attempt`; scheduler-confirmed image installation is `exec_success`. Clone,
+Refresh and unsupported producers stay null. Existing path/name evidence,
+command-line provenance, timing and `PROC_START_SRC` remain unchanged.
+<!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs -->
+
+| Gate | Result |
+|---|---|
+| Frozen baseline | **71/71** `sfx-01|sfx-02|sfx-03`. |
+| Focused contracts | **7/7**, including null-first mixed direct projection. |
+| Final combined suite | **78/78**, no failures/skips. |
+| Non-incremental Linux Release build | **0 errors / 173 warnings** with SDK 10.0.402. |
+| Bounded process-only live gate | Sensors registered, controlled workloads and two inventories completed, graceful shutdown, no owned process left. |
+| Live acceptance | **26/26** aggregate assertions across 5,938 rows and 98 files. |
+| Controlled sequence | **8/8** cases have one null fork, two attempts and two successes with exact path-kind pairing and strict observation ordering. |
+| Null producers | **24/24** fork-only children and every Refresh row remain null. |
+| Schema/compatibility | Optional field present in **98/98** files; birth/hash/run scope, timing, name/path and command-line controls remain valid. |
+
+The live capture contains 1,482 attempt and 1,477 success observations with no
+invalid value, source mismatch, non-Start classification, Error/Fatal log entry,
+or nonzero drop/backlog diagnostic. This closes source-level distinction only;
+syscall outcome correlation and initial/latest successful-image DBT policy remain
+deferred. The implementation is committed locally in Wintap as `e93c77b`; nothing
+was pushed. Raw telemetry and identifiers remain outside Git. Full evidence:
+`../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md`.
