@@ -72,7 +72,8 @@ RHEL transfer: [[wiki/work/clone-default-true/dev_handoff]].
 Field-friendly named process/file/network stimulus and **root-owned field-host S3
 quick start**: [[wiki/tool/named-telemetry-smoke-workload]] — persistent user-created
 venv, explicit sudo Python/DuckDB, `--smoke-data-root`, automatic `raw_smoke_test` upload and
-dashboard validation.
+dashboard validation. The one-shot entry point lives in the Wintap source checkout as
+`devtools/telemetry_smoke_workload.py`; there is no current `telemetry_smoke_test.py`.
 Visual workflow: [[wiki/workflow/live-collector-validation]] — editable two-page
 draw.io diagram for **live-collector validation** and recurring telemetry canaries.
 Open-ended disposable-host stimuli with uploaded ground-truth snapshots:

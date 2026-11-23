@@ -8,7 +8,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - wiki/work/lintap-process-creation-validation/validation-harness-design.md
 policy: agent-editable
-last_validated: 2026-11-17
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -129,6 +129,105 @@ until those source and host details are checked.
   successful execs?
 - Which provenance and time fields are available and reliable across raw Wintap
   events, recorded Parquet, and Wintappy's normalized model?
+
+## Candidate two-layer direction
+
+Treat the stable process lifetime and its changing executable image as
+complementary views. Keep one deterministic representative image for the
+process-lifetime row and expose its selected name as `process_name`; separately
+retain the ordered detailed observations that explain how the process reached
+that image. The representative still needs an explicit policy, such as initial
+or latest successful image, and must select name/path from the same observation.
+
+Candidate homes for the ordered detail are:
+
+1. the existing `raw_process` observations plus a normalized ordered view;
+2. a process attribute containing an ordered list of provenance/time/name/path
+   tuples; or
+3. a separate process-image/exec-observation table keyed to the stable process
+   lifetime.
+
+No storage shape or representative-image policy is selected yet. Compare query
+ergonomics, schema evolution, Parquet/DuckDB behavior, cross-platform meaning,
+and preservation of failed exec attempts before choosing among them.
+<!-- HUMAN-REQUESTED: candidate direction from conversation 2026-11-23; not an accepted schema decision. -->
+
+### Future refinement: open-source comparison
+
+Investigate how other open-source tools model identity and mutable executable
+state across repeated `exec`, beginning with Sysdig/Falco libraries, Cilium
+Tetragon, osquery, and Tracee. Consider additional mature references such as
+Elastic's Linux/eBPF process telemetry, Sysmon for Linux, and Linux Audit where
+their event and state models are comparable.
+
+For each tool, record:
+
+- whether process identity remains stable across `exec`;
+- whether the canonical process name is initial, current, latest, or event-local;
+- whether failed exec attempts and successful image installation are distinct;
+- what timestamps, sequence IDs, or parent-image links order repeated execs;
+- whether current state and image history use one record, nested attributes, or
+  separate event/entity tables; and
+- how downstream queries avoid combining name and path from different
+  observations.
+
+Reuse the existing cross-sensor research thread rather than starting a duplicate
+survey: [[wiki/work/lintap-process-creation-validation/index]] and
+[[wiki/work/lintap-process-creation-validation/research-snapshot-2026-07-31]].
+<!-- HUMAN-REQUESTED: future comparative research note, conversation 2026-11-23. -->
+
+## Developer handoff
+
+**Status:** Investigation and design handoff only. No schema, producer, DBT, or
+historical-data change is authorized by this TODO.
+
+**Goal:** Propose a two-layer process model that keeps a stable process-lifetime
+identity, exposes one deterministic representative successful image as
+`process_name`, and retains an ordered history of exec attempts and successful
+image transitions.
+
+### Read first
+
+1. This TODO, especially the wrapper-to-`dd` example and candidate direction.
+2. [[wiki/tension/linux-process-lifecycle-vs-exec-attempt-observations]].
+3. [[wiki/work/lintap-process-creation-validation/validation-harness-design]].
+4. The producer and current projection:
+   `../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs`,
+   `../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c`,
+   and `../Wintap-PyUtil/wintap_dbt/models/silver/process.sql`.
+
+### Investigation sequence
+
+1. Measure repeated exec attempts, successful execs, and multi-name lifetimes in
+   representative data without treating raw `Start` rows as process births.
+2. Complete the open-source comparison described above, reusing the existing
+   cross-sensor research thread.
+3. Inventory the producer evidence available for ordering each observation.
+   Process-birth `EventTime` alone is insufficient; identify any required event
+   timestamp, monotonic time, sequence, source, and success fields.
+4. Compare the three detail-storage options against DuckDB/Parquet queryability,
+   compatibility, cross-platform semantics, and preservation of research evidence.
+5. Present an explicit representative-image policy and migration/compatibility
+   plan for human review before implementation.
+
+### Minimum acceptance contracts for a proposal
+
+- Repeated exec does not create a new process-lifetime identity.
+- Failed attempts cannot become the representative successful executable.
+- Representative name and path come from the same observation under a
+  deterministic rule.
+- Multiple successful image transitions can be ordered independently of process
+  birth time.
+- Raw intent evidence remains available without inflating process-birth counts.
+- PID reuse remains distinct from repeated exec within one lifetime.
+- Existing Windows semantics and historical raw data are not silently redefined.
+- Fixtures cover failed lookup attempts, wrapper/interpreter transitions,
+  multiple successful execs, PID reuse, and Stop after the final image.
+
+**Expected deliverable:** A source-grounded design recommendation and fixture/data
+measurement report. If implementation is selected, promote this TODO into a
+feature folder and obtain approval for the chosen producer/model/schema changes.
+<!-- HUMAN-REQUESTED: developer handoff added in conversation 2026-11-23. -->
 
 ## Suggested deep-dive work
 

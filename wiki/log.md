@@ -5,6 +5,15 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-22] docs | clarify named telemetry smoke entry point
+
+Revalidated the named telemetry smoke instructions against current Wintap source and
+the Analytics canary adapter. Clarified that the one-shot entry point is Wintap's
+`devtools/telemetry_smoke_workload.py`, not an Analytics-local or
+`telemetry_smoke_test.py` script, and added an early checkout/revision preflight.
+No collector, workload source, deployment, or live data was changed.
+<!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py; validation/telemetry-soak/canary-stimulus.py -->
+
 ## [2026-11-19] code/verification | direct raw-only DBT route
 
 Added and committed `657a37c` in `../Wintap-PyUtil`: an explicit

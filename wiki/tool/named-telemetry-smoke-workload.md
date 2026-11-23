@@ -20,7 +20,7 @@ grounded_by:
   - streamlit/projects/SmokeTests/page_views.py
   - https://docs.astral.sh/uv/pip/environments/
 policy: agent-editable
-last_validated: 2026-10-30
+last_validated: 2026-11-22
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -39,6 +39,14 @@ DuckDB and write access to the collector data root; on root-owned field systems,
 run the workload with `sudo` using an explicitly selected Python interpreter.**
 Wintap owns the workload, evidence publisher and uploader; Analytics owns the
 dashboard and this operator procedure; Lintap supplies packaging/path conventions.
+
+The runnable entry point is `telemetry_smoke_workload.py` in a **Wintap source
+checkout**; it is not a script in Wintap-Analytics, and there is no current
+`telemetry_smoke_test.py` entry point. The recurring Analytics canary adapter also
+imports this Wintap module, so it is not a replacement when the Wintap checkout is
+missing the file. Use a Wintap revision that contains the workload rather than
+renaming a command locally.
+<!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py §main; validation/telemetry-soak/canary-stimulus.py §stimulus -->
 
 Visual overview: [[wiki/workflow/live-collector-validation]] — two-page editable
 draw.io diagram of the data/evidence paths and root-owned operator workflow.
@@ -85,6 +93,12 @@ From the **Wintap checkout on the collection host**, in your normal login shell:
 WINTAP_REPO=$(pwd -P)
 DATA_ROOT=/var/log/lintap/data  # Replace with this collector's resolved data root.
 QA_ROOT="$HOME/qa/wintap-smoke"
+
+# Fail early if this shell is in the wrong repository or an incompatible revision.
+test -f "$WINTAP_REPO/devtools/telemetry_smoke_workload.py" || {
+  echo "Missing Wintap devtools/telemetry_smoke_workload.py" >&2
+  exit 1
+}
 
 # One-time setup in a dedicated, persistent environment.
 VENV="$HOME/.local/share/wintap-smoke/venv"
@@ -210,7 +224,7 @@ analysis machine's existing AWS profile/environment credentials. See
 | Run appears but no matching telemetry | Allow normal ETL/merge/upload, then verify host/time selectors, sensor startup/capabilities and stimulus path filters. |
 | Required case failed / supplied clone helper broken | Inspect the manifest's failed case; this produces exit 1. |
 
-Commands above were reviewed against current source on 2026-10-30. A new root-run
+Commands above were reviewed against current source on 2026-11-22. A new root-run
 field-host/S3 result is not recorded by this documentation update.
 
 ## Workload-only quick start
