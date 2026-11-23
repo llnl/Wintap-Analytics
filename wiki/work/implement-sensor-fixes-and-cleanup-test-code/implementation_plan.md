@@ -16,6 +16,7 @@ grounded_by:
   - ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md
   - ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md
   - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
+  - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
   - validation/dataset-smoke/README.md
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -467,6 +468,9 @@ with explicit environments and budgets, not prerequisites for every draft iterat
 - [x] `sfx-04`: exec syscall attempts and successful scheduler image transitions
   receive distinct additive semantics; 7/7 focused, 78/78 combined and 26/26 live
   aggregate assertions pass. Process-lifetime executable selection remains open.
+- [x] `sfx-05`: Linux executable path evidence source retained without changing
+  selected path/name; 5/5 focused, 83/83 combined and 37/37 live aggregate
+  assertions pass. BPF truncation and downstream lifetime policy remain open.
 - [ ] TC-06: remaining organization slices completed with scoped discovery proof.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
   gates and unresolved limitations recorded; durable facts promoted to canonical pages.

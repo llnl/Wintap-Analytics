@@ -17,6 +17,7 @@ grounded_by:
   - ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md
   - ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md
   - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
+  - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
   - validation/dataset-smoke/smoke_dataset.py
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -739,3 +740,32 @@ syscall outcome correlation and initial/latest successful-image DBT policy remai
 deferred. The implementation is committed locally in Wintap as `e93c77b`; nothing
 was pushed. Raw telemetry and identifiers remain outside Git. Full evidence:
 `../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md`.
+
+## sfx-05 Linux Executable Path Source — 2026-11-22
+
+The next bounded unit adds nullable `ExecutablePathSource` while preserving path
+and name selection. Exact Linux values are `exec-event-filename`, `procfs-exe`,
+`parent-procfs-exe`, and `unavailable`. Exec, clone and rundown retain their prior
+precedence; unsupported producers remain null. No BPF, argv, command-line,
+identity, timing, exec-kind or downstream-model behavior changed.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs -->
+
+| Gate | Result |
+|---|---|
+| Frozen baseline | **78/78** through `sfx-04`. |
+| Focused contracts | **5/5**, including source precedence and null-first direct projection. |
+| Final combined suite | **83/83**, no failures/skips. |
+| Non-incremental Linux Release build | **0 errors / 173 warnings** with SDK 10.0.402. |
+| Live acceptance | **37/37** assertions across 5,960 rows and 109 files. |
+| Exec evidence | All 2,967 exec attempt/success rows use `exec-event-filename`. |
+| Clone evidence | Null-kind Starts use 1,139 own-procfs, 524 parent-procfs and 43 explicit unavailable sources. |
+| Refresh evidence | 476 own-procfs and 811 unavailable; every stable-anchor Refresh uses own procfs. |
+| Compatibility/schema | Eight repeated-exec and 24 fork-only controls pass; optional path-source, exec-kind and timing fields are present in **109/109** files. |
+
+No null/invalid source, source/path mismatch, Error/Fatal log entry, nonzero
+drop/backlog diagnostic or owned-process leak occurred. The field records evidence
+origin; it does not claim unobserved syscall outcome, filename truncation status or
+initial/latest process-lifetime policy. Raw telemetry and identifiers remain
+outside Git. The implementation is committed locally in Wintap as `54ddf07`;
+nothing was pushed. Full evidence:
+`../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md`.

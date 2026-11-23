@@ -25,6 +25,7 @@ grounded_by:
   - ../wintap/tests/Lintap.Tests/PeriodicProcessRefreshSchedulerTests.cs
   - ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs
   - ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs
+  - ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
 last_validated: 2026-11-22
@@ -114,6 +115,14 @@ producers leave the field null. Both remain existing Start observations under on
 birth-based identity; the field does not create a new lifecycle or executable
 selection policy.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §GetExecutionObservationKind, HandleEvent; ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject -->
+
+Linux producers also label the selected path evidence without changing selection:
+exec uses `exec-event-filename` before own `procfs-exe`; clone uses own
+`procfs-exe` before inherited `parent-procfs-exe`; rundown uses own `procfs-exe`;
+and no selected evidence is `unavailable`. `ExecutablePathSource` must be combined
+with execution kind: event-filename evidence on an attempt is a requested path,
+while the same source on `exec_success` describes the scheduler-installed image.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §SelectExecutableMetadataAndSource; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §SelectExecutableMetadataAndSource; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §CreateRefreshMessage -->
 
 Process events are normalized as `WintapMessage` records with `MessageType = Process` and a nested `ProcessObject` containing process identity, parent identity, path, command line, user, exit/resource fields, and hashes. The schema and the PidHash formula (PID + create-time FileTime) were unchanged by the 2026-08 collection overhaul — all improvements below are population-rate and correctness improvements of existing fields.
 <!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject -->
@@ -225,6 +234,11 @@ in all 98 files and exact fork → attempt → success → attempt → success o
 all eight repeated-exec controls.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent; ../wintap/wintap/core/etl/load/DirectParquetSink.cs §AddScalarProperties; ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs -->
 
+Normal ETL and direct Parquet persist `ExecutablePathSource`; direct null-first
+batches retain the optional column. The bounded gate found valid non-null Linux
+sources and optional schema in all 109 files, with unchanged selected path/name.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent; ../wintap/wintap/core/etl/load/DirectParquetSink.cs §AddScalarProperties; ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs -->
+
 ## Analysis Implications
 
 - Process lineage is keyed by `PidHash`/`ParentPidHash`, not PID alone; PID reuse is handled by mixing PID with create time and by `ProcessResolver`'s time-windowed instance resolution.
@@ -245,6 +259,9 @@ all eight repeated-exec controls.
 - Filter executable success using `ExecutionObservationKind=exec_success`, not
   `ActivityType=Start` alone. Preserve attempts as intent evidence, keep name/path
   from the same row, and do not infer a process-lifetime initial/latest policy.
+- Use `ExecutablePathSource` to retain evidence quality. In particular, a clone's
+  `parent-procfs-exe` is inherited-image fallback, while `unavailable` is explicit
+  absence rather than authority to parse the command line.
 
 See also [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]], [[wiki/workflow/future-experiment-analysis-workflows]], and [[wiki/repo/wintappy-pipeline-repo]] (downstream `process`/`process_summary`/`process_uber_summary` DBT models).
 

@@ -8,6 +8,8 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs
   - ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs
   - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
+  - ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs
+  - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - wiki/work/lintap-process-creation-validation/validation-harness-design.md
 policy: agent-editable
@@ -25,8 +27,9 @@ tags: [todo, priority, process-events, data-quality, telemetry-semantics, wintap
 
 **Priority:** P1 — High (provisional; prioritize because the silver process row
 can silently attribute an executable that did not run).
-**State:** Promoted-partial. The bounded `sfx-04` sensor distinction is accepted;
-deterministic process-lifetime selection and DBT changes remain open.
+**State:** Promoted-partial. The bounded `sfx-04` observation-kind and `sfx-05`
+path-evidence-source slices are accepted; deterministic process-lifetime selection
+and DBT changes remain open.
 
 ## Finding
 
@@ -61,6 +64,15 @@ observation ordering. All 24 fork-only controls and all Refresh rows remain null
 the optional field is present in all 98 Parquet files. This closes source-level
 attempt-versus-installed-image ambiguity, not process-lifetime selection.
 <!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md; ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs -->
+
+`sfx-05` preserves why each existing Linux path was selected through nullable
+`ExecutablePathSource`: `exec-event-filename`, own `procfs-exe`, clone's
+`parent-procfs-exe` fallback, or `unavailable`. It does not change path/name
+selection. Focused tests pass 5/5, the combined suite passes 83/83, and the live
+gate passes 37/37 over 5,960 rows and 109 files. All exec attempts/successes use
+event-filename evidence; clone and Refresh source precedence is explicit and
+valid. This makes rows evidence-aware but still does not choose a lifetime image.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md; ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs -->
 
 The Wintappy silver process model groups observations by `pidhash` and uses
 `any_value` independently for `process_name` and `process_path`, without using

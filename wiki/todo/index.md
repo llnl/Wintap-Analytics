@@ -47,7 +47,7 @@ recorded.
 | Priority | Item | State | Summary |
 | --- | --- | --- | --- |
 | P1 — High (provisional) | [[wiki/todo/linux-process-name-exe-fallback]] | Promoted | Source repair and focused qualification complete; bounded Linux name evidence passes 8/8, while affected-row lineage and historical disposition remain open. |
-| P1 — High | [[wiki/todo/linux-process-executable-attribution]] | Promoted | Sensor/projection now distinguishes `exec_attempt` from `exec_success`; deterministic paired name/path and initial/latest successful-image DBT policy remain open. |
+| P1 — High | [[wiki/todo/linux-process-executable-attribution]] | Promoted | Sensor/projection distinguishes attempt/success and path evidence source; deterministic paired name/path and initial/latest successful-image DBT policy remain open. |
 | P1 — High | [[wiki/todo/process-observation-time-separate-from-birth]] | Promoted | Repaired-binary Linux `live-02` passes 18/18 timing assertions after the retained `live-01` defect; native Windows and full EventTime migration remain open. |
 | P1 — High | [[wiki/todo/lintap-linux-process-command-line-quality]] | Promoted | Bounded procfs provenance/status, truncation and child-only clone attribution pass Linux acceptance; immutable exec argv and deterministic DBT selection remain open. |
 | P1 — High (provisional) | [[wiki/diagnostic/duplicate-agent-id-and-os-family]] | Open | Replace hardcoded `windows` OS-family labels across canonical DBT models with platform-derived metadata and backward-compatible unknown handling. |

@@ -9593,3 +9593,21 @@ outside Git; no network, S3, DBT, dependency installation, deployment, historica
 mutation or Windows acceptance occurred. Wintap committed the implementation
 locally as `e93c77b`; nothing was pushed.
 <!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md; ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs -->
+
+## [2026-11-22] implementation/acceptance | Linux executable-path evidence source
+
+Completed bounded `sfx-05`: Linux process rows add nullable
+`ExecutablePathSource` while retaining the selected path and name. The vocabulary
+distinguishes exec-event filename, own procfs executable, clone's inherited parent
+procfs executable, and unavailable evidence. Existing identity, timing,
+command-line and exec-kind semantics remain unchanged.
+
+Focused tests pass 5/5, combined sensor fixes pass 83/83, and the non-incremental
+Release build has zero errors. The process-only gate passes 37/37 assertions over
+5,960 rows and 109 files. All 2,967 exec rows use event-filename evidence; clone
+and Refresh rows have valid own-procfs, parent-procfs or unavailable labels. All
+eight repeated-exec and 24 fork-only controls pass, and the optional field is
+present in every file. Raw identifiers remain outside Git; no network, S3, DBT,
+dependency installation, deployment, historical mutation, Windows acceptance or
+push occurred. Wintap committed the implementation locally as `54ddf07`.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md; ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs -->
