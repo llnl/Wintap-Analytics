@@ -25,8 +25,9 @@ grounded_by:
   - ../wintap/global.json
   - ../wintap/wintap/Makefile
   - ../wintap/tests/Wintap.Tests/Wintap.Tests.csproj
+  - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
-last_validated: 2026-11-22
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: dev-environment
 event_domain: cross-domain
@@ -57,9 +58,12 @@ environment now passes 17 PyUtil cases and preserves all 224 selected identities
 managed acceptance remains deferred. The opt-in helper and first bounded
 SmokeTests query/quality cleanup slice are implemented. A second whole-file move
 adds analysis/store controls, and a third adds mocked, transport-free S3 source
-contracts; the classified package passes 69 cases. Loopback HTTP, durable-producer
-and UI tests remain separate. See the verification record before selecting another
-mechanical slice.
+contracts. A fourth moves the 11-case durable producer/Parquet contract with only
+path/import adjustments; a fifth moves the unchanged 5-case page-query contract.
+The classified package passes 85 cases. The synthetic localhost HTTP case is now
+default-on with explicit environment opt-out, and the full project passes 98/98.
+Actual UI organization remains separate. See the verification record before
+selecting another mechanical slice.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — the RHEL sample will not be updated; do not wait for raw files there. -->
 
 ## Test-Cleanup Copy/Paste Prompt

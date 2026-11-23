@@ -315,9 +315,8 @@ from the SmokeTests project directory:
 python -m unittest discover -s tests -t . -p 'test_*.py' -v
 ```
 
-See `tests/README.md` for its 69-case inventory. Root-level durable-producer,
-opt-in loopback HTTP and Streamlit app/page tests remain outside that focused
-package.
+See `tests/README.md` for its 85-case inventory. The root-level default-on
+loopback HTTP and actual Streamlit app tests remain outside that focused package.
 
 Tests exercise empty UI, repeated run selection, uploaded portable manifests,
 host/PID/path/time isolation, timestamp formats, normal and direct schemas, and
@@ -330,9 +329,12 @@ with `python3 devtools/test_smoke_manifest.py -v` and
 
 S3 tests use synthetic configs/listings/credentials and injected files, including
 Streamlit source selection, read-only connection settings and fail-closed limits.
-The optional real loopback HTTP/S3 test requires cached httpfs and is enabled with
-`SMOKE_S3_HTTP_TEST=1`. It exercises signed boto3 listing plus DuckDB range reads,
-not real Garage/TLS/authorization or multi-host acceptance.
+The real loopback HTTP/S3 test is enabled by default and requires an already cached
+DuckDB `httpfs` extension. Set `SMOKE_S3_HTTP_TEST=0` (also `false`, `no`, or
+`off`, case-insensitive) to opt out explicitly. It binds only to `127.0.0.1` and
+uses synthetic objects and credentials while exercising signed boto3 listing plus
+DuckDB range reads; it is not real Garage/TLS/authorization or multi-host
+acceptance.
 ## TCP endpoint confirmation
 
 The **TCP endpoint normalization** section runs two same-host cases via an assigned

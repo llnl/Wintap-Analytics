@@ -9,7 +9,7 @@ import duckdb
 
 from queries import evaluate_run, load_manifests, prepare_data, quote
 from s3_source import dataset_parts, day_range, discover_files, load_config, open_source
-from test_durable import publish
+from .test_durable import publish
 
 
 class Paginator:

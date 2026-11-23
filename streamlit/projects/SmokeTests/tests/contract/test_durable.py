@@ -11,7 +11,7 @@ import duckdb
 from queries import TESTS, evaluate_run, load_manifests, mark_overlaps, overview, prepare_data, quote
 
 # Read the live producer rather than copying its schema into analysis tests.
-sys.path.insert(0, str(Path(__file__).resolve().parents[4] / "wintap" / "devtools"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[6] / "wintap" / "devtools"))
 from smoke_parquet import publish
 
 

@@ -6,19 +6,21 @@ It requires the installed DuckDB/Boto3 dependencies but does not require
 Streamlit, an AWS profile, a collector, a real dataset or network access, and it
 does not qualify sensor capture.
 
-## Frozen slice (2026-11-22)
+## Classified slices (2026-11-22 through 2026-11-23)
 
 | File under `contract/` | Cases | Coverage |
 |---|---:|---|
 | `test_analysis.py` | 22 | Canary-round analysis, runtime context, budgets, and local/fake-S3 summary persistence. |
+| `test_durable.py` | 11 | Live-producer synthetic Parquet publication, manifest integrity, triage, and overlap contracts. |
+| `test_pages.py` | 5 | Page working-set materialization, budgets, lifecycle requirements, and overlap behavior without Streamlit UI. |
 | `test_queries.py` | 12 | Manifest loading, schema normalization, bounded selectors and endpoint evaluation. |
 | `test_quality.py` | 22 | Adversarial file, process-lifecycle and network quality contracts. |
 | `test_s3_source.py` | 13 | Config validation, mocked listings/connections, and transport-free local source parity. |
-| **Total** | **69** | Whole files moved; assertions, fixtures and test names unchanged. |
+| **Total** | **85** | Whole files moved; only package/path imports changed. |
 
-The remaining root-level files cover the cross-repo durable producer contract,
-opt-in loopback HTTP behavior, and Streamlit pages/app behavior. They are
-intentionally outside these mechanical slices.
+The remaining root-level files cover default-on, explicitly opt-out loopback HTTP
+behavior and actual Streamlit app behavior. They are intentionally outside these
+mechanical slices.
 
 ## Commands
 

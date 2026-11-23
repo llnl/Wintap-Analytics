@@ -9747,3 +9747,36 @@ compatibility requirement. Evidence is under the approved `/data` evidence root;
 no dependency installation, S3/source-data access, push or historical mutation
 occurred.
 <!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md; ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/tests/test_compacted_inputs.py -->
+
+## [2026-11-23] implementation/verification | TC-06 durable SmokeTests slice
+
+Moved the complete 11-case durable producer/Parquet contract into the classified
+SmokeTests contract package. Only the live producer-helper parent depth and three
+dependent package imports changed; test bodies, identities, assertions, fixtures,
+production sources, dependencies and default discovery remain unchanged.
+
+The focused module passes 11/11 before and after with identical normalized
+identities. The contract package grows from 69/69 to 80/80 passing cases, and
+project-root discovery finds all 11 moved identities exactly once among 98 cases.
+Opt-in loopback HTTP and Streamlit UI tests were discovered but not executed. No
+network, S3, private dataset, collector, dependency installation, commit or push
+occurred. Evidence and checksums are retained under the approved `/data` root.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/contract/test_durable.py; streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/test_app.py; streamlit/projects/SmokeTests/test_s3_http.py; streamlit/projects/SmokeTests/tests/contract/test_s3_source.py -->
+
+## [2026-11-23] implementation/verification | TC-06 page-query and localhost default
+
+Moved the unchanged 5-case page-query/materialization module into the classified
+SmokeTests contract package. The focused module passes 5/5 before and after with
+identical identities; the package grows from 80/80 to 85/85, and project discovery
+finds each moved case exactly once.
+
+By human direction, the synthetic loopback HTTP test now runs when
+`SMOKE_S3_HTTP_TEST` is unset and accepts `0`, `false`, `no`, or `off` as explicit
+case-insensitive opt-outs. The default localhost case passes 1/1; the opt-out is
+discovered and skipped; full default project execution passes 98/98. The test stays
+read-only and loopback-only and does not claim external S3, Garage, TLS,
+authorization, or multi-host acceptance. No dependency installation, external
+network/private-data access, collector, deployment, historical mutation, commit,
+or push occurred.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — make SMOKE_S3_HTTP_TEST default true with explicit opt-out. -->
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/test_s3_http.py; streamlit/projects/SmokeTests/tests/contract/test_pages.py; streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/README.md -->

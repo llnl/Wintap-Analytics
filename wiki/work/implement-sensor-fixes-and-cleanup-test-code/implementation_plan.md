@@ -468,6 +468,15 @@ with explicit environments and budgets, not prerequisites for every draft iterat
   module moved whole; 22/22 pass before/after and the contract package passes 56/56.
 - [x] TC-06 third SmokeTests slice: synthetic S3 configuration/listing/source
   contracts moved whole; 13/13 pass before/after and the package passes 69/69.
+- [x] TC-06 fourth SmokeTests slice: the 11-case durable producer/Parquet contract
+  moved whole with path-only import updates; 11/11 pass before/after, the package
+  passes 80/80, and project-root discovery finds each moved case exactly once.
+- [x] TC-06 fifth SmokeTests slice: the 5-case page-query/materialization contract
+  moved whole without content changes; 5/5 pass before/after, the package passes
+  85/85, and project-root discovery finds each moved case exactly once.
+- [x] SmokeTests loopback HTTP policy: enabled when `SMOKE_S3_HTTP_TEST` is unset,
+  with case-insensitive `0`, `false`, `no`, or `off` as explicit opt-outs. The
+  default localhost case passes and the project-wide default run passes 98/98.
 - [x] `sfx-03`: bounded Linux procfs command-line provenance/status and child-only
   clone attribution implemented; 6/6 focused, 71/71 combined and 28/28 live
   aggregate assertions pass. Structured argv and deterministic DBT selection remain.

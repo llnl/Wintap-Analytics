@@ -8,8 +8,9 @@ grounded_by:
   - wiki/concept/llm-assisted-feature-workflow.md
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis.md
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan.md
+  - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
-last_validated: 2026-11-22
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -118,7 +119,11 @@ synthetic controls, and the first SmokeTests query/quality move preserves 34 cas
 The second whole-file move adds 22 synthetic analysis/store cases, bringing the
 classified contract package to 56 passing cases. A third whole-file move adds 13
 mocked, transport-free S3 source contracts, bringing the package to 69 passing
-cases; loopback HTTP remains separate.
+cases. A fourth whole-file move adds 11 durable producer/Parquet contracts,
+bringing the package to 80 passing cases. A fifth adds 5 unchanged page-query
+contracts, bringing the package to 85. The synthetic localhost HTTP case is now
+default-on with explicit environment opt-out; the full project passes 98/98, and
+actual UI organization remains separate.
 The existing RHEL path was only a one-time sample and will not receive raw files;
 its empty raw directory is not a gate. Continue later bounded cleanup slices under
 the implementation plan without inventing a replacement data requirement.

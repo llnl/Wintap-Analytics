@@ -9,7 +9,7 @@ from unittest.mock import patch
 import duckdb
 from streamlit.testing.v1 import AppTest
 
-from test_durable import publish
+from tests.contract.test_durable import publish
 
 
 class DashboardTests(unittest.TestCase):

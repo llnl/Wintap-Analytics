@@ -621,6 +621,82 @@ without a forwarding copy. No HTTP test, socket request, live S3, AWS profile,
 private dataset, collector, durable-producer test, DBT, dependency installation,
 assertion change or push occurred.
 
+## SmokeTests Durable-Producer Mechanical Slice — 2026-11-23
+
+Completed the fourth TC-06 SmokeTests slice by moving the complete 11-case durable
+producer/Parquet contract into `streamlit/projects/SmokeTests/tests/contract/`.
+The live Wintap producer-helper path changed only for the additional directory
+depth. Three dependent tests now import the moved module through its package path.
+No assertion, fixture, class/method name, production source, dependency, or
+project-wide default command changed. Root-level Streamlit app/page and opt-in
+loopback HTTP execution remain separate.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_durable.py; streamlit/projects/SmokeTests/tests/contract/test_s3_source.py; streamlit/projects/SmokeTests/test_app.py; streamlit/projects/SmokeTests/test_s3_http.py -->
+
+The before/after runs used the existing HostActivity interpreter as a bounded
+DuckDB dependency control. `SMOKE_S3_HTTP_TEST` was explicitly unset, all temporary
+files and reports stayed under `/data`, and each command had a 120-second ceiling.
+
+| Gate | Before | After |
+|---|---:|---:|
+| Durable module | **11 passed**, 1.188 s | **11 passed**, 1.017 s |
+| Selected identities | 11 unique | 11 unique; normalized set/order identical |
+| Duplicate selected identities | 0 | 0 |
+| Durable test body | Frozen SHA-256 | Byte-for-byte identical after normalizing the required parent-depth path |
+| Classified contract package | **69 passed**, 2.254 s | **80 passed**, 2.797 s |
+| Project-root discovery | Not changed | 98 cases discovered; all 11 durable identities appear exactly once |
+
+Python compilation and `git diff --check` pass. No HTTP/UI test execution, socket
+request, live S3, private dataset, collector, dependency installation, assertion
+change, commit, or push occurred. Evidence and checksums are under
+`/data/lintap-compactor/sensor-fixes/tc-06-durable-20261123/`.
+
+## SmokeTests Page-Query Mechanical Slice — 2026-11-23
+
+Completed the fifth TC-06 SmokeTests slice by moving the complete 5-case page
+query/materialization contract into `streamlit/projects/SmokeTests/tests/contract/`.
+The moved file is byte-for-byte identical; no import, assertion, fixture,
+class/method name, production source, dependency, or default command changed.
+Actual Streamlit AppTest behavior remains in the root-level UI module.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/contract/test_pages.py; streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/README.md -->
+
+| Gate | Before | After |
+|---|---:|---:|
+| Page-query module | **5 passed**, 0.129 s | **5 passed**, 0.141 s |
+| Selected identities | 5 unique | 5 unique; set/order identical |
+| Duplicate selected identities | 0 | 0 |
+| Moved test body | Frozen SHA-256 | Byte-for-byte identical |
+| Classified contract package | **80 passed**, 2.890 s | **85 passed**, 2.948 s |
+| Project-root discovery | Not changed | 98 cases discovered; all 5 page-query identities appear exactly once |
+
+Python compilation and `git diff --check` pass. No HTTP/UI test execution,
+network request, live S3, private dataset, collector, dependency installation,
+assertion change, commit, or push occurred during the mechanical move. Evidence
+and checksums are under
+`/data/lintap-compactor/sensor-fixes/tc-06-page-query-20261123/`.
+
+## SmokeTests Default-On Loopback HTTP — 2026-11-23
+
+Per human direction, `SMOKE_S3_HTTP_TEST` now defaults to enabled. Explicit
+case-insensitive false-like values `0`, `false`, `no`, and `off` skip the test.
+The project documentation records both the default and opt-out. The test remains
+synthetic, read-only, and loopback-only; it does not become Garage, TLS,
+authorization, external S3, or multi-host acceptance.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — make SMOKE_S3_HTTP_TEST default true with explicit opt-out. -->
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/test_s3_http.py; streamlit/projects/SmokeTests/README.md -->
+
+The matching DuckDB 1.5.6 `httpfs` extension was already cached. With the variable
+unset, the focused localhost case passes **1/1** in 1.945 seconds. With
+`SMOKE_S3_HTTP_TEST=0`, the same case is discovered and explicitly skipped. A
+direct environment-contract check confirms the unset/default and all four
+false-like values. The full project-wide default command passes **98/98** in
+7.612 seconds, including 12 Streamlit AppTest cases, the localhost transport case,
+and all 85 classified contracts.
+
+No dependency installation, external network/S3/private-data access, collector,
+deployment, historical mutation, commit, or push occurred. Temporary files and
+evidence remained under
+`/data/lintap-compactor/sensor-fixes/tc-06-s3-http-default-20261123/`.
+
 ## First Sensor-Fix Batch Source Qualification — 2026-11-22
 
 The uncommitted Wintap candidate on
