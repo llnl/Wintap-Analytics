@@ -7,7 +7,7 @@ grounded_by:
   - ../wintap/shared/WintapAPI/Interfaces.cs
   - ../wintap/wintap/core/infrastructure/EventChannel.cs
 policy: agent-editable
-last_validated: 2026-06-29
+last_validated: 2026-11-22
 repo_scope: wintap
 implementation_area: wintap-api
 event_domain: cross-domain
@@ -27,7 +27,7 @@ The model is intentionally cross-domain. `MessageTypeEnum` includes process, thr
 
 ## Domain Objects
 
-Process events use `ProcessObject` fields for parent PID/hash/name, executable name/path, command line, user, exit and resource counters, hashes, and process keys. Network events use `TcpConnectionObject` and `UdpPacketObject` for endpoint addresses, ports, packet size, state/failure fields, and TCP sequence/window metadata. File events use `FileActivityObject` for path, bytes requested, and PID.
+Process events use `ProcessObject` fields for parent PID/hash/name, executable name/path and path-evidence source, command line and its nullable source/capture status, execution-observation kind, user, exit and resource counters, hashes, and process keys. Linux procfs producers use the command-line/path quality fields; Linux exec producers label syscall-entry `exec_attempt` and scheduler-confirmed `exec_success`, while unsupported producers may leave additive fields null. Network events use `TcpConnectionObject` and `UdpPacketObject` for endpoint addresses, ports, packet size, state/failure fields, and TCP sequence/window metadata. File events use `FileActivityObject` for path, bytes requested, and PID.
 <!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject; §TcpConnectionObject; §UdpPacketObject; §FileActivityObject -->
 
 `WintapBase.ToDynamic()` converts nested object properties into an `ExpandoObject` and stringifies enum values for Parquet compatibility. This matters because downstream ETL pages should distinguish source enum semantics from serialized Parquet strings.

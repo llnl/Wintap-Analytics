@@ -16,9 +16,9 @@ grounded_by:
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
   - ../wintap/wintap/core/etl/model/ProcessObjectModel.cs
   - ../Wintappy/wintap_dbt/models/silver/process_file.sql
-  - streamlit/projects/SmokeTests/test_quality.py
+  - streamlit/projects/SmokeTests/tests/contract/test_quality.py
 policy: agent-editable
-last_validated: 2026-10-26
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: network

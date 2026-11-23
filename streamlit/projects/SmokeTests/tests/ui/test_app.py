@@ -9,7 +9,7 @@ from unittest.mock import patch
 import duckdb
 from streamlit.testing.v1 import AppTest
 
-from test_durable import publish
+from tests.contract.test_durable import publish
 
 
 class DashboardTests(unittest.TestCase):
@@ -33,7 +33,7 @@ class DashboardTests(unittest.TestCase):
             con.execute(f"COPY (SELECT 'vm-fixture' Hostname, 42 PID, TIMESTAMP '2026-10-25 12:00:01' EventTime, '/fixture/file' File_Path, 'Open' ActivityType) TO '{self.root / 'events.parquet'}' (FORMAT PARQUET)")
 
     def app(self):
-        app = AppTest.from_file(str(Path(__file__).with_name('main.py')), default_timeout=20).run()
+        app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
         app.sidebar.text_input[0].set_value(str(self.root)).run()
         self.assertFalse(app.exception)
         return app
@@ -111,7 +111,7 @@ class DashboardTests(unittest.TestCase):
         with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
              patch('s3_source.open_source', side_effect=lambda _: (duckdb.connect(), object())), \
              patch('s3_source.discover_files', return_value=([str(evidence)], [str(self.root / 'events.parquet')])):
-            app = AppTest.from_file(str(Path(__file__).with_name('main.py')), default_timeout=20).run()
+            app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
             self.assertFalse(app.exception)
             app.switch_page('views/canary.py').run()
             self.validate(app)
@@ -124,7 +124,7 @@ class DashboardTests(unittest.TestCase):
         with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
              patch('s3_source.open_source', side_effect=lambda _: (duckdb.connect(), object())), \
              patch('s3_source.discover_files', side_effect=ValueError('S3 file limit exceeded')):
-            app = AppTest.from_file(str(Path(__file__).with_name('main.py')), default_timeout=20).run()
+            app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
             self.assertFalse(app.exception)
             self.assertTrue(app.error)
             self.assertFalse(app.metric)

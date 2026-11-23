@@ -5,12 +5,12 @@ confidence: medium
 grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/network_ops_tracer.bpf.c
   - ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs
-  - ../Wintap-PyUtil/wintap_dbt/macros/network_keys.sql
+  - ../wintap/wintap/core/etl/transform/IdGenerator.cs
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_net_conn.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_file.sql
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: network
@@ -36,13 +36,13 @@ Read-only inspection of `process_net_conn` in the reviewed example database
 found 129 rows for one TCP five-tuple to the NFS service. The user confirms that
 the destination is the NetApp NFS device and that the home directory involved
 is mounted from it. The connection ID is a normalized five-tuple hash, not a
-process ID: Wintappy's temporary key macro hashes protocol and endpoint address
-and port pairs, while `process_net_conn` also groups by `pid_hash` and process
+process ID: Wintap .NET hashes context, protocol and normalized endpoint pairs,
+while `process_net_conn` also groups by `pid_hash` and process
 metadata. Thus one connection ID can legitimately appear on rows for several
 process identities. Of the 129 rows, 70 have `process_name = 'exe'` across 49
 distinct process hashes; that name-quality issue is tracked separately in
 [[wiki/todo/linux-process-name-exe-fallback]].
-<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/macros/network_keys.sql §temporary_five_tuple_conn_id; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_net_conn.sql -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenKeyForFive_Tuple_Conn; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process_net_conn.sql -->
 
 One row attributes a single 264-byte TCP send on that NFS tuple to process
 `ssh`. The same process also has a separate SSH connection to port 22. These

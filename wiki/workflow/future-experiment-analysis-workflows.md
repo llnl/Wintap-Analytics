@@ -62,9 +62,19 @@ This page previously did not identify who builds the `process`/`process_path`/`p
 
 ## Future Pages To Split Out
 
+The source-only [[wiki/tool/streamlit-app-review]] (2026-11-22) now separates
+five existing app roles: HostActivity availability, SmokeTests known-stimulus
+validation, legacy DataQA lifecycle/DLL QA, EDA process/network graphs, and
+CALDERA report hierarchy inspection. DataQA/EDA share an older shell and are
+consolidation candidates, but their unique research functions are not supplied
+by the modern dashboards. No app retirement or DBT compatibility is implied.
+<!-- SYNTHESIS: app-specific review grounded in live source paths on the linked page; not a revalidation of every workflow above. -->
+
 - Process tree concepts and API patterns.
 - ACME4 standard-view dataset access.
 - SQL workflow over `process_uber_summary` and related tables.
 - Process classification JSON and process-name normalization.
 - CALDERA/ACME4 annotation provenance and schemas.
-- Streamlit/S3-backed dataset access.
+- Streamlit/S3-backed dataset access: initial role/maintenance inventory in
+  [[wiki/tool/streamlit-app-review]]; app-specific contracts in
+  [[wiki/tool/recent-host-activity-dashboard]] and [[wiki/tool/smoke-test-results-dashboard]].

@@ -8,8 +8,9 @@ grounded_by:
   - wiki/concept/llm-assisted-feature-workflow.md
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis.md
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan.md
+  - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
-last_validated: 2026-11-22
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -110,7 +111,22 @@ for the detailed slices, capture handoff, and validation loop, and
 
 ## Next Step
 
-The Analytics/PyUtil first draft is checked; the Wintap first slice is implemented
-with static checks only. Obtain Windows acceptance and, independently, the first
-sensor-change/capture handoff; then select its dataset checks. The sensor session
-should supply its scope without overwriting test implementation/round records.
+The Analytics/PyUtil first draft is checked, bounded Linux sensor acceptance is
+complete, and Windows acceptance remains separate. HostActivity passes 59
+destination tests; an approved isolated uv environment passes 17 PyUtil cases and
+preserves 224 selected identities. The read-only dataset helper passes its
+synthetic controls, and the first SmokeTests query/quality move preserves 34 cases.
+The second whole-file move adds 22 synthetic analysis/store cases, bringing the
+classified contract package to 56 passing cases. A third whole-file move adds 13
+mocked, transport-free S3 source contracts, bringing the package to 69 passing
+cases. A fourth whole-file move adds 11 durable producer/Parquet contracts,
+bringing the package to 80 passing cases. A fifth adds 5 unchanged page-query
+contracts, bringing the package to 85. The synthetic localhost HTTP case is now
+default-on with explicit environment opt-out. The final SmokeTests organization
+places that one case under `tests/transport` and all 12 AppTest cases under
+`tests/ui`; the 85 contracts remain under `tests/contract`, and full discovery
+passes 98/98. Continue TC-06 with a separate validation/PyUtil/coordination slice.
+The existing RHEL path was only a one-time sample and will not receive raw files;
+its empty raw directory is not a gate. Continue later bounded cleanup slices under
+the implementation plan without inventing a replacement data requirement.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — do not retain the one-time RHEL sample as a raw-data gate. -->

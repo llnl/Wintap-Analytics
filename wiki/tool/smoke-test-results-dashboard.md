@@ -28,6 +28,10 @@ tags: [streamlit, smoke-tests, portable-manifests, cross-host, validation]
 
 # Smoke-test results dashboard
 
+App-role comparison: [[wiki/tool/streamlit-app-review]] — known-stimulus validation
+complements HostActivity availability diagnostics; generic lifecycle/DLL profiling
+and process/network graph exploration remain distinct research capabilities.
+
 End-to-end diagram: [[wiki/workflow/live-collector-validation]] — known activity,
 shared telemetry/evidence delivery, and explicit S3-backed validation.
 

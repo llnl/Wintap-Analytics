@@ -15,7 +15,7 @@ grounded_by:
   - ../Wintap/tests/Wintap.Tests/README.md
   - ../Wintap/devtools
 policy: agent-editable
-last_validated: 2026-11-22
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -139,7 +139,7 @@ streamlit/projects/SmokeTests/
   tests/
     contract/       # analysis, query, quality, durable-result contracts
     ui/             # app and page navigation/rendering
-    transport/      # synthetic source and opt-in HTTP/S3 transport
+    transport/      # synthetic source and default-on loopback HTTP/S3 transport
 
 validation/<harness>/
   tests/
@@ -152,6 +152,11 @@ wiki/work/host-process-identity-patch/
     analysis/       # deterministic analysis and evidence parsing tests
     qualification/  # installed/pressure/shutdown/retry evidence controls
 ```
+
+As of 2026-11-23, the SmokeTests hierarchy is implemented: 85 contract cases,
+one default-on loopback transport case with explicit opt-out, and 12 Streamlit UI
+cases are discovered exactly once. No project-root forwarding test modules remain.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract; streamlit/projects/SmokeTests/tests/transport; streamlit/projects/SmokeTests/tests/ui -->
 
 The Analytics moves should be mechanical first. Splitting a large file such as
 `HostActivity/tests/contract/test_host_activity.py` or `SmokeTests/test_analysis.py` is a
@@ -230,7 +235,7 @@ These are review groups, not deletion decisions.
 | Review group | Current files | Initial disposition | Reason |
 |---|---|---|---|
 | SmokeTests analysis/pages/app | `test_analysis.py`, `test_pages.py`, `test_app.py` | Relocate, then compare/possibly merge assertions | They all cover working sets, selected runs, overlap, and evaluation boundaries at different layers. Keep UI navigation tests separate from pure query/materialization contracts. |
-| SmokeTests source/HTTP | `test_s3_source.py`, `test_s3_http.py` | Retain and mark transport tiers | Synthetic source parity is default-safe; loopback HTTP is explicit opt-in and is not Garage acceptance. |
+| SmokeTests source/HTTP | `test_s3_source.py`, `test_s3_http.py` | Retain and mark transport tiers | Synthetic source parity and loopback-only HTTP are default-safe. HTTP supports explicit environment opt-out and is not Garage acceptance. |
 | Entity observation/completion | `test_coordination_entity_observations.py`, `*_observation_qualification.py`, `*_completion_observations.py`, `*_completion_qualification.py`, `*_completion_history_qualification.py`, `*_completion_crashes.py` | Relocate; build a coverage map before any merge | Names overlap, but the files distinguish ordinary contracts, genuine retained history, crash seams, and budget/immutability controls. |
 | Entity publication/history | `test_coordination_entity_publications.py`, `*_publication_qualification.py`, `*_writer_history.py`, `*_forward_history.py`, `*_resolution.py` | Relocate; extract shared fixture support only after comparison | Similar lifecycle vocabulary does not prove duplicate evidence. Preserve independent-original and forward-history controls. |
 | Intentional retry | `test_coordination_retry.py`, `test_coordination_intentional_retry.py`, `*_controls.py`, `*_history.py`, `*_credentials.py`, `*_upgrade.py` | Relocate into contract, qualification, compatibility | Separate retry protocol behavior from retained-history, credential-freeze, and schema-upgrade evidence. |

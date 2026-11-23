@@ -6,10 +6,10 @@ grounded_by:
   - ../wintap/tests/Wintap.Tests/RuntimeCapabilitiesTests.cs
   - ../wintap/devtools/test_smoke_manifest.py
   - ../wintap/devtools/test_telemetry_smoke_workload.py
-  - streamlit/projects/SmokeTests/test_durable.py
+  - streamlit/projects/SmokeTests/tests/contract/test_durable.py
   - wiki/work/clone-default-true/verification.md
 policy: agent-editable
-last_validated: 2026-10-23
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain

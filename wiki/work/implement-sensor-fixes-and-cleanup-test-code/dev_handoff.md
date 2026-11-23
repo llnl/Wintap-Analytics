@@ -25,8 +25,9 @@ grounded_by:
   - ../wintap/global.json
   - ../wintap/wintap/Makefile
   - ../wintap/tests/Wintap.Tests/Wintap.Tests.csproj
+  - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
-last_validated: 2026-11-22
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: dev-environment
 event_domain: cross-domain
@@ -37,6 +38,35 @@ tags: [feature-work, dev-handoff, linux, wintap, todo, sensor-fixes, iterative-d
 ---
 
 # Dev Handoff: Wintap TODO Review and Linux Implementation Continuation
+
+## Current Test-Engineering Assignment — Linux Destination
+
+The human has now assigned this session test implementation/testing and requested
+the bounded continuation plan in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan#Current Linux Tranche — Test Development While Captures Are Pending]].
+Lightweight existing-data readiness checks may precede TC-03; fresh-fix correctness
+still requires the sensor engineer's independent capture handoff. The prompts
+below preserve the transfer checkpoint; use the current tranche for test next steps.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — prepare the test plan and permit no-heroics existing-data smoke while fresh captures are pending. -->
+
+Destination checks pass 59 HostActivity/7 stdlib parser controls. The authorized
+RHEL dataset is under PyUtil's `data/wintap-analysis/rhel8/`; DB read-only readiness
+passes, and its empty raw directory is a final one-time sample result rather than a
+future gate. A subsequently approved isolated uv
+environment now passes 17 PyUtil cases and preserves all 224 selected identities
+(4 unit / 220 contract); its old `.venv` remains unusable and untouched. Windows
+managed acceptance remains deferred. The opt-in helper and first bounded
+SmokeTests query/quality cleanup slice are implemented. A second whole-file move
+adds analysis/store controls, and a third adds mocked, transport-free S3 source
+contracts. A fourth moves the 11-case durable producer/Parquet contract with only
+path/import adjustments; a fifth moves the unchanged 5-case page-query contract.
+The classified package passes 85 cases. The synthetic localhost HTTP case is now
+default-on with explicit environment opt-out. The transport case now lives under
+`tests/transport`, and all 12 Streamlit AppTest cases live under `tests/ui`; the
+full project passes 98/98 with no root-level forwarding tests. SmokeTests
+organization is complete. Select the next validation/PyUtil/coordination slice
+from the implementation plan rather than moving these cases again.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — the RHEL sample will not be updated; do not wait for raw files there. -->
 
 ## Test-Cleanup Copy/Paste Prompt
 

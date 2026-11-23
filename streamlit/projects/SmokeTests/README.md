@@ -308,6 +308,17 @@ observations are not original dev-time harness re-validation or historical-loss 
 python3 -m unittest discover -s streamlit/projects/SmokeTests -p 'test_*.py' -v
 ```
 
+The mechanically classified offline contract package can be run separately from
+the SmokeTests project directory:
+
+```bash
+python -m unittest discover -s tests/contract -t . -p 'test_*.py' -v
+```
+
+See `tests/README.md` for its 85-case inventory. The default-on loopback test is
+under `tests/transport/`, and the actual Streamlit app tests are under `tests/ui/`.
+Both remain outside that focused package.
+
 Tests exercise empty UI, repeated run selection, uploaded portable manifests,
 host/PID/path/time isolation, timestamp formats, normal and direct schemas, and
 exact HOST receipt matching, plus live-producer parquet schema, revision/conflict/
@@ -319,9 +330,17 @@ with `python3 devtools/test_smoke_manifest.py -v` and
 
 S3 tests use synthetic configs/listings/credentials and injected files, including
 Streamlit source selection, read-only connection settings and fail-closed limits.
-The optional real loopback HTTP/S3 test requires cached httpfs and is enabled with
-`SMOKE_S3_HTTP_TEST=1`. It exercises signed boto3 listing plus DuckDB range reads,
-not real Garage/TLS/authorization or multi-host acceptance.
+The real loopback HTTP/S3 test is enabled by default and requires an already cached
+DuckDB `httpfs` extension. Set `SMOKE_S3_HTTP_TEST=0` (also `false`, `no`, or
+`off`, case-insensitive) to opt out explicitly. It binds only to `127.0.0.1` and
+uses synthetic objects and credentials while exercising signed boto3 listing plus
+DuckDB range reads; it is not real Garage/TLS/authorization or multi-host
+acceptance.
+
+```bash
+python -m unittest -v tests.transport.test_s3_http
+```
+
 ## TCP endpoint confirmation
 
 The **TCP endpoint normalization** section runs two same-host cases via an assigned

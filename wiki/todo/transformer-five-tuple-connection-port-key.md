@@ -1,78 +1,157 @@
 ---
-title: "To-Do: Verify Transformer Five-Tuple Connection Port Key"
+title: "Diagnostic: Canonical Five-Tuple Connection Identity"
 type: diagnostic
-confidence: medium
+confidence: high
 grounded_by:
   - ../wintap/wintap/core/etl/transform/Transformer.cs
   - ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs
   - ../wintap/wintap/core/etl/transform/IdGenerator.cs
+  - ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
+  - ../Wintap-PyUtil/tests/test_network_activity_sql.py
+  - ../Wintap-PyUtil/tests/test_rawutil_conn_id_passthrough.py
+  - ../Wintap-PyUtil/wintappy/datautils/rawutil.py
+  - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
+  - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
 policy: agent-editable
-last_validated: 2026-11-08
+last_validated: 2026-11-23
 repo_scope: cross-repo
-implementation_area: windows-sensor
+implementation_area: data-pipeline
 event_domain: network
 audience: mixed
-status: draft
-source_paths: ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs; ../wintap/wintap/core/etl/transform/IdGenerator.cs
-tags: [todo, backlog, network-events, connection-identity, wintap]
+status: stable
+source_paths: ../wintap/wintap/core/etl/transform; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/tests/test_network_activity_sql.py; ../Wintap-PyUtil/wintappy/datautils/rawutil.py
+tags: [diagnostic, network-events, connection-identity, five-tuple, wintap, dbt]
 ---
 
-# To-Do: Verify Transformer Five-Tuple Connection Port Key
+# Diagnostic: Canonical Five-Tuple Connection Identity
 
-**Priority:** P2 — Medium (provisional; validate production impact before
-prioritizing a fix).
-**State:** Open — investigation only; no Wintap code change is authorized by
-this intake item.
-**Likely next step:** Trace representative inbound and outbound TCP/UDP events
-through `LoHi5Tuple` and `GenKeyForFive_Tuple_Conn`, then add a focused test that
-proves both endpoint ports contribute to the generated connection ID.
+**Priority:** P2 — Medium.
+**State:** Bounded single-authority implementation and DBT qualification complete;
+native Windows acceptance remains deferred, not eliminated.
+**Decision:** Direction-independent semantics are canonical, exact DBT bytes are
+not, and Wintap .NET must be the only production generator; see
+[[wiki/decision/canonical-five-tuple-connection-identity]].
 
-## Finding
+## Corrected finding
 
-In `Transformer.CreateProcessConn`, the call to
-`GenKeyForFive_Tuple_Conn` passes `loHi.HiIPPortInt` for both the low endpoint
-port argument and the high endpoint port argument. The `LoHi5Tuple` type keeps
-separate `LoIPPortInt` and `HiIPPortInt` properties, and the key generator
-accepts separate low- and high-port inputs and appends both to its key preimage.
-This makes the low-port argument at `Transformer.cs:37` look suspicious: for
-connections whose low and high endpoint ports differ, the generated key may
-encode the high port twice instead of encoding the actual endpoint pair.
-<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs §CreateProcessConn; ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs §LoIPPortInt/HiIPPortInt; ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenAttrKeyForFive_Tuple_Key -->
+The original intake alleged that `Transformer.CreateProcessConn` passed the high
+port for both endpoint-port arguments. That allegation does not reproduce in the
+current source or any history available in this repository. The 2024 initial
+import already passes `LoIPPortInt` and `HiIPPortInt` separately; later changes
+did not repair or alter that call. This establishes the behavior of available v7
+history, but cannot rule out a defect in an earlier ACME4-era source/build that is
+not present here.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs §CreateProcessConn; git history through initial commit 9c9ba7752474fb217072eb0d28c83530d4897857 -->
 
-That would potentially make different low-endpoint ports share a connection
-identifier when the remaining key fields match. It could also make the
-identifier inconsistent with the local/remote port values later assigned to
-`ProcessConnIncrData`. These are plausible consequences, not yet demonstrated
-capture defects; audit actual event shapes and downstream grouping before
-concluding severity.
-<!-- SYNTHESIS: inferred from the argument order in Transformer.CreateProcessConn and the low/high port fields consumed by IdGenerator.GenAttrKeyForFive_Tuple_Key -->
+`LoHi5Tuple` orders endpoint pairs by numeric IP and uses port as the same-IP
+tie-breaker. The current Wintap key is direction-independent, and direct vectors
+against the live C# sources confirm that changing either port, either IP, or the
+protocol changes the result.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs §compareAndAssign; ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenAttrKeyForFive_Tuple_Key; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs -->
 
-## Investigation
+## Actual compatibility gap
 
-1. Verify the apparent argument mismatch against the intended FiveTupleKey
-   semantics and historical compatibility requirements.
-2. Exercise both address orderings, same-address/different-port tuples,
-   inbound/outbound events, and TCP/UDP protocol values; assert that reversing
-   event orientation yields the intended stable ID while changing either
-   endpoint port changes the ID.
-3. Check how `LoHi5Tuple.compareAndAssign` assigns each port when IP addresses
-   compare equal and when the source endpoint sorts higher than the destination.
-4. Profile captured `process_net_conn`/increment data for repeated IDs with
-   differing normalized endpoint ports, and distinguish confirmed collisions
-   from expected process ownership or metadata variation.
-5. If confirmed, propose a narrowly scoped fix and regression test in the Wintap
-   code repository; review persisted-ID compatibility and migration implications
-   before implementation.
+Wintap and DBT agree on endpoint-pair ordering but not on the complete identity
+contract or exact hash:
 
-## Open questions
+| Property | Current Wintap producer | Temporary DBT behavior |
+|---|---|---|
+| Endpoint ordering | Numeric IP, then port for equal IPs | Same |
+| Direction reversal | Stable | Stable |
+| Tuple sensitivity | Both IPs, both ports and protocol contribute | Same |
+| Additional inputs | Context, dotted address strings and both private-gateway strings | Fixed context only; no string-address or gateway inputs |
+| Preimage/hash | Nested legacy attribute/entity MD5 preimages | Uppercase MD5 of ordered canonical JSON |
+| Incomplete tuple | Numeric inputs are non-nullable; the key method can still hash null strings/default numbers | Returns null if protocol or either endpoint IP/port is missing |
+| Exact persisted ID | Legacy Wintap value | Different canonical value |
 
-- Is the current argument intentional for a legacy identity contract, or a
-  copy/paste error?
-- Are there existing persisted records whose connection IDs would change if the
-  low-port argument were corrected?
-- Does any downstream consumer rely on the current collision/identity behavior?
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenAttrKeyForFive_Tuple_Key; §GenKeyForFive_Tuple_Conn; git history for removed PyUtil commit 189da24 -->
+
+The DBT override was introduced in commit `189da24` on 2026-11-10 and merged in
+`0e2c7eb` on 2026-11-12. It intentionally replaces producer `connid`; its source
+and README both call it temporary and assign the authoritative implementation to
+Wintap .NET. The history contains no claim that this was a repair for a duplicated
+port argument.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/wintap_dbt/README.md §Temporary network identity compatibility change -->
+
+The older PyUtil workaround, added in commit `ab9b90a` in 2024, is the closest
+available evidence about the ACME4 defect. Its source comment says ACME4 Wintap
+created `CONNID` without sorting source/destination fields, then recomputes the ID
+from persisted `localipaddr`, `localport`, `remoteipaddr`, `remoteport`, and
+protocol. That supports a bad-ID/order diagnosis and assumes the persisted tuple
+is usable. It does **not** prove whether a separate producer build ever copied the
+remote IP into both persisted IP columns.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintappy/datautils/rawutil.py §get_raw_view; commits ab9b90a and acd89ac -->
+
+These possible defects have different recoverability:
+
+- If only the generator received the remote endpoint twice, while the persisted
+  local/remote columns remained correct, both the old workaround and current DBT
+  can discard the bad producer ID and compute a valid replacement.
+- If serialization wrote the remote IP into both persisted IP columns, current
+  DBT hashes that corrupted tuple and cannot recover the lost local IP. Recovery
+  would require another trustworthy field or source artifact.
+
+The current DBT formula is therefore both a historical compatibility repair and a
+later downstream implementation choice. Its exact JSON preimage and null policy
+are not the canonical target and should not be presented as proof of the original
+producer defect.
+
+## Verification
+
+Bounded offline evidence is under
+`/data/lintap-compactor/sensor-fixes/five-tuple-20261122/`:
+
+- Direct compilation of the live `IdGenerator`, `LoHi5Tuple`, and `Converters`
+  sources with SDK 10.0.402 passed reversal, same-IP reversal, both changed-port,
+  changed-IP, and changed-protocol vectors. It also proved gateway sensitivity and
+  that incomplete/default input can still produce a non-null legacy key.
+- Direct DuckDB execution of the existing DBT contract returned zero issues.
+- The two formulas produced 32-character uppercase hashes but not the same value
+  for the same complete tuple.
+- The existing Wintap xUnit class could not execute on Linux because its built
+  assembly targets Windows. This is a platform boundary, not a failed semantic
+  assertion; native Windows acceptance remains deliberately deferred.
+- The PyUtil pytest wrapper was not run because its checked-in environment is
+  unavailable. No environment was created and no dependency was installed; the
+  shipping contract SQL itself was executed with the installed DuckDB CLI.
+
+## Completed single-authority migration
+
+The exact legacy .NET preimage remains. The bounded source round completed:
+
+1. Prove context plus protocol and both complete IP/port endpoint pairs contribute
+   to producer identity.
+2. Prove whole-pair reversal stability for send/receive, opposite host sensors,
+   and same-host client/server processes, including equal-IP port tie-breaking.
+3. Prove changing context, protocol, either IP, or either paired port changes the
+   identity.
+4. Gateways remain metadata and both identity slots are empty. RFC 1122 loopback
+   uses hostname context; every non-loopback connection uses `public`. Opposite
+   sensors with gateway metadata in opposite endpoint slots now share an ID.
+5. Silver DBT and legacy PyUtil raw views preserve producer `connid`; both
+   downstream hash implementations and DBT's exact-output contract were removed.
+6. Release uses a clean cutover to newly collected producer-ID data. No legacy
+   migration or mixed-population compatibility is required. Native Windows
+   acceptance remains a future gate.
+
+Repeated uses of one five-tuple continue to share an ID because this is tuple
+identity, not socket-lifetime identity.
+
+The context refinement intentionally rekeys all producer connection IDs. The
+source-linked suite passes **33/33** cases; focused PyUtil passthrough contracts
+pass **78/78**, and all **11/11** selected real-DBT nodes pass without downstream
+rehashing. Native Windows acceptance remains deferred, not eliminated; DBT
+qualification for this round is complete.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md -->
 
 ## Scope
 
-This is an analytics-wiki intake note. No Wintap source, schema, or raw
-documents were changed while recording it.
+This investigation changed wiki documentation only. The absent ACME4 producer
+source/build or sanitized value-level evidence remains required to distinguish a
+hash-input/order defect conclusively from duplicated persisted endpoint columns.
+Wintap and Wintap-PyUtil
+source and tests were modified in the authorized bounded round. Schemas,
+historical data, materialized DBT outputs, dependencies, and deployments were not
+modified. No network, S3, or native Windows acceptance was performed. Full results:
+`../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md`.

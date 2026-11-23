@@ -5,6 +5,11 @@ confidence: medium
 grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c
+  - ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs
+  - ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs
+  - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
+  - ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs
+  - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - wiki/work/lintap-process-creation-validation/validation-harness-design.md
 policy: agent-editable
@@ -22,10 +27,9 @@ tags: [todo, priority, process-events, data-quality, telemetry-semantics, wintap
 
 **Priority:** P1 — High (provisional; prioritize because the silver process row
 can silently attribute an executable that did not run).
-**State:** Open — intake finding; deep dive not started.
-**Likely next step:** Promote to a cross-repo feature investigation, then decide
-whether the result is a bug fix, a model enhancement, or both. This intake does
-not select the eventual process/image model.
+**State:** Promoted-partial. The bounded `sfx-04` observation-kind and `sfx-05`
+path-evidence-source slices are accepted; deterministic process-lifetime selection
+and DBT changes remain open.
 
 ## Finding
 
@@ -34,10 +38,41 @@ process lifetime. Syscall-entry observations record a requested executable
 before the syscall outcome is known; `sched_process_exec` records a successful
 image installation. Those are different facts and need to remain distinguishable.
 
-The Wintap callback currently emits both observation types as process `Start`
-messages and tags their provenance in `Process.Arguments`. It uses process start
-time as `EventTime`, rather than the individual exec-observation timestamp.
+The Wintap callback emits both observation types as process `Start` messages and
+tags their provenance in `Process.Arguments`. It keeps process birth as
+`EventTime`; additive fields preserve the individual raw kernel observation and
+converted UTC value separately. The accepted `sfx-04` slice now also labels
+syscall entry as `ExecutionObservationKind=exec_attempt` and
+`sched_process_exec` as `exec_success`.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §OnStarting, HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c §trace_execve_entry, trace_execveat_entry, trace_sched_process_exec -->
+
+## Bounded sensor disposition — 2026-11-22
+
+`sfx-04` adds nullable `ExecutionObservationKind` to the shared process object and
+normal/direct Parquet. Linux syscall-entry exec observations use `exec_attempt`;
+the successful scheduler image-install hook uses `exec_success`. Clone, Refresh
+and unsupported producers remain null. Existing `ActivityType=Start`, identity,
+executable name/path evidence, command-line provenance, timing and
+`PROC_START_SRC` are unchanged.
+<!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §GetExecutionObservationKind, HandleEvent; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent -->
+
+Focused tests pass 7/7, the combined sensor-fix suite passes 78/78, and the
+bounded process-only gate passes 26/26 aggregate assertions. Across eight
+controlled repeated-exec lifetimes, every case has one null fork, two attempts
+and two successes with exact stage-one/stage-two path pairing and strict
+observation ordering. All 24 fork-only controls and all Refresh rows remain null;
+the optional field is present in all 98 Parquet files. This closes source-level
+attempt-versus-installed-image ambiguity, not process-lifetime selection.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md; ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs -->
+
+`sfx-05` preserves why each existing Linux path was selected through nullable
+`ExecutablePathSource`: `exec-event-filename`, own `procfs-exe`, clone's
+`parent-procfs-exe` fallback, or `unavailable`. It does not change path/name
+selection. Focused tests pass 5/5, the combined suite passes 83/83, and the live
+gate passes 37/37 over 5,960 rows and 109 files. All exec attempts/successes use
+event-filename evidence; clone and Refresh source precedence is explicit and
+valid. This makes rows evidence-aware but still does not choose a lifetime image.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md; ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs -->
 
 The Wintappy silver process model groups observations by `pidhash` and uses
 `any_value` independently for `process_name` and `process_path`, without using
@@ -102,6 +137,14 @@ explicit process-lifetime view; this example does not select that policy.
 <!-- SYNTHESIS: user-provided sanitized raw_process example interpreted using ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs, ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracer.bpf.c, and ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql -->
 
 ### Timestamp precision follow-up
+
+The explicit requirement and implemented additive candidate now live in
+[[wiki/todo/process-observation-time-separate-from-birth]]. Preserve canonical
+birth for identity independently of the finest available occurrence time;
+additive timing preservation and migration of legacy `EventTime` semantics are
+separate scopes. Exec/clone kernel timestamps now reach separate normal-ETL
+observation fields in the source candidate; live qualification and the broader
+executable-selection model remain open.
 
 The same sample warrants a separate timestamp investigation. The Start rows
 repeat `134394151359900000`, which is aligned to a much coarser boundary, while
@@ -231,8 +274,8 @@ feature folder and obtain approval for the chosen producer/model/schema changes.
 
 ## Suggested deep-dive work
 
-1. Preserve the distinction between exec attempts and successful execs in the
-   base model.
+1. Consume the now-preserved distinction between exec attempts and successful
+   execs without treating either raw-row count as process-birth count.
 2. Define how successful image changes relate to a process-lifetime identity.
 3. Retain per-exec ordering information separately from process start time.
 4. Replace independent arbitrary selection of name and path with an explicit,
@@ -262,7 +305,7 @@ The broader unresolved lifecycle-versus-attempt tradeoff is tracked in
 
 ## Disposition
 
-No model choice, schema change, implementation scope, or cross-repo code change
-has been authorized by this intake entry. When promoted, follow
-[[wiki/concept/llm-assisted-feature-workflow]] and link the resulting work folder
-from [[wiki/todo/index]].
+The additive sensor/projection distinction is accepted. No initial/latest image
+policy, DBT implementation, historical repair, syscall-return correlation, or
+separate lifecycle API has been selected. Continue through the active feature
+workflow and preserve [[wiki/tension/linux-process-lifecycle-vs-exec-attempt-observations]].
