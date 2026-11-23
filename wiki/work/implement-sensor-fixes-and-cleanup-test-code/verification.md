@@ -20,10 +20,15 @@ grounded_by:
   - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
   - ../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md
   - ../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
+  - ../Wintap-PyUtil/tests/test_network_activity_sql.py
+  - ../Wintap-PyUtil/tests/test_rawutil_conn_id_passthrough.py
+  - ../Wintap-PyUtil/tests/test_compacted_inputs.py
+  - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
   - validation/dataset-smoke/smoke_dataset.py
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
-last_validated: 2026-11-22
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -829,3 +834,71 @@ process occurred. Raw telemetry and identifiers remain outside Git. The
 implementation is committed locally in Wintap as `45939db`; nothing was pushed.
 Full evidence:
 `../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md`.
+
+## Five-Tuple Connection-Key Investigation — 2026-11-22
+
+The original duplicate-port allegation does not reproduce in current source or
+available v7 history: `Transformer.CreateProcessConn` has passed distinct low/high
+ports since the 2024 import. This does not rule on the absent ACME4-era build. Its
+older PyUtil workaround describes unsorted source/destination ID inputs and
+recomputes from persisted endpoints; it cannot repair a local IP already
+overwritten in those persisted columns. Live-source C# vectors compiled with SDK
+10.0.402 confirm reversal and same-IP stability plus sensitivity to both ports,
+IP, and protocol. They also expose the real contract differences: the legacy key
+changes with private-gateway metadata and can hash incomplete/default input.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs; ../wintap/wintap/core/etl/transform/IdGenerator.cs -->
+
+The existing PyUtil DBT contract SQL returned **0 issues** under direct DuckDB CLI
+execution. For one complete synthetic tuple, DBT and Wintap each emitted a
+32-character hash but the values differed, as expected from their distinct
+preimages. The PyUtil pytest wrapper was unavailable and no dependency/environment
+was installed. Attempting the existing Wintap xUnit class from Linux stopped at
+the Windows-targeted assembly boundary before tests executed; no native Windows
+acceptance was started or claimed.
+<!-- GROUND_TRUTH: git history for removed PyUtil commit 189da24; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs -->
+
+Private evidence and checksums are under
+`/data/lintap-compactor/sensor-fixes/five-tuple-20261122/`; no identifiers or raw
+telemetry are persisted in Git. No source/schema, historical data, DBT output,
+dependency, network, S3, deployment, or package was changed. Disposition:
+[[wiki/decision/canonical-five-tuple-connection-identity]] now makes endpoint-
+normalized semantics—not DBT's exact JSON—the contract and requires one .NET
+generator. Gateway symmetry, DBT override removal and coordinated rebuild remain
+open.
+
+### First implementation round — 2026-11-23
+
+Wintap retains its legacy nested preimage but excludes ordinary default gateways
+from identity while continuing to record them as metadata. Loopback retains host
+scoping. Added vectors cover opposite sensors with gateway metadata in opposite
+slots, gateway independence, loopback reversal/host separation, context and every
+five-tuple field. Direct SDK 10.0.402 compilation of the actual changed source and
+test file with evidence-only stubs passes **32/32** cases.
+
+PyUtil silver DBT and legacy raw views now preserve producer `connid`; the DBT
+macro, exact-output contract and legacy scalar-list hash were removed. Focused
+model/raw-view/consumer tests pass **86/86**; the classified SQL contracts plus new
+raw-view checks pass **222/222**. The two new raw-view checks are classified
+`unit`, bringing the documented catalog to **226** cases (**6 unit + 220
+contract**). Static single-authority and Python compile checks pass.
+
+A real local DBT regression now seeds producer `ConnId` values, runs a selected
+bronze/silver build and its activity/non-null tests, and queries the materialized
+DuckDB table. All **11/11** selected DBT operations, models and tests pass; both
+synthetic TCP/UDP producer IDs are preserved exactly. The broader compacted-input
+file passes **8/8** runnable tests with its separate destructive migration test
+skipped by its existing opt-in guard. It used an existing DBT environment and a
+fresh fixture under `/data`; no sync, install, S3 or historical data was used. The
+initial `dbt --version` probe was not network-isolated and may have performed the
+standard package-version metadata check; the build itself used local fixtures and
+disabled anonymous telemetry.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_compacted_inputs.py §test_process_conn_dbt_build_preserves_producer_conn_id; ../Wintap-PyUtil/wintap_dbt/tests/process_conn_incr_conn_id_not_null.sql -->
+
+The normal Windows xUnit build remains blocked on Linux by Windows targeting and
+stale net8 assets; no restore or dependency install was allowed. The reused test
+environment also lacks `dynaconf`, so the unrelated four configuration tests did
+not collect. No deployment, historical mutation, source-data/S3 access, native
+Windows run or push occurred. Milestone commits were created locally after these
+gates. Evidence:
+`/data/lintap-compactor/sensor-fixes/conn-id-single-authority-20261123/`; full audit:
+`../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md`.

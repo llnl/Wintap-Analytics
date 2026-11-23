@@ -19,6 +19,9 @@ grounded_by:
   - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
   - ../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md
   - ../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
+  - ../Wintap-PyUtil/tests/test_network_activity_sql.py
+  - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
   - validation/dataset-smoke/README.md
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -479,6 +482,15 @@ with explicit environments and budgets, not prerequisites for every draft iterat
 - [x] `sfx-07`: Linux Stop retains kernel occurrence and receipt timing without
   changing EventTime or identity; 4/4 focused, 92/92 combined and 50/50 live
   aggregate assertions pass.
+- [x] Five-tuple current-source investigation: no duplicate-port call exists in
+  available v7 history; current Wintap and canonical DBT semantics/exact IDs were
+  compared with bounded offline vectors. The absent ACME4 build remains unresolved.
+- [x] Five-tuple single-authority source migration: qualify .NET endpoint reversal,
+  opposite-host, same-host client/server, field sensitivity and context vectors;
+  retain ordinary gateways as metadata and loopback host scoping; remove DBT and
+  legacy PyUtil hash generation. Source-linked Wintap cases pass 32/32 and PyUtil
+  contracts pass 222/222. Native Windows acceptance and coordinated rebuild/
+  deployment remain separate; exact DBT JSON is not an acceptance requirement.
 - [ ] TC-06: remaining organization slices completed with scoped discovery proof.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
   gates and unresolved limitations recorded; durable facts promoted to canonical pages.

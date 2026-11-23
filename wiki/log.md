@@ -9648,3 +9648,82 @@ remain outside Git; no BPF, network, S3, DBT, dependency installation, deploymen
 historical mutation, Windows acceptance or push occurred. Wintap committed the
 implementation locally as `45939db`.
 <!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md; ../wintap/tests/Lintap.Tests/ProcessExitObservationTimingTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs; ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs -->
+
+## [2026-11-22] investigation/decision | canonical five-tuple connection identity
+
+Found no duplicate-port call in available Wintap v7 history: it has passed distinct
+low/high ports since its recorded 2024 import. Later tracing found the 2024 ACME4
+PyUtil workaround describes unsorted source/destination ID inputs and rebuilds the
+ID from persisted endpoint columns. That can repair a bad producer ID when those
+columns are correct, but cannot recover an endpoint already overwritten there;
+the absent ACME4 producer build leaves that narrower historical question open.
+Current Wintap and temporary PyUtil
+DBT behavior agree on endpoint-pair ordering, reversal, and tuple sensitivity but
+differ in exact identity: Wintap's legacy nested hash includes dotted strings and
+private gateways and can hash incomplete/default input; DBT uses canonical JSON
+over protocol plus numeric endpoint pairs and returns null for incomplete tuples.
+
+Recorded the human-selected DBT behavior as the exact Wintap producer target and
+documented the coordinated rekey consequence. Direct SDK 10.0.402 C# vectors and
+DBT contract SQL passed; exact IDs differ. The Linux Wintap xUnit attempt stopped
+at its Windows assembly boundary, and the unavailable PyUtil pytest environment
+was not replaced. Private evidence remains under `/data`; no source/schema,
+dependency, historical data, network, S3, deployment, native Windows acceptance,
+commit or push occurred. Corrected relevant `../Wintappy` citations to the live
+`../Wintap-PyUtil` checkout path.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs; ../wintap/wintap/core/etl/transform/IdGenerator.cs -->
+<!-- HISTORICAL: removed temporary PyUtil implementation is retained in commits 189da24 and 0e2c7eb. -->
+
+## [2026-11-23] decision/refinement | semantic CONN_ID and sole .NET authority
+
+Human owner clarified that canonical `ConnId` is a semantic contract, not DBT's
+exact JSON preimage: hardcoded context `llnl` plus protocol and two whole IP/port
+endpoint pairs, normalized so opposite send/receive, opposite-host sensor and
+same-host client/server perspectives fuse to one ID. Context retains the future
+network-space namespace hook. Legacy .NET nesting and extra fixed strings may
+remain because deterministic format is an implementation detail.
+
+The end state has exactly one generator in Wintap .NET; DBT and legacy PyUtil
+`rawutil` must stop rehashing and consume producer `connid` after semantic
+qualification. Opened
+[[wiki/tension/private-gateway-connection-identity]] because current gateway lookup
+is host-local and can populate opposite endpoint slots on opposite sensors, which
+may conflict with cross-host fusion. Updated the ADR, diagnostics, network/concept/
+repo pages, feature plan/verification, queue and index. No source, schema, data,
+dependency, deployment or test artifact changed.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs; ../wintap/wintap/core/etl/transform/IdGenerator.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql -->
+
+## [2026-11-23] implementation/verification | sole .NET CONN_ID authority
+
+Implemented the authorized first round across Wintap and Wintap-PyUtil. Wintap
+retains context, whole-endpoint ordering and its legacy nested preimage. Ordinary
+default gateways remain recorded metadata but no longer affect `ConnId`; loopback
+retains host scoping. New source-linked vectors cover opposite sensors, gateway
+independence, loopback reversal/host separation, context and every five-tuple
+field; direct SDK 10.0.402 compilation/execution passes 32/32 cases.
+
+PyUtil silver DBT and legacy raw views now preserve producer `connid`. Removed the
+temporary DBT macro/exact-output contract and legacy scalar-list hash. Focused
+model/raw-view/consumer tests pass 86/86; classified SQL contracts plus new raw-
+view tests pass 222/222. The two new raw-view tests are marked `unit`, bringing
+the documented catalog to 226 cases (6 unit + 220 contract). Static
+single-authority and Python compile checks pass. The accepted ADR and held tension
+retain explicit human-review notices.
+
+Follow-up DBT qualification added producer IDs to the synthetic Parquet fixture
+and a real local build regression. All 11 selected on-run operations, bronze/
+silver models and DBT tests pass, and the materialized table preserves both
+synthetic producer IDs exactly. The broader compacted-input file passes 8 runnable
+tests with its separately guarded destructive migration test skipped. Testing used
+an existing DBT environment and fresh `/data` fixture; no sync, installation,
+source-data or S3 access occurred. The initial `dbt --version` probe was not
+network-isolated and may have made DBT's standard package-version metadata check;
+the build itself was local with anonymous telemetry disabled.
+
+Normal xUnit remains blocked on Linux by Windows targeting and stale net8 assets;
+no restore/install was performed. Four unrelated config tests could not collect
+because the reused environment lacks `dynaconf`. Evidence is under
+`/data/lintap-compactor/sensor-fixes/conn-id-single-authority-20261123/`. No
+deployment, historical mutation, source-data/S3 access, native Windows acceptance
+or push occurred. Milestone commits were created locally after these gates.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md; ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/wintappy/datautils/rawutil.py; ../Wintap-PyUtil/tests/test_network_activity_sql.py; ../Wintap-PyUtil/tests/test_rawutil_conn_id_passthrough.py; ../Wintap-PyUtil/tests/test_compacted_inputs.py -->
