@@ -17,7 +17,7 @@ grounded_by:
   - wiki/work/improve-lintap-data-quality/clone-validation-results.md
   - wiki/work/selinux-monitoring/verification.md
 policy: agent-editable
-last_validated: 2026-10-26
+last_validated: 2026-11-22
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -114,15 +114,15 @@ registration/“attached N” logs alone are not conclusive evidence. See
 | Exec additional sched-exec hook absent | Syscall entries without success confirmation | Cannot distinguish successful exec from failed attempts using that missing source. Fewer rows can mean fewer hooks, not fewer processes |
 | Clone + Exec, all tested hooks | Birth + exec-entry + successful-exec observations | Observed **three Start rows per fork+exec child, one PidHash**. Count identities, not Start rows; multiplicity is not fixed across configurations |
 | Late Clone after Exec/Refresh/Stop, new resolver guard | Provisional clone metadata marked `PROC_START_SRC=sched_fork` | Existing same-hash resolver row is not overwritten/revived; raw observations remain separate. Guard does not reconcile different hashes or order every other source |
-| Exit CO-RE: `exit_tracer.bpf.o` | Leader-task sched-exit; filters non-leader exits; parent TGID and kernel wait status | ExitCode carries kernel wait status, not automatically a decoded shell exit code. Leader exit is not a proven last-thread/group-death signal |
-| Exit fallback: `exit_tracepoint.bpf.o` | Every sched-exit task ID; kernel PPID and exit code set to zero | Thread Stop records possible; `ExitCode=0` is a placeholder, **not proof of successful exit**. Resolver/`/proc` may recover parent context but not the lost status |
+| Exit CO-RE: `exit_tracer.bpf.o` | Leader-task sched-exit; filters non-leader exits; parent TGID and kernel wait status | Persisted `ExitCodeCaptureStatus=kernel-wait-status`; `ExitCode` is not automatically a decoded shell exit code. Leader exit is not a proven last-thread/group-death signal |
+| Exit fallback: `exit_tracepoint.bpf.o` | Every sched-exit task ID; kernel PPID and exit code set to zero | Persisted `ExitCodeCaptureStatus=unavailable`; thread Stop records are possible and `ExitCode=0` is a placeholder, **not proof of successful exit**. Resolver/`/proc` may recover parent context but not the lost status |
 | Either Exit path, current userspace | Stop enrichment/identity from resolver, then live `/proc`, then fallback | Stop `EventTime` uses `DateTime.UtcNow` at callback, not the supplied kernel timestamp. Lifetime end can be late; unmatched Stop may use an exit-time identity |
 | Exit disabled/failed | No Stop observations from Exit | Open lifecycle rows are not proof processes remain alive; reconciliation is a different observation mechanism |
 | ProcessRundown enabled | One startup `/proc` inventory, emits Refresh | Helps pre-existing processes; neither continuous birth coverage nor a retroactive birth/exit history. Does not require BTF/eBPF; its `/proc` view/access still matters |
 
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §HandleEvent; §IsThreadClone; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c §trace_process_fork; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_tracer.bpf.c §trace_process_fork; §trace_sys_enter_clone3 -->
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c §trace_execve_entry; §trace_sched_process_exec -->
-<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/exit_tracer.bpf.c §trace_process_exit; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/exit_tracepoint.bpf.c §trace_process_exit; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §Start -->
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs §GetExitCodeCaptureStatus, HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/exit_tracer.bpf.c §trace_process_exit; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/exit_tracepoint.bpf.c §trace_process_exit; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §Start -->
 
 Measured counts and limits: [[wiki/work/improve-lintap-data-quality/clone-validation-results]].
 Shared model boundary: [[wiki/event_type/process-events]].

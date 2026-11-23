@@ -9611,3 +9611,22 @@ present in every file. Raw identifiers remain outside Git; no network, S3, DBT,
 dependency installation, deployment, historical mutation, Windows acceptance or
 push occurred. Wintap committed the implementation locally as `54ddf07`.
 <!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md; ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs -->
+
+## [2026-11-22] implementation/acceptance | Linux exit-code capture status
+
+Completed bounded `sfx-06`: Linux Stop rows add nullable
+`ExitCodeCaptureStatus` without changing numeric `ExitCode`. CO-RE reports
+`kernel-wait-status`; fallback placeholder zero reports `unavailable`. Normal and
+direct Stop projections retain the field, including null-first direct schemas.
+
+Focused tests pass 5/5, combined sensor fixes pass 88/88, and the non-incremental
+Release build has zero errors. Failed `live-01` remains immutable evidence of
+1,686 absent-resolver callback errors; the narrow null-safe lookup repair preserves
+initialized-resolver behavior. Interrupted `live-02` produced 1,066 classified
+Stops without runtime errors. Final `live-03` passes 43/43 assertions over 3,430
+rows and 39 files: all 574 Stops are `kernel-wait-status`, matching Exit tier
+`core`, while non-Stops remain null. All repeated-exec and fork-only controls pass.
+Raw identifiers remain outside Git; no BPF, network, S3, DBT, dependency install,
+deployment, historical mutation, Windows acceptance or push occurred. Wintap
+committed the implementation locally as `fde5a56`.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md; ../wintap/tests/Lintap.Tests/ProcessExitCodeCaptureStatusTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs; ../wintap/wintap/core/infrastructure/EventChannel.cs -->

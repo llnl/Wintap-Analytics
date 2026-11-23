@@ -18,6 +18,7 @@ grounded_by:
   - ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md
   - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
   - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
+  - ../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md
   - validation/dataset-smoke/smoke_dataset.py
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -769,3 +770,36 @@ initial/latest process-lifetime policy. Raw telemetry and identifiers remain
 outside Git. The implementation is committed locally in Wintap as `54ddf07`;
 nothing was pushed. Full evidence:
 `../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md`.
+
+## sfx-06 Linux Exit-Code Capture Status — 2026-11-22
+
+This bounded unit adds nullable `ExitCodeCaptureStatus` while preserving numeric
+`ExitCode`. Linux CO-RE Exit uses `kernel-wait-status`; fallback tracepoint uses
+`unavailable` because its zero is a placeholder. Unsupported producers remain
+null. Normal Stop rows and direct Parquet retain the field, including null-first
+batches. No wait-status decoding, BPF change, exit filtering, lifecycle identity,
+timing, resolver/parent semantics, or prior additive field changed. Direct-mode
+qualification required the history lookup to tolerate an absent optional resolver;
+initialized-resolver behavior is unchanged.
+<!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs; ../wintap/wintap/core/infrastructure/EventChannel.cs; ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs -->
+
+| Gate | Result |
+|---|---|
+| Frozen baseline | **83/83** through `sfx-05`. |
+| Focused contracts | **5/5**, including tier classification and normal/null-first projection. |
+| Final combined suite | **88/88**, no failures/skips. |
+| Non-incremental Linux Release build | **0 errors / 173 warnings** with SDK 10.0.402. |
+| `live-01` defect evidence | CO-RE loaded, but **1,686** callbacks exposed the absent-resolver null dereference before Stop output. |
+| `live-02` repair evidence | **1,066** classified Stops and zero runtime errors; interrupted before periodic acceptance. |
+| Final `live-03` acceptance | **43/43** assertions across 3,430 rows and 39 files; four sensors registered, two inventories completed, and shutdown was clean. |
+| Stop semantics | **574/574** Stops are `kernel-wait-status`, matching recorded Exit tier `core`; every non-Stop row is null. |
+| Compatibility/schema | Eight repeated-exec and 24 fork-only controls pass; exit status, exec kind, path source and both timing fields are optional in **39/39** files. |
+
+Observed numeric wait-status values remain uninterpreted. There were no Error/Fatal
+entries, nonzero drop/backlog diagnostics, workload stderr, or leaked processes.
+The pre-existing null-first optional-string limitation populated observation run
+ID in 4/8 repeated-exec cases; it is globally single-valued and consistent where
+present, while birth/hash identity and timing pass 8/8. Raw telemetry and
+identifiers remain outside Git. The implementation is committed locally in Wintap
+as `fde5a56`; nothing was pushed. Full evidence:
+`../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md`.

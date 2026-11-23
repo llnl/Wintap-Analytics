@@ -26,6 +26,7 @@ grounded_by:
   - ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs
   - ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs
   - ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs
+  - ../wintap/tests/Lintap.Tests/ProcessExitCodeCaptureStatusTests.cs
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
 last_validated: 2026-11-22
@@ -239,6 +240,14 @@ batches retain the optional column. The bounded gate found valid non-null Linux
 sources and optional schema in all 109 files, with unchanged selected path/name.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent; ../wintap/wintap/core/etl/load/DirectParquetSink.cs §AddScalarProperties; ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs -->
 
+Stop projection now persists nullable `ExitCodeCaptureStatus` without changing
+the numeric `ExitCode`. Linux CO-RE Exit emits `kernel-wait-status`; the fallback
+tracepoint emits `unavailable` because its numeric zero is a placeholder.
+Unsupported producers leave status null. Normal Stop ETL and direct Parquet retain
+the field, including null-first direct batches. The bounded CO-RE gate found all
+574 Stop rows labeled `kernel-wait-status` and optional schema in all 39 files.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs §GetExitCodeCaptureStatus, HandleEvent; ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs §createProcessTerminate; ../wintap/wintap/core/etl/load/DirectParquetSink.cs §AddScalarProperties; ../wintap/tests/Lintap.Tests/ProcessExitCodeCaptureStatusTests.cs -->
+
 ## Analysis Implications
 
 - Process lineage is keyed by `PidHash`/`ParentPidHash`, not PID alone; PID reuse is handled by mixing PID with create time and by `ProcessResolver`'s time-windowed instance resolution.
@@ -262,6 +271,10 @@ sources and optional schema in all 109 files, with unchanged selected path/name.
 - Use `ExecutablePathSource` to retain evidence quality. In particular, a clone's
   `parent-procfs-exe` is inherited-image fallback, while `unavailable` is explicit
   absence rather than authority to parse the command line.
+- Interpret Linux `ExitCode` together with `ExitCodeCaptureStatus`.
+  `kernel-wait-status` is raw kernel wait status, not a decoded shell exit code;
+  `unavailable` means a fallback placeholder and numeric zero is not proof of
+  success. Neither status proves leader exit was final thread-group death.
 
 See also [[wiki/tension/raw-telemetry-vs-normalized-wintap-semantics]], [[wiki/workflow/future-experiment-analysis-workflows]], and [[wiki/repo/wintappy-pipeline-repo]] (downstream `process`/`process_summary`/`process_uber_summary` DBT models).
 
