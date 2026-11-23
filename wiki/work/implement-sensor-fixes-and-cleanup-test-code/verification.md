@@ -19,6 +19,7 @@ grounded_by:
   - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
   - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
   - ../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md
+  - ../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md
   - validation/dataset-smoke/smoke_dataset.py
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -803,3 +804,28 @@ present, while birth/hash identity and timing pass 8/8. Raw telemetry and
 identifiers remain outside Git. The implementation is committed locally in Wintap
 as `fde5a56`; nothing was pushed. Full evidence:
 `../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md`.
+
+## sfx-07 Linux Stop Observation Timing — 2026-11-22
+
+This bounded unit retains Linux Exit's existing kernel occurrence timestamp in
+the established observation fields and extends normal Stop projection with those
+fields plus envelope `ReceiveTime`. Stop `EventTime`, identity, resolver/parent
+behavior, exit values/status, BPF and all Start/Refresh behavior remain unchanged.
+Failed additive UTC conversion stays null while raw monotonic evidence survives.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs; ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs; ../wintap/wintap/core/etl/model/ProcessData.cs -->
+
+| Gate | Result |
+|---|---|
+| Frozen baseline | **88/88** through `sfx-06`. |
+| Focused contracts | **4/4**, including identity/EventTime preservation and normal/direct projection. |
+| Final combined suite | **92/92**, no failures/skips. |
+| Non-incremental Linux Release build | **0 errors / 173 warnings** with SDK 10.0.402. |
+| Live acceptance | **50/50** assertions across 3,634 rows and 47 files. |
+| Stop timing | **625/625** Stops retain positive raw/UTC timing, expected clock domain, one run scope, and receipt after observation; converted observation FILETIME exactly equals Stop `EventTime`. |
+| Compatibility/schema | Eight repeated-exec and 24 fork-only controls pass; all four observation fields are optional in **47/47** files. |
+
+No Error/Fatal entry, nonzero drop/backlog diagnostic, workload stderr, or leaked
+process occurred. Raw telemetry and identifiers remain outside Git. The
+implementation is committed locally in Wintap as `45939db`; nothing was pushed.
+Full evidence:
+`../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md`.

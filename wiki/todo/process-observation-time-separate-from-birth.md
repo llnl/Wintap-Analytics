@@ -6,6 +6,7 @@ grounded_by:
   - ../wintap/shared/WintapAPI/WintapMessage.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs
+  - ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracer.bpf.c
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/clone_core_tracer.bpf.c
@@ -21,7 +22,9 @@ grounded_by:
   - ../wintap/wintap/core/etl/load/DirectParquetSink.cs
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - ../wintap/tests/Lintap.Tests/ProcessObservationTimingTests.cs
+  - ../wintap/tests/Lintap.Tests/ProcessExitObservationTimingTests.cs
   - ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md
+  - ../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md
 policy: agent-editable
 last_validated: 2026-11-22
 repo_scope: cross-repo
@@ -36,12 +39,10 @@ tags: [todo, priority, process-events, timestamps, precision, identity, exec, re
 # To-Do: Preserve Process Observation Time Separately from Canonical Birth
 
 **Priority:** P1 — High (human-requested research/data-fidelity requirement).
-**State:** Promoted — the bounded additive slice is implemented in an uncommitted
-source candidate. Linux `live-01` validated 8/8 multi-exec timing cases and exposed
-a direct-Parquet null defect; the repair passes 8/8 focused observation tests and
-65/65 expanded Linux/synthetic tests. Repaired-binary Linux `live-02` passes all
-18/18 aggregate acceptance checks. Full migration and native Windows acceptance
-remain open.
+**State:** Promoted — bounded Linux Start/Refresh timing and direct-Parquet repair
+are accepted, and `sfx-07` extends the same additive occurrence metadata to Stop.
+Its gate passes 50/50 checks with complete Stop timing. Full `EventTime` migration
+and native Windows acceptance remain open.
 
 ## Requirement
 
@@ -97,7 +98,10 @@ semantic migration remains a separate coordinated unit.** The candidate:
    report unavailable UTC distinctly. Conversion must not quantize to `CLK_TCK`.
 4. Gives Refresh the userspace UTC scan-start timestamp and propagates the existing
    `ReceiveTime`; it never claims a `/proc` inventory has kernel exec timing.
-5. Preserves source provenance and raw row multiplicity. Unsupported/legacy timing
+5. Gives Linux Stop the supplied kernel occurrence time in raw/UTC/domain/run
+   metadata and propagates `ReceiveTime`, without changing Stop `EventTime` or
+   identity. Conversion failure leaves additive UTC absent while retaining raw time.
+6. Preserves source provenance and raw row multiplicity. Unsupported/legacy timing
    stays absent/null, not fabricated. Windows live ETW acquisition stays unchanged;
    native additive schema/runtime compatibility still needs its own runner.
 <!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs; ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs; ../wintap/wintap/core/infrastructure/RuntimeCapabilities.cs -->
@@ -141,6 +145,9 @@ timing fields in all 124 Parquet files.
 - Multi-exec live ordering is established in both captures, and `live-02` closes
   bounded Linux acceptance by proving absent Refresh monotonic timing remains null
   after the direct-Parquet repair.
+- `sfx-07 live-01` passes 50/50 checks across 3,634 rows and 47 files. All 625
+  Stops retain positive raw/UTC timing, the expected clock domain, one run scope,
+  receipt after observation, and exact converted-time agreement with `EventTime`.
 - Raw monotonic nanoseconds are comparable only within their documented capture-run
   and clock domain. Nanosecond units do not guarantee nanosecond accuracy or a total causal
   order; equal timestamps remain ties. Do not order using rounded downstream times.

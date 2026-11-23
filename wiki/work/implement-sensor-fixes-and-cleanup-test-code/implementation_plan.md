@@ -18,6 +18,7 @@ grounded_by:
   - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
   - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
   - ../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md
+  - ../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md
   - validation/dataset-smoke/README.md
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -475,6 +476,9 @@ with explicit environments and budgets, not prerequisites for every draft iterat
 - [x] `sfx-06`: Linux Stop rows distinguish CO-RE kernel wait status from fallback
   placeholder zero without decoding or changing `ExitCode`; 5/5 focused, 88/88
   combined and 43/43 final live assertions pass.
+- [x] `sfx-07`: Linux Stop retains kernel occurrence and receipt timing without
+  changing EventTime or identity; 4/4 focused, 92/92 combined and 50/50 live
+  aggregate assertions pass.
 - [ ] TC-06: remaining organization slices completed with scoped discovery proof.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
   gates and unresolved limitations recorded; durable facts promoted to canonical pages.

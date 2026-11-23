@@ -9630,3 +9630,21 @@ Raw identifiers remain outside Git; no BPF, network, S3, DBT, dependency install
 deployment, historical mutation, Windows acceptance or push occurred. Wintap
 committed the implementation locally as `fde5a56`.
 <!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md; ../wintap/tests/Lintap.Tests/ProcessExitCodeCaptureStatusTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs; ../wintap/wintap/core/infrastructure/EventChannel.cs -->
+
+## [2026-11-22] implementation/acceptance | Linux Stop observation timing
+
+Completed bounded `sfx-07`: Linux Exit retains its existing kernel occurrence
+timestamp as raw monotonic, UTC FILETIME, clock-domain and run-scope metadata.
+Normal Stop ETL now carries those fields and envelope `ReceiveTime`; direct Parquet
+already retains the nested values. Stop `EventTime`, identity, resolver/parent
+behavior, exit semantics, BPF and Start/Refresh behavior remain unchanged.
+
+Focused tests pass 4/4, combined sensor fixes pass 92/92, and the non-incremental
+Release build has zero errors. The process-only gate passes 50/50 assertions over
+3,634 rows and 47 files. All 625 Stops have positive complete timing, one run
+scope, receipt after observation, and exact converted-time agreement with
+`EventTime`; all prior repeated-exec and fork-only controls pass. Raw identifiers
+remain outside Git; no BPF, network, S3, DBT, dependency installation, deployment,
+historical mutation, Windows acceptance or push occurred. Wintap committed the
+implementation locally as `45939db`.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md; ../wintap/tests/Lintap.Tests/ProcessExitObservationTimingTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs; ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs -->

@@ -27,6 +27,7 @@ grounded_by:
   - ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs
   - ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs
   - ../wintap/tests/Lintap.Tests/ProcessExitCodeCaptureStatusTests.cs
+  - ../wintap/tests/Lintap.Tests/ProcessExitObservationTimingTests.cs
   - ../wintap/tests/Wintap.Tests/TelemetryProjectionQualityTests.cs
 policy: agent-editable
 last_validated: 2026-11-22
@@ -248,6 +249,16 @@ the field, including null-first direct batches. The bounded CO-RE gate found all
 574 Stop rows labeled `kernel-wait-status` and optional schema in all 39 files.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs §GetExitCodeCaptureStatus, HandleEvent; ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs §createProcessTerminate; ../wintap/wintap/core/etl/load/DirectParquetSink.cs §AddScalarProperties; ../wintap/tests/Lintap.Tests/ProcessExitCodeCaptureStatusTests.cs -->
 
+Linux Stop now retains its existing kernel occurrence timestamp in the same
+observation fields used by exec/clone. `EventTime` remains the converted Stop
+occurrence time; additive raw monotonic, UTC FILETIME, clock domain and run scope
+do not change identity. Failed additive UTC conversion remains null while raw
+timing survives. Normal Stop ETL also retains these fields and `ReceiveTime`;
+direct Parquet already carries them. The bounded gate found positive complete
+timing on all 625 Stops, exact equality between Stop `EventTime` and converted
+observation FILETIME, and optional four-field schema in all 47 files.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs §ApplyObservationTiming, HandleEvent; ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs §createProcessTerminate; ../wintap/wintap/core/etl/model/ProcessData.cs §ProcessTerminateData; ../wintap/tests/Lintap.Tests/ProcessExitObservationTimingTests.cs -->
+
 ## Analysis Implications
 
 - Process lineage is keyed by `PidHash`/`ParentPidHash`, not PID alone; PID reuse is handled by mixing PID with create time and by `ProcessResolver`'s time-windowed instance resolution.
@@ -256,7 +267,8 @@ the field, including null-first direct batches. The bounded CO-RE gate found all
 - Stop records are first-class again (coverage restored), with resource metrics best-effort per the correlation-window semantics above — treat metric-defaulted stops (`manifest_metric_misses`) as valid terminations, not data errors.
 - Compare raw monotonic observation nanoseconds only within their capture-run and
   clock domain. They preserve producer ordering evidence but do not guarantee
-  nanosecond accuracy or replace birth-based identity.
+  nanosecond accuracy or replace birth-based identity. Stop observation timing is
+  termination occurrence evidence, not process birth.
 - Treat numeric `0` from `live-01` as retained serialization-defect evidence, not
   a valid userspace Refresh monotonic timestamp. Repaired-binary `live-02` confirms
   all 1,312 Refresh rows remain null while all 4,988 kernel-timed Start rows remain
