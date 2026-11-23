@@ -308,15 +308,16 @@ observations are not original dev-time harness re-validation or historical-loss 
 python3 -m unittest discover -s streamlit/projects/SmokeTests -p 'test_*.py' -v
 ```
 
-The mechanically classified offline query/quality slice can be run separately
-from the SmokeTests project directory:
+The mechanically classified offline contract package can be run separately from
+the SmokeTests project directory:
 
 ```bash
-python -m unittest discover -s tests -t . -p 'test_*.py' -v
+python -m unittest discover -s tests/contract -t . -p 'test_*.py' -v
 ```
 
-See `tests/README.md` for its 85-case inventory. The root-level default-on
-loopback HTTP and actual Streamlit app tests remain outside that focused package.
+See `tests/README.md` for its 85-case inventory. The default-on loopback test is
+under `tests/transport/`, and the actual Streamlit app tests are under `tests/ui/`.
+Both remain outside that focused package.
 
 Tests exercise empty UI, repeated run selection, uploaded portable manifests,
 host/PID/path/time isolation, timestamp formats, normal and direct schemas, and
@@ -335,6 +336,11 @@ DuckDB `httpfs` extension. Set `SMOKE_S3_HTTP_TEST=0` (also `false`, `no`, or
 uses synthetic objects and credentials while exercising signed boto3 listing plus
 DuckDB range reads; it is not real Garage/TLS/authorization or multi-host
 acceptance.
+
+```bash
+python -m unittest -v tests.transport.test_s3_http
+```
+
 ## TCP endpoint confirmation
 
 The **TCP endpoint normalization** section runs two same-host cases via an assigned

@@ -61,9 +61,11 @@ adds analysis/store controls, and a third adds mocked, transport-free S3 source
 contracts. A fourth moves the 11-case durable producer/Parquet contract with only
 path/import adjustments; a fifth moves the unchanged 5-case page-query contract.
 The classified package passes 85 cases. The synthetic localhost HTTP case is now
-default-on with explicit environment opt-out, and the full project passes 98/98.
-Actual UI organization remains separate. See the verification record before
-selecting another mechanical slice.
+default-on with explicit environment opt-out. The transport case now lives under
+`tests/transport`, and all 12 Streamlit AppTest cases live under `tests/ui`; the
+full project passes 98/98 with no root-level forwarding tests. SmokeTests
+organization is complete. Select the next validation/PyUtil/coordination slice
+from the implementation plan rather than moving these cases again.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — the RHEL sample will not be updated; do not wait for raw files there. -->
 
 ## Test-Cleanup Copy/Paste Prompt

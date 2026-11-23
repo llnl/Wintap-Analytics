@@ -477,6 +477,12 @@ with explicit environments and budgets, not prerequisites for every draft iterat
 - [x] SmokeTests loopback HTTP policy: enabled when `SMOKE_S3_HTTP_TEST` is unset,
   with case-insensitive `0`, `false`, `no`, or `off` as explicit opt-outs. The
   default localhost case passes and the project-wide default run passes 98/98.
+- [x] TC-06 sixth SmokeTests slice: the byte-identical 1-case localhost transport
+  module moved into `tests/transport`; default and explicit opt-out behavior pass,
+  and project discovery remains 98/98 with the identity present exactly once.
+- [x] TC-06 seventh SmokeTests slice: the 12-case Streamlit AppTest module moved
+  into `tests/ui` with only three project-main path-depth adjustments; 12/12 pass
+  before/after, contracts remain 85/85, and project discovery remains 98/98.
 - [x] `sfx-03`: bounded Linux procfs command-line provenance/status and child-only
   clone attribution implemented; 6/6 focused, 71/71 combined and 28/28 live
   aggregate assertions pass. Structured argv and deterministic DBT selection remain.
@@ -506,7 +512,8 @@ with explicit environments and budgets, not prerequisites for every draft iterat
   both gateway identity slots empty. Source-linked checks pass 33/33; focused
   PyUtil passthrough contracts pass 78/78 and all 11 selected real-DBT nodes pass.
   Release is a clean new-data cutover with no legacy or mixed-data requirement.
-- [ ] TC-06: remaining organization slices completed with scoped discovery proof.
+- [ ] TC-06: SmokeTests organization is complete with scoped discovery proof;
+  remaining validation/PyUtil/coordination organization slices are still open.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
   gates and unresolved limitations recorded; durable facts promoted to canonical pages.
 

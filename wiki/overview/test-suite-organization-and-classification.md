@@ -153,6 +153,11 @@ wiki/work/host-process-identity-patch/
     qualification/  # installed/pressure/shutdown/retry evidence controls
 ```
 
+As of 2026-11-23, the SmokeTests hierarchy is implemented: 85 contract cases,
+one default-on loopback transport case with explicit opt-out, and 12 Streamlit UI
+cases are discovered exactly once. No project-root forwarding test modules remain.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract; streamlit/projects/SmokeTests/tests/transport; streamlit/projects/SmokeTests/tests/ui -->
+
 The Analytics moves should be mechanical first. Splitting a large file such as
 `HostActivity/tests/contract/test_host_activity.py` or `SmokeTests/test_analysis.py` is a
 separate change because it changes imports and makes duplicate assertion review

@@ -9761,7 +9761,7 @@ project-root discovery finds all 11 moved identities exactly once among 98 cases
 Opt-in loopback HTTP and Streamlit UI tests were discovered but not executed. No
 network, S3, private dataset, collector, dependency installation, commit or push
 occurred. Evidence and checksums are retained under the approved `/data` root.
-<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/contract/test_durable.py; streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/test_app.py; streamlit/projects/SmokeTests/test_s3_http.py; streamlit/projects/SmokeTests/tests/contract/test_s3_source.py -->
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/contract/test_durable.py; streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/ui/test_app.py; streamlit/projects/SmokeTests/tests/transport/test_s3_http.py; streamlit/projects/SmokeTests/tests/contract/test_s3_source.py -->
 
 ## [2026-11-23] implementation/verification | TC-06 page-query and localhost default
 
@@ -9779,4 +9779,20 @@ authorization, or multi-host acceptance. No dependency installation, external
 network/private-data access, collector, deployment, historical mutation, commit,
 or push occurred.
 <!-- HUMAN-DECISION: conversation 2026-11-23 — make SMOKE_S3_HTTP_TEST default true with explicit opt-out. -->
-<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/test_s3_http.py; streamlit/projects/SmokeTests/tests/contract/test_pages.py; streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/README.md -->
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/transport/test_s3_http.py; streamlit/projects/SmokeTests/tests/contract/test_pages.py; streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/README.md -->
+
+## [2026-11-23] implementation/verification | TC-06 SmokeTests transport/UI completion
+
+Created milestone commit `7056bed` for the durable/page-query/default-localhost
+work, then completed the remaining SmokeTests mechanical organization. The
+byte-identical one-case localhost test moved to `tests/transport`; default execution
+passes and explicit opt-out still skips. The 12-case AppTest module moved to
+`tests/ui` with only three equivalent project-main path-depth adjustments.
+
+Transport passes 1/1 before and after, UI passes 12/12 before and after, contracts
+remain 85/85, and full default project execution remains 98/98. Every moved
+identity is discovered exactly once under its new module, and no forwarding test
+files remain at the project root. No external network/S3/private-data access,
+dependency installation, collector, deployment, historical mutation, or push
+occurred. Broader TC-06 validation/PyUtil/coordination organization remains open.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/contract; streamlit/projects/SmokeTests/tests/transport/test_s3_http.py; streamlit/projects/SmokeTests/tests/ui/test_app.py; streamlit/projects/SmokeTests/tests/README.md -->

@@ -3,18 +3,18 @@ title: "Verification: smoke-test results dashboard"
 type: diagnostic
 confidence: medium
 grounded_by:
-  - streamlit/projects/SmokeTests/test_queries.py
-  - streamlit/projects/SmokeTests/test_app.py
+  - streamlit/projects/SmokeTests/tests/contract/test_queries.py
+  - streamlit/projects/SmokeTests/tests/ui/test_app.py
   - ../wintap/devtools/test_smoke_manifest.py
   - ../wintap/devtools/test_telemetry_smoke_workload.py
-  - streamlit/projects/SmokeTests/test_s3_source.py
-  - streamlit/projects/SmokeTests/test_s3_http.py
-  - streamlit/projects/SmokeTests/test_pages.py
+  - streamlit/projects/SmokeTests/tests/contract/test_s3_source.py
+  - streamlit/projects/SmokeTests/tests/transport/test_s3_http.py
+  - streamlit/projects/SmokeTests/tests/contract/test_pages.py
   - validation/telemetry-soak/test_canaries.py
   - validation/telemetry-soak/test_runner.py
-  - streamlit/projects/SmokeTests/test_analysis.py
+  - streamlit/projects/SmokeTests/tests/contract/test_analysis.py
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
