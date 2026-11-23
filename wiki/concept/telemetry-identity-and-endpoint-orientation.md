@@ -14,6 +14,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/model/ProcessConnIncrData.cs
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
   - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
+  - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
 policy: human-review-required
 last_validated: 2026-11-23
@@ -45,14 +46,15 @@ old packages and historical recordings have not been migrated.
 |---|---|---|
 | `agent_id` / `AgentId` | Persisted collector UUID, host-bound and stable across ordinary restarts. | `pid-v2` checks hostname/machine binding and replaces unbound legacy or differently bound copied state. Fully cloned hostname and machine ID cannot be distinguished locally. It is not a cryptographic host identity. |
 | `pid_hash` / `PidHash` | Process-instance key: normalized hostname, OS PID and canonical process-start UTC FILETIME; independent of agent UUID. | PID alone is reusable. `pid-v2` changes historical hashes; legacy stores/recordings are preserved, not silently rekeyed. |
-| `conn_id` / `ConnId` | Direction-independent key for context plus transport protocol and two normalized IP/port endpoint pairs. Context remains hardcoded as `llnl` but reserves a namespace for overlapping network spaces. | Does not include PID, agent UUID or connection-start time. Preimage encoding is private to .NET; ordinary gateways are metadata while loopback remains host-scoped. It identifies tuple equivalence, not a unique socket lifetime or process owner. |
+| `conn_id` / `ConnId` | Direction-independent key for context plus transport protocol and two normalized IP/port endpoint pairs. Host-oriented local IPv4 in RFC 1122 loopback space uses hostname context; every non-loopback connection uses `public`. | Does not include PID, agent UUID or connection-start time. Preimage encoding is private to .NET; both gateway slots are empty for identity while gateway values remain metadata. It identifies tuple equivalence, not a unique socket lifetime or process owner. |
 
 <!-- GROUND_TRUTH: ../wintap/wintap/core/shared/AgentIdentity.cs §LoadOrCreate; ../wintap/wintap/core/shared/ProcessIdentity.cs §Compute; ../wintap/wintap/core/etl/transform/Transformer.cs §CreateProcessConn -->
 
 Wintap owns the sole nested implementation and orders endpoint pairs.
 Wintap-PyUtil now preserves producer `connid`; its DBT and legacy raw-view hash
-implementations were removed. Ordinary gateways remain metadata, loopback stays
-host-scoped, and a future symmetric network-space namespace is held. See
+implementations were removed. Gateway values remain metadata, loopback is scoped
+through hostname context, non-loopback uses `public`, and a future symmetric
+network-space namespace is held. See
 [[wiki/decision/canonical-five-tuple-connection-identity]],
 [[wiki/tension/private-gateway-connection-identity]], and
 [[wiki/todo/transformer-five-tuple-connection-port-key]].

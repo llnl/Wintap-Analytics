@@ -269,8 +269,8 @@ attribution outcomes, including cases absent from the supplied sample.
 Silver `process_conn_incr` now preserves raw producer `connid`; DBT no longer
 contains a five-tuple hash macro. Wintap .NET is the sole generator. Repeated
 five-tuples share the key because it is tuple identity, not a connection-instance
-key. Existing temporary-DBT materializations require coordinated rebuild and
-downstream qualification before producer and DBT-derived populations are joined.
+key. Release uses a clean cutover to newly collected producer-ID data; temporary
+DBT-derived populations are neither migrated nor joined with the new population.
 A real local DBT regression builds the bronze/silver network path and confirms two
 synthetic producer IDs survive materialization exactly.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/tests/test_network_activity_sql.py; ../Wintap-PyUtil/tests/test_compacted_inputs.py §test_process_conn_dbt_build_preserves_producer_conn_id; ../Wintap-PyUtil/wintap_dbt/README.md §Network connection identity -->

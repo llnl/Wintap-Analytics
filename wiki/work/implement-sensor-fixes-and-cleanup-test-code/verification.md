@@ -25,6 +25,7 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_rawutil_conn_id_passthrough.py
   - ../Wintap-PyUtil/tests/test_compacted_inputs.py
   - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
+  - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
   - validation/dataset-smoke/smoke_dataset.py
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
@@ -902,3 +903,29 @@ Windows run or push occurred. Milestone commits were created locally after these
 gates. Evidence:
 `/data/lintap-compactor/sensor-fixes/conn-id-single-authority-20261123/`; full audit:
 `../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md`.
+
+### Hostname/public connection-context refinement — 2026-11-23
+
+The approved refinement moves loopback host scoping out of gateway preimage slots.
+`Transformer` now selects connection context from the host-oriented local IPv4:
+RFC 1122 loopback uses hostname and every non-loopback connection uses `public`.
+Both gateway identity slots are empty, while gateway values remain emitted
+metadata. The existing `llnl` context remains for non-connection identity types.
+This intentionally rekeys all connection IDs.
+
+The pre-change source-linked run produced the expected red exact-context mismatch.
+After implementation, direct SDK 10.0.402 compilation/execution of the changed
+production and test sources passes **33/33** cases. Coverage includes a non-`.1`
+loopback address, distinct hosts, reversal, exact hostname context, exact `public`
+context, rejection of legacy `llnl` connection context, gateway independence and
+all prior endpoint-normalization behavior.
+
+Focused downstream DBT/legacy passthrough contracts pass **78/78**. All **11/11**
+selected nodes in the real local DBT regression pass, preserving both synthetic
+producer IDs through bronze/silver materialization. No downstream connection hash
+was restored. DBT qualification for this round is complete. Native Windows testing
+is deferred, not eliminated. Release is a clean cutover to newly collected data;
+no legacy migration or mixed-population compatibility is required. Evidence:
+`/data/lintap-compactor/sensor-fixes/conn-id-loopback-context-20261123/`; full audit:
+`../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md`.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/tests/test_compacted_inputs.py; ../Wintap-PyUtil/tests/test_network_activity_sql.py; ../Wintap-PyUtil/tests/test_rawutil_conn_id_passthrough.py -->

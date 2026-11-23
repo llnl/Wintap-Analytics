@@ -12,6 +12,7 @@ grounded_by:
   - ../Wintap-PyUtil/tests/test_rawutil_conn_id_passthrough.py
   - ../Wintap-PyUtil/wintappy/datautils/rawutil.py
   - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
+  - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
 policy: agent-editable
 last_validated: 2026-11-23
 repo_scope: cross-repo
@@ -26,8 +27,8 @@ tags: [diagnostic, network-events, connection-identity, five-tuple, wintap, dbt]
 # Diagnostic: Canonical Five-Tuple Connection Identity
 
 **Priority:** P2 — Medium.
-**State:** Bounded single-authority implementation complete; native Windows and
-deployment/rebuild acceptance remain pending.
+**State:** Bounded single-authority implementation and DBT qualification complete;
+native Windows acceptance remains deferred, not eliminated.
 **Decision:** Direction-independent semantics are canonical, exact DBT bytes are
 not, and Wintap .NET must be the only production generator; see
 [[wiki/decision/canonical-five-tuple-connection-identity]].
@@ -125,15 +126,24 @@ The exact legacy .NET preimage remains. The bounded source round completed:
    and same-host client/server processes, including equal-IP port tie-breaking.
 3. Prove changing context, protocol, either IP, or either paired port changes the
    identity.
-4. Ordinary gateways remain metadata; loopback retains host scoping. Opposite
+4. Gateways remain metadata and both identity slots are empty. RFC 1122 loopback
+   uses hostname context; every non-loopback connection uses `public`. Opposite
    sensors with gateway metadata in opposite endpoint slots now share an ID.
 5. Silver DBT and legacy PyUtil raw views preserve producer `connid`; both
    downstream hash implementations and DBT's exact-output contract were removed.
-6. Deployment remains gated on native Windows acceptance and coordinated rebuild
-   because existing DBT IDs and producer IDs differ. Do not silently mix them.
+6. Release uses a clean cutover to newly collected producer-ID data. No legacy
+   migration or mixed-population compatibility is required. Native Windows
+   acceptance remains a future gate.
 
 Repeated uses of one five-tuple continue to share an ID because this is tuple
 identity, not socket-lifetime identity.
+
+The context refinement intentionally rekeys all producer connection IDs. The
+source-linked suite passes **33/33** cases; focused PyUtil passthrough contracts
+pass **78/78**, and all **11/11** selected real-DBT nodes pass without downstream
+rehashing. Native Windows acceptance remains deferred, not eliminated; DBT
+qualification for this round is complete.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md -->
 
 ## Scope
 

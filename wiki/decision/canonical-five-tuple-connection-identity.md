@@ -10,6 +10,7 @@ grounded_by:
   - ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs
   - ../wintap/wintap/core/etl/transform/IdGenerator.cs
   - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
+  - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
 policy: human-review-required
 last_validated: 2026-11-23
 repo_scope: cross-repo
@@ -24,7 +25,7 @@ tags: [decision, connection-identity, conn-id, five-tuple, dbt, wintap]
 
 # Decision: Canonical Five-Tuple Connection Identity
 
-<!-- REVIEW NEEDED: confirm the accepted ADR text reflects the approved first-round implementation and deferred native Windows/rebuild acceptance. -->
+<!-- HUMAN-DECISION: conversation 2026-11-23 — hostname/public context is approved; DBT qualification runs now, Windows testing is deferred but retained, and release is a clean new-data cutover with no legacy/mixed-data requirement. -->
 
 ## Context
 
@@ -49,9 +50,11 @@ preimage:
 
 - `ConnId` represents context plus the network five-tuple: transport protocol and
   two IP/port endpoint pairs.
-- Context namespaces otherwise identical private address spaces. It remains
-  hardcoded as `llnl` for now; retaining it preserves the future ability to assign
-  different contexts to overlapping network spaces.
+- Connection context is selected from the host-oriented local IPv4 endpoint. An
+  address in RFC 1122 loopback block `127.0.0.0/8` uses the observing hostname;
+  every non-loopback connection uses literal context `public`.
+- The existing `Transformer.context = "llnl"` remains for non-connection identities;
+  it is no longer the connection context.
 - Normalize by sorting **whole endpoint pairs**, not independent IP and port
   scalars. Numeric IP orders first; port breaks a same-IP tie.
 - Swapping endpoint order must preserve `ConnId`. This applies across opposite
@@ -66,10 +69,10 @@ preimage:
   Python paths must consume producer `connid` rather than recompute it.
 - `ConnId` remains tuple identity, not a socket or connection-lifetime identifier.
 
-Ordinary default gateways remain metadata rather than identity inputs in this
-round because endpoint-slot derivation is host-relative. Loopback retains its
-host-scoping value so identical loopback tuples on unrelated hosts do not collide.
-A future symmetric private-network namespace remains held; see
+Ordinary default gateways and loopback host metadata remain recorded but neither
+gateway preimage slot receives a value. Loopback host scoping is expressed solely
+through connection context, so identical loopback tuples on unrelated hosts do not
+collide. A future symmetric private-network namespace remains held; see
 [[wiki/tension/private-gateway-connection-identity]].
 
 ## Rationale
@@ -77,8 +80,9 @@ A future symmetric private-network namespace remains held; see
 This contract allows events observed from opposite host/process perspectives to
 fuse directly in SQL joins and graph operations without repeating normalization
 downstream. Context preserves a namespace hook for overlapping address spaces,
-while keeping preimage encoding private to the sole .NET implementation avoids
-cross-language byte-for-byte coupling.
+although the current non-loopback value `public` does not itself distinguish
+overlapping private networks. Keeping preimage encoding private to the sole .NET
+implementation avoids cross-language byte-for-byte coupling.
 
 ## Consequences
 
@@ -87,10 +91,12 @@ cross-language byte-for-byte coupling.
 - Downstream exact output is not an acceptance oracle. DBT and the legacy PyUtil
   raw-view repair retain overrides only until .NET behavior is qualified, then
   return to producer `connid`.
-- Removing the override changes current silver IDs to producer IDs. Dependent
-  materializations and joins require coordinated rebuild and qualification.
+- Removing the override changes silver IDs to producer IDs. Release starts a fresh
+  new-data population rather than migrating or combining legacy materializations.
+- Moving loopback host scoping into context and replacing connection context
+  `llnl` with `public` intentionally rekeys all producer connection IDs.
 - A future gateway/network-space namespace must preserve cross-sensor symmetry.
-- Historical recordings are not mutated by this decision.
+- Historical recordings are not mutated or included in the release cutover.
 
 ## Alternatives Considered
 

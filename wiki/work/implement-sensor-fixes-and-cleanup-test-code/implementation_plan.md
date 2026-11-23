@@ -22,10 +22,11 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
   - ../Wintap-PyUtil/tests/test_network_activity_sql.py
   - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
+  - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
   - validation/dataset-smoke/README.md
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
-last_validated: 2026-11-22
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -489,8 +490,13 @@ with explicit environments and budgets, not prerequisites for every draft iterat
   opposite-host, same-host client/server, field sensitivity and context vectors;
   retain ordinary gateways as metadata and loopback host scoping; remove DBT and
   legacy PyUtil hash generation. Source-linked Wintap cases pass 32/32 and PyUtil
-  contracts pass 222/222. Native Windows acceptance and coordinated rebuild/
-  deployment remain separate; exact DBT JSON is not an acceptance requirement.
+  contracts pass 222/222. Native Windows acceptance remains deferred; exact DBT
+  JSON is not an acceptance requirement.
+- [x] `sfx-09`: move loopback host scoping into connection context for the full
+  RFC 1122 loopback block, use `public` for non-loopback connections, and leave
+  both gateway identity slots empty. Source-linked checks pass 33/33; focused
+  PyUtil passthrough contracts pass 78/78 and all 11 selected real-DBT nodes pass.
+  Release is a clean new-data cutover with no legacy or mixed-data requirement.
 - [ ] TC-06: remaining organization slices completed with scoped discovery proof.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
   gates and unresolved limitations recorded; durable facts promoted to canonical pages.

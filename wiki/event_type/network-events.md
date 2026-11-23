@@ -15,6 +15,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintappy/datautils/rawutil.py
   - ../Wintap-PyUtil/tests/test_network_activity_sql.py
   - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
+  - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/network_ops_tracer.bpf.c
   - ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs
 policy: agent-editable
@@ -107,8 +108,9 @@ pairs, normalized so reversing the complete endpoint pairs preserves the key.
 This enables two host sensors—or client and server processes on one host—to emit
 the same connection identity without downstream renormalization. The exact nested
 .NET preimage may retain legacy conventions; DBT's JSON format is not canonical.
-Context remains hardcoded as `llnl` while preserving a future namespace hook for
-overlapping address spaces.
+Context is the observing hostname when the host-oriented local IPv4 is in RFC 1122
+loopback space; otherwise it is literal `public`. The existing hardcoded `llnl`
+context remains for other identity types, not connection identity.
 
 Wintap's current producer and all available v7 history pass distinct low/high
 ports and perform the same endpoint ordering. This does not adjudicate an absent
@@ -117,12 +119,14 @@ as unsorted source/destination inputs and rebuilds the ID from persisted endpoin
 columns. If those columns themselves duplicated the remote IP, neither that
 workaround nor current DBT could reconstruct the missing local endpoint.
 The bounded implementation removes downstream DBT/legacy Python rehashing and
-preserves producer `connid`. Ordinary default gateways remain recorded metadata
-but no longer affect the hash; loopback retains host scoping. Source-linked tests
-pass opposite-sensor, reversal, same-host, context and every-five-tuple-field
-vectors. A future symmetric private-network namespace remains held in
+preserves producer `connid`. Default gateways remain recorded metadata, but both
+gateway preimage slots are empty; loopback host scoping is carried only by context.
+Source-linked tests pass opposite-sensor, reversal, same-host, exact hostname/
+`public` context and every-five-tuple-field vectors. This intentionally rekeys all
+connection IDs. A future symmetric private-network namespace remains held in
 [[wiki/tension/private-gateway-connection-identity]]. Adoption still requires a
-coordinated rebuild, not a one-line port fix;
+clean new-data cutover after deferred native Windows acceptance; no historical or
+mixed-population compatibility is required;
 see [[wiki/decision/canonical-five-tuple-connection-identity]] and
 [[wiki/todo/transformer-five-tuple-connection-port-key]].
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs §CreateProcessConn; ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenAttrKeyForFive_Tuple_Key; ../Wintap-PyUtil/wintappy/datautils/rawutil.py §get_raw_view; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql -->

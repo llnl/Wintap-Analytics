@@ -9727,3 +9727,23 @@ because the reused environment lacks `dynaconf`. Evidence is under
 deployment, historical mutation, source-data/S3 access, native Windows acceptance
 or push occurred. Milestone commits were created locally after these gates.
 <!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md; ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/wintappy/datautils/rawutil.py; ../Wintap-PyUtil/tests/test_network_activity_sql.py; ../Wintap-PyUtil/tests/test_rawutil_conn_id_passthrough.py; ../Wintap-PyUtil/tests/test_compacted_inputs.py -->
+
+## [2026-11-23] implementation/verification | hostname/public CONN_ID context
+
+Refined sole .NET connection identity after human approval. `Transformer` now
+uses the observing hostname as context when the host-oriented local IPv4 is in RFC
+1122 loopback space and literal `public` otherwise. Both gateway preimage slots are
+empty; gateways remain emitted metadata. The existing `llnl` context remains for
+non-connection identities. This intentionally rekeys all connection IDs.
+
+The pre-change source-linked run failed the new exact-context assertion as
+expected. The changed production/test sources compile directly with SDK 10.0.402
+and pass 33/33 endpoint-normalization cases. Focused PyUtil passthrough contracts
+pass 78/78, and all 11 selected real-DBT nodes preserve producer IDs without
+rehashing. DBT qualification for this round is complete. By human direction,
+native Windows testing is deferred rather than eliminated, and release uses a
+clean cutover to newly collected data with no legacy migration or mixed-data
+compatibility requirement. Evidence is under the approved `/data` evidence root;
+no dependency installation, S3/source-data access, push or historical mutation
+occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md; ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/tests/test_compacted_inputs.py -->

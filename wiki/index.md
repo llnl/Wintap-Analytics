@@ -179,7 +179,7 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint]] | high | Dissolved: ignored conditional PUT remains an endpoint observation, but reservations/manifests were removed. |
 | [[wiki/tension/dbt-arbitrary-representatives-vs-compaction-equivalence]] | high | Resolved by human acceptance: existing ANY_VALUE quality debt is non-blocking for compaction; bronze/schema/build gates remain and affected downstream drift is reported. |
 | [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] | medium | Human accepts best-effort native-Mac process-group release for normal completion, with escaped-descendant risk explicit and reservation retention on timeout/supervisor death/uncertain group state; no VM/Docker prerequisite. An isolated candidate passes 12 actual-Mac synthetic lifecycle controls; broader DBT/data/S3/service platform acceptance remains open. |
-| [[wiki/tension/private-gateway-connection-identity]] | high | Held after the first round: ordinary gateways remain metadata and loopback stays host-scoped; a future symmetric private-network namespace remains deferred. |
+| [[wiki/tension/private-gateway-connection-identity]] | high | Held after refinement: both gateway identity slots are empty, loopback uses hostname context, non-loopback uses `public`, and a future symmetric private-network namespace remains deferred. |
 ## Decision
 
 | Page | Confidence | Summary |
@@ -194,7 +194,7 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/decision/ai-velocity-roi-mini-lab]] | high | Per-feature velocity/ROI mini-lab, revised to v2.1 (2026-08-19, post external review): headline **Velocity** = solo-hours / (5.714 × days) in Feature and Portfolio views, forced-counterfactual sealed Q1 under the three-question ratchet, point-plus-uncertainty reporting, frozen-criteria/availability-finality/comparability guardrails, per-unit quality loop, attention proxy as coverage-annotated diagnostic, never-gates rule. |
 | [[wiki/decision/platform-runtime-data-root-defaults]] | high | Records that unconfigured Wintap deployments use the OS defaults owned by Env.cs while explicit programmatic, environment, and JSON overrides remain supported. |
 | [[wiki/decision/separate-data-and-runtime-roots]] | high | Accepted layout decision: durable `raw_sensor` data and host-local runtime state use independently configurable roots; Linux defaults are `<data-root> and <runtime-root>` with no automatic migration. |
-| [[wiki/decision/canonical-five-tuple-connection-identity]] | high | Defines semantic `ConnId` as context plus a direction-independent five-tuple, keeps exact preimage encoding private to the sole .NET implementation, and requires removal of DBT hash generation. |
+| [[wiki/decision/canonical-five-tuple-connection-identity]] | high | Defines semantic `ConnId` as hostname context for loopback or `public` otherwise plus a direction-independent five-tuple, keeps exact preimage encoding private to sole .NET generation, and requires downstream passthrough. |
 | [[wiki/decision/registry-provider-strategy]] | high | Accepted (2026-08-25, session-handle sub-decision OPEN): manifest-only Windows registry collection via an undocumented Microsoft-Windows-Kernel-Registry capture mode (4-byte 0xFFFFFFFF EVENT_FILTER_DESCRIPTOR at EnableTraceEx2) — standalone mechanism record with the probe matrix, sticky-global-state finding, KCB-correlation negative result, and framed session-handle options. |
 ## Concept
 
@@ -322,8 +322,10 @@ call in available v7 history and traces the ACME4 workaround to unsorted produce
 ID inputs. The absent historical build still prevents ruling on duplicated
 persisted endpoints. The accepted target now preserves .NET as the sole generator;
 DBT's exact JSON is not canonical; DBT and legacy raw-view rehashing are now
-removed in the bounded source round. Native Windows acceptance and coordinated
-rebuild/deployment remain pending.
+removed in the bounded source round, and local DBT passthrough qualification is
+complete. Native Windows acceptance is deferred, not eliminated. Release uses a
+clean cutover to newly collected data with no legacy migration or mixed-data
+compatibility requirement.
 The provisional P2 [[wiki/todo/lintap-rpm-amazon-linux-2023]] tracks the reported
 failure of the current Lintap RPM to install on AWS Amazon Linux 2023; artifact,
 error classification, and target-support boundary remain to be established.
