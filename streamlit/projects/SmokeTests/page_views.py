@@ -2,6 +2,7 @@
 import streamlit as st
 
 from queries import TESTS, evaluate_run, mark_overlaps, prepare_data, selector_query
+from s3_source import discover_telemetry_files
 
 ICONS = {'red': '🔴', 'yellow': '🟡', 'green': '🟢', 'gray': '⚪'}
 
@@ -104,8 +105,14 @@ def test_page(ctx, canary):
         with st.spinner('Reading selected-run observations; other runs are not evaluated…'):
             available = False
             if run['selectors']:
+                telemetry_files = ctx['telemetry_files']
+                if ctx['remote']:
+                    domains = {selector['domain'] for selector in run['selectors']}
+                    telemetry_files = discover_telemetry_files(ctx['client'], ctx['config'], *ctx['window'],
+                        domains=domains)
+                    st.caption(f'S3: {len(telemetry_files)} telemetry files selected from explicit event/hour partitions.')
                 _, errors, available = prepare_data(con, ctx['data_root'], ctx['unlabelled_host'],
-                    telemetry_files=ctx['telemetry_files'])
+                    telemetry_files=telemetry_files)
             if available and run['selectors']:
                 materialize_run(con, run, ctx['padding'])
             evaluation = evaluate_run(con, run, available, ctx['padding'])

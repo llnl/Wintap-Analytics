@@ -110,11 +110,21 @@ class DashboardTests(unittest.TestCase):
         self.telemetry()
         with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
              patch('s3_source.open_source', side_effect=lambda _: (duckdb.connect(), object())), \
-             patch('s3_source.discover_files', return_value=([str(evidence)], [str(self.root / 'events.parquet')])):
+             patch('s3_source.discover_evidence_files', return_value=[str(evidence)]), \
+             patch('page_views.discover_telemetry_files', return_value=[str(self.root / 'events.parquet')]) as telemetry, \
+             patch('batch_views.discover_telemetry_files') as batch_telemetry, \
+             patch('batch_views.discover_host_files') as batch_host:
             app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
             self.assertFalse(app.exception)
+            telemetry.assert_not_called()
             app.switch_page('views/canary.py').run()
+            telemetry.assert_not_called()
+            batch_telemetry.assert_not_called()
+            batch_host.assert_not_called()
             self.validate(app)
+            telemetry.assert_called_once()
+            batch_telemetry.assert_not_called()
+            batch_host.assert_not_called()
             self.assertTrue(any('stimulus only' in m.value for m in app.markdown))
             self.assertTrue(any('Yellow' in m.value for m in app.markdown))
 
@@ -123,7 +133,7 @@ class DashboardTests(unittest.TestCase):
         config.write_text(json.dumps(dict(endpoint='https://garage.example.invalid', datasets=['s3://fixture-bucket/run'])))
         with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
              patch('s3_source.open_source', side_effect=lambda _: (duckdb.connect(), object())), \
-             patch('s3_source.discover_files', side_effect=ValueError('S3 file limit exceeded')):
+             patch('s3_source.discover_evidence_files', side_effect=ValueError('S3 file limit exceeded')):
             app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
             self.assertFalse(app.exception)
             self.assertTrue(app.error)

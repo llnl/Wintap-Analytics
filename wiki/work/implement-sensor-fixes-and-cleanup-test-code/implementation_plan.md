@@ -811,6 +811,10 @@ with explicit environments and budgets, not prerequisites for every draft iterat
   with sanitized connection/listing/evidence/dashboard stage codes; the UI package
   passes 13/13 and full project discovery/execution passes 99/99. Target-system
   diagnosis remains an operator follow-up, not a local acceptance claim.
+- [x] SmokeTests S3 startup optimization: list only hourly `raw_smoke_test`
+  evidence at startup; defer selector-relevant telemetry/event-family discovery to
+  explicit validation. The added discovery contract brings full execution to
+  100/100; live configured startup loads without raising the prior 10,000-file cap.
 - [x] `sfx-03`: bounded Linux procfs command-line provenance/status and child-only
   clone attribution implemented; 6/6 focused, 71/71 combined and 28/28 live
   aggregate assertions pass. Structured argv remains a separate deferred producer

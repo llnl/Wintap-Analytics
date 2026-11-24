@@ -76,6 +76,7 @@ Set these values to the destination used by your collector uploader:
 | `region` | Region used by the existing S3/Garage deployment. |
 | `datasets` | S3 root containing the uploaded `raw_sensor/` tree; one or more roots are supported. |
 | `max_files` | Listing cap; `10000` is the starting default. |
+| `start_hour` / `end_hour` | Optional inclusive UTC upload-partition bounds in `YYYYMMDDHH`; legacy day bounds expand to full days. |
 
 For example, if an uploaded object is
 `s3://example-bucket/example-prefix/raw_sensor/raw_smoke_test/dayPK=20261030/hourPK=14/example.parquet`,
@@ -144,13 +145,16 @@ continuation. The source README contains the complete command. `uv python instal
 1. The sidebar should select **Garage / S3** and show your **Local S3 JSON config**
    path automatically. Leave the local parquet root and optional JSON inputs empty
    for automatic S3 discovery.
-2. Set **Start partition day** / **End partition day** to include the run's UTC
-   collection/publication days, using `YYYYMMDD`. Default is yesterday through today.
-3. Click **Refresh files / results**. The page reports evidence and telemetry file
-   counts; uploaded `raw_smoke_test` supplies the run manifests automatically.
+2. Set **Start upload-partition hour** / **End upload-partition hour** to the smallest
+   safe publication window, using `YYYYMMDDHH`. Include adjacent hours for delayed
+   publication; these are not event-time or run-time bounds.
+3. Click **Refresh files / results**. Startup lists only `raw_smoke_test` evidence;
+   uploaded evidence supplies the run manifests automatically. Ordinary telemetry
+   is not listed or read yet.
 4. Select the test host, then **Canary Tests** → `telemetry-workload` → the exact
    run → **Validate selected run**. For a recurring expanded round, use
-   **Run all validations for this canary**.
+   **Run all validations for this canary**. Only that explicit action lists the
+   selector-relevant canonical event families under the selected hourly partitions.
 
 If no run appears, check the dataset prefix, UTC window and uploaded
 `raw_smoke_test` objects. Remote errors now identify a sanitized stage and exception
@@ -168,6 +172,8 @@ Streamlit pages separate **Overview**, **Canary Tests** and **Dev-time Tests**.
 Overview reads manifests only, without telemetry metadata/scans. Test pages offer
 family/run selection, saved selectors/reports and explicit selected-run validation
 with tailored SQL, coverage and rows. Missing runs/data are expected, never PASS.
+Remote startup is evidence-only; telemetry listing and reads are deferred to an
+explicit validation and pruned by canonical event family plus `dayPK`/`hourPK`.
 Read-only in-memory DuckDB queries do not start tests, stop collectors, run DBT
 or modify raw data. All-canary analysis writes summary-only results beside the dataset.
 Analytics owns the app; Wintap owns scripts/manifest production.

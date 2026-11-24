@@ -148,9 +148,10 @@ bringing the package to 80 passing cases. A fifth adds 5 unchanged page-query
 contracts, bringing the package to 85. The synthetic localhost HTTP case is now
 default-on with explicit environment opt-out. The final SmokeTests organization
 places that one case under `tests/transport`; the UI package under `tests/ui` now
-has 13 AppTest cases after adding sanitized remote-diagnostic coverage. The 85
-contracts remain under `tests/contract`, and full discovery passes 99/99. Continue
-TC-06 with a separate validation/PyUtil/coordination slice.
+has 13 AppTest cases after adding sanitized remote-diagnostic coverage. The contract
+package now has 86 cases after adding hourly evidence-discovery coverage, and full
+discovery passes 100/100. Continue TC-06 with a separate
+validation/PyUtil/coordination slice.
 The existing RHEL path was only a one-time sample and will not receive raw files;
 its empty raw directory is not a gate. Continue later bounded cleanup slices under
 the implementation plan without inventing a replacement data requirement.

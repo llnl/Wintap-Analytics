@@ -162,15 +162,20 @@ the config path. Local/mounted mode remains unchanged. No settings are persisted
 the dashboard. Boto3 lists objects and DuckDB reads them directly with a temporary,
 in-memory S3 secret; there is no dataset download/sync or persistent secret file.
 
-Default window is yesterday through today (UTC); optional `start_day` and `end_day`
-config fields and sidebar controls use **YYYYMMDD**. Listing is paginated and pruned
-to `dayPK=` prefixes, inclusive 1–31 days. Evidence partitions reflect publication
-time, so include adjacent days for midnight runs. Objects uploaded late may require
-an older partition window; the window is not a transport-completeness watermark.
-Listing refreshes on every rerun/Refresh click. File caps fail closed, never silently
-truncate a passing result. Overview reads only evidence, not telemetry schemas/events.
-Explicit validation still requires per-file telemetry schema reads and a selected
-observation scan; large windows can be slow, so start with one or two days.
+The sidebar uses inclusive UTC upload-partition hours in **YYYYMMDDHH** form. Optional
+`start_hour` and `end_hour` config fields set those controls. Legacy `start_day` and
+`end_day` fields remain accepted and expand to `00` through `23`; when no window is
+configured, yesterday through today is the backward-compatible default. These are
+upload/publication partitions, not run-time boundaries or completeness watermarks;
+include adjacent hours when publication may be delayed.
+
+Startup lists only exact `raw_smoke_test/dayPK=/hourPK=` prefixes and loads portable
+evidence. It does not enumerate ordinary telemetry. Telemetry discovery is deferred
+until **Validate selected run** or **Run all validations**, then restricted to the
+selector-relevant canonical event families and exact selected hour partitions.
+File caps fail closed and never silently truncate a passing result. Large validation
+windows can still be expensive, so choose the smallest upload-hour window that safely
+covers on-time and delayed publication.
 
 Remote failures report a sanitized stage/category code without exception text:
 `remote-connection`, `remote-listing`, `remote-evidence`, or `remote-dashboard`.
@@ -178,7 +183,7 @@ The last two explicitly mean connection/listing may already have succeeded; they
 must not be diagnosed as credential failures without separate evidence. Report the
 code when escalating, never credentials, signed URLs, or unredacted object paths.
 
-Both `raw_smoke_test` and telemetry use the **same configured connection/source**;
+Both `raw_smoke_test` and deferred telemetry use the **same configured connection/source**;
 manifest hashes, revision conflicts, hostname/run selectors and missing-data triage
 remain unchanged. S3 connection/read diagnostics suppress details that might contain
 credentials or signed URLs. An unavailable source is an error, not empty green data.

@@ -153,10 +153,11 @@ wiki/work/host-process-identity-patch/
     qualification/  # installed/pressure/shutdown/retry evidence controls
 ```
 
-As of 2026-11-24, the SmokeTests hierarchy is implemented: 85 contract cases,
+As of 2026-11-24, the SmokeTests hierarchy is implemented: 86 contract cases,
 one default-on loopback transport case with explicit opt-out, and 13 Streamlit UI
-cases are discovered exactly once. The thirteenth UI case covers sanitized remote
-connection diagnostics. No project-root forwarding test modules remain.
+cases are discovered exactly once. The additional contract covers exact hourly
+evidence discovery; the thirteenth UI case covers sanitized remote connection
+diagnostics. No project-root forwarding test modules remain.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract; streamlit/projects/SmokeTests/tests/transport; streamlit/projects/SmokeTests/tests/ui -->
 
 The Analytics moves should be mechanical first. Splitting a large file such as

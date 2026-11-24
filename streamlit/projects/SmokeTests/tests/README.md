@@ -17,10 +17,10 @@ Streamlit AppTest and synthetic local fixtures.
 | `test_pages.py` | 5 | Page working-set materialization, budgets, lifecycle requirements, and overlap behavior without Streamlit UI. |
 | `test_queries.py` | 12 | Manifest loading, schema normalization, bounded selectors and endpoint evaluation. |
 | `test_quality.py` | 22 | Adversarial file, process-lifecycle and network quality contracts. |
-| `test_s3_source.py` | 13 | Config validation, mocked listings/connections, and transport-free local source parity. |
-| **Total** | **85** | Whole files moved; only package/path imports changed. |
+| `test_s3_source.py` | 14 | Config validation, hourly evidence/telemetry discovery, mocked connections, and transport-free local source parity. |
+| **Total** | **86** | Classified contracts plus one hourly evidence-discovery regression. |
 
-The test tree therefore contains 85 contract cases, one transport case, and 13 UI
+The test tree therefore contains 86 contract cases, one transport case, and 13 UI
 cases. The additional UI case covers sanitized remote connection diagnostics; no
 forwarding test modules remain at the former project-root paths.
 

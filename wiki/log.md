@@ -5,6 +5,18 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-24] code/verification | Hour-pruned lazy SmokeTests S3 discovery
+
+Changed remote SmokeTests startup to list only `raw_smoke_test` evidence under exact
+UTC `dayPK`/`hourPK` prefixes. Ordinary telemetry discovery is now deferred to an
+explicit selected-run or all-canary validation and restricted to selector-relevant
+canonical event families. Synthetic execution passes 100/100. A live configured
+read-only check resolved credentials, loaded nine evidence objects into three runs
+without warnings, and rendered the default AppTest page with no exception or UI
+error; no identifiers or object names were retained. Target operator interaction
+remains pending.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §hour_range/§discover_evidence_files/§discover_telemetry_files; streamlit/projects/SmokeTests/main.py §main; streamlit/projects/SmokeTests/page_views.py §test_page; streamlit/projects/SmokeTests/batch_views.py §canary_batch_page -->
+
 ## [2026-11-24] todo | Smoke dashboard discovery without S3 list permission
 
 Added a P3 intake note for strict no-list SmokeTests operation. Current remote

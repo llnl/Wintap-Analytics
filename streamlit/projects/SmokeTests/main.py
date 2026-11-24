@@ -5,7 +5,7 @@ import duckdb
 import streamlit as st
 
 from queries import load_manifests
-from s3_source import discover_files, load_config, open_source
+from s3_source import discover_evidence_files, load_config, open_source
 
 
 REMOTE_DIAGNOSTICS = {
@@ -58,9 +58,9 @@ def main():
             except ValueError as error:
                 st.error(str(error))
                 return
-            start = st.text_input('Start partition day (UTC, YYYYMMDD)', config['start_day'])
-            end = st.text_input('End partition day (UTC, YYYYMMDD)', config['end_day'])
-            st.caption('Publication/collection partitions are not run boundaries or a completeness watermark. Include adjacent days around midnight.')
+            start = st.text_input('Start upload-partition hour (UTC, YYYYMMDDHH)', config['start_hour'])
+            end = st.text_input('End upload-partition hour (UTC, YYYYMMDDHH)', config['end_hour'])
+            st.caption('Upload partitions are not run boundaries or a completeness watermark. Include adjacent hours around delayed publication or UTC boundaries.')
             if config['endpoint'].startswith('http://'):
                 st.warning('Configured endpoint uses unencrypted HTTP; use HTTPS unless intentionally isolated.')
         st.button('Refresh files / results')
@@ -73,8 +73,8 @@ def main():
             stage = 'remote-connection'
             con, client = open_source(config)
             stage = 'remote-listing'
-            evidence_files, telemetry_files = discover_files(client, config, start, end, snapshot=snapshot)
-            st.caption(f'S3: {len(evidence_files)} evidence files and {len(telemetry_files)} telemetry files listed. Telemetry is read only on explicit validation.')
+            evidence_files = discover_evidence_files(client, config, start, end, snapshot=snapshot)
+            st.caption(f'S3: {len(evidence_files)} evidence files listed. Telemetry discovery and reads are deferred until explicit validation.')
         else:
             con = duckdb.connect(':memory:')
         stage = 'remote-evidence' if remote else 'local-evidence'

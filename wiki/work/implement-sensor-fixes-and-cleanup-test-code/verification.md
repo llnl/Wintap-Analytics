@@ -44,6 +44,45 @@ tags: [feature-work, testing, test-organization, verification, iterative-develop
 
 # Verification: Implement sensor fixes and cleanup test code
 
+## SmokeTests Hour-Pruned Lazy S3 Discovery — 2026-11-24
+
+Remote startup now lists only the known `raw_smoke_test` event family at exact UTC
+`dayPK`/`hourPK` prefixes and loads its portable manifests. It does not enumerate
+ordinary telemetry. Selected-run validation derives canonical event families from
+that run's selector domains; all-canary validation derives them from the selected
+round. Both list telemetry only after the corresponding explicit validation button.
+Legacy day config remains accepted as a full-day expansion, while new
+`start_hour`/`end_hour` bounds and sidebar controls allow an inclusive 1–744-hour
+upload-partition window.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §hour_range/§_discover_events/§discover_evidence_files/§discover_telemetry_files; streamlit/projects/SmokeTests/main.py §main; streamlit/projects/SmokeTests/page_views.py §test_page; streamlit/projects/SmokeTests/batch_views.py §canary_batch_page -->
+
+This preserves upload-time semantics: the app does not infer S3 hours from event
+timestamps, which could silently miss delayed publication. Operators choose an
+explicit upload-hour window and are told to include adjacent hours. File caps still
+fail closed; narrowing event family and hour reduces startup and validation scope
+without treating omitted partitions as automatically complete.
+
+Commands run with the app-local Python 3.13 requirements environment:
+
+```sh
+python -m py_compile s3_source.py main.py page_views.py batch_views.py
+python -B -m unittest -v tests.contract.test_s3_source tests.ui.test_app
+python -B -m unittest discover -s . -p 'test_*.py' -v
+```
+
+- Focused source/UI: **27/27 passed**.
+- Full SmokeTests: **100/100 passed** in 3.470 seconds: 86 contracts, one loopback
+  transport case, and 13 UI cases.
+- `git diff --check` and direct Python compilation pass.
+
+With explicit human authorization, a live configured read-only source check used the
+standard credential chain without printing role, bucket, prefix, host, or object
+identifiers. Exact evidence-hour discovery returned nine objects; all loaded into
+three runs with zero evidence warnings. A default-page Streamlit AppTest against that
+source completed with zero exceptions, zero UI errors, and one rendered metric. The
+test did not modify S3 data or the private connection config. Explicit telemetry
+validation and operator browser acceptance remain pending.
+
 ## SmokeTests Staged Remote Diagnostics — 2026-11-24
 
 The remote Streamlit path no longer labels every caught exception as an S3
