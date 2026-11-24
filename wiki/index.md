@@ -97,6 +97,8 @@ all-round summaries persist separately beside data, not under raw telemetry.
 Windows/EC2 launch uses app-local requirements with explicit Python 3.13, supports
 instance-profile credentials, and reports sanitized connection/listing/evidence/
 dashboard failure stages instead of one generic S3 credential message.
+Strict no-list S3 discovery is deferred as a low-priority intake item:
+[[wiki/todo/smoke-dashboard-no-list-s3-discovery]].
 Overview now reads manifests only; Canary Tests and Dev-time Tests pages use explicit
 validation. One-click canary-round observations and passive HOST startup comparison
 expose coverage gaps without certifying capture. Initial S3 rounds show TCP Accept,

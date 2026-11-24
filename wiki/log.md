@@ -5,6 +5,16 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-24] todo | Smoke dashboard discovery without S3 list permission
+
+Added a P3 intake note for strict no-list SmokeTests operation. Current remote
+discovery uses `ListObjectsV2` on configured prefixes and therefore needs
+`s3:ListBucket`, though it does not enumerate account buckets. The note records a
+predictable fixed-key catalog as the leading no-list candidate, prefix-scoped
+listing and external catalogs as alternatives, and another approved role as the
+temporary workaround. No implementation or IAM change is authorized.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §discover_files/§discover_host_files; streamlit/projects/SmokeTests/result_store.py §location -->
+
 ## [2026-11-24] code/docs | staged SmokeTests remote diagnostics
 
 Replaced SmokeTests' catch-all remote-source message with sanitized stage/category

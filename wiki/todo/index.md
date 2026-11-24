@@ -5,7 +5,7 @@ confidence: medium
 grounded_by:
   - wiki/concept/feature-work-template.md
 policy: agent-editable
-last_validated: 2026-11-23
+last_validated: 2026-11-24
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -59,6 +59,7 @@ recorded.
 | P2 — Medium (provisional) | [[wiki/todo/unify-lintap-runtime-and-etl-configuration]] | Open | Design one canonical operator-facing configuration to replace the split `lintap.env`/`ETLConfig.json` surfaces, with migration and no silent installer overwrite. |
 | P3 — Low | [[wiki/todo/daily-compacted-tier]] | Open | Evaluate a verified `compacted2/dayPK` daily roll-up over completed hourly compacted data, with disjoint reader precedence and explicit late-data handling. |
 | P3 — Low | [[wiki/todo/dbt-direct-hostname-filter]] | Open | Add case-insensitive filename-based hostname selection to raw-only `make dbt-build-direct`, including source preflight, PIDSTAT coverage, and compacted-input boundaries. |
+| P3 — Low | [[wiki/todo/smoke-dashboard-no-list-s3-discovery]] | Open | Evaluate a fixed-key object catalog or other bounded discovery contract so SmokeTests can operate with direct reads but no `s3:ListBucket`; another approved role is the temporary workaround. |
 | Untriaged | [[wiki/todo/raw-sensor-upload-time-partition]] | Implemented; endpoint verification pending | S3 now binds UTC upload-time keys with durable unresolved-attempt sidecars and exact-key HEAD validation; live endpoint qualification remains open. |
 | Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Open | Investigate process-attributed listening-socket lifecycle capture and a downstream model distinct from peer-oriented connections; priority and platform scope remain open. |
 | P1 — High | [[wiki/todo/test-suite-reorganization]] | Promoted | Phase 1 of [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]]; first draft checked, broader cleanup and fresh-capture iterations remain open. Preserve collection counts and review evidence before merging or archiving cases. |
