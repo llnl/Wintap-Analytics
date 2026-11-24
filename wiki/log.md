@@ -9958,3 +9958,31 @@ remains for this tranche. Structured argv/eBPF argv, syscall-result correlation,
 truncation, historical repair, and an explicit as-of relation remain separate future
 follow-ups; native Windows validation remains deferred.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-23] fix/verification | Multipass recovery and Debian arm64 build
+
+Recovered a fresh Ubuntu arm64 development VM after the Bash launcher timed out in
+`uv` dependency retrieval and then wedged while printing failure diagnostics.
+Standard pip completed the same pinned guest-native environment immediately; the
+full dependency gate passed. Updated the Lintap Bash launcher to use bounded pip
+network retries, avoid recursive ownership changes on the host-mounted data tree,
+and bound cloud-init diagnostic commands. Focused packaging/provisioning tests pass
+26/26; Bash syntax and diff checks pass. Built and structurally inspected the native
+arm64 self-contained `7.0.1~beta.1-1` Debian package: required native dependencies,
+12 eBPF objects, metadata, payload and maintainer scripts passed; SHA-256 is recorded
+in the feature verification. The optional .NET diagnostic-provider soname warning
+remains. No package installation, service start or runtime capture is claimed.
+<!-- GROUND_TRUTH: ../Lintap/multipass-lintap.sh; ../Lintap/tests/test_multipass_provisioning.py; ../Lintap/multipass-check-dev.sh; ../Lintap/packaging/lintap-deb/build-deb.sh; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-23] todo | unify Lintap runtime and ETL configuration
+
+Added a P2 provisional intake item to replace the operator-facing `lintap.env` and
+`ETLConfig.json` split with one canonical configuration. The item requires an
+explicit ownership and precedence contract, migration of existing local values,
+and Debian/RPM plus applicable Windows installer behavior that does not silently
+overwrite administrator configuration. Recorded that Debian conffile and RPM
+`%config(noreplace)` semantics already protect `lintap.env`, while the
+assembly-adjacent ETL JSON remains ordinary application payload. Updated the TODO
+queue, main index, and agent instructions so future TODO requests use the existing
+intake structure rather than a parallel backlog.
+<!-- GROUND_TRUTH: wiki/todo/unify-lintap-runtime-and-etl-configuration.md; ../wintap/wintap/core/shared/ConfigManager.cs; ../wintap/wintap/core/etl/shared/Utilities.cs; ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/lintap-rpm/build-rpm.sh -->

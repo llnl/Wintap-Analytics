@@ -21,7 +21,7 @@ grounded_by:
   - ../Lintap/pidstat-go/replay.go
   - ../Lintap/pidstat-go/collector.go
 policy: agent-editable
-last_validated: 2026-10-26
+last_validated: 2026-11-23
 repo_scope: Lintap
 implementation_area: packaging
 event_domain: cross-domain
@@ -181,7 +181,12 @@ Both launchers install SDK **10.0.402** in guest-native `/opt/wintap-sdk`, inclu
 libbpf/libelf development packages and running-kernel tools. The shared guest
 check requires exact SDK selection, both shared runtimes, actual BPF compilation,
 kernel BTF parsing and matching DuckDB versions. Cloud-init failures are fatal by
-default. Branch checkout remains opt-in; the example target is `develop`.
+default. In the Bash launcher, the guest-native environment is still created by
+`uv`, while pinned dependencies are installed through standard `pip` with bounded
+HTTP retries after a reproduced `uv` HTTP stall. Host-mounted data is not recursively
+re-owned, and best-effort cloud-init diagnostics have a host-side timeout so an
+unresponsive command cannot wedge the launcher after failure. Branch checkout
+remains opt-in; the example target is `develop`.
 <!-- GROUND_TRUTH: ../Lintap/multipass-lintap.sh §runcmd; ../Lintap/multipass-lintap.ps1 §cloudInit; ../Lintap/multipass-check-dev.sh -->
 
 Python environments and managed build outputs/intermediates use guest-native
@@ -191,6 +196,10 @@ uses a separate guest-local validation environment. Commands and output location
 are documented in `../Lintap/Multipass.md`. Fresh Ubuntu arm64 provisioning,
 12-object tracer rebuild and managed compilation passed on 2026-10-26; details
 are in [[wiki/work/wintap-telemetry-identity-and-data-quality/verification]].
+The repaired Bash path passed its full dependency check on a fresh Ubuntu arm64
+development VM on 2026-11-23. A native self-contained arm64 package with version
+`7.0.1~beta.1-1` then passed metadata, payload, required-native-dependency and
+maintainer-script inspection. Installation and runtime capture were not run.
 <!-- GROUND_TRUTH: ../Lintap/Multipass.md §Useful commands inside the VM; ../Lintap/multipass-lintap.sh §BUILD_WINTAP -->
 
 ## Wiki Boundary

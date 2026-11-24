@@ -21,7 +21,12 @@ release identity, format-specific Debian/RPM/MSI encoding and build-to-install c
 
 Multipass development refresh: [[wiki/repo/lintap-supporting-repo]] — fresh Ubuntu
 arm64 provisioning verifies SDK10.0.402, DuckDB1.5.6, all12 tracers, managed build,
-24 packaging/provisioning regressions and5 validation-harness tests.
+24 packaging/provisioning regressions and5 validation-harness tests. A later Bash
+provisioning repair uses pip after a reproduced uv HTTP stall, avoids recursive
+ownership changes on host mounts, bounds failure diagnostics, and passes the fresh
+VM dependency gate plus 26 focused packaging/provisioning tests. The repaired VM
+also produced and structurally verified a native arm64 `7.0.1~beta.1-1` Debian
+package; install and runtime acceptance remain pending.
 
 Develop merge maintenance: Wintap `5afd320` (local) preserves feature semantics
 and fixes standalone MCP's multi-RID lock graph;113focused managed tests and
@@ -319,6 +324,9 @@ listening-socket lifecycle capture and downstream modeling; priority and platfor
 scope remain open. [[wiki/todo/canonical-process-owned-network-grains]] tracks
 canonical process-owned increment/connection grains, conflict visibility, and
 network-observed process identity semantics for reusable analytics.
+[[wiki/todo/unify-lintap-runtime-and-etl-configuration]] tracks replacing the
+operator-facing `lintap.env` and `ETLConfig.json` split with one canonical
+configuration while preserving local values across installer upgrades.
 [[wiki/todo/transformer-five-tuple-connection-port-key]] finds no duplicate-port
 call in available v7 history and traces the ACME4 workaround to unsorted producer
 ID inputs. The absent historical build still prevents ruling on duplicated

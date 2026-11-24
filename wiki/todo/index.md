@@ -5,7 +5,7 @@ confidence: medium
 grounded_by:
   - wiki/concept/feature-work-template.md
 policy: agent-editable
-last_validated: 2026-11-22
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: none
@@ -56,6 +56,7 @@ recorded.
 | P2 — Medium | [[wiki/todo/transformer-five-tuple-connection-port-key]] | Implemented; Windows acceptance deferred | .NET is the sole generator; gateways are metadata, loopback uses hostname context, non-loopback uses `public`, and DBT passthrough qualification passes. Release is a clean new-data cutover with no legacy/mixed-data requirement. |
 | P2 — Medium (provisional) | [[wiki/todo/lintap-rpm-amazon-linux-2023]] | Open | Reproduce and classify the current Lintap RPM installation failure on AWS Amazon Linux 2023, then define and qualify the appropriate RPM/build target. |
 | P2 — Medium (provisional) | [[wiki/todo/linux-interactive-session-feed]] | Open | Replace the barely acceptable Linux process-start activity proxy with a real interactive session/logon feed, preferring systemd-logind with a PAM fallback. |
+| P2 — Medium (provisional) | [[wiki/todo/unify-lintap-runtime-and-etl-configuration]] | Open | Design one canonical operator-facing configuration to replace the split `lintap.env`/`ETLConfig.json` surfaces, with migration and no silent installer overwrite. |
 | P3 — Low | [[wiki/todo/daily-compacted-tier]] | Open | Evaluate a verified `compacted2/dayPK` daily roll-up over completed hourly compacted data, with disjoint reader precedence and explicit late-data handling. |
 | Untriaged | [[wiki/todo/raw-sensor-upload-time-partition]] | Open | Current .NET code partitions at merge time and retries the same S3 key; the requested UTC actual-upload partition contract needs a separate shared-uploader correction. |
 | Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Open | Investigate process-attributed listening-socket lifecycle capture and a downstream model distinct from peer-oriented connections; priority and platform scope remain open. |

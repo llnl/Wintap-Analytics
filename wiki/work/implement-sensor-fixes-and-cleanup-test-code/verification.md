@@ -28,6 +28,9 @@ grounded_by:
   - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
   - validation/dataset-smoke/smoke_dataset.py
   - streamlit/projects/SmokeTests/tests/README.md
+  - ../Lintap/packaging/lintap-deb/build-deb.sh
+  - ../Lintap/tests/test_multipass_provisioning.py
+  - ../Lintap/multipass-check-dev.sh
 policy: agent-editable
 last_validated: 2026-11-23
 repo_scope: cross-repo
@@ -1220,3 +1223,41 @@ remain in the raw/staging evidence.
 
 No production or historical data was rewritten. Native Windows negative-control
 acceptance and broader cross-platform policy validation remain open.
+
+## Multipass recovery and Debian arm64 build — 2026-11-23
+
+The Bash Multipass provisioning path was recovered after a reproduced `uv`
+dependency-download stall and a second host-side stall in cloud-init failure
+diagnostics. The repair keeps `uv` for environment creation, installs pinned Python
+dependencies with standard pip and bounded retries, avoids recursively changing
+ownership on the host-mounted data tree, and bounds each best-effort diagnostic
+command. The full VM dependency gate passed, including SDK **10.0.402**, both .NET
+runtimes, kernel BTF parsing, eBPF compilation, bpftool, DuckDB **1.5.6**, and pinned
+Python imports. Focused provisioning/packaging tests passed **26/26**; Bash syntax
+and diff checks also passed.
+<!-- GROUND_TRUTH: ../Lintap/multipass-lintap.sh; ../Lintap/tests/test_multipass_provisioning.py; ../Lintap/multipass-check-dev.sh -->
+
+A native arm64, self-contained Debian package was then built from Wintap commit
+`57789ff2119bdfe675a510101fb5b1c8431f23e8` and Lintap commit
+`432e8f2957ef9783b6329e60ec03bdea4c64b8c2`, with only the unrelated uncommitted
+provisioning repair present in Lintap. The build restore briefly added an RID entry
+to a tracked Wintap lockfile; that generated source-tree change was removed and the
+Wintap checkout was confirmed clean after the build.
+
+| Package check | Result |
+|---|---|
+| Artifact | `lintap_7.0.1~beta.1-1_arm64.deb`, 102,093,428 bytes |
+| SHA-256 | `2aa16462ffee0d751a686457c742222a5a6165d63ea9f50ea427269ea4a7f84d` |
+| Metadata | `Package: lintap`; `Version: 7.0.1~beta.1-1`; `Architecture: arm64` |
+| Version ordering | Debian comparison confirms the beta sorts before `7.0.1-1` |
+| Payload | Main sensor, self-contained MCP helper, pidstat helpers, config, two systemd units, and **12** eBPF objects present |
+| Native dependencies | Required `ldd` check passed |
+| Maintainer scripts | Shell syntax passed; install enables but does not auto-start the service |
+| Build diagnostics | 0 compiler errors; existing compiler warnings remain |
+
+The optional .NET diagnostic provider still reports unresolved
+`liblttng-ust.so.0` on this Ubuntu environment; the builder classifies that provider
+as optional and records the warning separately. This round establishes package build
+and structural inspection only. The package was not installed, upgraded, started,
+or runtime-smoke-tested, so no deployment or telemetry acceptance is claimed.
+<!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/README.md -->
