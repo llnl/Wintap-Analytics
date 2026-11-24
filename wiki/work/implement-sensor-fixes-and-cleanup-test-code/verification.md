@@ -32,13 +32,13 @@ grounded_by:
   - ../Lintap/tests/test_multipass_provisioning.py
   - ../Lintap/multipass-check-dev.sh
 policy: agent-editable
-last_validated: 2026-11-23
+last_validated: 2026-11-24
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
 audience: mixed
 status: draft
-source_paths: streamlit/projects/HostActivity/tests; streamlit/projects/SmokeTests/tests; validation/dataset-smoke; ../Wintap-PyUtil/tests; wiki/work/implement-sensor-fixes-and-cleanup-test-code
+source_paths: streamlit/projects/HostActivity/tests; streamlit/projects/SmokeTests/tests; validation/dataset-smoke; ../Wintap-PyUtil/tests; ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs; ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs; ../wintap/tests/Wintap.Tests/S3UploadAttemptBindingTests.cs; wiki/work/implement-sensor-fixes-and-cleanup-test-code
 tags: [feature-work, testing, test-organization, verification, iterative-development]
 ---
 
@@ -1261,3 +1261,15 @@ as optional and records the warning separately. This round establishes package b
 and structural inspection only. The package was not installed, upgraded, started,
 or runtime-smoke-tested, so no deployment or telemetry acceptance is claimed.
 <!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/README.md -->
+
+## S3 upload-time UTC partition correction — 2026-11-24
+
+The approved shared Wintap S3 correction was implemented on the current feature
+branch. The source-level change was checked with `git diff --check`. The Lintap
+build completed with **0 errors / 173 warnings**, and the focused S3 test filter
+completed **8/8 passed** using the available .NET 10 SDK. The focused tests cover
+UTC boundary rewriting, exact source identity, matching-object validation,
+authoritative-miss rebinding, inconclusive-HEAD exact-key retry policy, and
+sidecar cleanup. No live S3 endpoint or source dataset was accessed; endpoint
+qualification remains open.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs; ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs; ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs; ../wintap/tests/Wintap.Tests/S3UploadAttemptBindingTests.cs -->

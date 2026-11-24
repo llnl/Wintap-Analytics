@@ -25,9 +25,13 @@ grounded_by:
   - ../wintap/global.json
   - ../wintap/wintap/Makefile
   - ../wintap/tests/Wintap.Tests/Wintap.Tests.csproj
+  - ../wintap/tests/Wintap.Tests/S3UploadAttemptBindingTests.cs
+  - ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs
+  - ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs
+  - ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
-last_validated: 2026-11-23
+last_validated: 2026-11-24
 repo_scope: cross-repo
 implementation_area: dev-environment
 event_domain: cross-domain
@@ -38,6 +42,22 @@ tags: [feature-work, dev-handoff, linux, wintap, todo, sensor-fixes, iterative-d
 ---
 
 # Dev Handoff: Wintap TODO Review and Linux Implementation Continuation
+
+## S3 Upload-Time Partition Correction — Handoff 2026-11-24
+
+The approved shared .NET S3 uploader correction is implemented on this feature
+branch. The Lintap build passed with 0 errors, and the focused
+`S3UploadAttemptBindingTests` filter passed 8/8 using the available .NET 10 SDK.
+The implementation uses current UTC upload partitions, durable unresolved-attempt
+sidecars, exact-key HEAD validation, safe current-key rebinding after an
+authoritative 404, and exact-key retry after an inconclusive HEAD.
+
+Testing continues on another host for an authorized S3-compatible endpoint and
+ambiguous PUT/HEAD fault scenarios. Do not treat the local build or focused unit
+pass as live endpoint qualification. Preserve the current Wintap source commit
+`e92016daef33eb34aec65e35c4c14eba4ef4e10c` and run the endpoint matrix there
+without modifying Parquet contents or event timestamps.
+<!-- HUMAN-DECISION: conversation 2026-11-24 — commit the implementation locally and continue live S3 testing on another host. -->
 
 ## Current Test-Engineering Assignment — Linux Destination
 
@@ -238,7 +258,7 @@ Findings are recorded evidence/design candidates, not newly reproduced defects.
 | P2 provisional | [[wiki/todo/linux-nfs-process-network-attribution]] | Qualify initiating-task versus socket-owner meaning with controlled file/network observations. The observed NFS association is not yet a confirmed sensor bug. |
 | P2 provisional | [[wiki/todo/linux-interactive-session-feed]] | Prototype a genuine Linux session lifecycle feed using logind, with optional PAM fallback. Event/API/schema, login-stack changes, and downstream consumption are not approved yet. |
 | Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Define listener lifecycle/ownership and capture support; keep peerless listeners distinct from connected flows. Platform scope and shared/API/DBT contracts remain undecided. |
-| Untriaged; deferred | [[wiki/todo/raw-sensor-upload-time-partition]] | Retry-safe current-UTC upload partitions in shared .NET uploader code, preserving rows and avoiding ambiguous-success duplicates. Separate later task, not a prerequisite to DCC-E2E-01. |
+| Implemented; endpoint verification pending | [[wiki/todo/raw-sensor-upload-time-partition]] | Shared .NET S3 uploader now uses current UTC upload partitions with durable unresolved-attempt bindings, exact-key validation, and no second key after an inconclusive HEAD. Build passed; live endpoint qualification remains separate from DCC-E2E-01. |
 
 The Linux sensor implementation is owned by Wintap, even where the intake title
 says Lintap. Lintap owns supporting packaging; PyUtil/Wintappy owns canonical DBT;

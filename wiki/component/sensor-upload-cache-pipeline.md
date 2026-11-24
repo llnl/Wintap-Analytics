@@ -7,16 +7,17 @@ grounded_by:
   - ../wintap/wintap/core/etl/load/Merge.cs
   - ../wintap/wintap/core/etl/load/RawSensorWriter.cs
   - ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs
+  - ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs
   - ../wintap/wintap/core/etl/ETLConfig.json
   - ../Lintap/pidstat-collector.py
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-24
 repo_scope: wintap
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: mixed
 status: reviewed
-source_paths: wiki/component/sensor-upload-cache-pipeline.md
+source_paths: ../wintap/wintap/core/etl/load/CacheManager.cs; ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs; ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs; ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs
 tags: [wintap, lintap, etl, upload, s3, parquet, cache, cross-repo]
 ---
 
@@ -45,15 +46,16 @@ fix-upload-cache-deletion and improve-pidstat-collector feature work
   sweep enumerates `raw_sensor/**/*.parquet` once and hands each file to
   every enabled adapter.
 
-Current Wintap timestamp detail: `doMerge()` supplies a UTC merge time,
-`Merge` embeds it in the generated file name, and `RawSensorWriter` derives
-`dayPK`/`hourPK` from that timestamp. If all uploads fail, the local file is
-retained for retry; the S3 adapter mirrors its existing relative path, so a
-delayed retry can arrive later under the earlier partition. This is the current
-merge/materialization-time behavior, not the requested actual-upload-time UTC
-contract. See [[wiki/todo/raw-sensor-upload-time-partition]] for the separate
-.NET correction intake.
+Current Wintap materialization still supplies a merge-time timestamp to the
+filename and local partition. For S3 publication, the approved uploader fix now
+rewrites only the remote `dayPK`/`hourPK` segments from the UTC time of the
+upload attempt and records the selected key in a durable `.s3upload.json`
+sidecar. A later retry validates that exact key before either treating it as
+already uploaded or assigning a fresh current UTC partition. Finalized local
+`raw_sensor` files are retained across startup so unresolved attempts remain
+retryable. SMB/file-share upload paths remain unchanged.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/CacheManager.cs §doMerge/§upload; ../wintap/wintap/core/etl/load/Merge.cs §Start; ../wintap/wintap/core/etl/load/RawSensorWriter.cs §MaterializeFromParquetGlob; ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs §getS3ObjectNameForFile -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs; ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs -->
 
 ## Contracts (verified 2026-08-15..17)
 

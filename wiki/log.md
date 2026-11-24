@@ -5,6 +5,18 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-24] code/verification | S3 upload-time UTC partition binding
+
+Implemented the approved shared .NET S3 upload correction on the current Wintap
+feature branch. S3 keys now use the UTC upload-attempt partition rather than the
+stale filename/local partition; unresolved attempts persist an atomic sidecar and
+validate the exact key with metadata-aware HEAD checks before rebinding after an
+authoritative miss. Startup now retains finalized `raw_sensor` files and removes
+only orphaned sidecars, preserving restart retryability. The Lintap build passed
+with 0 errors and the focused S3 tests passed 8/8 using the available .NET 10 SDK.
+No live S3 or source dataset was used; endpoint qualification remains open.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs; ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs; ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs; ../wintap/wintap/core/etl/load/CacheManager.cs; ../wintap/tests/Wintap.Tests/S3UploadAttemptBindingTests.cs -->
+
 ## [2026-11-22] docs | clarify named telemetry smoke entry point
 
 Revalidated the named telemetry smoke instructions against current Wintap source and

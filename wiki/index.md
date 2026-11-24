@@ -339,9 +339,9 @@ compatibility requirement.
 The provisional P2 [[wiki/todo/lintap-rpm-amazon-linux-2023]] tracks the reported
 failure of the current Lintap RPM to install on AWS Amazon Linux 2023; artifact,
 error classification, and target-support boundary remain to be established.
-The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
-.NET gap between current merge-time partitions and the requested actual-upload
-UTC partition contract.
+The implemented [[wiki/todo/raw-sensor-upload-time-partition]] records the shared
+.NET S3 correction from merge-time paths to UTC upload-time keys, with durable
+unresolved-attempt validation; live endpoint qualification remains open.
 The low-priority [[wiki/todo/daily-compacted-tier]] tracks a future verified
 `compacted2/dayPK` roll-up, disjoint reader precedence, and late-arrival
 handling; it is separate from the current hourly historical catch-up.
@@ -846,7 +846,8 @@ Broad transport/fault coverage and the representative shard/performance benchmar
 remain pending.
 Object filenames may change while
 the partition scheme is preserved. Daily rollup and cron are deferred; the
-upload-time partition TODO is [[wiki/todo/raw-sensor-upload-time-partition]].
+implemented upload-time partition behavior is recorded in
+[[wiki/todo/raw-sensor-upload-time-partition]].
 
 Pidstat Go rewrite, fpc-03 review checkpoint and four-hour VM soak completed
 (2026-10-31 05:18–09:18UTC;49files/399312rows,2880sample times,80canaries;
