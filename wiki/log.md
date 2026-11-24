@@ -5,6 +5,17 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-24] code/docs | staged SmokeTests remote diagnostics
+
+Replaced SmokeTests' catch-all remote-source message with sanitized stage/category
+diagnostics for connection setup, listing, evidence loading and dashboard rendering.
+Added UI regressions that preserve fail-closed behavior and prove private exception
+text is not rendered. Documented requirements-only uv use, explicit Python 3.13,
+Windows PowerShell launch, EC2 instance-profile credentials and regional AWS S3
+endpoints. Focused UI passes 13/13 and the full SmokeTests package passes 99/99;
+target-system rerun remains pending.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/main.py; streamlit/projects/SmokeTests/tests/ui/test_app.py; streamlit/projects/SmokeTests/README.md -->
+
 ## [2026-11-24] code/verification | S3 upload-time UTC partition binding
 
 Implemented the approved shared .NET S3 upload correction on the current Wintap

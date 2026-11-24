@@ -44,6 +44,42 @@ tags: [feature-work, testing, test-organization, verification, iterative-develop
 
 # Verification: Implement sensor fixes and cleanup test code
 
+## SmokeTests Staged Remote Diagnostics — 2026-11-24
+
+The remote Streamlit path no longer labels every caught exception as an S3
+credential/source failure. `main.py` tracks four bounded stages—connection,
+listing, evidence loading and dashboard rendering—and renders only the stable stage,
+exception class and stage-specific next checks. Raw exception text remains hidden
+because SDK/DuckDB failures can include signed URLs, endpoint/object details or
+connection SQL. The existing fail-closed listing behavior is unchanged.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/main.py §REMOTE_DIAGNOSTICS, remote_error, main; streamlit/projects/SmokeTests/tests/ui/test_app.py §DashboardTests -->
+
+The UI regression now verifies connection and listing stage codes, no partial
+result after listing refusal, and suppression of a synthetic private exception
+string. Documentation adds requirements-only uv usage, explicit Python 3.13 to
+avoid unsupported-wheel source builds, Windows PowerShell launch, EC2 instance-role
+credential-chain behavior and regional AWS S3 endpoint shape.
+
+Commands run from `streamlit/projects/SmokeTests/` with uv 0.13.9 and its Python
+3.13 interpreter:
+
+```sh
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.13 --no-project \
+  --with-requirements requirements.txt python -B -m unittest -v tests.ui.test_app
+PYTHONDONTWRITEBYTECODE=1 uv run --python 3.13 --no-project \
+  --with-requirements requirements.txt python -B -m unittest discover -s . -p 'test_*.py' -v
+```
+
+- Focused UI: **13/13 passed** in 12.990 seconds.
+- Full SmokeTests: **99/99 passed** in 3.866 seconds, including 85 contracts,
+  one loopback transport case and 13 UI cases.
+- `git diff --check` and direct Python compilation pass.
+
+The uv invocation materialized an ephemeral app dependency environment; it did not
+change a lockfile or project environment. The transport test used localhost only.
+No live S3, private dataset, collector, deployment or target Windows system was
+accessed by this local verification. Target-system rerun is pending after push.
+
 ## Round TC-02 / First Cut — 2026-11-22
 
 Scope: Analytics HostActivity's three existing test modules and PyUtil's

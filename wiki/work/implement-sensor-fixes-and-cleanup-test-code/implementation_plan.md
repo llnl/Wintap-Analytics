@@ -807,6 +807,10 @@ with explicit environments and budgets, not prerequisites for every draft iterat
 - [x] TC-06 seventh SmokeTests slice: the 12-case Streamlit AppTest module moved
   into `tests/ui` with only three project-main path-depth adjustments; 12/12 pass
   before/after, contracts remain 85/85, and project discovery remains 98/98.
+- [x] SmokeTests remote diagnostics: replace the generic remote-source catch-all
+  with sanitized connection/listing/evidence/dashboard stage codes; the UI package
+  passes 13/13 and full project discovery/execution passes 99/99. Target-system
+  diagnosis remains an operator follow-up, not a local acceptance claim.
 - [x] `sfx-03`: bounded Linux procfs command-line provenance/status and child-only
   clone attribution implemented; 6/6 focused, 71/71 combined and 28/28 live
   aggregate assertions pass. Structured argv remains a separate deferred producer

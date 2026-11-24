@@ -20,8 +20,9 @@ Streamlit AppTest and synthetic local fixtures.
 | `test_s3_source.py` | 13 | Config validation, mocked listings/connections, and transport-free local source parity. |
 | **Total** | **85** | Whole files moved; only package/path imports changed. |
 
-The test tree therefore contains 85 contract cases, one transport case, and 12 UI
-cases. No forwarding test modules remain at the former project-root paths.
+The test tree therefore contains 85 contract cases, one transport case, and 13 UI
+cases. The additional UI case covers sanitized remote connection diagnostics; no
+forwarding test modules remain at the former project-root paths.
 
 ## Commands
 

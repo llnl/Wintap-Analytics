@@ -82,9 +82,10 @@ contracts. A fourth moves the 11-case durable producer/Parquet contract with onl
 path/import adjustments; a fifth moves the unchanged 5-case page-query contract.
 The classified package passes 85 cases. The synthetic localhost HTTP case is now
 default-on with explicit environment opt-out. The transport case now lives under
-`tests/transport`, and all 12 Streamlit AppTest cases live under `tests/ui`; the
-full project passes 98/98 with no root-level forwarding tests. SmokeTests
-organization is complete. Select the next validation/PyUtil/coordination slice
+`tests/transport`, and all 13 Streamlit AppTest cases live under `tests/ui`; the
+full project passes 99/99 with no root-level forwarding tests. The added UI case
+guards sanitized remote-stage diagnostics and private exception-text suppression.
+SmokeTests organization is complete. Select the next validation/PyUtil/coordination slice
 from the implementation plan rather than moving these cases again.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — the RHEL sample will not be updated; do not wait for raw files there. -->
 

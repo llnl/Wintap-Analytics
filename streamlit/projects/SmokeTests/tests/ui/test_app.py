@@ -127,7 +127,22 @@ class DashboardTests(unittest.TestCase):
             app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
             self.assertFalse(app.exception)
             self.assertTrue(app.error)
+            self.assertIn('S3 object listing failed', app.error[0].value)
+            self.assertIn('[remote-listing:ValueError]', app.error[0].value)
             self.assertFalse(app.metric)
+
+    def test_s3_connection_diagnostic_suppresses_exception_text(self):
+        config = self.root / 'fixture.local.json'
+        config.write_text(json.dumps(dict(endpoint='https://garage.example.invalid', datasets=['s3://fixture-bucket/run'])))
+        private_detail = 'synthetic-private-signed-url-and-secret'
+        with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
+             patch('s3_source.open_source', side_effect=RuntimeError(private_detail)):
+            app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
+            self.assertFalse(app.exception)
+            self.assertTrue(app.error)
+            self.assertIn('S3 connection setup failed', app.error[0].value)
+            self.assertIn('[remote-connection:RuntimeError]', app.error[0].value)
+            self.assertNotIn(private_detail, app.error[0].value)
 
     def test_working_set_failure_does_not_evaluate_truncated_data(self):
         self.telemetry()

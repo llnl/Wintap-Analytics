@@ -1,6 +1,6 @@
 # Smoke-test results dashboard
 
-From **Wintap-Analytics** on the analysis machine (macOS is supported):
+From **Wintap-Analytics** on the analysis machine (macOS and Windows are supported):
 
 ```bash
 python3 -m pip install -r streamlit/projects/SmokeTests/requirements.txt
@@ -12,6 +12,11 @@ It reads finalized raw parquet with DuckDB in memory. Streamlit pages separate
 Overview, Canary Tests and Dev-time Tests. Test pages provide run selectors,
 saved evidence and explicit selected-run validation. Empty/missing data is normal.
 It **never executes tests or changes collector configuration**.
+
+This directory intentionally has `requirements.txt`, not `pyproject.toml`. Do not
+run `uv sync`; use `uv run --no-project --with-requirements ...` as shown below.
+Select Python 3.13 explicitly: a newer prerelease interpreter may lack a DuckDB
+wheel and incorrectly fall back to a local C++/NMake source build.
 
 Quality checks require file activities per expected/observed path, non-placeholder
 lifecycle identities and required Start→Stop identity linkage. Repeated Starts retain
@@ -123,14 +128,31 @@ to run the dashboard. Path-style addressing supports Garage. HTTPS certificate
 verification stays enabled. Explicit `http://` is allowed with a UI warning for an
 intentionally isolated test endpoint; there is no insecure-TLS option.
 
+The standard chain also supports an EC2 instance profile. On such a host, omit
+`AWS_PROFILE` and static credential variables so boto3 can use its refreshable
+instance-role credentials. For AWS S3, use the regional origin as the endpoint—for
+example, `https://s3.us-west-2.amazonaws.com` with region `us-west-2`—and keep the
+bucket/prefix only in `datasets`.
+
 Launch with a disposable uv dependency environment (does not sync/alter Wintappy):
 
 ```bash
 export WINTAP_SMOKE_CONFIG="$HOME/.config/wintap-smoke/garage.json"
 # Optional: export AWS_PROFILE=<your-existing-profile>
-uv run --no-project \
+uv run --python 3.13 --no-project \
   --with-requirements streamlit/projects/SmokeTests/requirements.txt \
   python -m streamlit run streamlit/projects/SmokeTests/main.py \
+  --server.address 127.0.0.1
+```
+
+Windows PowerShell uses the same app-local requirements:
+
+```powershell
+uv python install 3.13
+$env:WINTAP_SMOKE_CONFIG = "$HOME\.config\wintap-smoke\garage.json"
+uv run --python 3.13 --no-project `
+  --with-requirements .\streamlit\projects\SmokeTests\requirements.txt `
+  python -m streamlit run .\streamlit\projects\SmokeTests\main.py `
   --server.address 127.0.0.1
 ```
 
@@ -149,6 +171,12 @@ Listing refreshes on every rerun/Refresh click. File caps fail closed, never sil
 truncate a passing result. Overview reads only evidence, not telemetry schemas/events.
 Explicit validation still requires per-file telemetry schema reads and a selected
 observation scan; large windows can be slow, so start with one or two days.
+
+Remote failures report a sanitized stage/category code without exception text:
+`remote-connection`, `remote-listing`, `remote-evidence`, or `remote-dashboard`.
+The last two explicitly mean connection/listing may already have succeeded; they
+must not be diagnosed as credential failures without separate evidence. Report the
+code when escalating, never credentials, signed URLs, or unredacted object paths.
 
 Both `raw_smoke_test` and telemetry use the **same configured connection/source**;
 manifest hashes, revision conflicts, hostname/run selectors and missing-data triage
