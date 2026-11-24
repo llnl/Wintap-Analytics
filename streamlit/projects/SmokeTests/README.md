@@ -102,7 +102,8 @@ From Wintap-Analytics, copy `garage.example.json` to a private config outside Gi
   "endpoint": "https://garage.example.invalid",
   "region": "us-east-1",
   "datasets": ["s3://example-bucket/example-prefix"],
-  "max_files": 20000
+  "max_files": 20000,
+  "memory_mb": 4096
 }
 ```
 
@@ -172,10 +173,16 @@ include adjacent hours when publication may be delayed.
 Startup lists only exact `raw_smoke_test/dayPK=/hourPK=` prefixes and loads portable
 evidence. It does not enumerate ordinary telemetry. Telemetry discovery is deferred
 until **Validate selected run** or **Run all validations**, then restricted to the
-selector-relevant canonical event families and exact selected hour partitions.
+selector-relevant canonical event families, exact selected hour partitions, and
+the manifest hostname (including matching short/FQDN forms) in canonical producer
+filenames.
 File caps fail closed and never silently truncate a passing result. Large validation
 windows can still be expensive, so choose the smallest upload-hour window that safely
 covers on-time and delayed publication.
+
+Validation disables DuckDB disk spill so private telemetry never enters a temporary
+disk cache. `memory_mb` controls the in-memory working-set budget (default 4096;
+accepted range 256–8192). An exhausted budget fails closed without a capture PASS.
 
 Remote failures report a sanitized stage/category code without exception text:
 `remote-connection`, `remote-listing`, `remote-evidence`, or `remote-dashboard`.

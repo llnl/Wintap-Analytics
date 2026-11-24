@@ -101,7 +101,7 @@ def test_page(ctx, canary):
     try:
         # Disable spill: private telemetry/credentials must not enter a disk cache.
         con.execute("SET temp_directory=''")
-        con.execute("SET memory_limit='256MB'")
+        con.execute(f"SET memory_limit='{int(ctx['memory_mb'])}MB'")
         with st.spinner('Reading selected-run observations; other runs are not evaluated…'):
             available = False
             if run['selectors']:
@@ -109,7 +109,7 @@ def test_page(ctx, canary):
                 if ctx['remote']:
                     domains = {selector['domain'] for selector in run['selectors']}
                     telemetry_files = discover_telemetry_files(ctx['client'], ctx['config'], *ctx['window'],
-                        domains=domains)
+                        domains=domains, hosts={run['host']['hostname']})
                     st.caption(f'S3: {len(telemetry_files)} telemetry files selected from explicit event/hour partitions.')
                 _, errors, available = prepare_data(con, ctx['data_root'], ctx['unlabelled_host'],
                     telemetry_files=telemetry_files)

@@ -71,7 +71,7 @@ python -B -m unittest discover -s . -p 'test_*.py' -v
 ```
 
 - Focused source/UI: **27/27 passed**.
-- Full SmokeTests: **100/100 passed** in 3.238 seconds: 86 contracts, one loopback
+- Full SmokeTests: **100/100 passed** in 3.217 seconds: 86 contracts, one loopback
   transport case, and 13 UI cases.
 - `git diff --check` and direct Python compilation pass.
 
@@ -85,12 +85,17 @@ validation and operator browser acceptance remain pending.
 
 A subsequent operator-selected validation exposed the former 10,000-file listing
 cap before telemetry reads began: each of three cross-domain runs selected the same
-10,284-object full-day source set. The private config was atomically raised to 20,000
-and narrowed to an evidence-adjacent 11-hour upload window, reducing the selected set
-to an observed aggregate of about 5,900 files. The checked-in starting default and
-example are now 20,000; hour narrowing remains preferred over repeatedly increasing
-the cap. No role, host, run, bucket, prefix, or object identifier is retained here.
-<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §load_config/§discover_telemetry_files; streamlit/projects/SmokeTests/garage.example.json -->
+roughly 10,300-object full-day source set. The private config was atomically raised
+to 20,000 and narrowed to an evidence-adjacent 11-hour upload window, reducing the
+set to about 5,900 files. Canonical producer filename filtering by the manifest
+hostname then reduced the selected-run read set to 635 objects. Schema preparation
+completed with zero errors. The former 256 MB and trial 1 GB in-memory limits both
+failed closed during working-set materialization; 4 GB completed evaluation of 17
+cases with a yellow result rather than an infrastructure error. Disk spill remains
+disabled. Checked-in defaults are now 20,000 files and 4 GB; hour/host narrowing is
+preferred over repeatedly increasing either budget. No role, host, run, bucket,
+prefix, or object identifier is retained here.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/RawSensorWriter.cs §ParseMergedFileName; streamlit/projects/SmokeTests/s3_source.py §load_config/§_host_candidates/§discover_telemetry_files; streamlit/projects/SmokeTests/page_views.py §test_page; streamlit/projects/SmokeTests/garage.example.json -->
 
 ## SmokeTests Staged Remote Diagnostics — 2026-11-24
 

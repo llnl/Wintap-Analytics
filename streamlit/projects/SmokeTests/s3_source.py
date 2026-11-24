@@ -8,7 +8,7 @@ from queries import quote
 
 
 FIELDS = {"endpoint", "region", "datasets", "start_day", "end_day", "start_hour", "end_hour",
-          "max_files", "extension_directory"}
+          "max_files", "memory_mb", "extension_directory"}
 TELEMETRY_EVENTS = {
     "process": "raw_process",
     "file": "raw_process_file",
@@ -90,6 +90,9 @@ def load_config(path):
     maximum = value.get("max_files", 20000)
     if isinstance(maximum, bool) or not isinstance(maximum, int) or not 1 <= maximum <= 100000:
         raise ValueError("max_files must be 1–100000")
+    memory_mb = value.get("memory_mb", 4096)
+    if isinstance(memory_mb, bool) or not isinstance(memory_mb, int) or not 256 <= memory_mb <= 8192:
+        raise ValueError("memory_mb must be 256–8192")
     extension_directory = value.get("extension_directory")
     if extension_directory is not None and (not isinstance(extension_directory, str) or not extension_directory):
         raise ValueError("extension_directory must be a nonempty local path")
@@ -100,7 +103,7 @@ def load_config(path):
     value.setdefault("start_hour", value["start_day"] + "00")
     value.setdefault("end_hour", value["end_day"] + "23")
     hour_range(value["start_hour"], value["end_hour"])
-    return dict(value, region=region, max_files=maximum)
+    return dict(value, region=region, max_files=maximum, memory_mb=memory_mb)
 
 
 def open_source(config):
@@ -143,9 +146,19 @@ def open_source(config):
         raise RuntimeError("S3 connection setup failed. Check AWS credentials/profile, endpoint, TLS trust and cached httpfs extension locally; details suppressed to protect credentials.") from None
 
 
-def _discover_events(client, config, start, end, events, snapshot=None):
+def _host_candidates(hosts):
+    return {str(host).lower().split('.', 1)[0] for host in hosts or () if str(host)}
+
+
+def _matches_host(name, candidates):
+    separators = [position for delimiter in ('+', '=') if (position := name.find(delimiter)) >= 0]
+    return bool(separators) and name[:min(separators)].split('.', 1)[0] in candidates
+
+
+def _discover_events(client, config, start, end, events, snapshot=None, hosts=None):
     """List exact event/hour prefixes; caps fail closed, never silently truncate."""
     hours = hour_range(start, end)
+    host_candidates = _host_candidates(hosts)
     files = set()
     try:
         paginator = client.get_paginator("list_objects_v2")
@@ -161,6 +174,9 @@ def _discover_events(client, config, start, end, events, snapshot=None):
                         for item in page.get("Contents", []):
                             key = item["Key"]
                             if not key.startswith(partition) or not key.endswith(".parquet"):
+                                continue
+                            name = key.rsplit('/', 1)[-1].lower()
+                            if host_candidates and not _matches_host(name, host_candidates):
                                 continue
                             if any(c in key for c in "*?[]\\"):
                                 raise ValueError("S3 keys contain unsupported wildcard characters")
@@ -181,14 +197,14 @@ def discover_evidence_files(client, config, start, end, snapshot=None):
     return _discover_events(client, config, start, end, {"raw_smoke_test"}, snapshot)
 
 
-def discover_telemetry_files(client, config, start, end, domains=None, snapshot=None):
+def discover_telemetry_files(client, config, start, end, domains=None, snapshot=None, hosts=None):
     """List only canonical event families needed by an explicit validation."""
     domains = set(TELEMETRY_EVENTS if domains is None else domains)
     unknown = domains - set(TELEMETRY_EVENTS)
     if unknown:
         raise ValueError("Unsupported telemetry domain")
     events = {TELEMETRY_EVENTS[domain] for domain in domains}
-    return _discover_events(client, config, start, end, events, snapshot)
+    return _discover_events(client, config, start, end, events, snapshot, hosts)
 
 
 def discover_files(client, config, start, end, snapshot=None):

@@ -16,8 +16,11 @@ without warnings, and rendered the default AppTest page with no exception or UI
 error; no identifiers or object names were retained. Target operator interaction
 then exposed a 10,000-file validation-listing cap before any telemetry read. The
 private config was raised to 20,000 and narrowed to an evidence-adjacent upload-hour
-window; the checked-in starting default is now 20,000. Explicit result acceptance
-remains pending.
+window. Manifest-host filename filtering reduced the live selected-run read set from
+about 5,900 to 635 objects. Schema preparation completed without errors; configurable
+4 GB in-memory materialization then evaluated 17 cases as yellow, while lower budgets
+failed closed. Checked-in defaults are now 20,000 files and 4 GB with disk spill
+disabled. Operator UI confirmation remains pending.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §hour_range/§discover_evidence_files/§discover_telemetry_files; streamlit/projects/SmokeTests/main.py §main; streamlit/projects/SmokeTests/page_views.py §test_page; streamlit/projects/SmokeTests/batch_views.py §canary_batch_page -->
 
 ## [2026-11-24] todo | Smoke dashboard discovery without S3 list permission

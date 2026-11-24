@@ -61,7 +61,7 @@ def canary_batch_page(ctx):
     st.caption('Validation writes a summary under analysis/smoke-tests/v1 beside the dataset (first configured S3 root). Raw telemetry and manifests are never modified. Existing results are reused only for matching object/evidence/code/settings fingerprints.')
     try:
         settings = dict(padding=ctx['padding'], unlabelled_host=ctx['unlabelled_host'], window=ctx['window'],
-                        max_rows=100000, memory_mb=256, hostname_aliases=alias, evidence_errors=ctx['errors'])
+                        max_rows=100000, memory_mb=ctx['memory_mb'], hostname_aliases=alias, evidence_errors=ctx['errors'])
         fingerprint = None
         report = None
         saved = False
@@ -98,7 +98,8 @@ def canary_batch_page(ctx):
                 snapshot = dict(ctx['snapshot'])
                 domains = {selector['domain'] for run in group['runs'] for selector in run['selectors']}
                 telemetry = discover_telemetry_files(ctx['client'], ctx['config'], *ctx['window'],
-                    domains=domains, snapshot=snapshot)
+                    domains=domains, snapshot=snapshot,
+                    hosts={run['host']['hostname'] for run in group['runs']})
                 host_files = discover_host_files(ctx['client'], ctx['config'], snapshot)
                 fingerprint = input_fingerprint(group['runs'], ctx['runs'], snapshot, settings, ctx['source_id'])
                 if not force:
@@ -117,7 +118,8 @@ def canary_batch_page(ctx):
                 with st.spinner('Validating all families and runtime context with one shared observation scan…'):
                     report = analyze_round(ctx['con'], group['runs'], ctx['runs'], telemetry, host_files,
                         data_root=ctx['data_root'], unlabelled_host=ctx['unlabelled_host'], padding=ctx['padding'],
-                        evidence_errors=ctx['errors'], fingerprint=fingerprint, allow_hostname_aliases=alias)
+                        memory_mb=ctx['memory_mb'], evidence_errors=ctx['errors'], fingerprint=fingerprint,
+                        allow_hostname_aliases=alias)
                 saved = False
             if not saved:
                 try:

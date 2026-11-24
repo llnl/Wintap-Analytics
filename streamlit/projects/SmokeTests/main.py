@@ -91,7 +91,8 @@ def main():
             window=[start, end] if remote else None,
             visible_runs=[r for r in runs if r['host']['hostname'].lower() in selected_hosts],
             data_root='' if remote else data_root, telemetry_files=telemetry_files,
-            unlabelled_host=unlabelled_host, padding=padding, row_limit=row_limit)
+            unlabelled_host=unlabelled_host, padding=padding, row_limit=row_limit,
+            memory_mb=config['memory_mb'] if remote else 4096)
         st.session_state['_smoke_context'] = ctx
         pages = [st.Page('views/overview.py', title='Overview', default=True, url_path='overview'),
                  st.Page('views/canary.py', title='Canary Tests', url_path='canary-tests'),

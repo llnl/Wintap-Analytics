@@ -9,7 +9,7 @@ import duckdb
 
 from queries import evaluate_run, load_manifests, prepare_data, quote
 from s3_source import (dataset_parts, day_range, discover_evidence_files, discover_files,
-                       hour_range, load_config, open_source)
+                       discover_telemetry_files, hour_range, load_config, open_source)
 from .test_durable import publish
 
 
@@ -48,6 +48,7 @@ class S3SourceTests(unittest.TestCase):
         self.assertEqual(day_range(config["start_day"], config["end_day"]), ["20261024", "20261025"])
         self.assertEqual((config['start_hour'], config['end_hour']), ('2026102400', '2026102523'))
         self.assertEqual(len(hour_range(config['start_hour'], config['end_hour'])), 48)
+        self.assertEqual(config['memory_mb'], 4096)
         self.assertEqual(dataset_parts("s3://test-bucket/run/raw_sensor/"), ("test-bucket", "run/raw_sensor/"))
         self.assertEqual(dataset_parts("s3://test-bucket"), ("test-bucket", "raw_sensor/"))
 
@@ -119,7 +120,9 @@ class S3SourceTests(unittest.TestCase):
 
     def test_evidence_discovery_uses_only_exact_evidence_hour_prefixes(self):
         keys = ["run/raw_sensor/raw_smoke_test/dayPK=20261025/hourPK=01/evidence.parquet",
-                "run/raw_sensor/raw_process/dayPK=20261025/hourPK=01/events.parquet"]
+                "run/raw_sensor/raw_process/dayPK=20261025/hourPK=01/vm-fixture+raw_process+1.parquet",
+                "run/raw_sensor/raw_process/dayPK=20261025/hourPK=01/vm-fixture.example+raw_process+2.parquet",
+                "run/raw_sensor/raw_process/dayPK=20261025/hourPK=01/other-host+raw_process+2.parquet"]
         paginator = Paginator(keys)
         client = MagicMock()
         client.get_paginator.return_value = paginator
@@ -128,6 +131,10 @@ class S3SourceTests(unittest.TestCase):
         self.assertEqual(client.get_paginator.call_count, 1)
         self.assertEqual({call['Prefix'] for call in paginator.calls},
                          {'run/raw_sensor/raw_smoke_test/dayPK=20261025/hourPK=01/'})
+        selected = discover_telemetry_files(client, self.config, '2026102501', '2026102501',
+                                            domains={'process'}, hosts={'vm-fixture.example'})
+        self.assertEqual(len(selected), 2)
+        self.assertTrue(all('/vm-fixture' in path for path in selected))
 
     def test_source_connection_uses_temporary_secret_path_style_and_session_token(self):
         session = MagicMock()

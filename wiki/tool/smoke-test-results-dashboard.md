@@ -66,7 +66,8 @@ Set these values to the destination used by your collector uploader:
   "endpoint": "https://garage.example.invalid",
   "region": "us-east-1",
   "datasets": ["s3://example-bucket/example-prefix"],
-  "max_files": 20000
+  "max_files": 20000,
+  "memory_mb": 4096
 }
 ```
 
@@ -76,6 +77,7 @@ Set these values to the destination used by your collector uploader:
 | `region` | Region used by the existing S3/Garage deployment. |
 | `datasets` | S3 root containing the uploaded `raw_sensor/` tree; one or more roots are supported. |
 | `max_files` | Fail-closed listing cap; `20000` is the starting default. Narrow upload hours before raising it further. |
+| `memory_mb` | In-memory DuckDB validation budget; default `4096`, accepted range 256–8192. Disk spill remains disabled. |
 | `start_hour` / `end_hour` | Optional inclusive UTC upload-partition bounds in `YYYYMMDDHH`; legacy day bounds expand to full days. |
 
 For example, if an uploaded object is
@@ -154,7 +156,9 @@ continuation. The source README contains the complete command. `uv python instal
 4. Select the test host, then **Canary Tests** → `telemetry-workload` → the exact
    run → **Validate selected run**. For a recurring expanded round, use
    **Run all validations for this canary**. Only that explicit action lists the
-   selector-relevant canonical event families under the selected hourly partitions.
+   selector-relevant canonical event families under the selected hourly partitions,
+   then retains canonical producer filenames matching the manifest hostname's
+   case-insensitive short/FQDN form.
 
 If no run appears, check the dataset prefix, UTC window and uploaded
 `raw_smoke_test` objects. Remote errors now identify a sanitized stage and exception
@@ -332,8 +336,9 @@ summary persistence; see [[wiki/work/wintap-telemetry-identity-and-data-quality/
 Validation normalizes the selected source's candidate files, scans the union of
 the selected run's exact selector predicates once into a temporary in-memory table,
 then reuses it for checks/details. Overlapping selectors do not duplicate rows.
-Row budget is 100,000 matching observations; DuckDB memory is 256 MB with disk spill
-disabled. Budget/read failure is unavailable validation, not a truncated PASS.
+Row budget is 100,000 matching observations; DuckDB memory is configurable from
+256–8192 MB (4096 MB default) with disk spill disabled. Budget/read failure is
+unavailable validation, not a truncated PASS.
 These bounds do not cap network bytes or wall-clock duration. Individual details
 remain fresh/explicit; round summary persistence is described below. Native timestamp
 pushdown/partition pruning remains a follow-up: uncertain files are not discarded.
