@@ -9998,3 +9998,13 @@ assembly-adjacent ETL JSON remains ordinary application payload. Updated the TOD
 queue, main index, and agent instructions so future TODO requests use the existing
 intake structure rather than a parallel backlog.
 <!-- GROUND_TRUTH: wiki/todo/unify-lintap-runtime-and-etl-configuration.md; ../wintap/wintap/core/shared/ConfigManager.cs; ../wintap/wintap/core/etl/shared/Utilities.cs; ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/lintap-rpm/build-rpm.sh -->
+
+## [2026-11-24] todo | direct DBT hostname filtering
+
+Added a P3 low-priority intake item for case-insensitive hostname selection based
+on raw Parquet filenames in `make dbt-build-direct`. The item records the shared
+DBT path/preflight and PIDSTAT scan points, legacy/new filename delimiter handling,
+the compacted-shard provenance boundary, the direct-target prerequisite caveat,
+and tests required before implementation. No PyUtil source, DBT model, dataset, or
+S3 object was changed.
+<!-- GROUND_TRUTH: wiki/todo/dbt-direct-hostname-filter.md; ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql; ../Wintap-PyUtil/wintap_dbt/macros/relations.sql; ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql; ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_pidstat_metrics.sql -->

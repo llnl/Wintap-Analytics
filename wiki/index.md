@@ -12,6 +12,9 @@ DBT source-aware validation: [[wiki/work/dbt-source-validation/verification]] �
 local/split/S3 inputs, explicit named AWS profile selection, no placeholder directory,
 partition-scoped DuckDB preflight, offline dashboard checks. Combined SELinux/source
 validation now passes 286 regressions; historical config failure does not reproduce.
+Open low-priority follow-up: [[wiki/todo/dbt-direct-hostname-filter]] — filename-based
+hostname selection for raw-only `make dbt-build-direct`, with source-preflight and
+PIDSTAT coverage still to be designed and qualified.
 Combined release gates: [[wiki/work/selinux-dbt-pipeline/verification]] — required
 PR review, full split-local/authenticated-S3 builds, temporary network-ID consumer
 qualification, and S3 pull-helper hardening.
