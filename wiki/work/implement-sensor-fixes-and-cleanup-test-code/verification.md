@@ -1053,3 +1053,170 @@ no legacy migration or mixed-population compatibility is required. Evidence:
 `/data/lintap-compactor/sensor-fixes/conn-id-loopback-context-20261123/`; full audit:
 `../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md`.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/tests/test_compacted_inputs.py; ../Wintap-PyUtil/tests/test_network_activity_sql.py; ../Wintap-PyUtil/tests/test_rawutil_conn_id_passthrough.py -->
+
+## Linux executable-attribution capture preparation — 2026-11-23
+
+The named Linux workload was extended, but no collector was started and no live
+telemetry or DBT input was read. The default one-round mode remains compatible with
+the existing smoke contract. The optional bounded mode adds repeated successful
+same-PID exec stages with changing argument tokens, a failed exec attempt followed by
+a successful exec, and a long-lived Refresh candidate. The portable selectors retain
+the expected stage kind, PID/TID, token and failed-attempt path independently of
+collected rows.
+<!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py; ../wintap/devtools/test_telemetry_smoke_workload.py -->
+
+| Check | Result |
+|---|---|
+| Python regression | **2/2 passed** with Python 3.12. |
+| Python compilation | Passed for workload and regression test. |
+| Wintap build | SDK 10.0.402; **0 errors / 174 warnings**; Lintap DLL and Linux eBPF tracer objects emitted under the approved `/data/lintap-compactor` evidence root. |
+| Prepared config | Fresh process/exec/clone/exit/rundown, ETL/Parquet, and one-minute Refresh configuration generated under the same evidence root. |
+| Workload cycle prepared | Nine rounds at 60-second spacing, 0.25-second worker hold, 600-second Refresh candidate; approximately ten minutes. |
+| Collector state | Not started; awaiting operator launch with one-minute process Refresh and confirmed data root. |
+
+The host default `python3` is Python 3.6 and cannot execute the existing test suite's
+`subprocess.run(capture_output=...)` calls; use the approved modern persistent
+interpreter/virtual environment for the capture. No raw identifiers, hostnames,
+telemetry, historical data, deployment, DBT output or source data were persisted.
+
+## Linux executable-attribution capture and DBT qualification — 2026-11-23
+
+The operator completed the prepared bounded Linux cycle under the sanitized capture
+label `linux-exec-20261123`: nine rounds at 60-second spacing, all 19 targeted PIDs
+matched, and the long-lived Refresh candidate was retained. Ctrl-C shutdown was
+graceful. Final serializer evidence reported zero drops, zero remaining queues, zero
+Parquet failures, and no serializer backlog. The workload manifest, raw Parquet and
+runtime log remain outside Git in operator-retained evidence; this page intentionally
+does not record hostnames, account names, IP addresses, or raw identifiers.
+
+### Raw process evidence
+
+The finalized `raw_process` input consisted of three Parquet files with 21,931 rows,
+5,807 distinct `PidHash` values and 5,807 distinct PIDs. No row had a null or empty
+`PidHash`. The activity split was 15,395 `Start` and 6,536 `Refresh` rows. Observation
+kinds were 5,022 `exec_attempt`, 5,007 `exec_success`, and 11,902 null/initial rows.
+These counts are producer-layer evidence, independent of the DBT output.
+
+The prevalence/concentration scan found the following at the `PidHash` grouping level:
+
+| Measure | Result |
+|---|---:|
+| Groups with more than one process name | 4,508 / 5,807 |
+| Groups with more than one process path | 4,545 / 5,807 |
+| Groups with more than one command line | 686 / 5,807 |
+| Maximum distinct names / paths / command lines | 3 / 5 / 5 |
+| One-row groups | 371 groups / 371 rows |
+| 2–5-row groups | 4,968 groups / 14,950 rows |
+| 6–10-row groups | 47 groups / 328 rows |
+| 11+-row groups | 421 groups / 6,282 rows |
+
+After restricting to `Start`/`Refresh` rows and excluding `exec_attempt`, 16,909
+eligible rows remained. The eligible scan still found 4,508 name-varying groups,
+4,544 path-varying groups and 620 command-line-varying groups. These aggregate
+figures establish concentration and multiplicity; they do not by themselves
+distinguish repeated exec, PID reuse, fork images, or other producer behavior.
+
+### Independent workload contracts
+
+The targeted cohorts retained one `PidHash` while exposing ordered image observations:
+
+| Cohort | Result |
+|---|---|
+| `wt_reexec` | 9/9 cohorts retained one `PidHash` across multiple images. The latest eligible name/path/arguments tuple matched the DBT row in 3/9 cohorts. |
+| `wt_execfail` | 9 missing-executable attempts, 0 corresponding successes, and 9/9 attempts preceded a successful replacement. The latest eligible tuple matched DBT in 7/9 cohorts. |
+| `wt_refresh` | 10 Refresh rows retained stable identity; the latest observation was Refresh and the latest eligible tuple matched DBT 1/1. |
+
+Failed attempts are evidence but are not eligible canonical image rows. The Refresh
+candidate resolves the live interpreter through procfs, while successful exec rows
+retain the invoked executable path; this is consistent with point-in-time/current
+state versus historical image evidence and is not a reason to merge the relations.
+<!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py; ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md; ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md; ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md -->
+
+### Isolated DBT result and `any_value` finding
+
+An isolated DBT build against the finalized raw root completed **139/139** nodes.
+The build did not modify production data, historical data, source code or schemas.
+The process model produced one row for each of the 19 targeted `PidHash` values, but
+its current projection uses independent `any_value` expressions for process name,
+arguments and path. The selected fields therefore are not guaranteed to come from
+one observation row or to represent the latest valid image. In the capture:
+
+- the selected name/path/arguments triple was present in an eligible source row for
+  9/9 `wt_reexec`, 8/9 `wt_execfail`, and 1/1 `wt_refresh` cohorts;
+- one `wt_execfail` row selected the failed `missing-executable` image, which was an
+  ineligible `exec_attempt`; and
+- exact latest eligible tuple agreement was only 3/9, 7/9 and 1/1 respectively.
+
+This is a downstream semantic defect, not a raw-telemetry failure. The required
+repair is a deterministic paired-row selection policy: for current state, prefer the
+latest valid Refresh as of the query time, otherwise the latest successful exec;
+retain initial/history and failed-attempt evidence separately. Name, path and
+arguments must be selected from that same row. The existing synthetic `any_value`
+contracts remain useful for truly invariant columns, but they do not authorize
+`any_value` for these changing image fields.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/tests/test_any_value_contract_sql.py -->
+
+The DBT model also reports `os_family='windows'` for this Linux input because that
+value is currently hard-coded; this capture records the limitation and does not
+reinterpret it as producer evidence. Native Windows negative-control acceptance
+remains a separate pending gate.
+
+### Read-only deterministic selector prototype
+
+A read-only DuckDB prototype was evaluated against the isolated database without
+changing DBT SQL or source data. It filters canonical image candidates to `Start` or
+`Refresh` rows, excludes `exec_attempt`, and selects one complete source row with this
+policy: latest valid Refresh, otherwise latest `exec_success`, otherwise an explicit
+eligible fallback. The ranking uses observation UTC, comparable monotonic time,
+receipt time, and a stable value tie-breaker; name, path and arguments are projected
+only from the selected row.
+
+| Prototype check | Result |
+|---|---:|
+| Full `PidHash` groups selected | 5,807 / 5,807 |
+| Full-dataset selection roles | 493 Refresh, 4,947 successful-exec, 367 fallback |
+| Targeted cohorts selected | 19 / 19 |
+| Targeted cohorts with exact policy/pair agreement | 19 / 19 in each of `wt_reexec`, `wt_execfail`, and `wt_refresh` |
+| Selected targeted rows that were `exec_attempt` | 0 |
+| Selected targeted triples co-occurred in a source row | 19 / 19 |
+| Randomized source-order runs with identical results | 10 / 10 |
+
+This qualified the candidate ranking and pairing contract for the bounded production
+implementation. The resulting DBT model is validated below. An explicit as-of
+predicate remains a separate future relation rather than a requirement for the
+current process model; tie/ambiguity and broader non-image-field audit work also
+remain separate follow-ups.
+
+## Deterministic DBT paired-row implementation — 2026-11-23
+
+The approved PyUtil change replaces process-image `any_value` selection with a
+deterministic paired-row projection. `stg_raw_process` now supplies nullable defaults
+for the additive observation columns when older raw Parquet lacks them. The silver
+`process` model:
+
+1. considers only `Start`/`Refresh` rows and excludes `exec_attempt`;
+2. prefers the latest valid Refresh, otherwise the latest `exec_success`, otherwise
+   an explicit eligible fallback;
+3. orders by observation UTC, monotonic observation time, receipt time, event time and
+   a stable value tie-breaker; and
+4. takes process name, arguments and path from that one selected row.
+
+The model additionally exposes `image_selection`, `image_observation_kind`, and the
+selected observation timing fields so downstream consumers can distinguish current
+image evidence from process birth timing. Existing lifetime start/stop counts and
+birth timestamps remain aggregate projections; failed-attempt and transition rows
+remain in the raw/staging evidence.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_raw_process.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/wintap_dbt/models/schema.yml -->
+
+| Gate | Result |
+|---|---|
+| Focused PyUtil contracts | **32 passed, 1 skipped**. |
+| Python compilation | Passed for the changed staging/model tests. |
+| Isolated DBT build | **139/139** nodes passed; 0 errors, 0 warnings, 0 skips. |
+| Legacy-schema smoke build | **13/13** selected staging/model/tests passed with observation columns absent from raw Parquet. |
+| Finalized capture target output | 19/19 targeted process rows retained paired fields; 18 selected `exec_success`, 1 selected `Refresh`. |
+| Failed-attempt protection | 0 selected `exec_attempt` rows and 0 selected failed-executable paths. |
+| Compatibility | Legacy fixture/model checks pass with nullable observation-column defaults. |
+
+No production or historical data was rewritten. Native Windows negative-control
+acceptance and broader cross-platform policy validation remain open.

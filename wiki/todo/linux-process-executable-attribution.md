@@ -25,11 +25,26 @@ tags: [todo, priority, process-events, data-quality, telemetry-semantics, wintap
 
 # To-Do: Deterministic Linux Process Executable Attribution
 
+## Top-level platform finding
+
+The confirmed multiple-`process_name` behavior is currently a **Linux-specific
+investigation**. Linux can legitimately emit multiple image observations under one
+`PidHash` because repeated `exec` transitions preserve the process identity. Normal
+Windows process creation does not have an equivalent `execve` image replacement;
+multiple names under one Windows `PidHash` would therefore be treated first as an
+identity, snapshot/enrichment, replay/deduplication, or other data-quality anomaly,
+not assumed to be valid repeated-exec behavior. Windows belongs in the validation
+plan as a negative control: repeated Refresh values should normally remain stable,
+and PID reuse should produce a distinct creation-time-scoped hash.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §GetExecutionObservationKind; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §EtwParser_ProcessStart; §CreateRefreshMessage -->
+
 **Priority:** P1 — High (provisional; prioritize because the silver process row
 can silently attribute an executable that did not run).
-**State:** Promoted-partial. The bounded `sfx-04` observation-kind and `sfx-05`
-path-evidence-source slices are accepted; deterministic process-lifetime selection
-and DBT changes remain open.
+**State:** Promoted for the bounded Linux repeated-exec slice. The `sfx-04`
+observation-kind and `sfx-05` path-evidence-source slices, finalized capture, and
+deterministic paired-row DBT projection are accepted. Structured argv/eBPF argv,
+syscall-result correlation, BPF truncation, historical repair, and an explicit
+as-of relation remain separate future follow-ups.
 
 ## Finding
 
@@ -37,6 +52,15 @@ Linux process telemetry can contain multiple start-like observations for one
 process lifetime. Syscall-entry observations record a requested executable
 before the syscall outcome is known; `sched_process_exec` records a successful
 image installation. Those are different facts and need to remain distinguishable.
+
+The latest reported form of this issue—multiple `process_name` values associated
+with the same OS PID—is now explicitly included in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]]. PID alone is not
+enough to diagnose it: the investigation must distinguish PID reuse across
+different `PidHash` values from multiple image observations within one process
+lifetime, then determine whether downstream selection introduces the problematic
+canonical value.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — include the latest multiple-name/same-PID issue in the active feature scope. -->
 
 The Wintap callback emits both observation types as process `Start` messages and
 tags their provenance in `Process.Arguments`. It keeps process birth as
@@ -82,9 +106,61 @@ come from different observations. `any_value` also supplies no explicit
 deterministic ordering rule.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql §process_base -->
 
+This does not imply that every `any_value` use is defective. For a field whose
+eligible non-null values are proven identical within the grouping key, `any_value`
+can be a harmless shortcut: duplicate identical rows are not semantic conflict,
+and null-only groups have a separately defined result. The audit must therefore be
+column- and feature-specific. The relevant question is whether multiple distinct
+eligible values exist and whether row provenance/order carries meaning.
+
+The active plan will classify each use as invariant-safe, conflict-visible metadata,
+or ordering-sensitive feature. `process_name`, `process_path`, and image-related
+arguments are initially ordering-sensitive; fields such as `os_pid` may be safe only
+after group-specific invariance tests. Any retained shortcut needs a regression
+contract proving equivalence rather than relying on the function name.
+
 Multiple successful execs within one process lifetime add a separate ambiguity:
 the process-start `EventTime` does not order those image changes or establish
 which successful image the base row should represent.
+
+### Refresh as current-state evidence
+
+The new periodic process listing is a useful candidate for a different question:
+which image was observable for a still-running process at a particular scan time.
+Linux and Windows Refresh retain the birth-scoped identity while adding an
+observation time, so a matching, valid Refresh may be more accurate than an older
+event for a **current-state as-of query**. It is not proof of an exec transition,
+does not replace birth `EventTime`, and is not automatically the canonical lifetime
+image. Enumeration and field reads can race with process changes or exit, and a
+Refresh can be stale relative to the query.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §CreateRefreshMessage; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §RunPeriodicRefreshSnapshot; §CreateRefreshMessage -->
+
+The implementation plan evaluated separate lifetime and current-state views. The
+bounded DBT process projection now applies the measured paired-row precedence for
+the current full-input snapshot: latest valid Refresh, otherwise latest ordered
+`exec_success`, otherwise qualified start evidence. An explicit requested-cutoff
+as-of relation remains deferred for a future follow-up; it is not required to close
+the current Linux repeated-exec slice.
+
+### Population generality and recurring-cause feedback
+
+The severity assessment must separate raw observation volume from independent
+process-lifetime prevalence. A regularly invoked wrapper can generate a large pile
+of multi-name observations while representing one recurring cause on one host or
+host-day. Conversely, a smaller row count spread across many hosts, days, and
+independent lifetimes may indicate a broader producer or model defect.
+
+The measurement plan therefore reports observation, `PidHash` lifetime, PID-group,
+host-day, host, and cause-signature rates, with concentration measures and
+leave-one-host/day-out checks. It also caps recurring signatures to one lifetime per
+host-day when estimating breadth. A repeated signature is evidence of recurrence,
+not automatically a confirmed root cause.
+
+Results can feed algorithm tuning through versioned baseline/candidate shadow runs,
+stratified human labels, and held-out host/time validation. The loop must preserve
+unknown and ambiguous cases, test beyond the dominant recurring wrapper pattern,
+and never self-label from the current arbitrary projection or automatically rewrite
+historical data.
 
 ## Impact
 

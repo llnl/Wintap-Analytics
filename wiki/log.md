@@ -9805,3 +9805,156 @@ files remain at the project root. No external network/S3/private-data access,
 dependency installation, collector, deployment, historical mutation, or push
 occurred. Broader TC-06 validation/PyUtil/coordination organization remains open.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/contract; streamlit/projects/SmokeTests/tests/transport/test_s3_http.py; streamlit/projects/SmokeTests/tests/ui/test_app.py; streamlit/projects/SmokeTests/tests/README.md -->
+
+## [2026-11-23] scope | include same-PID process-name multiplicity
+
+The human added the latest multiple-`process_name`/same-PID issue to the active
+sensor-fixes and test-cleanup feature. Updated the brief, implementation plan,
+handoff, executable-attribution intake and index. The bounded investigation first
+separates PID reuse across `PidHash` values from repeated image observations within
+one process lifetime, then measures attempt/success ordering and PyUtil's arbitrary
+independent name/path selection. No representative initial/latest-image policy,
+schema/model implementation, historical repair, data access or source change was
+authorized or performed.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — include the latest multiple-name/same-PID issue in the current feature scope. -->
+
+## [2026-11-23] plan | Refresh evidence in process-name multiplicity work
+
+Started a detailed implementation plan for the multiple-`process_name`/same-PID
+issue. The plan treats a matching periodic Refresh as a candidate strong source for
+the image observable at that scan time, while preserving birth identity, exec-event
+semantics and historical transition evidence. It sequences source/schema inventory,
+aggregate measurement, repeated-exec/PID-reuse/Refresh fixtures, read-only candidate
+views, human policy review, and only then a bounded DBT or producer change. No source,
+schema, DBT, dataset, or historical data was changed.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql -->
+
+## [2026-11-23] plan | prevalence and recurring-cause feedback loop
+
+Extended the process-name multiplicity plan to distinguish raw observation volume
+from independent lifetime, PID-group, host-day, host, and recurring-cause prevalence.
+Added concentration measures, per-host/day caps, leave-one-out checks, versioned
+signature clustering, stratified human labels, baseline/candidate shadow runs, and
+held-out validation. A recurring wrapper pattern can now be recognized as one
+concentrated cause without allowing it to define generality or self-tune the model.
+No source, schema, DBT, dataset, or historical data was changed.
+<!-- HUMAN-REQUESTED: conversation 2026-11-23 — learn from multi-host/multi-day data and use a controlled feedback loop where helpful. -->
+
+## [2026-11-23] plan | column-specific ANY_VALUE resolution
+
+Extended the process-name plan to audit every affected `any_value` use by column
+contract rather than banning the function globally. The plan distinguishes proven
+invariant-safe shortcuts, conflict-visible metadata, and ordering-sensitive paired
+features. It adds distinct-value/null-pattern QA, explicit retained-use regression
+contracts, and replacement requirements for process name/path and other changing
+fields. Duplicate identical values are not treated as semantic conflicts.
+<!-- HUMAN-REQUESTED: conversation 2026-11-23 — resolve ANY_VALUE according to the specific column/feature contract. -->
+
+## [2026-11-23] audit | ANY_VALUE source inventory
+
+Ran a read-only inventory at PyUtil revision `4085747`. Excluding generated
+`wintap_dbt/target/` SQL, the source tree contains 73 textual `any_value` matches
+across 14 files: 71 executable calls and two comments. Recorded preliminary
+process/host/network/file/registry/image-load/SELinux classifications and defined
+fixtures for equivalent duplicates, null handling, conflicts, paired name/path,
+failed exec eligibility, Refresh as-of selection, and ambiguous temporal attribution
+in [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/any-value-audit]]. No
+PyUtil SQL, tests, dataset, or historical data was changed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models; ../Wintap-PyUtil/wintappy/datautils/rawtostdview.sql -->
+
+The focused baseline test command was attempted through the documented offline
+environment path but could not start: system Python lacks `pytest`, and the existing
+offline environment failed closed on a permissions error. This is an environment
+blocker, not a test result; no dependency installation or environment repair was
+performed.
+
+## [2026-11-23] verification | ANY_VALUE synthetic contract slice
+
+With explicit approval, replaced the stale PyUtil virtual environment using the
+locked development dependencies and added six synthetic in-memory DuckDB contract
+tests in `../Wintap-PyUtil/tests/test_any_value_contract_sql.py`. They cover invariant
+shortcuts, duplicate/null handling, visible conflicts, paired name/path selection,
+failed-attempt exclusion, and Refresh as-of selection. The combined focused suite
+passed **31 tests with one pre-existing skip**; the expanded selected contract suite
+passed **226/226**; Black and compilation checks passed. No live data, collector,
+deployment, historical data, or production SQL was changed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_any_value_contract_sql.py; ../Wintap-PyUtil/pyproject.toml -->
+
+## [2026-11-23] finding | Linux-primary multiple-name behavior
+
+Promoted the platform boundary to a top-level finding: Linux repeated `exec` can
+legitimately produce multiple image observations under one `PidHash`, while normal
+Windows process creation has no equivalent image-replacement lifecycle. Windows is
+therefore a negative control for stable Refresh values and distinct PID-reuse hashes;
+same-hash name changes should first be investigated as identity, snapshot/enrichment,
+replay, deduplication, or other data-quality anomalies.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs -->
+
+## [2026-11-23] preparation | bounded Linux executable-attribution capture
+
+Extended `../wintap/devtools/telemetry_smoke_workload.py` with optional repeated
+rounds, same-PID multi-successful-exec stages with changing argument tokens, a
+failed-exec-attempt then successful-exec case, and a long-lived Refresh candidate.
+The portable manifest now records execution-stage expectations and Refresh candidates.
+The recommended first real cycle is approximately ten minutes: nine rounds at
+60-second spacing with a 600-second Refresh candidate, using a one-minute Lintap
+process Refresh interval. The Wintap workload regression passes **2/2** under
+Python 3.12; the host default Python 3.6 cannot run the existing test suite's
+`capture_output` option. No Lintap process has been started and no telemetry or DBT
+data has been read or changed.
+<!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py; ../wintap/devtools/test_telemetry_smoke_workload.py -->
+
+The matching Wintap build was prepared with the pinned SDK 10.0.402 under the
+approved `/data/lintap-compactor` evidence root: **0 errors / 174 warnings**. The
+fresh config and `Lintap.dll`/Linux eBPF objects are retained there. Privileged
+collector launch remains with the operator; no Lintap process has been started.
+<!-- GROUND_TRUTH: ../wintap/global.json; ../wintap/wintap/Lintap.csproj; ../wintap/wintap/Makefile -->
+
+## [2026-11-23] verification | finalized Linux repeated-exec capture and DBT audit
+
+Completed the bounded sanitized Linux capture `linux-exec-20261123`: nine rounds,
+19/19 targeted PIDs matched, clean Ctrl-C shutdown, zero serializer drops/backlog/
+Parquet failures, and independent raw evidence for repeated exec, failed attempts and
+Refresh. The raw process scan contained 21,931 rows across 5,807 `PidHash` groups;
+prevalence and concentration counts are recorded in the feature verification page.
+
+The isolated DBT build passed 139/139 nodes. The downstream process projection does
+not yet satisfy the required deterministic paired-row policy: exact latest eligible
+tuple agreement was 3/9 repeated-exec, 7/9 failed-attempt, and 1/1 Refresh cohorts;
+one failed-attempt path was selected by `any_value`. The finding requires a bounded
+deterministic DBT repair, while native Windows negative-control acceptance remains
+open. No source, schema, production or historical data was changed, and no hostnames,
+account names, IP addresses or raw identifiers were persisted here.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/tests/test_any_value_contract_sql.py; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-23] verification | deterministic paired-row prototype
+
+Ran a read-only DuckDB prototype against the isolated finalized capture. A selector
+that excludes `exec_attempt`, prefers latest valid Refresh, falls back to latest
+successful exec, and projects name/path/arguments from one ranked row selected all
+19 targeted cohorts correctly, selected no failed attempts, and remained stable across
+10 randomized source-order runs. The prototype is recorded as design qualification;
+production DBT still needs as-of, tie/ambiguity, non-image-field and regression-test
+contracts. No source or production model was changed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/tests/test_any_value_contract_sql.py; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-23] implementation | deterministic PyUtil process-image projection
+
+With explicit authorization, changed PyUtil staging and silver DBT models to select
+process name, arguments and path from one deterministic eligible observation row.
+Failed attempts are excluded; latest valid Refresh wins, then latest successful exec,
+with explicit fallback and selected-row timing/role fields. Nullable staging defaults
+preserve older raw Parquet schemas. Focused contracts pass **32/32 with one existing
+skip** and the isolated finalized capture build passes **139/139**. No production or
+historical data was changed; native Windows qualification remains open.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_raw_process.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/tests/test_compacted_inputs.py -->
+
+## [2026-11-23] disposition | Linux repeated-exec tranche
+
+Reviewed the remaining Linux scope. The bounded Linux capture, producer evidence,
+failed-attempt exclusion, paired-row PyUtil projection, legacy-schema compatibility,
+and focused/isolated validation are complete. No required Linux implementation
+remains for this tranche. Structured argv/eBPF argv, syscall-result correlation, BPF
+truncation, historical repair, and an explicit as-of relation remain separate future
+follow-ups; native Windows validation remains deferred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->

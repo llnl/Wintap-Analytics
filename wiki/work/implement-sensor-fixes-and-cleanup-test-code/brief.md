@@ -25,9 +25,19 @@ tags: [feature-work, testing, test-organization, sensor-fixes, cross-repo]
 ## Status
 
 The test-development session has implemented and checked an iterative first cut.
-Another session owns the small sensor changes and fresh captures; its exact fix scope
-remains to be supplied. The original stub request is retained below as history.
+The sensor workstream has completed bounded Linux process units through `sfx-07`
+and connection-identity work through `sfx-09`; native Windows acceptance and later
+test-organization slices remain open. The feature now
+also includes investigation of the latest `process_name` finding: multiple names
+associated with the same OS PID. That scope must distinguish repeated exec within
+one `PidHash`, PID reuse across distinct process lifetimes, and downstream arbitrary
+name selection before choosing a fix. The bounded Linux repeated-exec producer,
+evidence, and paired-row PyUtil projection are now complete for this tranche. An
+explicit as-of relation is noted for future follow-up, and native Windows validation
+remains deferred. The original stub request is retained below
+as history.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — create a stub only; another session will update the workflow. -->
+<!-- HUMAN-DECISION: conversation 2026-11-23 — include the latest multiple-process-name/same-PID issue in the current feature scope. -->
 
 ## Problem
 
@@ -85,9 +95,19 @@ branch-ref update, commit, or push was performed.
 
 ## Later Sensor-Fix Phase
 
-To be populated by the other session. No existing sensor or pipeline TODO is
-automatically selected. This test-development session makes no sensor behavior or
-schema changes.
+The selected bounded Linux sensor units and connection-identity work are recorded
+in the implementation plan and verification page. The newly included
+`process_name` multiplicity issue continues
+[[wiki/todo/linux-process-executable-attribution]] inside this feature. Inclusion
+authorizes investigation, design, fixtures, and affected producer/downstream tests;
+it does not yet select an initial-versus-latest image policy, schema change,
+historical repair, or broad producer rewrite.
+
+The first question is whether the reported rows share only an OS PID or also one
+birth-scoped `PidHash`. Multiple names can be valid raw observations when one
+process lifetime successfully execs more than once; the defect risk is silently
+collapsing those observations into an arbitrary or mismatched canonical name/path.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — add same-PID process-name multiplicity to the active scope without preselecting its remedy. -->
 
 ## Iterative Development
 
@@ -103,7 +123,11 @@ for the detailed slices, capture handoff, and validation loop, and
 
 ## Open Questions
 
-- Exact sensor fixes, affected platforms, compatibility boundaries, and ordering.
+- For the newly included name issue, whether multiplicity occurs within one
+  `PidHash`, across PID reuse, or only after downstream aggregation.
+- Whether a separate historical/as-of relation and ordered image history should be
+  added; this is deferred after the current full-input paired-row projection.
+- Exact remaining sensor fixes, affected platforms, compatibility boundaries, and ordering.
 - Sensor-specific dataset checks, verification commands, and acceptance criteria.
 - Final workflow completion criteria.
 - Windows runtime baseline/acceptance for the authorized Wintap draft;

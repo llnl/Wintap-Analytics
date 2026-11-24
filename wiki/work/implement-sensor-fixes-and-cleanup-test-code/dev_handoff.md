@@ -68,6 +68,22 @@ organization is complete. Select the next validation/PyUtil/coordination slice
 from the implementation plan rather than moving these cases again.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — the RHEL sample will not be updated; do not wait for raw files there. -->
 
+## Newly Included Process-Name Scope — 2026-11-23
+
+The current feature now includes the latest finding that one OS PID is associated
+with multiple `process_name` values. Continue through
+[[wiki/todo/linux-process-executable-attribution]] and the bounded plan in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan#Included process-name multiplicity scope — 2026-11-23]].
+
+Do not key the investigation on PID alone. First separate PID reuse across distinct
+`PidHash` values from repeated exec observations within one birth-scoped identity.
+For the latter, distinguish `exec_attempt` from `exec_success`, order observations
+with the additive observation fields, and keep name/path from the same row. The
+current PyUtil silver model's independent `any_value` selections are part of the
+investigation. No representative initial/latest-image policy, schema change, or
+historical repair is approved yet.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — include the multiple-name/same-PID issue in this feature. -->
+
 ## Test-Cleanup Copy/Paste Prompt
 
 ```text
@@ -90,11 +106,12 @@ report missing prerequisites without installing/upgrading or retargeting tests.
 When existing environments are ready, rerun only the documented lightweight
 checks, record destination results separately, and retain the 120-second ceiling.
 
-Next: obtain the sensor worker's exact fix/build, authorized read-only capture,
-UTC workload interval, relevant event families, independent expected observations,
-and limitations (TC-03). Then select and run the bounded dataset check and refine
-only the affected test slice. Do not invent a sensor fix, broaden data access,
-weaken an oracle, or treat the nine TODO candidates as an approved work queue.
+Next: include the approved process-name multiplicity investigation. Obtain the
+exact producer/PyUtil revisions, authorized read-only capture, UTC interval and
+source layer. Compare same PID with `PidHash`; classify PID reuse, exec attempts,
+successful image transitions and downstream aggregation before refining only the
+affected tests. Do not preselect initial/latest-image policy, broaden data access,
+weaken an oracle, or treat the remaining TODO candidates as an approved work queue.
 ```
 
 ## Sensor-Preparation Copy/Paste Prompt

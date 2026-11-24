@@ -244,7 +244,7 @@ of their lifecycle; the manifest and evidence remain for analysis.
 
 | Domain | Stimulus | Collected-data expectation / caveat |
 |---|---|---|
-| Process | Named `wt_fork`, `wt_forkexec`, `wt_spawn`, `wt_threads` and child/image names | Start/Stop; fork-only requires Clone; threads must not appear as process Starts. posix_spawn implementation is libc-dependent |
+| Process | Named `wt_fork`, `wt_forkexec`, `wt_spawn`, `wt_threads`, repeated `wt_reexec`, failed-then-successful `wt_execfail`, and optional long-lived `wt_refresh` | Start/Stop; repeated exec stages retain one PID with changing argument tokens; failed attempts are explicitly ineligible successes; fork-only requires Clone; threads must not appear as process Starts. posix_spawn implementation is libc-dependent |
 | Native optional | One round of fork/exec, worker-thread fork, pthread, legacy clone process/thread, clone3 process/thread, explicit vfork+exec | Pass compiled clone helper; missing helper is SKIP, unavailable clone3 records errno. vfork child only calls exec/_exit before image replacement |
 | File | `wt_file`: create/open/write/read/file-backed mmap/close/delete; dirfd relative openat/unlinkat; rename/truncate extras | Linux normalized Open/Read/Write/Close/Delete; mmap becomes Read, rename/truncate have no dedicated FileOps activity |
 | Network | Separate `wt_tcp4srv/cli`, unconnected `wt_udp4srv/cli`, connected-client `wt_udp4cnsrv/cli`; TCP connect/accept/send/recv/disconnect | Independent UDP mode worker/socket/PID cases prevent one connected Receive satisfying unconnected coverage. Server receives still use peer-buffer recvfrom. `--ipv6` is extra stimulus, not certified Linux capture |
@@ -254,6 +254,21 @@ fork birth inherits parent comm; `/proc` resolver can normalize Python aliases;
 exec-entry and image-replacement observations can disagree transiently. Manifest
 PID/TID, UTC interval, case command line, file paths and socket ports are selectors.
 Thread rows explicitly mark `expectedProcessStart: false`.
+The execution selectors additionally record same-PID stage order, argument tokens,
+failed `exec_attempt` paths, and successful `exec_success` stages. `--rounds` and
+`--interval` repeat the complete named set; `--refresh-hold` keeps a process alive
+long enough for a configured collector Refresh tick, but captured Refresh rows still
+depend on collector configuration and timing.
+
+For the current Linux attribution validation, launch Lintap separately with a fresh
+data/runtime root, normal ETL/Parquet output, and a one-minute Refresh schedule. A
+minimal configuration uses `ProcessRefreshEnabled: true`,
+`ProcessRefreshIntervalMinutes: 1`, `ProcessRefreshOffsetMinutes: 0`, and enables
+the process-relevant `Execve`, `Clone`, `Exit`, and `ProcessRundown` sensors. Confirm
+the startup capability receipt and actual data root before invoking the workload;
+the collector must already be running. The exact bounded procedure and config example
+are in `../wintap/devtools/README.md` under “Bounded Linux executable-attribution
+capture”.
 Current portable manifests add explicit per-path activity expectations (rename paths
 need not each perform every operation) and IPv4 TCP/UDP host-relative socket expectations.
 Eight-file canary separately records all eight expected paths. These are stimulus facts,
@@ -303,7 +318,8 @@ rundown Refresh, HOST, registry or SELinux/security events.
 
 - `python3 devtools/test_telemetry_smoke_workload.py -v`: two tests pass: all stdlib
   domains, expected activity manifest, thread negative case, lifecycle file removal,
-  refusing existing directories and broken helper failure.
+  refusing existing directories, repeated same-PID exec/argument cases, Refresh
+  candidate retention, and broken helper failure.
 - `cc -O2 -Wall -pthread ... clone_lifecycle_workload.c`: no warnings/errors.
 - Builder VM `lintap-clone-validation`, Ubuntu 24.04/aarch64, kernel
   `6.8.0-147-generic`: default and optional IPv6 stimulus complete; native one-round

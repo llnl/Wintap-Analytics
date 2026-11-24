@@ -337,6 +337,310 @@ does not retroactively expand TC-02's mechanical test-move scope, authorize
 historical repair, or make the Linux-hosted broader Windows run an acceptance gate.
 See [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
 
+## Included process-name multiplicity scope — 2026-11-23
+
+The human added the latest `process_name` issue—multiple names associated with the
+same OS PID—to this feature. It continues the open deterministic executable-
+attribution work in [[wiki/todo/linux-process-executable-attribution]]. This is an
+investigation and affected producer/model-test scope, not a conclusion that every
+multi-name PID is invalid or authorization for historical repair.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — include the latest multiple-name/same-PID issue in the current feature scope. -->
+
+Use a bounded slice:
+
+1. Bind the observation to its source layer and exact producer/PyUtil revisions.
+   Group first by normalized host, OS PID and `PidHash`, not PID alone.
+2. Classify each multi-name case as PID reuse across distinct hashes, multiple raw
+   observations within one process lifetime, a valid successful exec transition,
+   a failed exec attempt, or a downstream projection/aggregation artifact.
+3. For one-lifetime cases, order rows with the additive observation fields and use
+   `ExecutionObservationKind` plus `ExecutablePathSource`; keep name and path from
+   the same observation. Birth `EventTime` alone is not sufficient ordering.
+4. Measure current silver `any_value` behavior, including whether independently
+   selected `process_name` and `process_path` can mismatch or select an attempted
+   executable. Do not treat raw Start-row multiplicity as multiple process births.
+5. Prepare fixtures for repeated successful exec, failed attempts, wrapper/
+   interpreter transitions, PID reuse, Refresh, and Stop after the final image.
+6. Present an explicit initial-versus-latest representative-image policy and an
+   ordered-history shape for human review before changing DBT/schema semantics.
+
+**Acceptance for the investigation/design slice:** the frequency and layer of the
+reported behavior are measured; same-lifetime exec is separated from PID reuse;
+failed attempts cannot become the representative successful executable; selected
+name/path stay paired; and unresolved policy choices remain visible. Native Windows,
+historical rebuilding, and migration compatibility remain separate gates.
+
+### Refresh as point-in-time image evidence — design input, not a decision
+
+The human's proposal is plausible for a narrower question: a valid Refresh can be
+the best evidence of the process image that was observable **at that scan time**.
+Linux Refresh reads the current `/proc` process listing and records the process birth
+in `EventTime` plus the scan instant in `ObservationTimeFileTimeUtc`; Windows periodic
+Refresh similarly reads a live snapshot and records the scan observation time. Both
+recompute the birth-scoped `PidHash`, so a Refresh can be joined to the lifetime
+without treating the reusable PID as identity.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §RunSnapshot; §CreateRefreshMessage; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §RunPeriodicRefreshSnapshot; §CreateRefreshMessage -->
+
+This does **not** make Refresh universally more accurate. Apply the following
+semantic separation during investigation:
+
+| Question | Preferred evidence candidate | Reason / limitation |
+|---|---|---|
+| When was the process born? | Birth `EventTime` and `PidHash` | Refresh observes an existing process; its observation time is not birth. |
+| What image was live at a scan instant? | Latest valid Refresh at or before the query time | It samples current state, but `/proc`/snapshot enumeration and field reads are not atomic and the process may change or exit during the scan. |
+| Did an exec request occur? | `exec_attempt` row | Refresh cannot prove a syscall attempt or its outcome. |
+| Which image installation succeeded? | `exec_success` row, ordered by observation time | Refresh can corroborate later state but does not identify the transition that produced it. |
+| What was current at process termination? | Last valid observation before Stop, with explicit freshness bounds | A Refresh can be stale; Stop and later observations must not be rewritten from it. |
+| What should the lifetime summary report? | Unselected until policy review | “Initial,” “latest successful,” and “latest observed” answer different analytical questions. |
+
+Therefore the initial plan is to expose Refresh as a separate **current-state
+evidence role**, not to let it overwrite the canonical lifetime `process_name`.
+For a current-state view, a candidate precedence is: matching valid Refresh at the
+requested as-of time; otherwise the latest ordered `exec_success`; otherwise the
+birth/start observation with explicit quality. This is a proposal for measurement
+and fixture evaluation, not an accepted DBT contract. A Refresh must lose authority
+when its identity is missing/mismatched, its executable evidence is unavailable, or
+the query asks about a historical transition rather than current state.
+
+### Detailed implementation sequence
+
+#### Phase A — Freeze contracts and inspect evidence
+
+1. Record the exact Wintap and PyUtil revisions, raw/normal-ETL/direct-Parquet
+   source layer, platform, enabled process sensors, and schema version.
+2. Inventory which rows carry `ActivityType`, `ProcessStartSource`,
+   `ExecutionObservationKind`, `ExecutablePathSource`, `ObservationTimeFileTimeUtc`,
+   `ObservationTimeMonotonicNanoseconds`, `ObservationRunId`, `ProcessName`, and
+   `ProcessPath` on Linux and Windows.
+3. Verify that Refresh rows use birth `EventTime` plus observation time and that
+   repeated Refresh rows retain one `PidHash`; do not infer this from a row count.
+4. Document missing comparability: Windows Refresh currently has live snapshot name
+   and path but does not carry the Linux exec-kind/path-source vocabulary. Do not
+   silently equate platform-specific evidence strength.
+5. Inventory every `any_value` use across the PyUtil SQL/DBT tree, then trace the
+   affected model uses to reachable downstream consumers. The current textual
+   inventory is a baseline (73 matches across SQL files) and must be regenerated at
+   the pinned revision. This is a column/feature audit, not a blanket ban: the
+   existing compaction decision treats the debt as non-blocking for compaction, but
+   this feature must resolve semantic uses that can misrepresent process identity or
+   image state.
+   The first read-only inventory is recorded in
+   [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/any-value-audit]].
+
+#### Phase A2 — Classify `any_value` by column contract
+
+For each use, record the relation, grouping key, expression, null behavior, expected
+invariance, whether row ordering has meaning, downstream consumers, and the proposed
+replacement or retained justification. Include process, network, file, registry,
+image-load, host, SELinux, and legacy-model uses rather than assuming the process
+finding generalizes. Use three outcomes:
+
+1. **Invariant-safe shortcut:** within the grouping key, all non-null values are
+   proven equal, or there is at most one non-null value and null is intentionally
+   ignored. `any_value` may remain as a performance/readability shortcut, but the
+   invariant must have a regression test and an explicit comment or contract.
+2. **Conflict-visible metadata:** values are normally stable but disagreement is
+   meaningful. Keep a deterministic representative only if consumers need one, and
+   expose a distinct-count/conflict flag rather than hiding the disagreement.
+3. **Ordering-sensitive feature:** values can legitimately change across rows or
+   must be paired with another value. `any_value` is not acceptable as the semantic
+   selector; use a deterministic ordered row or a separately defined aggregate.
+
+DuckDB's `any_value` ignores nulls and, absent an explicit ordering contract, does
+not establish which non-null row supplied the result. Therefore do not document it
+as “first non-null” unless the SQL explicitly defines that ordering. The safe claim
+is instead “all eligible non-null candidates are equivalent, so whichever eligible
+candidate is returned has the same meaning.” If there are multiple distinct
+candidates, order and provenance must be addressed.
+
+Initial process-model audit targets:
+
+| Field/feature | Initial risk hypothesis | Required treatment |
+|---|---|---|
+| `process_name` | Can change across fork/exec/Refresh and can select an attempted image | Ordering- and evidence-sensitive; paired with path. |
+| `process_path` | Can change and can disagree independently with name | Ordering- and evidence-sensitive; select the same row as name. |
+| `args` / command line | Can vary by observation and has explicit quality states | Preserve observation/source semantics; do not arbitrary-select for canonical image. |
+| `os_pid` | Usually invariant within `PidHash`, but PID reuse is outside the group contract | Prove invariant in each grouping model; retain QA conflict count. |
+| `hostname` / `agent_id` | Expected stable for a scoped identity, but conflicts indicate data quality | Prove invariance and expose conflicts; do not use arbitrary selection to hide them. |
+| parent identity fields | May differ under late linkage, missing history, or race | Measure conflicts and document whether representative or temporal parent is required. |
+| file hashes and user fields | May be invariant, absent, or observation-dependent | Test per model; do not generalize from process rows. |
+| downstream `os_pid` summaries | Often a display shortcut after grouping by a stronger key | Retain only after group-specific invariance tests pass. |
+
+This matrix is a starting hypothesis, not a pre-approved classification. The same
+SQL function can be safe for one column and wrong for another.
+
+#### Phase B — Measure the reported multi-name population
+
+1. Group raw observations by normalized host, OS PID, and `PidHash`; separately list
+   PID groups that contain more than one hash to identify reuse.
+2. Within each hash, count distinct names and paired `(name, path)` values by
+   activity/source: fork/start, `exec_attempt`, `exec_success`, Refresh, and Stop.
+3. For each multi-name lifetime, order observations by the best available evidence:
+   observation UTC, same-run monotonic time where comparable, source kind, and a
+   stable file/row tie-breaker. Mark ordering confidence instead of fabricating it.
+4. Measure whether the current silver `any_value` result selects an attempt, a
+   successful image, a Refresh value, or a name/path pair that never co-occurred.
+5. Produce aggregate-only results for counts/rates and sanitized fixture labels;
+   retain raw identifiers outside the wiki and do not repair historical data.
+6. For every affected `any_value` field, compare `count(distinct non-null value)`
+   and null/non-null patterns within the actual grouping key. Separate harmless
+   repeated values from conflicting candidates; do not count duplicate identical
+   rows as semantic disagreement.
+
+#### Phase B2 — Measure prevalence, recurrence, and concentration
+
+Do not answer “how common is the problem?” from raw row volume alone. A frequently
+run wrapper can create many observations from one recurring cause, while a rare
+one-off defect can affect many independent process lifetimes. Report the population
+at several levels:
+
+| Level | Example measure | What it answers |
+|---|---|---|
+| Observation | Multi-name rows / all process rows | How much telemetry is affected or noisy? |
+| Lifetime | Affected `PidHash` lifetimes / all lifetimes | How many process instances experience it? |
+| PID reuse group | Affected PID groups / PID groups | Is reusable PID ambiguity contributing? |
+| Host-day | Host-days with at least one affected lifetime / observed host-days | How broadly does it occur operationally? |
+| Host | Hosts with affected lifetimes / observed hosts | Is it isolated to one machine or environment? |
+| Cause cluster | Independent recurring signatures with affected lifetimes | How many distinguishable causes appear? |
+
+For every numerator and denominator, retain the source layer, time window, platform,
+and evidence-quality restrictions. Report both count and rate, plus the number of
+hosts and host-days contributing. A large observation count from one repeatedly
+invoked script must not be presented as broad host prevalence.
+
+Cluster recurring cases before estimating generality. Candidate aggregate-only
+signature components include the ordered source-kind pattern, successful-image
+transition shape, paired executable/path category, parent/launcher category,
+Refresh confirmation pattern, and coarse time cadence. Keep exact hostnames,
+accounts, addresses, command lines, and raw paths out of persistent artifacts.
+Use a stable signature version so a later algorithm change does not silently merge
+or split historical clusters.
+
+For concentration, report at least:
+
+1. largest-cluster share of affected lifetimes and observations;
+2. top-`K` cluster share and the smallest `K` covering 50%, 90%, and 95% of
+   affected lifetimes (with `K` reported, not only a percentage);
+3. per-host and per-host-day maximum share;
+4. leave-one-host-out and leave-one-day-out rates; and
+5. whether the finding persists after capping each cause cluster to one lifetime
+   per host-day.
+
+These measures distinguish a common generic producer/model problem from a narrow
+but highly recurring workload signature. Do not call a cluster a root cause until
+the source evidence and an independent workload or temporal pattern support that
+interpretation; otherwise label it a recurrence/signature cluster.
+
+#### Phase B3 — Feedback loop for algorithm tuning
+
+Use the data as a controlled feedback loop rather than allowing the current
+algorithm to train on or validate itself:
+
+1. **Baseline:** run the current detector/projection unchanged and persist only a
+   versioned aggregate report plus bounded, sanitized exemplars outside the wiki.
+2. **Review labels:** humans classify a stratified sample of clusters and cases as
+   valid repeated exec, PID reuse, failed-attempt contamination, Refresh/current-
+   state disagreement, producer evidence loss, downstream selection error, or
+   unknown. Stratify by host, day, platform, cluster size, and evidence quality so
+   the dominant wrapper cannot consume the entire sample.
+3. **Candidate rule:** change one ranking, eligibility, pairing, or clustering rule
+   at a time. Record the policy version and the expected semantic effect.
+4. **Shadow evaluation:** run candidate and baseline side by side on the same
+   immutable data. Compare affected lifetimes, false selections, name/path pairing,
+   Refresh freshness, cluster concentration, and unknown/ambiguous rates.
+5. **Holdout:** validate on a later time window and, when possible, a held-out host
+   or workload family. Do not accept a rule because it only fixes the recurring
+   known wrapper.
+6. **Promotion:** require human review of changed cases and retain the baseline,
+   candidate, labels, policy version, and limitations. Promote only a rule whose
+   improvement holds across independent strata without hiding unresolved cases.
+7. **Drift monitoring:** rerun aggregate prevalence/concentration checks after
+   each meaningful producer, DBT, or workload change. Alert on new clusters,
+   sudden host concentration, rising ambiguous rates, or evidence-source changes.
+
+The feedback artifact should answer: what changed, which labeled cases motivated
+it, which cases improved or regressed, whether the result generalized beyond the
+dominant recurring cause, and what remains unknown. Automatic production retuning,
+historical rewriting, and self-labeling from `any_value` output are out of scope.
+
+#### Phase C — Build the semantic fixture matrix
+
+Create synthetic and, only when separately authorized, fresh bounded captures for:
+
+- fork/start followed by no exec;
+- failed exec attempts followed by a different successful image;
+- wrapper/interpreter followed by `exec` into a final image under the same PID;
+- multiple successful image transitions under one `PidHash`;
+- Refresh before and after an image transition;
+- repeated Refresh with unchanged and changed current image;
+- PID reuse with distinct birth times and hashes;
+- process exit during enumeration or field lookup;
+- Stop after the final image; and
+- missing, unavailable, or conflicting name/path evidence.
+
+Each fixture must assert identity, paired name/path, source kind, observation time,
+Refresh freshness, and whether the row is eligible for current-state versus
+lifetime selection. Raw Start/Refresh counts must not stand in for process counts.
+
+#### Phase D — Prototype views before producer changes
+
+1. Add a read-only analysis query/view in the test fixture environment, not yet a
+   production model, that returns one row per `(PidHash, observation)` with paired
+   image fields and an evidence classification.
+2. Add a current-state candidate view that selects the latest valid Refresh as of a
+   requested observation time, with deterministic fallback to ordered successful
+   exec and then qualified start evidence.
+3. Add a lifetime candidate view that reports separate initial, latest-successful,
+   latest-Refresh, and selected-policy fields rather than hiding disagreement.
+4. Add a column-contract QA relation for each audited `any_value`: group key,
+   non-null distinct count, null-only flag, conflict flag, chosen value, source
+   evidence, and whether the field was invariant-safe, conflict-visible, or
+   ordering-sensitive.
+5. Add process-specific QA columns/counts for `num_process_name`, distinct paired
+   images, selected evidence kind, ordering confidence, and name/path disagreement.
+   Preserve current model names until compatibility and query costs are reviewed.
+6. Compare the candidate views against current `process.sql` output and classify
+   every difference as expected policy change, arbitrary-selection correction,
+   missing evidence, or fixture/model defect.
+
+#### Phase E — Human policy review and bounded implementation
+
+Present the measured results and choose, explicitly:
+
+1. whether `process_name` in the existing lifetime model means initial image,
+   latest successful image, latest observed image, or remains a compatibility field;
+2. whether Refresh is authoritative only for a new current-state relation or also
+   for the lifetime summary;
+3. whether ordered image history is a view, separate relation, nested attribute,
+   or raw-only evidence; and
+4. how Linux/Windows evidence differences and old Parquet missing columns are
+   represented.
+
+Only after approval should the smallest implementation be selected. Prefer a
+deterministic paired-row DBT change plus regression fixtures if raw fields suffice;
+retain `any_value` where the column-contract evidence proves equivalence; replace it
+only where conflict or ordering semantics require it. Add producer fields only when
+ordering or evidence provenance is demonstrably insufficient. Historical repair,
+mixed-version migration, and a broad schema rewrite require separate authorization.
+
+#### Phase F — Acceptance and closeout
+
+- Unit/synthetic tests cover all fixture cases and preserve existing process counts.
+- DBT tests prove failed attempts cannot be selected as successful canonical images.
+- Name and path always come from one observation row.
+- Every retained `any_value` has an invariance/eligibility contract and regression
+  evidence; every removed use has a documented semantic reason and replacement.
+- Duplicate identical values are not misreported as conflicts, while distinct
+  non-null candidates and null-only groups remain visible.
+- Current-state queries select a matching, fresh Refresh and expose its observation
+  time; stale or mismatched Refresh rows are not silently promoted.
+- PID reuse remains distinct from repeated exec under one `PidHash`.
+- Linux and Windows behavior is tested within each platform's evidence contract.
+- A bounded fresh capture validates the approved semantics independently of the
+  model's own output; native Windows acceptance remains a separate gate.
+- Verification records row counts, selected evidence, limitations, revisions and
+  compatibility decisions; durable semantics are then promoted to canonical pages.
+
 ## TC-03 — Receive the Next Small Sensor Capture
 
 The sensor session supplies a bounded handoff before dataset validation begins:
@@ -355,6 +659,26 @@ Prefer a read-only local snapshot for the first validation. Do not download data
 open S3, run a collector, invoke DBT on a private capture, or mutate source files
 without the concrete scope being authorized. Real identifiers remain outside the
 persistent wiki; store sanitized summaries, counts, and generic capture labels.
+
+### Prepared Linux capture cycle — awaiting collector launch
+
+The named workload is now prepared for a bounded Linux executable-attribution cycle.
+Its default one-round behavior remains compatible with existing smoke checks. The
+new optional cases preserve independent stimulus evidence for repeated successful
+execs in one PID (`wt_reexec`), a failed exec attempt followed by a successful exec
+(`wt_execfail`), changing argument tokens, and a long-lived Refresh candidate
+(`wt_refresh`). `--rounds`/`--interval` repeat the complete named set and the portable
+manifest records same-PID execution stages rather than treating names as identity.
+<!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py §exec_worker; §main; ../wintap/devtools/test_telemetry_smoke_workload.py -->
+
+The recommended first cycle is approximately ten minutes: nine rounds at 60-second
+spacing, `--hold 0.25`, and one `--refresh-hold 600` candidate. Lintap must be
+launched first with process, exec, clone, exit, and rundown sensors enabled, normal
+Parquet/ETL output enabled, and a one-minute Refresh interval (`ProcessRefreshEnabled`,
+`ProcessRefreshIntervalMinutes=1`, `ProcessRefreshOffsetMinutes=0`). The operator
+must confirm the actual data root and retain the workload manifest, collector build/
+configuration, UTC interval, runtime capability receipt, raw process output, and
+smoke-parquet oracle. No capture has started yet.
 
 ## TC-04 — Test Against the Fresh Dataset
 
@@ -485,13 +809,15 @@ with explicit environments and budgets, not prerequisites for every draft iterat
   before/after, contracts remain 85/85, and project discovery remains 98/98.
 - [x] `sfx-03`: bounded Linux procfs command-line provenance/status and child-only
   clone attribution implemented; 6/6 focused, 71/71 combined and 28/28 live
-  aggregate assertions pass. Structured argv and deterministic DBT selection remain.
+  aggregate assertions pass. Structured argv remains a separate deferred producer
+  follow-up; deterministic DBT image selection is complete.
 - [x] `sfx-04`: exec syscall attempts and successful scheduler image transitions
   receive distinct additive semantics; 7/7 focused, 78/78 combined and 26/26 live
   aggregate assertions pass. Process-lifetime executable selection remains open.
 - [x] `sfx-05`: Linux executable path evidence source retained without changing
   selected path/name; 5/5 focused, 83/83 combined and 37/37 live aggregate
-  assertions pass. BPF truncation and downstream lifetime policy remain open.
+  assertions pass. BPF truncation and downstream lifetime policy remain separate
+  future follow-ups, not blockers for the bounded repeated-exec repair.
 - [x] `sfx-06`: Linux Stop rows distinguish CO-RE kernel wait status from fallback
   placeholder zero without decoding or changing `ExitCode`; 5/5 focused, 88/88
   combined and 43/43 final live assertions pass.
@@ -512,6 +838,36 @@ with explicit environments and budgets, not prerequisites for every draft iterat
   both gateway identity slots empty. Source-linked checks pass 33/33; focused
   PyUtil passthrough contracts pass 78/78 and all 11 selected real-DBT nodes pass.
   Release is a clean new-data cutover with no legacy or mixed-data requirement.
+- [x] Included process-name multiplicity: the finalized Linux capture measures same-
+   PID cases by `PidHash` and source layer, and the human-reviewed representative-
+  image/current-state semantics are recorded in verification. The deterministic DBT
+  implementation is complete; an explicit as-of relation is deferred.
+- [x] ANY_VALUE audit baseline: inventory 73 source-SQL text matches at pinned PyUtil
+   revision `4085747` (71 calls and 2 comments), identify preliminary field
+   contracts, and define equivalence/conflict/order-sensitive regression fixtures in
+   [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/any-value-audit]].
+- [x] ANY_VALUE synthetic contract slice: add six in-memory DuckDB cases for
+   invariant fields, duplicate/null handling, visible conflicts, paired name/path,
+   failed-attempt exclusion, and Refresh as-of selection. Focused combined suite
+   passes 31/31 with one pre-existing skip; Black and compilation pass.
+- [x] Linux capture preparation: extend the named workload with repeated rounds,
+   same-PID successful exec/argument stages, failed-attempt coverage, and a long-lived
+   Refresh candidate; Python 3.12 regression passes 2/2.
+- [x] Linux real capture: the operator completed the one-minute-Refresh,
+   approximately ten-minute nine-round workload; all 19 targeted PIDs matched,
+   manifest/raw process output and clean-shutdown evidence were retained externally,
+   and the isolated DBT analysis completed 139/139 nodes. See verification for
+   sanitized counts and the unresolved deterministic projection finding.
+- [x] Deterministic process projection: replace changing image-field `any_value`
+   usage with paired-row selection for latest valid Refresh/current state and latest
+   successful-exec fallback; preserve failed-attempt/history evidence. PyUtil focused
+   contracts pass 32/32 with one existing skip and the isolated DBT build passes
+   139/139; native Windows qualification remains open.
+- [x] Linux tranche disposition: bounded repeated-exec capture, producer evidence,
+   paired-row DBT selection, legacy-schema compatibility and focused validation are
+   complete. Structured argv/eBPF argv, syscall-result correlation, BPF truncation,
+   historical repair, and the explicit as-of relation are recorded as separate
+   future follow-ups; Windows validation remains deferred.
 - [ ] TC-06: SmokeTests organization is complete with scoped discovery proof;
   remaining validation/PyUtil/coordination organization slices are still open.
 - [ ] Final: agreed sensor checks and organization boundaries accepted; broader
