@@ -71,7 +71,7 @@ python -B -m unittest discover -s . -p 'test_*.py' -v
 ```
 
 - Focused source/UI: **27/27 passed**.
-- Full SmokeTests: **100/100 passed** in 3.470 seconds: 86 contracts, one loopback
+- Full SmokeTests: **100/100 passed** in 3.238 seconds: 86 contracts, one loopback
   transport case, and 13 UI cases.
 - `git diff --check` and direct Python compilation pass.
 
@@ -82,6 +82,15 @@ three runs with zero evidence warnings. A default-page Streamlit AppTest against
 source completed with zero exceptions, zero UI errors, and one rendered metric. The
 test did not modify S3 data or the private connection config. Explicit telemetry
 validation and operator browser acceptance remain pending.
+
+A subsequent operator-selected validation exposed the former 10,000-file listing
+cap before telemetry reads began: each of three cross-domain runs selected the same
+10,284-object full-day source set. The private config was atomically raised to 20,000
+and narrowed to an evidence-adjacent 11-hour upload window, reducing the selected set
+to an observed aggregate of about 5,900 files. The checked-in starting default and
+example are now 20,000; hour narrowing remains preferred over repeatedly increasing
+the cap. No role, host, run, bucket, prefix, or object identifier is retained here.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §load_config/§discover_telemetry_files; streamlit/projects/SmokeTests/garage.example.json -->
 
 ## SmokeTests Staged Remote Diagnostics — 2026-11-24
 

@@ -66,7 +66,7 @@ Set these values to the destination used by your collector uploader:
   "endpoint": "https://garage.example.invalid",
   "region": "us-east-1",
   "datasets": ["s3://example-bucket/example-prefix"],
-  "max_files": 10000
+  "max_files": 20000
 }
 ```
 
@@ -75,7 +75,7 @@ Set these values to the destination used by your collector uploader:
 | `endpoint` | S3 API origin, including `http://` or `https://` and a port if needed. The bucket/prefix belongs in `datasets`. |
 | `region` | Region used by the existing S3/Garage deployment. |
 | `datasets` | S3 root containing the uploaded `raw_sensor/` tree; one or more roots are supported. |
-| `max_files` | Listing cap; `10000` is the starting default. |
+| `max_files` | Fail-closed listing cap; `20000` is the starting default. Narrow upload hours before raising it further. |
 | `start_hour` / `end_hour` | Optional inclusive UTC upload-partition bounds in `YYYYMMDDHH`; legacy day bounds expand to full days. |
 
 For example, if an uploaded object is

@@ -102,7 +102,7 @@ From Wintap-Analytics, copy `garage.example.json` to a private config outside Gi
   "endpoint": "https://garage.example.invalid",
   "region": "us-east-1",
   "datasets": ["s3://example-bucket/example-prefix"],
-  "max_files": 10000
+  "max_files": 20000
 }
 ```
 

@@ -87,7 +87,7 @@ def load_config(path):
     region = value.get("region", "us-east-1")
     if not isinstance(region, str) or not region:
         raise ValueError("region must be a nonempty string")
-    maximum = value.get("max_files", 10000)
+    maximum = value.get("max_files", 20000)
     if isinstance(maximum, bool) or not isinstance(maximum, int) or not 1 <= maximum <= 100000:
         raise ValueError("max_files must be 1–100000")
     extension_directory = value.get("extension_directory")
