@@ -43,6 +43,13 @@ tags: [feature-work, dev-handoff, linux, wintap, todo, sensor-fixes, iterative-d
 
 # Dev Handoff: Wintap TODO Review and Linux Implementation Continuation
 
+## Approved Windows SDK policy instruction — 2026-11-24
+
+Wintap `developer_docs/instructions/sdk-01-stable-dotnet-10-selection.md` is approved;
+see [[wiki/decision/stable-dotnet-10-development-sdk]]. Implementation and Windows
+verification are pending, so exact-SDK gates below remain pre-change guidance;
+Linux packaging compatibility requires separate review.
+
 ## S3 Upload-Time Partition Correction — Handoff 2026-11-24
 
 The approved shared .NET S3 uploader correction is implemented on this feature

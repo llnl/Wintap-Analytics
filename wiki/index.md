@@ -200,6 +200,8 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/tension/private-gateway-connection-identity]] | high | Held after refinement: both gateway identity slots are empty, loopback uses hostname context, non-loopback uses `public`, and a future symmetric private-network namespace remains deferred. |
 ## Decision
 
+[[wiki/decision/stable-dotnet-10-development-sdk]] — approved; implementation pending, Linux packaging review separate.
+
 | Page | Confidence | Summary |
 |------|------------|---------|
 | [[wiki/decision/raw-sensor-compaction-fixed-hours-and-manual-cleanup]] | high | Accepted fixed hours/skip/manual cleanup; subsequently approved optional validated UTC-prefix deletion and unioned raw/compacted DBT input. |

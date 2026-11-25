@@ -5,6 +5,12 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-24] approval | Stable .NET 10 development SDK selection
+
+Architect approved Wintap `developer_docs/instructions/sdk-01-stable-dotnet-10-selection.md`;
+see [[wiki/decision/stable-dotnet-10-development-sdk]]. Implementation and Windows
+verification are pending; Linux packaging compatibility requires separate review.
+
 ## [2026-11-24] code/verification | Hour-pruned lazy SmokeTests S3 discovery
 
 Changed remote SmokeTests startup to list only `raw_smoke_test` evidence under exact
