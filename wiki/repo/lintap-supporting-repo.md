@@ -56,6 +56,17 @@ The older sysdig workflow captures process, file, network, and optional SELinux 
 
 ## pidstat Collector (promoted 2026-08-17)
 
+**2026-11-24 packaging update:** Debian/RPM builders now package the static Go
+collector at `/usr/lib/lintap/pidstat-collector`, with direct service `--collect`
+startup and no collector Python/uv/DuckDB/bootstrap runtime requirement. Go 1.27.3
+is build-host-only. Python source remains a compatibility test reference; the older
+deployment description below is historical. Greenfield Debian Ubuntu arm64 package
+build/install/reinstall, default rotations, schema and crash recovery tested;
+consumer/paired-live review remains open. Ubuntu amd64
+and native RPM qualification deferred to other platforms. See
+[[wiki/work/fix-pidstat-collector/verification]].
+<!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/lintap-rpm/build-rpm.sh; ../Lintap/packaging/lintap-deb/lintap-pidstat.service -->
+
 `../Lintap/pidstat-collector.py` is a single-process Python host-performance collector: it samples `/proc` directly (stat/io/status/schedstat — full pidstat-equivalent schema plus `hostname` and container-attribution columns from cgroup/ns), computes rates from counter deltas, and rotates typed parquet into the sensor's cache at `raw_sensor/pidstat/dayPK=/hourPK=/` every `PIDSTAT_ROTATE_INTERVAL_SEC` (default 300, synced to the sensor upload cycle), where the sensor's uploader ships it ([[wiki/component/sensor-upload-cache-pipeline]]). Configuration is `PIDSTAT_*` env vars; sampling default 5 s; crash salvage via a spool outside the swept tree; accumulation guard caps unshipped bytes/age. It runs as a systemd service (`lintap-pidstat.service`) from a uv-managed Python 3.12 venv (`pidstat-collector-bootstrap.sh` / `-launch.sh`) because RHEL 8's system python3.6 predates duckdb wheels. `pidstat-collect.sh` remains only as a minimal example; the interim bash rotating collector was retired after its per-line command substitutions caused a ~700 forks/sec storm ([[wiki/diagnostic/rhel8-clone-sensor-and-fork-without-exec]]). Wintappy's DBT bronze reads the parquet layout directly.
 <!-- GROUND_TRUTH: ../Lintap/pidstat-collector.py; ../Lintap/packaging/lintap-rpm/lintap-pidstat.service; ../Lintap/README.md §Managed pidstat collector -->
 
