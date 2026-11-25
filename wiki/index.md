@@ -56,13 +56,13 @@ or historical-loss closure. Detailed
 audit payloads are uncommitted;archive provenance is retained,not loaded by default.
 
 RHEL 9 package preparation: [[wiki/repo/lintap-supporting-repo]] — canonical Lintap
-guide now selects SDK 10.0.402 and provides operator-assisted prerequisite/build
+guide selects stable .NET 10 and provides operator-assisted prerequisite/build
 steps; bounded operator-assisted RHEL 9 package/capture/shutdown and fresh DBT smoke
 pass. A newer package deployment and initial canary rounds are reported; independent
 payload proof and full live/multi-day qualification remain pending.
 Upgrade closure: [[wiki/work/wintap-telemetry-identity-and-data-quality/runtime_alignment_plan]]
 — all 13 C# targets and active package/provision/run defaults align with .NET 10;
-exact SDK 10.0.402 is enforced. Native self-contained RPM smoke passes by operator
+stable .NET 10 selection is enforced and recorded. Native self-contained RPM smoke passes by operator
 report; other package modes/platforms and broader acceptance remain pending.
 
 Canonical context:
@@ -298,7 +298,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/workflow/future-experiment-analysis-workflows]] | high | Tracks first-class analytics topics including ACME4 Explore, DuckDB view construction, process trees/paths, process-centric SQL, and network joins. |
 | [[wiki/workflow/process-ancestry-completeness-qa]] | medium | First-round DBT terminal/context QA implemented; broader root fraction, concentration/K95 and independent validity-audit guidance remains separate. |
 | [[wiki/workflow/lintap-dev-field-workflow]] | high | The Lintap dev/field split: field-host clones are read-only by policy (reviews transcribed dev-side), diagnostics bundles must be self-sufficient, deploys pull and rebuild tracers on-host, pushes require the human's credentials, and agent memory must mirror into the wiki. |
-| [[wiki/workflow/rhel8-rpm-build-prerequisites]] | high | Preflight and software prerequisites for a native RHEL 8 x86_64 Lintap RPM build, including exact .NET SDK 10.0.402 and the current BTF/CO-RE limitation. |
+| [[wiki/workflow/rhel8-rpm-build-prerequisites]] | high | Preflight and software prerequisites for a native RHEL 8 x86_64 Lintap RPM build, including stable .NET 10 SDK selection and the current BTF/CO-RE limitation. |
 ## Repo
 
 | Page | Confidence | Summary |

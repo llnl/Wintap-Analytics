@@ -93,10 +93,10 @@ identify the host target triple; `libbpf-devel` supplies the `<bpf/...>`
 headers included by the eBPF sources. The RPM builder compiles the tracer
 objects; it does not need to install or start the Lintap service.
 
-## 3. Select the exact .NET SDK
+## 3. Select a stable .NET 10 SDK
 
-The source-of-truth version is in `wintap/global.json`. Check whether the
-approved package repositories already provide **10.0.402** before installing a
+The source policy is in `wintap/global.json`: minimum 10.0.100, `latestMinor`,
+no prereleases. Check whether approved repositories provide stable .NET 10 before installing a
 separate SDK:
 
 ```bash
@@ -104,38 +104,35 @@ dnf --showduplicates list dotnet-sdk-10.0
 command -v dotnet && dotnet --info || true
 ```
 
-Do not install an arbitrary `dotnet-sdk-10.0` package and assume it is the
-required patch. If an approved package installation selects exactly 10.0.402,
-use it. Otherwise, with approval for downloading Microsoft's official
-installer, install the pinned SDK into a user-local, isolated directory (this
+An approved `dotnet-sdk-10.0` package is sufficient if the project resolves a
+stable version at or above its baseline. Otherwise, with approval for downloading
+Microsoft's official installer, install stable .NET 10 into an isolated directory (this
 does not replace a system SDK):
 
 ```bash
-SDK_VERSION=10.0.402
-export DOTNET_ROOT="$HOME/.dotnet/wintap-sdk-$SDK_VERSION"
+export DOTNET_ROOT="$HOME/.dotnet/wintap-sdk-10"
 mkdir -p "$DOTNET_ROOT"
 curl --fail --location https://dot.net/v1/dotnet-install.sh \
   -o "$DOTNET_ROOT/dotnet-install.sh"
 # Inspect/approve the downloaded installer before running it; do not curl | bash.
 bash "$DOTNET_ROOT/dotnet-install.sh" \
-  --version "$SDK_VERSION" --install-dir "$DOTNET_ROOT" --no-path
+  --channel 10.0 --quality GA --install-dir "$DOTNET_ROOT" --no-path
 export PATH="$DOTNET_ROOT:$PATH"
 ```
 
-The RPM builder resolves `global.json` and rejects an SDK other than 10.0.402
-before cleaning or compiling. Verify selection both at the shell and from the
-Wintap checkout:
+The RPM builder validates policy and the resolved stable .NET 10 SDK before
+cleaning or compiling. Run the same project-directory preflight:
 
 ```bash
-test "$(dotnet --version)" = 10.0.402 || { echo 'Wrong SDK selected'; exit 1; }
-(cd wintap && test "$(dotnet --version)" = 10.0.402) || { echo 'Wintap selects a different SDK'; exit 1; }
+source Lintap/packaging/dotnet-common.sh
+lintap_require_dotnet_sdk wintap/wintap
 dotnet --info
 dotnet --list-runtimes
 ```
 
 Keep this SDK on `PATH` for the build. Do not confuse the SDK version with the
 .NET runtime version bundled into the default self-contained RPM.
-<!-- GROUND_TRUTH: ../Lintap/packaging/README.md §Install/select the pinned SDK; ../Lintap/packaging/dotnet-common.sh; ../wintap/global.json -->
+<!-- GROUND_TRUTH: ../Lintap/packaging/README.md §Install/select a stable .NET 10 SDK; ../Lintap/packaging/dotnet-common.sh; ../wintap/global.json -->
 
 ## 4. Confirm the source checkouts and disk location
 
@@ -167,8 +164,7 @@ command, RPM inspection, and any separately approved install/smoke test.
 
 ## Common incorrect assumptions
 
-- SDK 8.0 is not compatible with the current source baseline; use exact SDK
-  10.0.402.
+- SDK 8.0 is not compatible; use a stable .NET 10 SDK selected by the project.
 - An RPM named `.el8` does not prove the build ran on RHEL 8 or that BTF was
   available.
 - `kernel-devel` does not supply running-kernel BTF.

@@ -30,6 +30,44 @@ tags: [feature-work, testing, verification, sensor-fixes]
 
 # Verification: Sensor Fixes and Test Cleanup
 
+## Packaging SDK follow-up — 2026-11-25
+
+Subsequent build-host prerequisite repair adds shared checksum-verified native
+Go 1.27.3 installation to both Multipass launchers before post-create checks.
+Existing VMs use the explicit installer without recreation; package/runtime
+installation does not invoke it. Post-create checks validate Go and use the shared
+stable .NET SDK preflight instead of equating the selected SDK with the minimum.
+
+```sh
+uv run pytest -q tests/test_build_go_setup.py tests/test_dotnet_packaging.py tests/test_pidstat_packaging.py tests/test_multipass_provisioning.py
+bash -n packaging/install-build-go.sh multipass-lintap.sh multipass-check-dev.sh packaging/dotnet-common.sh
+```
+
+**61 passed**; Bash syntax passes. Provisioning failure stops before build/SSH
+changes, including Go installation failure. Fake-download installer tests cover both native
+architectures, checksum rejection, valid reinstall and preservation of invalid
+existing installations. No actual download/guest installation or PowerShell runtime
+execution was performed; live provisioning/package qualification remains separate.
+
+Human authorized replacing Lintap's stale exact-10.0.402 guard with stable .NET 10
+project resolution. Both builders retain pre-cleanup rejection and .NET 10 runtime
+validation. Tests cover stable minimum/newer patches, wrong major, preview and
+below-baseline SDKs, invalid baseline policies, caller-directory resolution and
+both builders' failure-before-cleanup behavior. Provisioning's installed SDK is
+validated against the minimum rather than required to equal it.
+
+From Lintap:
+
+```sh
+uv run pytest -q tests/test_dotnet_packaging.py tests/test_pidstat_packaging.py tests/test_multipass_provisioning.py
+bash -n packaging/dotnet-common.sh packaging/lintap-deb/build-deb.sh packaging/lintap-rpm/build-rpm.sh
+```
+
+**54 passed**; shell syntax passes. SDK tests use fake tools, not native publish
+or installed-service evidence. No guest package build/install or SDK installation
+performed by this follow-up; native amd64/RPM qualification remains open.
+<!-- GROUND_TRUTH: ../Lintap/packaging/dotnet-common.sh; ../Lintap/tests/test_dotnet_packaging.py -->
+
 ## Current acceptance boundary
 
 macOS/Linux feature testing is complete; the initial static-only development

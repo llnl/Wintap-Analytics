@@ -10139,3 +10139,22 @@ test rerun or source change performed. Human subsequently authorized committing
 and pushing the documentation cleanup to the feature branch. Whitespace,
 frontmatter, navigation and added-content identifier checks pass; the link scanner's
 POSIX character-class match was a false positive, not a wiki link.
+
+## [2026-11-25] fix/verification | Lintap stable .NET 10 packaging SDK
+
+Human authorized aligning the shared Debian/RPM SDK guard with Wintap's minimum
+10.0.100/latestMinor/no-prerelease policy. Record actual project-selected SDK;
+retain pre-cleanup rejection and staged runtime checks. Updated SDK regressions,
+package guidance, canonical wiki context and feature checklist/verification.
+Focused package/provisioning tests: 54 passed; Bash syntax passes. No native guest
+build, install, service operation, commit or push; unrelated untracked script preserved.
+
+## [2026-11-25] fix/verification | Multipass Go build prerequisite
+
+Added explicit architecture-aware Go 1.27.3 build-host installer with official
+checksum validation and isolated native storage. Both Multipass launchers invoke
+it before checks; documented existing-VM setup without recreation and aligned
+post-create SDK resolution. Focused installer/packaging/provisioning tests: 61
+passed; Bash syntax passes. Tests use fake downloads; live installation and
+PowerShell execution not qualified. No service operation. Human subsequently
+authorized commit/push of both prerequisite fixes and their wiki records.

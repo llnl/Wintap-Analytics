@@ -144,6 +144,10 @@ authorizes deletion. No wholesale project/default-suite rewrite is implied.
 - [x] Repeated-exec/failed-attempt capture and deterministic paired-row DBT repair.
 - [x] Legacy raw-schema compatibility and scoped DBT build qualification.
 - [x] Stable .NET 10 SDK selection; macOS/Linux feature testing complete.
+- [x] Align Lintap Debian/RPM SDK preflight with stable .NET 10 roll-forward;
+  record resolved version and retain pre-cleanup rejection/runtime checks.
+- [x] Add pinned Go build prerequisites to both Multipass launchers, existing-VM
+  setup guidance and fake-download installer regressions; live installation separate.
 - [x] S3 UTC upload-partition/attempt binding implementation and focused tests.
 - [ ] Native Windows build/discovery/filtering/runtime acceptance.
 - [ ] Authorized uploader endpoint/ambiguous PUT/HEAD fault qualification.

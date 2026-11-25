@@ -43,9 +43,10 @@ This wiki treats Lintap as supporting infrastructure, not the main Wintap sensor
 
 The TeleTap-oriented workflow uses Linux eBPF tools, Python, DuckDB, and both Wintap
 and Lintap repos; runtime sensor attachment requires appropriate privileges.
-Current package qualification selects .NET 10 SDK **10.0.402** from Wintap's
-`global.json`. TeleTap and both Multipass provisioning implementations now select
-this baseline and .NET 10 paths. Build commands build/run Wintap's `Lintap.csproj`.
+Package preflight follows Wintap's stable .NET 10 `global.json` policy (minimum
+10.0.100, `latestMinor`, no prereleases) and records the actual SDK. Multipass may
+install 10.0.402, which satisfies that policy but is not mandatory for packaging.
+Build commands build/run Wintap's `Lintap.csproj`.
 <!-- GROUND_TRUTH: ../Lintap/packaging/README.md §Build prerequisites; ../wintap/global.json; ../Lintap/teletap/README.md §Build Commands -->
 
 TeleTap output is expected to include canonical raw sensor Parquet under `raw_sensor/<event>/dayPK=YYYYMMDD/hourPK=HH/` and raw process connection increments partitioned by protocol. The old merged-to-raw conversion step is explicitly removed, and the canonical full ETL is stated to live in `Wintap-PyUtil/wintap_dbt`, not in the TeleTap directory. `Wintap-PyUtil` is the `../Wintappy` repo; see [[wiki/repo/wintappy-pipeline-repo]] for its bronze/silver/gold DBT pipeline.
@@ -141,13 +142,13 @@ historical evidence, not validation of the current script.
 <!-- GROUND_TRUTH: ../Lintap/packaging/lintap-rpm/build-rpm.sh §eBPF build; §expected_bpf_objects -->
 
 The canonical guide now includes **operator-assisted RHEL 9 x86_64 qualification**:
-read-only inventory, approved repository/prerequisite setup, exact SDK selection,
+read-only inventory, approved repository/prerequisite setup, stable .NET 10 SDK selection,
 fresh self-contained `.el9` build, package/native dependency inspection, then
 separately approved installation/capture/downstream checks. RHEL 9 validation is
 pending; a release suffix or Ubuntu pass is not acceptance. Keep security controls,
 existing collectors and historical identity/data intact unless the user explicitly
 designates a disposable test system. Both framework-dependent builders now declare
-ASP.NET Core 10.0; both enforce SDK 10.0.402 from the selected project directory
+ASP.NET Core 10.0; both validate stable .NET 10 selection from the project directory
 before cleanup/compilation and validate the main staged .NET 10 runtimeconfig.
 These correct upgrade oversights; source/regression alignment does not certify a
 fresh installed package:
@@ -158,9 +159,10 @@ records diagnostics/sample and provisioning/run corrections plus pending live ga
 
 The managed libbpf resolver tries `.so.1`, `.so.0`, then `.so`; qualify required APIs
 and actual hook behavior, not package-name or library-load success alone. Do not
-fake compatibility with a SONAME symlink. SDK `latestPatch` is a development
-roll-forward policy; qualification's explicit `10.0.402` check prevents silent drift.
-<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/LibBpf.cs §ResolveLibbpf; ../wintap/global.json; ../Lintap/packaging/README.md §Install/select the pinned SDK -->
+fake compatibility with a SONAME symlink. SDK minimum 10.0.100, `latestMinor` and
+no prereleases govern greenfield packaging; builders report the actual selected SDK.
+SDK preflight is not native package qualification.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/LibBpf.cs §ResolveLibbpf; ../wintap/global.json; ../Lintap/packaging/dotnet-common.sh -->
 
 The Debian environment follows the field sensor settings while deliberately
 retaining Snappy Parquet compression because current Ubuntu glibc supports the
@@ -185,12 +187,22 @@ deployed.
 
 ## Multipass development dependencies
 
+Both launchers install build-host Go 1.27.3 through
+`packaging/install-build-go.sh`, selecting native Linux amd64/arm64 and validating
+the archive against official release metadata before isolated installation. The
+installer runs even when optional post-create checks are disabled; failure stops
+provisioning. Existing VMs can run it explicitly without recreation. It does not
+replace system Go or install a package-runtime dependency; login-shell profile
+sets `GO`, `GOTOOLCHAIN=local` and PATH. Actual live installation remains to be
+qualified; fake-download and packaging/provisioning regressions pass.
+<!-- GROUND_TRUTH: ../Lintap/packaging/install-build-go.sh; ../Lintap/multipass-lintap.sh; ../Lintap/multipass-lintap.ps1; ../Lintap/tests/test_build_go_setup.py -->
+
 Lintap owns the Bash/PowerShell Multipass provisioning entry points; the sensor
 build uses the mounted Wintap checkout and Analytics owns the validation harness.
 Both launchers install SDK **10.0.402** in guest-native `/opt/wintap-sdk`, including
 .NET/ASP.NET Core 10, and DuckDB CLI/Python **1.5.6**. Ubuntu supplies Clang/LLVM,
 libbpf/libelf development packages and running-kernel tools. The shared guest
-check requires exact SDK selection, both shared runtimes, actual BPF compilation,
+check validates project-selected stable .NET 10, both shared runtimes, actual BPF compilation,
 kernel BTF parsing and matching DuckDB versions. Cloud-init failures are fatal by
 default. In the Bash launcher, the guest-native environment is still created by
 `uv`, while pinned dependencies are installed through standard `pip` with bounded

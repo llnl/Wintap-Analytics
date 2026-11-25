@@ -4,6 +4,8 @@ type: concept
 confidence: medium
 grounded_by:
   - ../wintap/global.json
+  - ../Lintap/packaging/dotnet-common.sh
+  - ../Lintap/tests/test_dotnet_packaging.py
   - ../wintap/devtools/test_runtime_alignment.py
   - ../wintap/.github/workflows/release.yml
   - ../wintap/developer_docs/instructions/sdk-01-stable-dotnet-10-selection.md
@@ -24,8 +26,10 @@ Architect approved `../wintap/developer_docs/instructions/sdk-01-stable-dotnet-1
 on 2026-11-24; policy and tradeoffs are in [[wiki/decision/stable-dotnet-10-development-sdk]].
 Implementation is complete in Wintap: minimum 10.0.100, major-10 `latestMinor`
 roll-forward, and no prereleases. Current guidance records the selected stable SDK.
-macOS/Linux feature testing is complete; native Windows verification and Lintap's
-exact-SDK packaging qualification remain separate. Historical 10.0.402 results
+macOS/Linux feature testing is complete. Lintap packaging now accepts the same stable
+.NET 10 policy and records the selected version; provisioning may still install
+10.0.402 as a valid SDK rather than equating it with the minimum. Native Windows
+and native package qualification remain separate. Historical 10.0.402 results
 are dated evidence, not current Wintap development prerequisites.
 
 ## Related
