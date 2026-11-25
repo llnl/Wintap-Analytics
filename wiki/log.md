@@ -10167,3 +10167,11 @@ CA/proxy guidance and build-host/runtime separation. Corrected the workflow's
 remaining stale exact-.NET-SDK introduction. No remote host operation or native
 RHEL acceptance inferred. Human subsequently authorized commit/push of these
 documentation updates; whitespace checks pass.
+
+## [2026-11-25] fix/verification | RHEL 8 Python manifest compatibility
+
+Operator RPM staging failed on Python 3.6's rejection of subprocess `text=True`.
+Changed both pidstat build-manifest calls to `universal_newlines=True`; clean/dirty
+manifest regressions preserve revision and hashes. Combined focused suite: 63
+passed. Actual Python 3.6/native RHEL rebuild remains unverified. Human authorized
+commit/push of the fix and verification records; whitespace checks pass.

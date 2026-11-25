@@ -32,6 +32,15 @@ tags: [feature-work, testing, verification, sensor-fixes]
 
 ## Packaging SDK follow-up — 2026-11-25
 
+RHEL 8 operator build reached staging/module verification but failed generating
+the Go manifest: system Python 3.6 rejects `subprocess.check_output(text=True)`.
+Replaced both manifest calls with equivalent `universal_newlines=True`; retained
+revision/dirty-state and binary/module hash fields. Two regressions execute the
+shipping manifest with a Python-3.6-compatible subprocess shim for clean/dirty
+source. Combined installer/SDK/pidstat/provisioning command below now passes
+**63 tests**. This is compatibility regression evidence, not an actual Python 3.6
+or native RHEL rebuild pass; operator retry remains required.
+
 Subsequent build-host prerequisite repair adds shared checksum-verified native
 Go 1.27.3 installation to both Multipass launchers before post-create checks.
 Existing VMs use the explicit installer without recreation; package/runtime
