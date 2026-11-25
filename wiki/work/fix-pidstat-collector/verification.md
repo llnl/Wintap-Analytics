@@ -26,7 +26,7 @@ grounded_by:
   - ../Wintap-Analytics/validation/pidstat-loop/check_spool.py
   - ../Wintap-Analytics/validation/pidstat-loop/check_native_spool.py
 policy: agent-editable
-last_validated: 2026-10-30
+last_validated: 2026-11-24
 repo_scope: cross-repo
 implementation_area: packaging
 event_domain: process
@@ -37,6 +37,189 @@ tags: [feature-work, pidstat, verification, go]
 ---
 
 # Verification: Fix pidstat Collector
+
+## 2026-11-24 — Commit and cross-host handoff
+
+Human authorized committing and pushing current feature work for testing on other
+host types. Lintap implementation committed as `4c280b0` on
+`feature/implement-sensor-fixes-and-cleanup-test-code`. Updated dev handoff with
+native Ubuntu amd64/RPM build commands, artifact identity, completed arm64 cells,
+remaining acceptance/consumer gaps and known setup failures. Reviewed wiki diff
+for unauthorized host/account/IP disclosures; private output remains outside wiki.
+Unrelated untracked work excluded. Push authorization is for feature branches,
+not field rollout or release acceptance.
+
+## 2026-11-24 — PKG-04/05 installed arm64 lifecycle verification
+
+Scheduled follow-up inspected the installed Go process: active, **zero restarts**
+during default run, installed executable and empty main-thread child list at
+inspection. `sudo systemctl stop lintap-pidstat` completes with Result=success and
+exit status 0. Only `collector.lock` remains in spool. Existing data preserved.
+No collector source changes in this unit; no repair iterations required.
+
+Transferred a private archive of the run into approved host temporary storage and
+decoded every file with DuckDB through Lintap's `uv run python`. First inspection
+assumed a filename delimiter incorrectly and failed before validation; corrected
+inspection uses decoded local timestamps and explicit `hive_partitioning=false`.
+DuckDB otherwise adds two virtual partition columns; these are not raw schema fields.
+
+- Four initial files: **4,974 / 7,902 / 7,708 / 5,415 rows**, total **25,999**.
+  Sample timestamps per file: **37 / 60 / 60 / 42**, total **199**.
+  Recorded time range 21:46:56–22:03:26 MST. All adjacent sample timestamps within
+  files are exactly **5 seconds**; cross-file boundaries continue that cadence.
+  Three epoch-aligned 300s rotation boundaries crossed, plus final SIGTERM seal.
+- All four have identical **26-column** ordered schema: TIMESTAMP, INTEGER/BIGINT,
+  FLOAT rates and VARCHAR text as specified. Physical fields all OPTIONAL;
+  timestamp MICROS/non-UTC annotation and signed widths inspected. Local
+  day/hour partitions and each file's single 300s epoch window asserted.
+- Null inspection: container runtime/id null on every row in this non-container
+  workload; remaining fields populated. No identifier values copied into wiki.
+  This is schema/cadence/readability proof, not paired-live metric parity.
+- Config-preserving reinstall: saved original env, appended synthetic harmless
+  configuration/comment, ran `sudo dpkg -i <same beta.2 artifact>`, compared before/
+  after SHA-256 **equal**, and confirmed pidstat stayed inactive. Restored original
+  env from preserved copy. Package configure/install successful; no bootstrap.
+- Restricted-PATH installed `--recover` succeeds on clean spool. Explicit start
+  creates nonempty current TSV. Forced main-process SIGKILL and allowed automatic
+  restart; service active with **NRestarts=1**. Graceful stop succeeds afterward.
+  Two extra files decode: **272 rows/2 timestamps** (pre-crash spool), **137 rows/
+  1 timestamp** (post-restart). All six files decode with 26 columns, total
+  **26,408 rows**. No `.active` output; spool again only lock file. This scoped
+  crash-recovery exercise does not establish exactly-once row accounting/power-loss
+  guarantees; deterministic collector tests cover additional transition failures.
+
+Host private evidence: approved temporary toolchain area, `package-output-report.json`
+and two output archives. Guest archives/logs retained in native temporary storage.
+Development package remains installed/enabled; both sensor and pidstat services
+are **stopped** after tests. Ubuntu amd64/native RPM remain explicitly deferred.
+Canonical DBT and paired-live comparisons remain open; no release acceptance,
+commit or push claimed. Linux Python reference setup remains blocked as recorded.
+<!-- GROUND_TRUTH: ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/lintap-deb/lintap-pidstat.service; ../Lintap/pidstat-go/schema.go; ../Lintap/pidstat-go/collector.go -->
+
+## 2026-11-24 — PKG-03 integration and Ubuntu arm64 install
+
+Human authorizes package build/deploy/test and passwordless-sudo service operations
+in the existing disposable development VM, with repos mounted under `~/git/`.
+Ubuntu amd64 and native RPM testing are explicitly deferred to other platforms.
+No commit/push or field deployment authorized. PKG-03 budget: three candidates or
+60 minutes; two code candidates so far (initial integration, module-path repair).
+
+Both builders now preflight pinned Go, build/stage the architecture-matched static
+release binary and hash manifest, retire the three Python package files from copied
+publish payloads, and assert their absence. Units directly execute `--collect`.
+Shipped env files omit Python/DuckDB knobs; install messages and operator docs need
+no bootstrap. Python source/tests retained unchanged. Cleanup guidance/script no
+longer deletes operator venvs. Conffile/noreplace protections remain.
+
+- Focused package/build/provisioning tests: **45 pass** (19 pidstat packaging cases).
+- First VM package build completed .NET publish but failed because new code used
+  the builders' workspace-level `REPO_ROOT` for the Lintap Go module. Corrected both
+  to `SCRIPT_DIR/../../pidstat-go` and added an actual module-path regression.
+- Two subsequent builds hit Go proxy TLS handshake timeouts. Transferred the
+  host's verified module download cache to native guest temporary storage; offline
+  `GOPROXY=off GOMODCACHE=<native-cache>` build succeeds with module verification.
+  Reused the successful .NET publish via `--publish-dir`, distinct native work root.
+- Artifact: `../artifacts/lintap-deb/lintap_7.0.1~beta.2-1_arm64.deb`, SHA-256
+  `7822ae95ade46dda2369d80273564667deea10e89dcfe66d0bf18b767663ca62`.
+  Built with `--skip-mcp`; native dependency inspection retains the known optional
+  diagnostic-provider warning. Installed binary matches arm64 release hash recorded
+  at PKG-02. Package file list contains binary/unit/manifest, not Python payload.
+- Fresh `sudo dpkg -i <artifact>` initially leaves package unconfigured because the
+  existing LTTng dependency is absent. `sudo apt-get install -y --fix-broken`
+  installs the declared dependency and completes configuration. pidstat is enabled
+  but inactive after install (no implicit collection). Explicit start succeeds.
+- Root restricted-PATH `--kernel-context`: ticks **100**, page size **4096**.
+  `systemd-analyze verify` passes; systemd MainPID is the installed Go executable
+  with `--collect`; main-thread child list empty at inspection (snapshot, not
+  exhaustive child-process proof). Lintap sensor service remains stopped.
+- Native guest `make test GO=<verified-linux-toolchain>` with offline cache:
+  **27 Go tests**, vet and module verification pass.
+- Expanded host test run including Python reference: **55 pass, 3 fail, 2 skip**.
+  Failures are macOS runtime-root permissions in two existing config tests and absent
+  Linux `/proc` in the existing live sampler test. No oracle/source changes to mask
+  these. Guest reference-suite setup fails downloading an unrelated Streamlit
+  dependency (`websockets`); Linux reference rerun remains blocked by setup.
+
+Service started at 2026-11-24 21:46:51 MST with default 5s/300s settings, existing
+development data preserved. One-time follow-up scheduled for 16 minutes later to
+inspect three rotation boundaries, gracefully stop, decode output and test restart.
+Long-run/schema/reinstall/consumer results are pending, not PASS. Failed guest logs
+retained under native temporary storage; no host/account/IP values persisted here.
+<!-- GROUND_TRUTH: ../Lintap/packaging/pidstat-common.sh; ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/lintap-rpm/build-rpm.sh; ../Lintap/tests/test_pidstat_packaging.py -->
+
+## 2026-11-24 — Greenfield deployment scope correction
+
+The human confirms there is no existing deployment footprint and directs greenfield
+deployment. Removed Python-to-Go package migration, active-service handoff,
+Go-to-Python downgrade and mixed-installed-base input requirements from the current
+packaging plan. Retained fresh-install lifecycle, config protections, Go recovery,
+telemetry compatibility and native runtime/consumer qualification. No collector or
+package source changed and no tests/services run for this planning correction.
+Earlier migration requirements are historical, not outstanding release gates.
+
+## 2026-11-24 — PKG-02 release build checkpoint
+
+Human requested “Proceed” after develop integration. Scope is Lintap build/package
+development, not installation, shared-service operations, commit/push or rollout.
+Bounded unit PKG-02: three candidate revisions/60 minutes maximum. One candidate
+adds `../Lintap/packaging/pidstat-common.sh` and
+`../Lintap/tests/test_pidstat_packaging.py`; collector behavior is unchanged.
+Hypothesis/acceptance: exact build-host Go pin, matching supported package/RID pairs,
+release-named executable of the correct ELF architecture, no interpreter or shared
+libraries, and source/module/binary hash manifest, without runtime provisioning.
+
+- Downloaded Go 1.27.3 Darwin arm64 from go.dev into approved temporary storage and
+  verified published SHA-256. Python extraction failed because the host Python lacks
+  `tarfile.extractall(filter=...)`; `tar` extraction of the verified archive succeeded.
+  No global toolchain installation or pin changes.
+- `make test build GO=<verified-toolchain>/go/bin/go` in `../Lintap/pidstat-go`:
+  **27 top-level Go tests pass**, vet passes, all modules verified; both historical
+  spike-named Linux builds pass. Prior broken temporary toolchain is not reused.
+- `uv run pytest -q tests/test_pidstat_packaging.py tests/test_multipass_provisioning.py tests/test_dotnet_packaging.py`:
+  **42 passed**, including 16 new architecture/toolchain/ELF regressions.
+- First manual helper invocation omitted `GO` and failed preflight (no Go on PATH).
+  Reran with explicit `GO=<verified-toolchain>/go/bin/go` and shell fail-fast;
+  `lintap_build_pidstat pidstat-go <native-output> amd64 linux-x64` and matching
+  `arm64 linux-arm64` pass module verification, build and ELF assertions.
+- Release amd64 SHA-256:
+  `4dfa48faa1ab8eaa289ef5874a6dacba7d24ea82c3c4ea36c4d643478181e222`.
+  Release arm64 SHA-256:
+  `60dfcff604a4caac14af67e6ece687cf7d7531ad1eb4582babd9d78a3fae1e5b`.
+- `python3 validation/pidstat-loop/evidence.py static --arm64 <release-arm64>/pidstat-collector --amd64 <release-amd64>/pidstat-collector`:
+  **PASS**; inspected `result.json` at
+  `validation/pidstat-loop/evidence/20261125T043334Z-ff19f80a/`.
+  Machines 183/62, no PT_INTERP, no DT_NEEDED. Cross-build/static proof only.
+- `git diff --check` passes; unrelated untracked work preserved.
+
+One candidate revision, no collector repair. Build checkpoint complete; next is
+builder integration and upgrade lifecycle tests. Neither builder invokes the helper
+yet. No fresh Python/live replay, paired-live, DBT, native Linux runtime or package
+qualification claimed. Historical fpc-03/soak human review remains open. No new
+package built/installed, guest data changed or service operated.
+<!-- GROUND_TRUTH: ../Lintap/packaging/pidstat-common.sh; ../Lintap/tests/test_pidstat_packaging.py; ../Lintap/pidstat-go/Makefile -->
+
+## 2026-11-24 — Package replacement planning
+
+**Subsequent authorized integration:** fetched Lintap `origin` and confirmed
+`origin/develop` at `053b2b5` contains the Go module. Merged it into the current
+feature branch using `git merge --no-edit origin/develop`, producing `b988aa3`
+without conflicts. Only the 15 Go module files were added; existing provisioning
+and package preparation changes remain. `uv run pytest -q
+tests/test_multipass_provisioning.py tests/test_dotnet_packaging.py` passes **26/26**;
+merge diff whitespace check passes. No Go executable is currently on host PATH,
+so fresh Go tests/builds were not run. Unrelated untracked work was preserved.
+The merge is local and unpushed; no package build or service operation was performed.
+
+Read current Debian/RPM builders, pidstat units/environment references, canonical
+consumer model and earlier feature/evidence records. Git ref inspection found the
+Go module on local `feature/pidstat-go` at `b9d5d59`, absent from the current
+`feature/implement-sensor-fixes-and-cleanup-test-code` working tree. Its build target
+still uses spike filenames and the CLI requires `--collect`. Both package builders
+currently stage the Python collector/bootstrap/launcher. Added
+[[wiki/work/fix-pidstat-collector/packaging_plan]] covering source integration,
+release builds, direct service wiring, safe upgrades, config preservation, rollback
+and platform/consumer qualification. No source edits, branch switch/fetch, Go tests,
+VM operations or package builds performed; earlier blocked and pending gates remain.
 
 ## 2026-10-31 — Topic-commit review
 

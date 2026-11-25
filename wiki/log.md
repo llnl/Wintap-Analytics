@@ -10038,6 +10038,28 @@ queue, main index, and agent instructions so future TODO requests use the existi
 intake structure rather than a parallel backlog.
 <!-- GROUND_TRUTH: wiki/todo/unify-lintap-runtime-and-etl-configuration.md; ../wintap/wintap/core/shared/ConfigManager.cs; ../wintap/wintap/core/etl/shared/Utilities.cs; ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/lintap-rpm/build-rpm.sh -->
 
+## [2026-11-24] plan | replace packaged Python pidstat with Go
+
+Added a packaging continuation to the existing fix-pidstat-collector feature rather
+than duplicating the rewrite. Current package branch lacks the Go module; inspected
+local topic ref contains the checkpoint with explicit `--collect` mode. Plan covers
+source integration, static architecture-matched binaries, Debian/RPM payload and
+service changes, active/inactive upgrade handoff, preserved configuration/spools,
+rollback and isolated consumer/native-platform qualification. Updated feature plan,
+handoff, verification and main index. No source, branches, packages or services changed;
+historical acceptance and qualification gaps remain explicit.
+<!-- GROUND_TRUTH: wiki/work/fix-pidstat-collector/packaging_plan.md; ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/lintap-rpm/build-rpm.sh -->
+
+## [2026-11-24] integration | bring Go pidstat develop checkpoint into feature
+
+Human requested develop integration before package replacement. Fetched Lintap refs,
+confirmed `053b2b5` contains the Go module, and merged into the current feature branch
+as `b988aa3` without conflicts. Fifteen Go module files added; package/provisioning
+changes preserved. Existing focused regressions pass 26/26 and merge diff check passes.
+No host Go on PATH, so no fresh Go test/build pass claimed. Updated package plan,
+handoff and verification. Merge remains local/unpushed; no package/service work run.
+<!-- GROUND_TRUTH: wiki/work/fix-pidstat-collector/verification.md; ../Lintap/pidstat-go/Makefile -->
+
 ## [2026-11-24] todo | direct DBT hostname filtering
 
 Added a P3 low-priority intake item for case-insensitive hostname selection based
@@ -10047,3 +10069,52 @@ the compacted-shard provenance boundary, the direct-target prerequisite caveat,
 and tests required before implementation. No PyUtil source, DBT model, dataset, or
 S3 object was changed.
 <!-- GROUND_TRUTH: wiki/todo/dbt-direct-hostname-filter.md; ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql; ../Wintap-PyUtil/wintap_dbt/macros/relations.sql; ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql; ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_pidstat_metrics.sql -->
+
+## [2026-11-24] implementation | Go pidstat release build checkpoint
+
+Authorized continuation adds a build-host release helper and 16 focused regressions
+in Lintap. Verified Go 1.27.3: 27 Go tests, vet/module checks, arm64/amd64 builds
+and static ELF inspection pass; combined package/provisioning regressions pass 42/42.
+Recorded setup/preflight failures and recovery in feature verification. Package
+payloads/services remain Python; no install, service operation, commit/push or fresh
+runtime/consumer qualification claimed.
+<!-- GROUND_TRUTH: ../Lintap/packaging/pidstat-common.sh; ../Lintap/tests/test_pidstat_packaging.py; wiki/work/fix-pidstat-collector/verification.md -->
+
+## [2026-11-24] scope | greenfield Go pidstat deployment
+
+Human confirms no existing deployment footprint. Simplified package plan to fresh
+installation/direct Go startup and Go restart/recovery; removed legacy Python
+upgrade handoff, package downgrade and mixed-installed-base qualification gates.
+Config protections and telemetry/runtime/consumer checks remain. Updated plan,
+handoff, verification and navigation; no source or service changes in this correction.
+
+## [2026-11-24] implementation | Go pidstat package integration and arm64 startup
+
+Human authorized development-VM build/install/service tests and deferred other
+platforms. Both builders/units/env/docs now use Go; 45 focused regressions pass.
+Repaired initial module-path error; guest proxy timeouts bypassed using verified
+offline module cache. Debian arm64 beta.2 artifact installed after resolving existing
+declared LTTng dependency; enabled without autostart, then direct Go start passes.
+27 native Go tests/vet/module checks pass. Default rotation run ongoing; output,
+restart and consumer gates pending. Host Python oracle tests expose three platform
+failures; guest full reference setup blocked by dependency download. No source
+oracle changes, field rollout or commit/push. Full details in feature verification.
+
+## [2026-11-24] verification | installed Go arm64 rotation and recovery
+
+Default run crossed three 300s boundaries with no restarts; graceful seal produced
+four files/25,999 rows/199 timestamps at 5s spacing. Inspected 26-column schema,
+physical types/nulls and local partitions. Modified env survived same-package
+reinstall byte-for-byte; installed SIGKILL/restart recovery and subsequent stop
+produced two additional readable files. Six files total/26,408 rows; no partials,
+only spool lock remains. Development services stopped, package retained. Private
+datasets preserved outside wiki; no identifiers recorded. Consumer/paired-live
+and other native platforms remain open; no commit/push or release claim.
+
+## [2026-11-24] handoff | commit Go pidstat packaging for cross-host tests
+
+Human authorized commit/push. Lintap implementation saved as `4c280b0`; updated
+feature dev handoff with native Ubuntu amd64/RPM commands, verified arm64 lifecycle,
+artifact hash, open qualification gates and setup caveats. Reviewed complete wiki
+diff for privacy; unrelated untracked work excluded. Feature-branch publication
+does not imply native RPM/amd64 or release acceptance.

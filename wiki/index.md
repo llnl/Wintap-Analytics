@@ -8,6 +8,14 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+Go pidstat package replacement plan:
+[[wiki/work/fix-pidstat-collector/packaging_plan]] — integrate the existing topic-ref
+module, stage static Debian/RPM binaries and replace Python service startup for
+greenfield deployment; qualify fresh-install lifecycle and native runtime/consumer gates.
+Package/service integration and Debian arm64 install/reinstall/default rotation/
+crash-recovery checks pass. Ubuntu amd64/native RPM qualification deferred
+to other platforms. See feature verification; no field-release acceptance claimed.
+
 DBT source-aware validation: [[wiki/work/dbt-source-validation/verification]] —
 local/split/S3 inputs, explicit named AWS profile selection, no placeholder directory,
 partition-scoped DuckDB preflight, offline dashboard checks. Combined SELinux/source

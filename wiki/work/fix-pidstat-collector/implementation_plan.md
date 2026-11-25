@@ -9,7 +9,7 @@ grounded_by:
   - ../Lintap/packaging/lintap-rpm/build-rpm.sh
   - ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
 policy: agent-editable
-last_validated: 2026-10-30
+last_validated: 2026-11-24
 repo_scope: cross-repo
 implementation_area: packaging
 event_domain: process
@@ -20,6 +20,37 @@ tags: [feature-work, pidstat, go, engineering-loop, verification]
 ---
 
 # Implementation Plan: Fix pidstat Collector
+
+## Packaging continuation — 2026-11-24
+
+**Installed arm64 follow-up:** fresh install/config-preserving reinstall,
+three default rotation boundaries, SIGTERM seal and SIGKILL/restart recovery tested.
+Four default-run files decode with 26 columns and 25,999 rows/199 timestamps at 5s;
+two recovery files also decode. Both development services stopped afterward.
+Consumer/paired-live and other native-platform gates remain open.
+
+**PKG-03:** both package builders stage Go; units execute the installed binary
+directly, shipped knobs/docs omit bootstrap. Fresh Debian arm64 installation/start
+passes in the now-authorized development VM; 45 focused regressions and 27 native
+Go tests pass. Rotation/recovery checks ongoing. Ubuntu amd64/native RPM runtime
+qualification explicitly deferred to other platforms; no release pass inferred.
+
+**Scope correction:** the human confirms no existing deployment footprint. Treat
+packaging as greenfield: omit Python-to-Go upgrade handoff and package downgrade
+gates. Test fresh installation, direct Go startup and Go restart/recovery; keep
+configuration protections and telemetry compatibility. The packaging plan's
+greenfield lifecycle replaces its earlier migration requirements.
+
+**Authorized continuation:** after develop integration the human requested
+“Proceed”. PKG-02's build helper passes 16 focused regressions, both static Linux
+release builds and ELF inspection. Package payload/unit cutover, acceptance and
+deployment gates remain open; see verification.
+
+The requested Debian/RPM Python-to-Go replacement is detailed in
+[[wiki/work/fix-pidstat-collector/packaging_plan]]. It adds source-ref integration,
+release binary naming/static checks, the required `--collect` service flag,
+greenfield lifecycle and local-configuration preservation gates to
+fpc-04/fpc-05. Planning does not close historical acceptance or authorize deployment.
 
 ## Scope
 
