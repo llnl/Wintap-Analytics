@@ -32,6 +32,13 @@ tags: [feature-work, testing, verification, sensor-fixes]
 
 ## Packaging SDK follow-up — 2026-11-25
 
+Next operator RHEL build reached RPM check-files and rejected the staged
+`/usr/share/doc/lintap/pidstat-collector.build.json` as unpackaged. Added its explicit
+`%doc` entry to the generated spec and regression coverage in the RPM contract.
+Combined focused suite remains **63 passed**; native rebuild required. Operator
+output also reports duplicate build IDs for app/MCP DuckDB libraries; that separate
+diagnostic is retained, not resolved or suppressed by the manifest ownership fix.
+
 RHEL 8 operator build reached staging/module verification but failed generating
 the Go manifest: system Python 3.6 rejects `subprocess.check_output(text=True)`.
 Replaced both manifest calls with equivalent `universal_newlines=True`; retained

@@ -10175,3 +10175,11 @@ Changed both pidstat build-manifest calls to `universal_newlines=True`; clean/di
 manifest regressions preserve revision and hashes. Combined focused suite: 63
 passed. Actual Python 3.6/native RHEL rebuild remains unverified. Human authorized
 commit/push of the fix and verification records; whitespace checks pass.
+
+## [2026-11-25] fix/verification | RPM pidstat manifest ownership
+
+Operator RPM check-files rejected the staged Go build manifest as unpackaged.
+Added explicit generated-spec %doc ownership and RPM contract regression;
+combined focused suite: 63 passed. Duplicate app/MCP DuckDB build-ID diagnostic
+retained separately. Native rebuild unverified. Human authorized commit/push
+of the fix and verification records; whitespace checks pass.
