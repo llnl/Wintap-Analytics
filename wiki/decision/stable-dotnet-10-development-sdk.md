@@ -6,8 +6,10 @@ decided_on: 2026-11-24
 confidence: high
 grounded_by:
   - ../wintap/developer_docs/instructions/sdk-01-stable-dotnet-10-selection.md
+  - ../wintap/global.json
+  - ../wintap/tests/Wintap.Tests/README.md
 policy: human-review-required
-last_validated: 2026-11-24
+last_validated: 2026-11-25
 repo_scope: cross-repo
 implementation_area: dev-environment
 event_domain: none
@@ -29,7 +31,11 @@ update policy tests/guidance, provision Windows CI with `10.0.x`, and record the
 Avoid patch-pin churn without changing frameworks or dependencies.
 
 ## Consequences
-Implementation/Windows verification are pending; shared-resolver changes may fail unchanged Linux package checks, requiring separate review.
+Implementation is complete: minimum 10.0.100, `latestMinor`, no prereleases.
+Record the actual selected SDK. macOS/Linux feature testing is complete; native
+Windows verification remains separate. Lintap packaging retains an explicit
+10.0.402 qualification check; resolver policy does not update that contract.
+<!-- REVIEW NEEDED: implementation consequences updated from live sources; Windows and packaging qualification remain separate. -->
 
 ## Alternatives Considered
 Exact pinning obstructs development; `latestPatch` is too narrow; ecosystem-wide packaging relaxation is deferred.

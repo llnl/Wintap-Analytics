@@ -28,14 +28,14 @@ tags: [todo, priority, process-events, refresh, polling, windows, linux, wintap]
 
 **Priority:** P1 — High (human-requested; current deployments do not provide the
 intended periodic running-process inventory).
-**State:** Promoted — implemented as an uncommitted source candidate with focused
+**State:** Promoted — implemented on the feature branch with focused
 synthetic qualification. Bounded Linux `live-02` accepts repaired periodic output;
 native Windows remains open.
 **Likely next step:** Run the agreed native Windows platform gate.
 
 ## Finding
 
-The candidate now starts a shared periodic scheduler after each platform's startup
+The implementation starts a shared periodic scheduler after each platform's startup
 inventory boundary: Linux after successful rundown; Windows after bootstrap,
 replay and snapshot-delta reconciliation have been attempted. Periodic Windows
 inventory never clears or reconciles startup state.

@@ -35,7 +35,8 @@ tags: [lintap, linux, process-telemetry, data-quality, dbt, todo]
 **Priority:** P1 — High (provisional; the focused VM run reported a high blank
 rate and process-level values with multiple distinct observations).
 **State:** Promoted. The bounded `sfx-03` sensor slice is implemented and accepted;
-immutable exec argv, deterministic DBT selection and historical disposition remain.
+paired-row DBT selection is complete. Immutable exec argv and historical disposition
+remain separate.
 **Complexity:** High.
 
 ## Goal
@@ -189,8 +190,8 @@ observation.
 <!-- SPECULATIVE: these are unresolved contract and platform questions; the current source does not define the intended canonical semantics or capture limits -->
 
 For the bounded sensor slice, the rendered string and 256 KiB procfs ceiling are
-settled. Structured argv, kernel-boundary limits and the process-lifetime summary
-meaning remain unresolved.
+settled. Structured argv and kernel-boundary limits remain unresolved; the bounded
+process-image summary now uses a deterministic paired-row selector.
 
 ## Related findings
 

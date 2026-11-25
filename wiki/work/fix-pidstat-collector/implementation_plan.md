@@ -55,7 +55,7 @@ fpc-04/fpc-05. Planning does not close historical acceptance or authorize deploy
 ## Scope
 
 Implement [[wiki/work/fix-pidstat-collector/brief]] in bounded units `fpc-01` through
-`fpc-05`. First live environment: existing Multipass `lintap-dev` (Ubuntu arm64).
+`fpc-05`. First live environment: existing disposable Multipass VM (Ubuntu arm64).
 Do not recreate the VM, stop existing services or change shared data without approval.
 This document is a plan, not current implementation authorization.
 
@@ -67,7 +67,7 @@ This document is a plan, not current implementation authorization.
    writer with ZSTD, and pinned supported Go version. Record license and dependency
    choices. No DuckDB Go binding or cgo in the collector.
 3. Preserve the current Python version/revision as the reference through final review.
-   Generate authoritative golden output from its actual execution in `lintap-dev`,
+   Generate authoritative golden output from its actual execution in the approved VM,
    including real `/proc` samples and resulting TSV/Parquet. Hand-built expected rows
    supplement this baseline but cannot replace it. Python/DuckDB are allowed for
    testing, not installed runtime needs.
@@ -85,7 +85,7 @@ TSV encoding. See [[wiki/work/fix-pidstat-collector/verification]].
 ### Required Python-versus-Go differential evidence
 
 - Capture multiple real `/proc` snapshots and sample times from controlled live
-  workloads in `lintap-dev`: idle, CPU (including multicore), memory, I/O and process
+  workloads in the approved VM: idle, CPU (including multicore), memory, I/O and process
   churn, with cgroup/namespace observations where available. Preserve raw inputs,
   clock tick/page-size/memory context and the Python-produced results. Replay the
   **same inputs and elapsed times** through both samplers/writers. Exercise the real
@@ -196,7 +196,7 @@ No package/service unit has started.
 
 ## fpc-05 — Qualify Ubuntu arm64 and review
 
-1. Use dedicated test data/spool roots in `lintap-dev`; preserve existing telemetry
+1. Use dedicated test data/spool roots in the approved VM; preserve existing telemetry
    and services. Run with root's restricted system PATH. Record OS/kernel/architecture,
    Go version, dependency versions, git revisions and binary SHA256.
 2. Run deterministic tests, `go vet`, race-enabled tests where supported, golden
@@ -269,7 +269,7 @@ RHEL 8 amd64 live/RPM acceptance remains a follow-on gate; cross-build is not ru
 - [x] User-authorized four-hour sensor-on VM soak launched before packaging; default5s/300s, recurring five-family canaries, bounded shutdown and private evidence retrieval prepared.
 - [x] Four-hour completion, every-file inspection and same-session resource/smoke review documented:49files/399312rows,2880sample times,80stimuli; see soak_review and verification.
 - [ ] Human accepts four-hour review and remaining sensor/qualification limits before packaging.
-- [x] Human confirmed Go rewrite and Ubuntu arm64 `lintap-dev` first-target scope.
+- [x] Human confirmed Go rewrite and disposable Ubuntu arm64 first-target scope.
 - [x] Plan and later-loop boundaries recorded (planning initially made no source/VM changes).
 - [x] Native commands, bounded skill and deterministic evidence utility prepared/tested in Analytics only; first-pass external controller removed.
 - [x] Approved fpc-01 Lintap/VM scope, actual commands/reference revisions and effective permissions ready.

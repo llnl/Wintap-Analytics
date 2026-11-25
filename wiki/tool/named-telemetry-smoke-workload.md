@@ -233,7 +233,7 @@ When only local stimulus/JSON is needed, root and DuckDB are unnecessary if the
 output paths are writable. All commands below are from the Wintap repo.
 
 ```bash
-python3 devtools/telemetry_smoke_workload.py --output /home/user/qa/smoke-001
+python3 devtools/telemetry_smoke_workload.py --output ./qa/smoke-001
 ```
 
 Use a fresh directory **outside** collector data/runtime roots and configured
@@ -282,9 +282,9 @@ exercise exact production path/key projection, complementing unit-test case pair
 ## Native helper
 
 ```bash
-cc -O2 -pthread -o /home/user/qa/clone-helper devtools/clone_lifecycle_workload.c
-python3 devtools/telemetry_smoke_workload.py --output /home/user/qa/smoke-002 \
-  --clone-helper /home/user/qa/clone-helper
+cc -O2 -pthread -o ./qa/clone-helper devtools/clone_lifecycle_workload.c
+python3 devtools/telemetry_smoke_workload.py --output ./qa/smoke-002 \
+  --clone-helper ./qa/clone-helper
 ```
 
 `WINTAP_SMOKE_NAMES=1` is set only for this native invocation. It enables short
@@ -298,7 +298,7 @@ to the sudo workload invocation in step 2, retaining all three output/root argum
 
 The S3 procedure above publishes this envelope automatically as parquet. For a
 manual JSON transfer, choose the shared portable run envelope with
-`--manifest /home/user/qa/manifests/run-001.json` (default `./smoke-results/`).
+`--manifest ./qa/manifests/run-001.json` (default `./smoke-results/`).
 Upload/copy this JSON independently of parquet; the new
 [[wiki/tool/smoke-test-results-dashboard]] groups runs by test UUID and queries
 the recorded test-host/time/PID/path/ports. The workload's original `manifest.json`
@@ -321,12 +321,11 @@ rundown Refresh, HOST, registry or SELinux/security events.
   refusing existing directories, repeated same-PID exec/argument cases, Refresh
   candidate retention, and broken helper failure.
 - `cc -O2 -Wall -pthread ... clone_lifecycle_workload.c`: no warnings/errors.
-- Builder VM `lintap-clone-validation`, Ubuntu 24.04/aarch64, kernel
+- Disposable builder VM, Ubuntu 24.04/aarch64, kernel
   `6.8.0-147-generic`: default and optional IPv6 stimulus complete; native one-round
   mode completes with no clone3 skips and distinct clone process/thread/vfork cases.
-- Evidence: `/home/ubuntu/clone-validation/telemetry-smoke-first` and
-  `/home/ubuntu/clone-validation/telemetry-smoke-final` (final Python manifest
-  includes parsed native PID/TID records). These are **stimulus**
+- Operator-retained initial/final manifests include parsed native PID/TID records.
+  These are **stimulus**
   runs, not collected cross-domain acceptance. RHEL and other architectures pending.
 - Recompiled helper's default mode also passes actual CO-RE trace validation:
   unchanged 80 process/60 thread manifest, no missing/duplicate births, false thread

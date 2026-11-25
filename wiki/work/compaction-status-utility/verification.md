@@ -234,7 +234,8 @@ frontmatters**, **213 grounding path references** and **28 added wikilinks**, in
 added-content local-account/home-path/IP-pattern scans pass. The complete additions
 were manually reviewed for persistent-content privacy and read-mode consistency.
 These are scoped documentation checks, not a repository-wide wiki lint or runtime
-qualification. Changes remain uncommitted/unpushed.
+qualification. Changes were uncommitted/unpushed at this historical checkpoint;
+use current feature tips rather than this old publication status.
 
 ## Post-pull producer review — November 14
 

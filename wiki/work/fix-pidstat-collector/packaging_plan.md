@@ -52,13 +52,12 @@ Consumer/paired-live review and other native platforms remain open.
 **Current implementation:** both builders and units now use Go; Ubuntu arm64
 package build/fresh install/direct service startup pass. The human authorizes
 development-VM install/service tests and explicitly defers Ubuntu amd64/native RPM
-qualification to other platforms. Rotation/restart/consumer inspection remains
-pending. Earlier planning-only and Python-wiring statements below are historical.
+qualification to other platforms. Rotation/restart inspection passes; consumer
+qualification remains pending. Earlier Python-wiring statements below are historical.
 
-**Implementation continuation:** the subsequent “Proceed” authorizes Lintap
-build/package development, not installation, shared-service operations, commit/push
-or release. PKG-02's shared helper/static checks now pass; builders and units still
-use Python pending the next integration unit.
+**Historical authorization:** the initial “Proceed” covered build/package work;
+later approval covered development install/service tests and feature commit/push.
+Both builders/units now use Go. Field rollout/release acceptance remains separate.
 
 **Update after authorized fetch/merge:** `origin/develop` contains the Go checkpoint
 at `053b2b5`. It was merged without conflicts into Lintap's current feature branch
@@ -196,12 +195,13 @@ human approves release and any explicitly deferred platforms before rollout.
 - [x] Replacement, architecture and greenfield lifecycle gates planned; legacy migration gates superseded.
 - [x] Latest `origin/develop` fetched and Go checkpoint merged into the current Lintap feature branch (`b988aa3`); existing package/provisioning regressions pass 26/26.
 - [ ] Go source/ref and integration branch confirmed; prior acceptance gates resolved.
-- [x] Release build contract and static architecture checks pass (shared helper tested on arm64/amd64; not yet invoked by package builders).
+- [x] Release build contract and static architecture checks pass; both builders invoke the shared helper.
 - [x] Debian/RPM payload, direct service CLI and docs integrated; Debian arm64 artifact installed in development VM.
 - [x] Debian arm64 fresh-install lifecycle, config handling and Go restart/recovery tested; native RPM lifecycle deferred.
 - [ ] Ubuntu arm64 package/live and Python/Go consumer gates reviewed.
 - [ ] Native RPM target qualification reviewed or explicitly deferred from release.
 - [ ] Canonical docs updated and human authorizes publish/deployment.
 
-No implementation, tests, package build or service operations were performed to
-write this plan. Preserve existing unrelated working files and retained evidence.
+The original planning round performed no implementation or service operations.
+Subsequent authorized integration and arm64 tests are summarized above and in
+[[wiki/work/fix-pidstat-collector/verification]]. Preserve unrelated work and evidence.

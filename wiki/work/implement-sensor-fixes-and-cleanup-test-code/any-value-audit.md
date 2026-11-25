@@ -104,8 +104,9 @@ The process lifetime projection must not use independent `any_value` selection f
 
 These fields can differ across fork/start, failed `exec_attempt`, successful
 `exec_success`, Refresh, and Stop observations. A deterministic representative must
-select a single eligible row and take paired fields from that row. The lifetime
-policy remains open between initial, latest-successful, and latest-observed image.
+select a single eligible row and take paired fields from that row. The implemented
+policy prefers latest valid Refresh, successful exec, then eligible fallback;
+explicit as-of/history remains separate.
 
 SELinux temporal fallback is a special case: when more than one candidate lifetime
 matches a `(host, pid, event_time)`, all arbitrary candidate fields must remain
@@ -187,9 +188,9 @@ the selected row.
 The prototype selected all 5,807 `PidHash` groups: 493 Refresh roles, 4,947
 successful-exec roles and 367 fallback roles. It selected all 19 targeted cohorts
 with exact policy/pair agreement, selected no failed attempt, and produced identical
-results across ten randomized source-order runs. This is design qualification only;
-production DBT still needs as-of, tie/ambiguity, non-image-field and regression-test
-contracts.
+results across ten randomized source-order runs. This was prototype qualification;
+the production implementation below supersedes its implementation gate. As-of,
+ambiguity and non-image-field contracts remain follow-ups.
 
 ### Production DBT implementation — 2026-11-23
 
@@ -209,7 +210,7 @@ Windows qualification.
 
 1. Expand the inventory table with exact normalized expressions and downstream
    consumers for every call.
-2. Add the synthetic contract fixtures without changing production SQL.
+2. Extend the existing six synthetic contract fixtures for remaining column classes.
 3. Run the fixtures against both the DBT process models and the legacy standard-view
    path where the same contract exists.
 4. Record which uses are invariant-safe, conflict-visible, or ordering-sensitive.
@@ -240,4 +241,4 @@ full selected contract run passes **226/226**. The tests are synthetic/in-memory
 only; no live dataset, collector, deployment, historical data, or production SQL
 change was involved.
 
-<!-- SYNTHESIS: preliminary classifications inferred from the pinned PyUtil SQL sources; fixture execution is still required. -->
+<!-- SYNTHESIS: classifications beyond the implemented image selector remain preliminary; the six baseline fixtures have executed successfully. -->

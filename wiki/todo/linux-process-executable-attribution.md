@@ -164,11 +164,10 @@ historical data.
 
 ## Impact
 
-The base process row may report an executable that was never successfully run,
-or combine a process name and path from different observations. The current
-projection therefore does not provide reliable canonical executable
-attribution for a process lifetime. This is a source-level finding; its frequency
-and impact in recorded datasets still need measurement.
+The pre-fix process row could report an executable that never successfully ran
+or combine fields from different observations. Bounded Linux capture measured
+that defect and qualified the paired-row repair. Broader dataset prevalence and
+historical repair remain separate; the old arbitrary projection is not current.
 
 ## Example: wrapper script followed by `dd`
 
@@ -219,13 +218,11 @@ The explicit requirement and implemented additive candidate now live in
 birth for identity independently of the finest available occurrence time;
 additive timing preservation and migration of legacy `EventTime` semantics are
 separate scopes. Exec/clone kernel timestamps now reach separate normal-ETL
-observation fields in the source candidate; live qualification and the broader
-executable-selection model remain open.
+observation fields; bounded Linux live qualification and paired-row image selection
+are complete. Broader history/as-of contracts remain separate.
 
-The same sample warrants a separate timestamp investigation. The Start rows
-repeat `134394151359900000`, which is aligned to a much coarser boundary, while
-the Stop row carries `134394151363910716` with finer 100-nanosecond FILETIME
-precision. This may be intentional rather than ordinary truncation: the Linux
+The same sample showed clock-tick-aligned Start birth timestamps and finer Stop
+occurrence timestamps. This may be intentional rather than truncation: the Linux
 producer canonicalizes process birth times to the `/proc` clock-tick basis so
 Clone, Execve, and rundown observations produce the same identity. Stop time is
 reported as a termination/event timestamp and need not use that birth-time
@@ -381,7 +378,11 @@ The broader unresolved lifecycle-versus-attempt tradeoff is tracked in
 
 ## Disposition
 
-The additive sensor/projection distinction is accepted. No initial/latest image
-policy, DBT implementation, historical repair, syscall-return correlation, or
-separate lifecycle API has been selected. Continue through the active feature
-workflow and preserve [[wiki/tension/linux-process-lifecycle-vs-exec-attempt-observations]].
+The additive sensor distinction and bounded Linux paired-row DBT repair are complete.
+Current selection prefers latest valid Refresh, latest successful exec, then eligible
+fallback, with name/path/arguments from one row and failed attempts excluded. See
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]]. The earlier
+investigation sequence is historical; explicit as-of/history, broader ambiguity,
+native Windows, historical repair and syscall-return correlation remain separate.
+This TODO does not authorize those changes. Preserve
+[[wiki/tension/linux-process-lifecycle-vs-exec-attempt-observations]].

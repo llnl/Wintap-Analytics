@@ -10124,3 +10124,18 @@ feature dev handoff with native Ubuntu amd64/RPM commands, verified arm64 lifecy
 artifact hash, open qualification gates and setup caveats. Reviewed complete wiki
 diff for privacy; unrelated untracked work excluded. Feature-branch publication
 does not imply native RPM/amd64 or release acceptance.
+
+## [2026-11-25] docs/review | feature-branch Markdown cleanup
+
+Reviewed branch Markdown against `origin/main`. Consolidated sensor-fix and Go
+pidstat plans/handoffs/verification, retaining scoped results, repair failures and
+open qualification gates while removing private capture inventories and identifiers.
+Reconciled completed Linux capture/paired-row DBT repair, stable .NET 10 implementation
+and completed macOS/Linux testing with canonical pages, TODOs and navigation. Native
+Windows, uploader fault/endpoint, Go paired-live/consumer and other native package
+gates remain separate. Historical log entries remain dated history, not current
+instructions. SDK decision consequences flagged for human review. No behavioral
+test rerun or source change performed. Human subsequently authorized committing
+and pushing the documentation cleanup to the feature branch. Whitespace,
+frontmatter, navigation and added-content identifier checks pass; the link scanner's
+POSIX character-class match was a false positive, not a wiki link.

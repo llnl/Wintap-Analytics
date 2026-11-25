@@ -42,9 +42,8 @@ tags: [feature-work, verification, retrospective]
   Windows-platform/static-analysis warnings remain; no broad Windows suite claim.
 - Analytics isolated venv: `python -m unittest discover -s
   streamlit/projects/SmokeTests -p 'test_*.py' -v` — **19 passed**.
-- Ubuntu arm64 VM: `multipass exec lintap-clone-package --
-  /home/ubuntu/receipt-venv/bin/python -m unittest discover -s
-  /home/ubuntu/wintap/devtools -p 'test_smoke_manifest.py' -v` — **4 passed**,
+- Ubuntu arm64 VM: explicit isolated Python ran `unittest discover -s
+  <wintap-root>/devtools -p 'test_smoke_manifest.py' -v` — **4 passed**,
   including intentional export-failure warnings and retained JSON.
 - Same VM with `-p 'test_telemetry_smoke_workload.py'` — **2 passed**.
 - Lintap: `bash -n packaging/lintap-deb/build-deb.sh

@@ -7,7 +7,7 @@ grounded_by:
   - ../Wintap/tests/Wintap.Tests/Wintap.Tests.csproj
   - ../Wintap/tests/Wintap.Tests/EventChannelHealthWireInTests.cs
 policy: agent-editable
-last_validated: 2026-11-22
+last_validated: 2026-11-25
 repo_scope: wintap
 implementation_area: windows-sensor
 event_domain: cross-domain
@@ -23,8 +23,9 @@ resolution: null
 
 # Tension: Wintap Test Platform Boundaries
 
-The accepted bootstrap decision names Wintap/Lintap/Mactap test siblings; only
-`Wintap.Tests` exists today. It now references the Windows agent and links Linux
+The accepted bootstrap decision names Wintap/Lintap/Mactap test siblings;
+`Wintap.Tests` and the Linux-focused `Lintap.Tests` now exist. The Windows assembly
+references the Windows agent and links Linux
 production helpers/sensors, so subject-platform coverage and actual runner-platform
 coverage are not the same. Linux-only branches in an otherwise Windows-tested
 assembly are not evidence of a native Linux collector run.
@@ -32,10 +33,11 @@ assembly are not evidence of a native Linux collector run.
 
 The historical decision anticipated the Windows reference; this is a scope and
 follow-up tension, not evidence that the bootstrap was incorrectly implemented.
-The initial cleanup recommendation is to retain topology temporarily and label
-execution boundaries. The human must decide ownership/dependency boundaries before
-a later project split; neither shared-code portability nor native Linux/macOS
-acceptance is inferred from mechanical moves.
+The initial cleanup retained topology and labeled execution boundaries. Later Linux
+test-project work supersedes the "only Wintap.Tests" inventory; macOS/Linux feature
+testing is complete. Native Windows acceptance, broader shared-code ownership and
+any Mactap project remain distinct. This does not silently resolve the open tension.
+<!-- GROUND_TRUTH: ../wintap/tests/Lintap.Tests/README.md; ../wintap/tests/Wintap.Tests/README.md -->
 
 Related analysis and proposed gate:
 [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis]] and

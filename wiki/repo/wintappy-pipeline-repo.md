@@ -61,7 +61,7 @@ Its README carries the same LLNL release identifier, `LLNL-CODE-837816`, that ap
 The canonical Python dependency is pinned to DuckDB **1.5.6**; the current
 adapter/core tuple remains **dbt-duckdb1.9.6 / dbt-core1.12.2**. The local uv lock
 remains intentionally ignored by repo policy; the tracked manifest carries the
-engine pin. A fresh full DBT build on retained revision7 AXON drain inputs passed
+engine pin. A fresh full DBT build on retained revision7 sanitized drain inputs passed
 40 models/42 tests plus its startup hook, retaining collector birth and metadata.
 This is dependency validation, not repair of existing data-quality defects or
 rollout to installed collectors. See [[wiki/work/duckdb-1-5-maintenance/verification]].

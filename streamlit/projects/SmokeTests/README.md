@@ -49,8 +49,8 @@ is complete. A startup-race run can correctly show generated activity but no dat
 
 ```bash
 python3 devtools/telemetry_smoke_workload.py \
-  --output /home/ubuntu/qa/stimulus-001 \
-  --manifest /home/ubuntu/qa/manifests/run-001.json
+  --output ./qa/stimulus-001 \
+  --manifest ./qa/manifests/run-001.json
 ```
 
 ## Automatic durable evidence (recommended)
@@ -59,7 +59,7 @@ Use a Python environment with `duckdb` installed on the test host:
 
 ```bash
 python3 devtools/telemetry_smoke_workload.py \
-  --output /home/ubuntu/qa/stimulus-002 \
+  --output ./qa/stimulus-002 \
   --smoke-data-root /var/log/lintap/data
 ```
 

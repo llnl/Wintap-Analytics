@@ -155,7 +155,8 @@ or pipeline acceptance.
 
 ## Next Step
 
-[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]] records
-the implemented static draft and pending Windows gate. Obtain runtime acceptance;
-topology, mixed-file splitting, native workloads, and fresh-capture validation
-follow as separate bounded rounds.
+This is the initial dated inventory, not a current suite census. `Lintap.Tests`
+now exists, macOS/Linux feature testing and bounded Linux captures are complete,
+and stable .NET 10 selection supersedes the exact development SDK pin. Native
+Windows acceptance and further mixed-file/topology review remain separate; use
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]] for current gates.

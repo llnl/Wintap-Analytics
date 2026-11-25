@@ -96,8 +96,8 @@ An unresolved `/proc/<pid>/exe` alias is not executable evidence, and producers
 do not infer paths from flattened command lines. A real executable named `exe`,
 case and embedded spaces remain valid. Focused synthetic/ETL coverage passes;
 bounded Linux `live-01` executable-name evidence passed all 8/8 multi-exec cases.
-Historical affected-row lineage remains open, and the repaired binary still needs
-a fresh capture for the independent direct-Parquet timing gate.
+Historical affected-row lineage remains open; the repaired binary's independent
+direct-Parquet timing gate subsequently passed.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcessSensorHelper.cs; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs -->
 
 Linux command-line capture now labels the existing rendered value with
@@ -150,7 +150,7 @@ Start-vs-Refresh duplicates are suppressed by resolver-backed PID plus
 create-time-tolerance dedup (Start wins).
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §InitializeStartupBootstrap/InitializeSnapshotDelta -->
 
-The uncommitted periodic candidate starts scheduling only after that startup
+The implemented periodic scheduler starts only after that startup
 attempt. Linux starts scheduling after startup rundown succeeds. A shared
 UTC-aligned one-shot scheduler defaults to hourly `HH:05`, skips missed ticks and
 overlaps, and waits for an active inventory on disposal. Periodic Windows
@@ -275,8 +275,9 @@ observation FILETIME, and optional four-field schema in all 47 files.
   populated and nonzero; both fields are optional in all 124 Parquet files.
 - Treat command-line status as part of the observation. Do not fill `empty`,
   `unavailable` or `read-error` rows from parent/neighbor events, and do not parse
-  the flattened string as executable path evidence. Process-lifetime DBT selection
-  remains a separate unresolved contract.
+  the flattened string as executable path evidence. DBT now selects changing image
+  fields from one eligible row: latest valid Refresh, successful exec, then fallback.
+  An explicit as-of relation remains separate.
 - Filter executable success using `ExecutionObservationKind=exec_success`, not
   `ActivityType=Start` alone. Preserve attempts as intent evidence, keep name/path
   from the same row, and do not infer a process-lifetime initial/latest policy.

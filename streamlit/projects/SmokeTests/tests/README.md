@@ -8,7 +8,7 @@ capture. The separate `transport/` package uses only a loopback HTTP server and
 synthetic objects. The `ui/` package exercises the real multipage application with
 Streamlit AppTest and synthetic local fixtures.
 
-## Classified slices (2026-11-22 through 2026-11-23)
+## Classified slices (2026-11-22 through 2026-11-24)
 
 | File under `contract/` | Cases | Coverage |
 |---|---:|---|

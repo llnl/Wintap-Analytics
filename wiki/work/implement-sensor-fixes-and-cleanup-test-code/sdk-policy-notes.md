@@ -8,23 +8,25 @@ grounded_by:
   - ../wintap/.github/workflows/release.yml
   - ../wintap/developer_docs/instructions/sdk-01-stable-dotnet-10-selection.md
 policy: agent-editable
-last_validated: 2026-11-24
+last_validated: 2026-11-25
 repo_scope: cross-repo
 implementation_area: dev-environment
 event_domain: none
 audience: developer
 status: draft
 source_paths: ../wintap/global.json; ../wintap/devtools/test_runtime_alignment.py
-tags: [feature-work, sdk, net10, windows, implementation-pending]
+tags: [feature-work, sdk, net10, windows]
 ---
 
 # Stable .NET 10 SDK selection — working notes
 
 Architect approved `../wintap/developer_docs/instructions/sdk-01-stable-dotnet-10-selection.md`
 on 2026-11-24; policy and tradeoffs are in [[wiki/decision/stable-dotnet-10-development-sdk]].
-Implementation and Windows verification are pending; afterward update current SDK gates
-and runtime-alignment guidance, retaining historical results.
-Linux packaging compatibility requires separate review because it shares `global.json`.
+Implementation is complete in Wintap: minimum 10.0.100, major-10 `latestMinor`
+roll-forward, and no prereleases. Current guidance records the selected stable SDK.
+macOS/Linux feature testing is complete; native Windows verification and Lintap's
+exact-SDK packaging qualification remain separate. Historical 10.0.402 results
+are dated evidence, not current Wintap development prerequisites.
 
 ## Related
 

@@ -47,9 +47,9 @@ recorded.
 | Priority | Item | State | Summary |
 | --- | --- | --- | --- |
 | P1 — High (provisional) | [[wiki/todo/linux-process-name-exe-fallback]] | Promoted | Source repair and focused qualification complete; bounded Linux name evidence passes 8/8, while affected-row lineage and historical disposition remain open. |
-| P1 — High | [[wiki/todo/linux-process-executable-attribution]] | Promoted | Sensor/projection distinguishes attempt/success and path evidence source; deterministic paired name/path and initial/latest successful-image DBT policy remain open. |
+| P1 — High | [[wiki/todo/linux-process-executable-attribution]] | Promoted | Bounded Linux capture and deterministic paired-row DBT selection complete; as-of/history, broader ambiguity and native Windows remain separate. |
 | P1 — High | [[wiki/todo/process-observation-time-separate-from-birth]] | Promoted | Linux Start/Refresh timing repair is accepted and `sfx-07` adds complete Stop occurrence metadata with 50/50 live checks; native Windows and full EventTime migration remain open. |
-| P1 — High | [[wiki/todo/lintap-linux-process-command-line-quality]] | Promoted | Bounded procfs provenance/status, truncation and child-only clone attribution pass Linux acceptance; immutable exec argv and deterministic DBT selection remain open. |
+| P1 — High | [[wiki/todo/lintap-linux-process-command-line-quality]] | Promoted | Bounded procfs quality and child-only clone attribution pass Linux acceptance; paired-row DBT selection complete, immutable exec argv remains separate. |
 | P1 — High (provisional) | [[wiki/diagnostic/duplicate-agent-id-and-os-family]] | Open | Replace hardcoded `windows` OS-family labels across canonical DBT models with platform-derived metadata and backward-compatible unknown handling. |
 | P2 — Medium (provisional) | [[wiki/todo/linux-nfs-process-network-attribution]] | Open | Qualify why Linux process contexts, including SSH, appear on a shared TCP tuple to the NFS host; distinguish causal I/O attribution from socket ownership. |
 | P2 — Medium | [[wiki/todo/canonical-process-owned-network-grains]] | Open | Reconcile documented process/network increment and connection grains; preserve metadata conflicts and process-observation semantics for reusable analytics. |
@@ -62,7 +62,7 @@ recorded.
 | P3 — Low | [[wiki/todo/smoke-dashboard-no-list-s3-discovery]] | Open | Evaluate a fixed-key object catalog or other bounded discovery contract so SmokeTests can operate with direct reads but no `s3:ListBucket`; another approved role is the temporary workaround. |
 | Untriaged | [[wiki/todo/raw-sensor-upload-time-partition]] | Implemented; endpoint verification pending | S3 now binds UTC upload-time keys with durable unresolved-attempt sidecars and exact-key HEAD validation; live endpoint qualification remains open. |
 | Untriaged | [[wiki/todo/listening-socket-capture-and-modeling]] | Open | Investigate process-attributed listening-socket lifecycle capture and a downstream model distinct from peer-oriented connections; priority and platform scope remain open. |
-| P1 — High | [[wiki/todo/test-suite-reorganization]] | Promoted | Phase 1 of [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]]; first draft checked, broader cleanup and fresh-capture iterations remain open. Preserve collection counts and review evidence before merging or archiving cases. |
+| P1 — High | [[wiki/todo/test-suite-reorganization]] | Promoted | App organization and bounded Linux capture iterations complete; broader cleanup/native Windows remain open. Preserve identities and evidence before merging or archiving cases. |
 | P1 — High | [[wiki/todo/periodic-process-refresh-listing]] | Promoted | Linux `live-02` accepts repaired periodic output with null monotonic timing across all Refresh rows; native Windows acceptance remains open. |
 
 ## Related

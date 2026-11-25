@@ -15,7 +15,7 @@ grounded_by:
   - ../Wintap/tests/Wintap.Tests/README.md
   - ../Wintap/devtools
 policy: agent-editable
-last_validated: 2026-11-23
+last_validated: 2026-11-25
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -33,7 +33,7 @@ first refactor should make purpose and execution boundary visible in the
 filesystem; stale or duplicative cases are reviewed only after that boundary is
 recorded.
 
-## Wintap Extension — Static-Checked First Draft
+## Wintap Extension — Current Platform Boundary
 
 On November 22 the human expanded this workflow to Wintap repository tests,
 requesting initial analysis/planning, not a filesystem change in that pass.
@@ -50,9 +50,10 @@ shared feature checkout. Five reviewed classes now have `TestKind=unit` and
 `Execution=synthetic` and reside under `Unit/Api`, `Unit/Shared`, and
 `Unit/Windows/File` / `Unit/Linux/File`. Existing `Category` tags, source bodies,
 fixture access, dependencies, and full-suite/CI selection are unchanged. The test
-README records partial inventory and focused Windows commands; actual build,
-discovery/filtering, and execution remain pending. Platform-project splitting
-remains a later human decision in
+README records partial inventory and focused Windows commands. macOS/Linux feature
+testing is complete and `Lintap.Tests` now exists; native Windows build,
+discovery/filtering and execution remain a separate gate. Broader platform ownership
+remains under review in
 [[wiki/tension/wintap-test-platform-boundaries]]. The Analytics/PyUtil inventory
 and historical verification below retain their original scope.
 <!-- GROUND_TRUTH: ../Wintap/tests/Wintap.Tests/Wintap.Tests.csproj; ../Wintap/tests/Wintap.Tests/README.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
@@ -72,12 +73,12 @@ they have shared relative-import dependents. Partial per-suite READMEs record
 counts, execution boundaries, and mixed coverage still awaiting separation.
 HostActivity passes 59 cases; PyUtil preserves 224 selected identities and passes
 17 representative cases. Full-suite defaults are unchanged; no assertions or
-historical evidence were removed. Remaining suite restructuring and dataset
-validation are open in
+historical evidence were removed. Bounded Linux capture/DBT validation is complete;
+remaining suite restructuring and native Windows acceptance are tracked in
 [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
 <!-- GROUND_TRUTH: streamlit/projects/HostActivity/tests/README.md; ../Wintap-PyUtil/tests/README.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
 
-The current tracked file inventory is 11 Analytics application test files, 10
+The November 22 tracked file inventory was 11 Analytics application test files, 10
 validation files, 14 feature-work files, 60 PyUtil main files, 20 compactor files,
 and seven DBT SQL files. No refreshed full-suite collection is claimed. The
 original snapshot below is retained as historical context, not today's baseline.
@@ -161,7 +162,7 @@ diagnostics. No project-root forwarding test modules remain.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract; streamlit/projects/SmokeTests/tests/transport; streamlit/projects/SmokeTests/tests/ui -->
 
 The Analytics moves should be mechanical first. Splitting a large file such as
-`HostActivity/tests/contract/test_host_activity.py` or `SmokeTests/test_analysis.py` is a
+`HostActivity/tests/contract/test_host_activity.py` or `SmokeTests/tests/contract/test_analysis.py` is a
 separate change because it changes imports and makes duplicate assertion review
 harder.
 
@@ -294,8 +295,8 @@ disposition.
 At minimum, the implementation should compare:
 
 - Analytics Streamlit project discovery and each validation-harness command;
-- PyUtil default pytest collection (currently 1,538 collected tests);
-- the isolated compactor project (currently 702 collected tests);
+- PyUtil default pytest collection (historical snapshot: 1,538 collected tests);
+- the isolated compactor project (historical snapshot: 702 collected tests);
 - the seven dbt SQL tests through the existing dbt command;
 - explicit native-Mac refusal/lifecycle controls on Linux and native-Mac
   qualification only on Darwin; and

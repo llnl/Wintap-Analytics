@@ -53,7 +53,7 @@ wall-clock time of the actual upload, rather than from event time or earlier
 local materialization time. A host returning after an outage is expected to
 publish locally cached event rows under the current upload-time partition.
 
-Current Wintap source does not establish that contract:
+Pre-fix source did not establish that contract:
 
 - `CacheManager.doMerge()` captures `DateTime.UtcNow` before the merge and passes
   that value to each merge operation.
@@ -98,16 +98,14 @@ may have reached S3 but the client did not receive a success response.
 5. Confirm downstream Wintappy raw scans discover the resulting partition and
    document any local-cache versus S3-path distinction.
 
-## Open Questions
+## Remaining Questions and Resolved Design
 
-- Does “actual upload time” mean attempt start, S3 acceptance/response time, or
-  another observable UTC instant?
+- Implemented time is UTC attempt binding; an inconclusive prior HEAD keeps the
+  exact key rather than creating a second object in a newer partition.
 - Must all uploader adapters share this rule, or is it specifically the S3
   destination contract?
-- Should the local cached path also change, or only the remote object key?
-- How should retries handle an ambiguous prior PUT so the data is not duplicated
-  under both the old and new partition?
-- Which exact Wintap/Lintap source branch and deployment path own the correction?
+- Only the remote S3 partition is rewritten; local cache/payload rows are unchanged.
+- Live endpoint/fault qualification and broader adapter policy remain open.
 
 ## Scope
 

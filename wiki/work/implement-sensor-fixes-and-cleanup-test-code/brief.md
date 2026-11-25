@@ -10,7 +10,7 @@ grounded_by:
   - wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan.md
   - streamlit/projects/SmokeTests/tests/README.md
 policy: agent-editable
-last_validated: 2026-11-23
+last_validated: 2026-11-25
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -41,8 +41,8 @@ as history.
 
 ## Problem
 
-Begin a phased workflow with the approved test-suite reorganization, followed by
-sensor fixes whose scope is still to be supplied.
+Organize tests in bounded slices and validate selected sensor/model fixes with
+independent fresh captures. Implemented scope and remaining gates are below.
 
 ## Original Phase 1 and Scope Expansion
 
@@ -83,9 +83,8 @@ Matching local branch: `feature/implement-sensor-fixes-and-cleanup-test-code`.
 | Wintap-PyUtil | `bab304c` — local `main` | Branch created; existing checkout left unchanged. |
 | Wintap | `a418aa4` — cached `origin/develop` | Branch created; existing checkout left unchanged. |
 
-These are local branch references only; no push was performed. Existing untracked
-work was left untouched. Lintap's supporting packaging repo has no new branch;
-add one only if later scope requires it.
+These are historical creation checkpoints, not current tips. Feature work has
+since been committed/pushed, including Lintap packaging. Preserve newer work.
 
 At TC-02 implementation start, the test session also switched PyUtil to its feature
 branch. At Wintap draft start, the human authorized sharing its feature checkout
@@ -100,8 +99,9 @@ in the implementation plan and verification page. The newly included
 `process_name` multiplicity issue continues
 [[wiki/todo/linux-process-executable-attribution]] inside this feature. Inclusion
 authorizes investigation, design, fixtures, and affected producer/downstream tests;
-it does not yet select an initial-versus-latest image policy, schema change,
-historical repair, or broad producer rewrite.
+the later approved paired-row selector prefers latest valid Refresh, otherwise
+latest successful exec, otherwise eligible fallback. Historical repair and broad
+producer rewrites remain separate.
 
 The first question is whether the reported rows share only an OS PID or also one
 birth-scoped `PidHash`. Multiple names can be valid raw observations when one
@@ -123,8 +123,7 @@ for the detailed slices, capture handoff, and validation loop, and
 
 ## Open Questions
 
-- For the newly included name issue, whether multiplicity occurs within one
-  `PidHash`, across PID reuse, or only after downstream aggregation.
+- Remaining ambiguity/non-image ANY_VALUE contracts beyond the completed Linux repair.
 - Whether a separate historical/as-of relation and ordered image history should be
   added; this is deferred after the current full-input paired-row projection.
 - Exact remaining sensor fixes, affected platforms, compatibility boundaries, and ordering.
@@ -135,24 +134,9 @@ for the detailed slices, capture handoff, and validation loop, and
 
 ## Next Step
 
-The Analytics/PyUtil first draft is checked, bounded Linux sensor acceptance is
-complete, and Windows acceptance remains separate. HostActivity passes 59
-destination tests; an approved isolated uv environment passes 17 PyUtil cases and
-preserves 224 selected identities. The read-only dataset helper passes its
-synthetic controls, and the first SmokeTests query/quality move preserves 34 cases.
-The second whole-file move adds 22 synthetic analysis/store cases, bringing the
-classified contract package to 56 passing cases. A third whole-file move adds 13
-mocked, transport-free S3 source contracts, bringing the package to 69 passing
-cases. A fourth whole-file move adds 11 durable producer/Parquet contracts,
-bringing the package to 80 passing cases. A fifth adds 5 unchanged page-query
-contracts, bringing the package to 85. The synthetic localhost HTTP case is now
-default-on with explicit environment opt-out. The final SmokeTests organization
-places that one case under `tests/transport`; the UI package under `tests/ui` now
-has 13 AppTest cases after adding sanitized remote-diagnostic coverage. The contract
-package now has 86 cases after adding hourly evidence-discovery coverage, and full
-discovery passes 100/100. Continue TC-06 with a separate
-validation/PyUtil/coordination slice.
-The existing RHEL path was only a one-time sample and will not receive raw files;
-its empty raw directory is not a gate. Continue later bounded cleanup slices under
-the implementation plan without inventing a replacement data requirement.
+Use [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]] for
+current closeout gates: native Windows, uploader endpoint/fault qualification,
+selected remaining organization and final review. macOS/Linux testing, bounded
+process capture/DBT repair and SmokeTests organization (100 cases) are complete.
+The empty one-time RHEL readiness sample is not a future data gate.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — do not retain the one-time RHEL sample as a raw-data gate. -->

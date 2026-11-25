@@ -23,8 +23,8 @@ for implementation).
 [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]]. The first draft
 moves HostActivity/configuration tests and marks PyUtil SQL contracts; broader
 reorganization and merge/archive decisions remain open.
-**Likely next step:** Iterate against the separate sensor session's fresh small
-captures, then expand the staged cleanup in bounded slices. See
+**Likely next step:** Select a remaining validation/PyUtil/coordination cleanup
+slice; app organization and bounded Linux capture iterations are complete. See
 [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]] and
 [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
 

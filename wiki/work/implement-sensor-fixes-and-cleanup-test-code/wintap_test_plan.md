@@ -23,7 +23,12 @@ tags: [feature-work, testing, xunit, iterative-development, implementation-plan]
 
 # Initial Plan: Wintap Test Cleanup
 
-## Approved First Draft and Deferred Gate
+## Current Boundary and Historical First Draft
+
+macOS/Linux feature testing and bounded Linux capture iterations are complete;
+`Lintap.Tests` now exists. Native Windows acceptance remains separate. The original
+first-cut procedure below is history, not a current static-only development limit.
+Use stable .NET 10 and record the actual SDK; see the current handoff for next gates.
 
 Start with inventory/traits and a five-file move **inside the existing Windows
 project**. Do not split assemblies, rewrite tests, alter dependencies, or select
@@ -31,7 +36,7 @@ sensor fixes in the first cut. The human approved implementation, then explicitl
 authorized a **static-checked draft with the Windows baseline deferred**, using
 the shared feature-branch checkout with the sensor worker. The five classes now
 have additive traits and are relocated; Windows runtime acceptance remains open.
-The feature checkout starts at `a418aa4`, refreshed from the initial `06849b4`
+The historical first-cut checkout started at `a418aa4`, refreshed from initial `06849b4`
 analysis. Do not confuse this static source baseline with managed test discovery.
 <!-- HUMAN-DECISION: conversation 2026-11-22 — proceed with implementation; defer the Windows baseline for a static draft and share the feature-branch worktree with the sensor worker. -->
 
@@ -74,7 +79,7 @@ Steps 2–5 and the runtime portion of step 7 were explicitly deferred, not pass
    analysis's `06849b4` source baseline against the intended feature revision.
    Do not switch their checkout, update branch refs, or fetch without coordination.
 2. On the agreed Windows runner, record revision/dirty state, SDK, configuration,
-   existing assets, and build command. Use SDK 10.0.402; a missing environment is
+   existing assets, and build command. Use a stable .NET 10 SDK; a missing environment is
    a blocker, not permission to upgrade packages or install tools.
 3. Build only the explicit test project with locked existing dependencies. If
    restore is needed, schedule a locked restore within the approved environment;
@@ -210,7 +215,8 @@ same small-round records and privacy rules as TC-03 through TC-05 in
 Ask the human to reconcile the accepted per-target convention with current shared
 and linked Linux tests before creating projects. Retaining the current assembly
 temporarily is the smallest first cut, not a reversal of that convention.
-If native Lintap/Mactap gates become needed, design only the required project and
+`Lintap.Tests` now exists and macOS/Linux feature testing is complete. Any further
+platform topology change must design only the required project and
 review compile/link ownership, Windows dependencies, internal visibility, copied
 assets, solution/CI inclusion, and locked restore. No empty sibling scaffolding.
 
@@ -229,7 +235,7 @@ authorized by this initial plan.
 - [ ] wtc-01/wtc-02 acceptance: actual Windows baseline/build/discovery/filtering
   and focused before/after runtime verification.
 - [ ] wtc-03: execution tiers and mixed/global-state cases reviewed in small rounds.
-- [ ] wtc-04: opt-in harness controls and first fresh-capture iteration recorded.
+- [x] wtc-04: opt-in harness controls and bounded Linux fresh-capture iterations recorded.
 - [ ] wtc-05: platform-project decision/evidence review only when needed.
 
 Wintap Developer audits stay in Wintap; sanitized cross-repo status is summarized

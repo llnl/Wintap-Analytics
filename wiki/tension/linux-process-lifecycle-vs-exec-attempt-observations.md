@@ -43,8 +43,9 @@ schema contract has been selected; cost and fidelity need live comparison.
 The bounded 2026-11-22 sensor slice preserves both raw Start rows while adding
 nullable `ExecutionObservationKind`: syscall entry is `exec_attempt`, and
 `sched_process_exec` is `exec_success`. This holds the distinction without
-resolving whether a future lifecycle API should split event types or which
-successful image a process-lifetime summary should represent.
+resolving whether a future lifecycle API should split event types. The later bounded
+DBT repair selects one paired image row (valid Refresh, successful exec, fallback);
+ordered history/as-of representation remains a separate follow-up.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §GetExecutionObservationKind, HandleEvent; ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md -->
 
 Research baseline and comparison plan:

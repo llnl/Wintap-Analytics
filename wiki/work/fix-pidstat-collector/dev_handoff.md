@@ -22,9 +22,9 @@ tags: [feature-work, handoff, pidstat, go, engineering-loop]
 ## New packaging plan — 2026-11-24
 
 **Completed follow-up:** arm64 default run and config-preserving reinstall pass;
-installed crash/restart recovery produces readable output. Six files total, 26,408
-rows; default-run subset four files/25,999 rows with 5s cadence and three rotation
-boundaries. Both development services stopped; package remains installed/enabled.
+installed crash/restart recovery produces readable 26-column output at default
+5s cadence across three rotation boundaries. Both development services stopped;
+package remains installed/enabled.
 Next qualification gaps: consumer/paired-live and other native platforms.
 
 Go payload/units/docs are integrated. Debian arm64 7.0.1~beta.2-1 remains installed
@@ -61,8 +61,8 @@ Do not treat a static cross-build as native runtime qualification.
 - Debian arm64 build, fresh install, enabled-without-autostart, direct Go startup,
   three 300s rotation boundaries at 5s cadence, SIGTERM seal, modified-config
   reinstall and SIGKILL/automatic-restart recovery tested.
-- Six files decode, 26,408 rows. Default-run subset: 25,999 rows/199 timestamps,
-  exact 26-column types/nulls/local partitions. This is not paired-live parity.
+- All outputs decode with exact 26-column types/nulls/local partitions and default
+  cadence. This is not paired-live parity.
 - Artifact `../artifacts/lintap-deb/lintap_7.0.1~beta.2-1_arm64.deb`, SHA-256
   `7822ae95ade46dda2369d80273564667deea10e89dcfe66d0bf18b767663ca62`.
   This build used `--skip-mcp`; MCP integration is not qualified by it.
@@ -152,7 +152,7 @@ source-aware local/S3 preflight, documented in
 compatibility workaround or canonical real-host DBT qualification.
 
 **Four-hour run completed and technically reviewed:** default5s/300s sensor-on
-`lintap-dev`,2026-10-31T05:18:50Z–09:18:50Z; all processes stopped cleanly.
+on a disposable Ubuntu arm64 VM; all processes stopped cleanly.
 49pidstat files/399312rows,2880uninterrupted5s sample times, exact26-column schema,
 80/80smoke generations, measured Go median0.47%one-coreCPU/~17MiB RSS. Read
 [[wiki/work/fix-pidstat-collector/soak_review]] and the latest verification entry.
@@ -177,7 +177,7 @@ current Build session. The following supplies the full scope if needed:
 > Implement the compatibility-preserving Go pidstat rewrite using
 > `wiki/work/fix-pidstat-collector/brief.md` and `implementation_plan.md`.
 > Read applicable repository instructions and `verification.md` first. The first
-> live target is the existing Multipass lintap-dev, Ubuntu arm64; do not recreate
+> live target is the existing disposable Multipass VM, Ubuntu arm64; do not recreate
 > it or infer RHEL 8 proof. Work only within the expressly approved Lintap collector,
 > build/test/package/docs scope plus Analytics wiki records. Preserve unrelated work,
 > services, environments and telemetry. Start with fpc-01: freeze actual Python

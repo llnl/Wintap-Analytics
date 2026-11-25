@@ -95,7 +95,7 @@ tags: [feature-work, references, raw_sensor, duckdb, s3, parquet]
   <!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/SmokeTests/s3_source.py §open_source/discover_files/object_identity -->
 
 - `../Wintap-Analytics/streamlit/projects/SmokeTests/tests/transport/test_s3_http.py`
-  - Opt-in loopback signed listing/range-read transport coverage; explicitly not
+  - Default-on, explicitly opt-out loopback signed listing/range-read coverage; not
     real Garage acceptance and not multipart-write evidence.
   <!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/SmokeTests/tests/transport/test_s3_http.py §HTTPSourceTest -->
 

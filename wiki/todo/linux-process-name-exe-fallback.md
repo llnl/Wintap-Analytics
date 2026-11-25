@@ -25,7 +25,7 @@ tags: [todo, priority, linux, process-events, data-quality, telemetry-semantics,
 **Priority:** P1 — High (provisional; the reported label obscures executable
 identity across many process records).
 **State:** Promoted — the source repair and synthetic/normal-ETL qualification are
-implemented in the uncommitted `sfx-01` candidate; bounded Linux `live-01` name
+implemented in the feature branch's `sfx-01` unit; bounded Linux `live-01` name
 evidence passed 8/8 multi-exec cases. Affected-row lineage and any historical
 repair remain open.
 **Likely next step:** Trace the reviewed DuckDB values through silver/bronze to raw
