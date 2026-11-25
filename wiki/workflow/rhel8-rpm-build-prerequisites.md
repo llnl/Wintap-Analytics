@@ -6,10 +6,12 @@ grounded_by:
   - ../Lintap/packaging/README.md
   - ../Lintap/packaging/lintap-rpm/build-rpm.sh
   - ../Lintap/packaging/dotnet-common.sh
+  - ../Lintap/packaging/install-build-go.sh
+  - ../Lintap/packaging/pidstat-common.sh
   - ../wintap/global.json
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile
 policy: agent-editable
-last_validated: 2026-10-26
+last_validated: 2026-11-25
 repo_scope: Lintap
 implementation_area: packaging
 event_domain: none
@@ -28,8 +30,8 @@ tools only; installing or starting the resulting sensor is a separate action.
 The current RPM builder requires a readable `/sys/kernel/btf/vmlinux` and
 validates the CO-RE `file_ops_tracer.bpf.o` payload. Use a native x86_64 host;
 do not use the script's cross-build option as a workaround. Historical RHEL 8
-notes naming .NET SDK 8 are obsolete: the current project requires SDK
-**10.0.402**.
+notes naming .NET SDK 8 are obsolete: the current project requires a stable
+**.NET 10 SDK** and packaging requires build-host **Go 1.27.3**.
 <!-- GROUND_TRUTH: ../Lintap/packaging/README.md §Supported targets; §Build prerequisites; §Build the RHEL 8 RPM; ../Lintap/packaging/lintap-rpm/build-rpm.sh §require_cmd; §expected_bpf_objects; ../wintap/global.json -->
 
 ## 1. Check the host and enabled repositories (read-only)
@@ -92,6 +94,32 @@ rpm --version
 identify the host target triple; `libbpf-devel` supplies the `<bpf/...>`
 headers included by the eBPF sources. The RPM builder compiles the tracer
 objects; it does not need to install or start the Lintap service.
+
+## Go build prerequisite — native RHEL 8 x86_64
+
+After download/software-installation approval, from the sibling checkout parent:
+
+```bash
+sudo bash Lintap/packaging/install-build-go.sh
+source /etc/profile.d/lintap-go.sh
+"$GO" version
+GOTOOLCHAIN=local "$GO" env GOVERSION GOHOSTOS GOHOSTARCH
+source Lintap/packaging/pidstat-common.sh
+lintap_require_pidstat_go
+```
+
+Expect `go1.27.3`, `linux`, `amd64`. The shared installer verifies official release
+metadata/archive checksum, installs under `/opt/lintap-go/1.27.3`, and does not
+replace system Go. It requires curl, CA trust, Python 3, tar/gzip and sha256sum.
+Go is build-host-only; do not add it as an installed RPM runtime dependency.
+Keep `GO` exported for the build; new login shells source its profile automatically.
+
+The distribution's `golang` package may not match the pin. Download/module-proxy
+failures are environment findings: fix approved CA/proxy setup or use verified
+cached inputs, never disable TLS or relax toolchain checks. User-local installation
+is documented in the canonical package guide. Native RHEL 8 execution of this
+new installer has not been verified by the agent; fake-download tests are not that proof.
+<!-- GROUND_TRUTH: ../Lintap/packaging/install-build-go.sh; ../Lintap/packaging/pidstat-common.sh; ../Lintap/packaging/lintap-rpm/README.md -->
 
 ## 3. Select a stable .NET 10 SDK
 

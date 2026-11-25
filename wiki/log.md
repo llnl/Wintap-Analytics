@@ -10158,3 +10158,12 @@ post-create SDK resolution. Focused installer/packaging/provisioning tests: 61
 passed; Bash syntax passes. Tests use fake downloads; live installation and
 PowerShell execution not qualified. No service operation. Human subsequently
 authorized commit/push of both prerequisite fixes and their wiki records.
+
+## [2026-11-25] docs | RHEL 8 Go build-host setup
+
+Added native x86_64 Go 1.27.3 setup/preflight to the RPM README and RHEL 8
+prerequisite workflow, including explicit GO selection, checksum verification,
+CA/proxy guidance and build-host/runtime separation. Corrected the workflow's
+remaining stale exact-.NET-SDK introduction. No remote host operation or native
+RHEL acceptance inferred. Human subsequently authorized commit/push of these
+documentation updates; whitespace checks pass.
