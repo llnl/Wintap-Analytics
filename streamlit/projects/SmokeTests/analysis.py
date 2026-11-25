@@ -196,9 +196,9 @@ def summarize(run, evaluation, context):
 
 
 def analyze_round(con, runs, all_runs, telemetry_files, host_files, data_root='', unlabelled_host='', padding=15,
-                  max_rows=100000, evidence_errors=(), fingerprint='', allow_hostname_aliases=True):
+                  max_rows=100000, memory_mb=4096, evidence_errors=(), fingerprint='', allow_hostname_aliases=True):
     con.execute("SET temp_directory=''")
-    con.execute("SET memory_limit='256MB'")
+    con.execute(f"SET memory_limit='{int(memory_mb)}MB'")
     con.execute("SET TimeZone='UTC'")
     receipts, receipt_errors = read_receipts(con, host_files)
     aliases = hostname_aliases(all_runs, receipts) if allow_hostname_aliases and not receipt_errors else {}

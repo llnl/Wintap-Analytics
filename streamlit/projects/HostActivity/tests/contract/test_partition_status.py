@@ -30,7 +30,7 @@ class FakePartitionClient:
 class PartitionStatusTests(unittest.TestCase):
     def setUp(self):
         spec = importlib.util.spec_from_file_location(
-            "partition_chart_test_main", Path(__file__).with_name("main.py")
+            "partition_chart_test_main", Path(__file__).resolve().parents[2] / "main.py"
         )
         self.dashboard = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(self.dashboard)

@@ -3,18 +3,18 @@ title: "Verification: smoke-test results dashboard"
 type: diagnostic
 confidence: medium
 grounded_by:
-  - streamlit/projects/SmokeTests/test_queries.py
-  - streamlit/projects/SmokeTests/test_app.py
+  - streamlit/projects/SmokeTests/tests/contract/test_queries.py
+  - streamlit/projects/SmokeTests/tests/ui/test_app.py
   - ../wintap/devtools/test_smoke_manifest.py
   - ../wintap/devtools/test_telemetry_smoke_workload.py
-  - streamlit/projects/SmokeTests/test_s3_source.py
-  - streamlit/projects/SmokeTests/test_s3_http.py
-  - streamlit/projects/SmokeTests/test_pages.py
+  - streamlit/projects/SmokeTests/tests/contract/test_s3_source.py
+  - streamlit/projects/SmokeTests/tests/transport/test_s3_http.py
+  - streamlit/projects/SmokeTests/tests/contract/test_pages.py
   - validation/telemetry-soak/test_canaries.py
   - validation/telemetry-soak/test_runner.py
-  - streamlit/projects/SmokeTests/test_analysis.py
+  - streamlit/projects/SmokeTests/tests/contract/test_analysis.py
 policy: agent-editable
-last_validated: 2026-10-25
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -189,21 +189,20 @@ Only finalized `.parquet` files are read, no writable dataset/DBT state opened.
 - Linux `test_telemetry_smoke_workload.py -v`: two tests pass after portability
   changes, including exported envelope and internal worker separation.
 - Nine modified smoke Python modules parse successfully.
-- Deliberately absent-data file-capture run returns failure (exit 2) and saves
-  `/home/ubuntu/dashboard-file-manifest.json` with exact path/PID/time selectors.
+- Deliberately absent-data file-capture run returns failure (exit 2) and retains
+  a private manifest with exact selectors.
 - Actual-object CO-RE Clone validation with new envelope passes 80 process/60
-  thread cases, no missing/duplicate/false births, parent errors or skips. Envelope
-  `/home/ubuntu/dashboard-clone-trace.json`; trace data at
-  `/home/ubuntu/clone-validation/dashboard-clone-trace`.
-- Fresh packaged normal-ETL capture completed on `lintap-clone-package`; two
+  thread cases, no missing/duplicate/false births, parent errors or skips.
+  Envelope and trace data remain in private evidence storage.
+- Fresh packaged normal-ETL capture completed on a disposable Ubuntu arm64 VM; two
   sequential workload manifests bundled independently with `raw_sensor`, transferred
   to Mac and queried using app code. **33 parquet files, two runs, no query errors.**
   Evidence in approved temp `dashboard-smoke-analysis/mac-query-report.json`.
-  Run `e7301101-0364-4708-ae1a-7f45e6f71d36` observes process Start/Stop, five
+  The ready-sensor run observes process Start/Stop, five
   FileOps activities, client TCP connect/send/recv/disconnect and UDP send/recv.
   Server TCP Accept and server UDP Receive are **not observed**; dashboard exposes
   these rather than claiming full network acceptance. Thread TID has no process row.
-  First run `30371dc3-6241-4bd1-aad6-201848c05fd4` ran before sensors were ready
+  The first run ran before sensors were ready
   (systemctl return is not attach readiness); no matching rows in any case. It
   remains separate, not backfilled with second-run telemetry. Service stopped.
   Streamlit AppTest renders transferred data on Mac: **36 tables**, two run choices,
@@ -221,31 +220,28 @@ Only finalized `.parquet` files are read, no writable dataset/DBT state opened.
   schema roundtrip, latest/reordered UTC partition revisions, multi-host copies,
   conflicting/hash/metadata rejection, partial arrival, severity/negative-companion
   checks, capability limitations, overview history/filter/navigation regressions.
-- `multipass exec lintap-clone-package -- /home/ubuntu/receipt-venv/bin/python
-  -m unittest discover -s /home/ubuntu/wintap/devtools -p 'test_smoke_manifest.py'
-  -v`: **4/4 pass**. Explicit/environment roots, opt-out, failure JSON/final outcome,
+- Explicit isolated VM Python ran `unittest discover -s <wintap-root>/devtools
+  -p 'test_smoke_manifest.py' -v`: **4/4 pass**. Roots, opt-out, failure JSON/final outcome,
   atomic lifecycle, UTC rollover and identical retry. Also pass on macOS.
 - Linux workload regression command with `-p 'test_telemetry_smoke_workload.py'`:
   **2/2 pass**. Named workload remains stdlib-capable; worker runs stay separate.
 - `py_compile` of app/query/producer/exporter passes; `git diff --check` passes
   in Analytics and Wintap. Unrelated dirty work preserved, no commits/pushes.
-- New temporary Multipass mount: Mac approved temp `durable-smoke-analysis` →
-  `/home/ubuntu/durable-smoke-analysis`. Installed package 104 launched directly
+- New temporary Multipass mount connects approved private analysis storage.
+  Installed package 104 launched directly
   with isolated data/runtime roots and 10/15-second ETL intervals, existing service
   left stopped/configuration unchanged. Two sequential named workloads generated
-  source-only JSON `/home/ubuntu/durable-run-{0,1}.json`; **no JSON transfer**.
+  source-only private JSON manifests; **no JSON transfer**.
 - Mac reads **23 telemetry + 6 evidence parquet files**, auto-discovers two final
-  runs `65309265-7cca-4fb8-9450-a68f8c727570` and
-  `c0688bc0-bedb-4e40-9d47-c11acd2dbc3a`. No manifest/query errors. AppTest renders
+  runs. No manifest/query errors. AppTest renders
   **37 tables**, two run choices and overview 0 red / 1 yellow / 0 green / 7 gray
   (latest per test/host). Capture app terminated cleanly, exit 0.
 - Both runs observe process Start/Stop, all five FileOps activities, client TCP/UDP
   and positive companion process capture with no named thread process row. Server
   TCP Accept and UDP Receive remain missing/yellow, not certified failures; optional
   native helper skipped and workload success is stimulus-only.
-- Evidence report: approved temp `durable-smoke-analysis/mac-durable-report.json`;
-  collector log/runtime on VM `/home/ubuntu/durable-smoke-collector.log` and
-  `/home/ubuntu/durable-smoke-runtime`. Temporary mount/data retained for viewing.
+- Analysis report, collector log/runtime and temporary mounted data remain in
+  operator-retained private storage.
 
 ## Remaining limits
 

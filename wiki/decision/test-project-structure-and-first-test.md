@@ -21,6 +21,22 @@ tags: [decision, wintap, tests, xunit, workflow]
 
 # Test Project Structure and First Test Target
 
+## Current Implementation Note — 2026-11-22
+
+The accepted decision and bootstrap rationale below are historical, not a current
+project descriptor. `WintapAPI` now targets .NET 10; `Wintap.Tests` now targets
+Windows-qualified .NET 10, references the Windows agent as anticipated, and links
+Linux helper/sensor sources. The deferred Lintap/Mactap test siblings still do
+not exist. This note does not supersede the accepted per-target convention.
+<!-- GROUND_TRUTH: ../Wintap/shared/WintapAPI/WintapAPI.csproj; ../Wintap/tests/Wintap.Tests/Wintap.Tests.csproj -->
+
+Current cleanup planning and the unresolved platform-ownership follow-up:
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]] and
+[[wiki/tension/wintap-test-platform-boundaries]].
+<!-- CONTRADICTION[soft]: bootstrap scope/TFM versus expanded current implementation; historical decision retained and current scope distinguished. -->
+
+## Historical Accepted Decision
+
 **Date:** 2026-06-30
 **Status:** Accepted
 

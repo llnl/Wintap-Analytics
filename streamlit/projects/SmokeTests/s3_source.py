@@ -7,7 +7,14 @@ from urllib.parse import urlsplit
 from queries import quote
 
 
-FIELDS = {"endpoint", "region", "datasets", "start_day", "end_day", "max_files", "extension_directory"}
+FIELDS = {"endpoint", "region", "datasets", "start_day", "end_day", "start_hour", "end_hour",
+          "max_files", "memory_mb", "extension_directory"}
+TELEMETRY_EVENTS = {
+    "process": "raw_process",
+    "file": "raw_process_file",
+    "network": "raw_process_conn_incr",
+    "host": "raw_host",
+}
 
 
 def day_range(start, end):
@@ -21,6 +28,25 @@ def day_range(start, end):
     if not 0 <= (last - first).days < 31:
         raise ValueError("Select an inclusive partition window of 1–31 days")
     return [(first + dt.timedelta(days=i)).strftime("%Y%m%d") for i in range((last - first).days + 1)]
+
+
+def hour_range(start, end):
+    """Inclusive UTC upload-partition hours; day values retain legacy full-day scope."""
+    if isinstance(start, str) and len(start) == 8:
+        start += "00"
+    if isinstance(end, str) and len(end) == 8:
+        end += "23"
+    try:
+        first = dt.datetime.strptime(start, "%Y%m%d%H").replace(tzinfo=dt.timezone.utc)
+        last = dt.datetime.strptime(end, "%Y%m%d%H").replace(tzinfo=dt.timezone.utc)
+        if first.strftime("%Y%m%d%H") != start or last.strftime("%Y%m%d%H") != end:
+            raise ValueError()
+    except (ValueError, TypeError):
+        raise ValueError("Partition hours must be YYYYMMDDHH") from None
+    count = int((last - first).total_seconds() // 3600)
+    if not 0 <= count < 31 * 24:
+        raise ValueError("Select an inclusive upload-partition window of 1–744 hours")
+    return [first + dt.timedelta(hours=i) for i in range(count + 1)]
 
 
 def dataset_parts(uri):
@@ -61,9 +87,12 @@ def load_config(path):
     region = value.get("region", "us-east-1")
     if not isinstance(region, str) or not region:
         raise ValueError("region must be a nonempty string")
-    maximum = value.get("max_files", 10000)
+    maximum = value.get("max_files", 20000)
     if isinstance(maximum, bool) or not isinstance(maximum, int) or not 1 <= maximum <= 100000:
         raise ValueError("max_files must be 1–100000")
+    memory_mb = value.get("memory_mb", 4096)
+    if isinstance(memory_mb, bool) or not isinstance(memory_mb, int) or not 256 <= memory_mb <= 8192:
+        raise ValueError("memory_mb must be 256–8192")
     extension_directory = value.get("extension_directory")
     if extension_directory is not None and (not isinstance(extension_directory, str) or not extension_directory):
         raise ValueError("extension_directory must be a nonempty local path")
@@ -71,7 +100,10 @@ def load_config(path):
     value.setdefault("start_day", (today - dt.timedelta(days=1)).strftime("%Y%m%d"))
     value.setdefault("end_day", today.strftime("%Y%m%d"))
     day_range(value["start_day"], value["end_day"])
-    return dict(value, region=region, max_files=maximum)
+    value.setdefault("start_hour", value["start_day"] + "00")
+    value.setdefault("end_hour", value["end_day"] + "23")
+    hour_range(value["start_hour"], value["end_hour"])
+    return dict(value, region=region, max_files=maximum, memory_mb=memory_mb)
 
 
 def open_source(config):
@@ -114,28 +146,37 @@ def open_source(config):
         raise RuntimeError("S3 connection setup failed. Check AWS credentials/profile, endpoint, TLS trust and cached httpfs extension locally; details suppressed to protect credentials.") from None
 
 
-def discover_files(client, config, start, end, snapshot=None):
-    """Paginated, partition-pruned listing; caps fail closed, never silently truncate."""
-    days = day_range(start, end)
+def _host_candidates(hosts):
+    return {str(host).lower().split('.', 1)[0] for host in hosts or () if str(host)}
+
+
+def _matches_host(name, candidates):
+    separators = [position for delimiter in ('+', '=') if (position := name.find(delimiter)) >= 0]
+    return bool(separators) and name[:min(separators)].split('.', 1)[0] in candidates
+
+
+def _discover_events(client, config, start, end, events, snapshot=None, hosts=None):
+    """List exact event/hour prefixes; caps fail closed, never silently truncate."""
+    hours = hour_range(start, end)
+    host_candidates = _host_candidates(hosts)
     files = set()
     try:
         paginator = client.get_paginator("list_objects_v2")
         for uri in config["datasets"]:
             bucket, root = dataset_parts(uri)
-            events = set()
-            for page in paginator.paginate(Bucket=bucket, Prefix=root, Delimiter="/"):
-                events.update(p["Prefix"] for p in page.get("CommonPrefixes", []))
-                if len(events) > 100:
-                    raise ValueError("Too many event prefixes; narrow the dataset root")
             for event in sorted(events):
-                if not event.startswith(root) or event.count("/") != root.count("/") + 1:
-                    raise ValueError("Unexpected S3 event prefix")
-                for day in days:
-                    partition = event + "dayPK=" + day + "/"
+                if event not in TELEMETRY_EVENTS.values() and event != "raw_smoke_test":
+                    raise ValueError("Unsupported S3 event prefix")
+                for hour in hours:
+                    partition = (root + event + "/dayPK=" + hour.strftime("%Y%m%d") +
+                                 "/hourPK=" + hour.strftime("%H") + "/")
                     for page in paginator.paginate(Bucket=bucket, Prefix=partition):
                         for item in page.get("Contents", []):
                             key = item["Key"]
                             if not key.startswith(partition) or not key.endswith(".parquet"):
+                                continue
+                            name = key.rsplit('/', 1)[-1].lower()
+                            if host_candidates and not _matches_host(name, host_candidates):
                                 continue
                             if any(c in key for c in "*?[]\\"):
                                 raise ValueError("S3 keys contain unsupported wildcard characters")
@@ -148,8 +189,30 @@ def discover_files(client, config, start, end, snapshot=None):
         raise
     except Exception:
         raise RuntimeError("S3 listing failed; check read/list permissions, connectivity and endpoint. Details suppressed to protect credentials.") from None
-    evidence = sorted(p for p in files if "/raw_smoke_test/" in p)
-    telemetry = sorted(files - set(evidence))
+    return sorted(files)
+
+
+def discover_evidence_files(client, config, start, end, snapshot=None):
+    """List only portable smoke evidence; ordinary telemetry remains deferred."""
+    return _discover_events(client, config, start, end, {"raw_smoke_test"}, snapshot)
+
+
+def discover_telemetry_files(client, config, start, end, domains=None, snapshot=None, hosts=None):
+    """List only canonical event families needed by an explicit validation."""
+    domains = set(TELEMETRY_EVENTS if domains is None else domains)
+    unknown = domains - set(TELEMETRY_EVENTS)
+    if unknown:
+        raise ValueError("Unsupported telemetry domain")
+    events = {TELEMETRY_EVENTS[domain] for domain in domains}
+    return _discover_events(client, config, start, end, events, snapshot, hosts)
+
+
+def discover_files(client, config, start, end, snapshot=None):
+    """Compatibility helper for callers explicitly requesting evidence and telemetry."""
+    evidence = discover_evidence_files(client, config, start, end, snapshot)
+    telemetry = discover_telemetry_files(client, config, start, end, snapshot=snapshot)
+    if len(evidence) + len(telemetry) > config["max_files"]:
+        raise ValueError("S3 file limit exceeded; narrow the partition window or increase max_files")
     return evidence, telemetry
 
 

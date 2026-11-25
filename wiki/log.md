@@ -5,6 +5,72 @@ Query: `grep "^## \[" log.md | tail -10`
 
 ---
 
+## [2026-11-24] approval | Stable .NET 10 development SDK selection
+
+Architect approved Wintap `developer_docs/instructions/sdk-01-stable-dotnet-10-selection.md`;
+see [[wiki/decision/stable-dotnet-10-development-sdk]]. Implementation and Windows
+verification are pending; Linux packaging compatibility requires separate review.
+
+## [2026-11-24] code/verification | Hour-pruned lazy SmokeTests S3 discovery
+
+Changed remote SmokeTests startup to list only `raw_smoke_test` evidence under exact
+UTC `dayPK`/`hourPK` prefixes. Ordinary telemetry discovery is now deferred to an
+explicit selected-run or all-canary validation and restricted to selector-relevant
+canonical event families. Synthetic execution passes 100/100. A live configured
+read-only check resolved credentials, loaded nine evidence objects into three runs
+without warnings, and rendered the default AppTest page with no exception or UI
+error; no identifiers or object names were retained. Target operator interaction
+then exposed a 10,000-file validation-listing cap before any telemetry read. The
+private config was raised to 20,000 and narrowed to an evidence-adjacent upload-hour
+window. Manifest-host filename filtering reduced the live selected-run read set from
+about 5,900 to 635 objects. Schema preparation completed without errors; configurable
+4 GB in-memory materialization then evaluated 17 cases as yellow, while lower budgets
+failed closed. Checked-in defaults are now 20,000 files and 4 GB with disk spill
+disabled. Operator UI confirmation remains pending.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §hour_range/§discover_evidence_files/§discover_telemetry_files; streamlit/projects/SmokeTests/main.py §main; streamlit/projects/SmokeTests/page_views.py §test_page; streamlit/projects/SmokeTests/batch_views.py §canary_batch_page -->
+
+## [2026-11-24] todo | Smoke dashboard discovery without S3 list permission
+
+Added a P3 intake note for strict no-list SmokeTests operation. Current remote
+discovery uses `ListObjectsV2` on configured prefixes and therefore needs
+`s3:ListBucket`, though it does not enumerate account buckets. The note records a
+predictable fixed-key catalog as the leading no-list candidate, prefix-scoped
+listing and external catalogs as alternatives, and another approved role as the
+temporary workaround. No implementation or IAM change is authorized.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/s3_source.py §discover_files/§discover_host_files; streamlit/projects/SmokeTests/result_store.py §location -->
+
+## [2026-11-24] code/docs | staged SmokeTests remote diagnostics
+
+Replaced SmokeTests' catch-all remote-source message with sanitized stage/category
+diagnostics for connection setup, listing, evidence loading and dashboard rendering.
+Added UI regressions that preserve fail-closed behavior and prove private exception
+text is not rendered. Documented requirements-only uv use, explicit Python 3.13,
+Windows PowerShell launch, EC2 instance-profile credentials and regional AWS S3
+endpoints. Focused UI passes 13/13 and the full SmokeTests package passes 99/99;
+target-system rerun remains pending.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/main.py; streamlit/projects/SmokeTests/tests/ui/test_app.py; streamlit/projects/SmokeTests/README.md -->
+
+## [2026-11-24] code/verification | S3 upload-time UTC partition binding
+
+Implemented the approved shared .NET S3 upload correction on the current Wintap
+feature branch. S3 keys now use the UTC upload-attempt partition rather than the
+stale filename/local partition; unresolved attempts persist an atomic sidecar and
+validate the exact key with metadata-aware HEAD checks before rebinding after an
+authoritative miss. Startup now retains finalized `raw_sensor` files and removes
+only orphaned sidecars, preserving restart retryability. The Lintap build passed
+with 0 errors and the focused S3 tests passed 8/8 using the available .NET 10 SDK.
+No live S3 or source dataset was used; endpoint qualification remains open.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs; ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs; ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs; ../wintap/wintap/core/etl/load/CacheManager.cs; ../wintap/tests/Wintap.Tests/S3UploadAttemptBindingTests.cs -->
+
+## [2026-11-22] docs | clarify named telemetry smoke entry point
+
+Revalidated the named telemetry smoke instructions against current Wintap source and
+the Analytics canary adapter. Clarified that the one-shot entry point is Wintap's
+`devtools/telemetry_smoke_workload.py`, not an Analytics-local or
+`telemetry_smoke_test.py` script, and added an early checkout/revision preflight.
+No collector, workload source, deployment, or live data was changed.
+<!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py; validation/telemetry-soak/canary-stimulus.py -->
+
 ## [2026-11-19] code/verification | direct raw-only DBT route
 
 Added and committed `657a37c` in `../Wintap-PyUtil`: an explicit
@@ -9220,3 +9286,900 @@ stopped before any S3 request, DBT execution, publication, deletion or ledger
 operation. Later scope synchronization deferred Mac DBT in favor of the Linux-only
 tranche; this was preparation evidence, not native-Mac qualification.
 <!-- SOURCE: Native-Mac worker checkout/runtime preparation and private configuration key-inventory review, conversation 2026-11-17. -->
+
+## [2026-11-22] feature-start | sensor fixes and test cleanup workflow stub
+
+Created [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]] at human
+request. Phase 1 follows the approved Analytics/PyUtil test reorganization plan;
+Wintap .NET test restructuring is excluded from that phase. Another session will
+supply sensor-fix scope and remaining workflow details. Created matching local
+`feature/implement-sensor-fixes-and-cleanup-test-code` branches in Analytics,
+PyUtil, and Wintap, and switched only Analytics. Existing work and sibling
+checkouts were preserved. No test moves, code changes, live verification, commit,
+or push were performed.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — approved-plan-only Phase 1; create a stub for another session to populate. -->
+
+## [2026-11-22] code/verification | iterative test-cleanup first cut
+
+Expanded [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]]
+for the human's iterative loop: lightweight test drafts, separate small sensor
+changes/captures, explicit dataset checks, repairs/refinement, and repetition.
+Relocated three HostActivity modules intact under `tests/contract/` and PyUtil
+configuration under `tests/unit/config/`; added partial inventories, discovery
+commands, and PyUtil unit/contract markers. Updated current wiki source citations
+and promoted the maintenance TODO; historical commands/results remain intact.
+HostActivity passes 59 cases before/after; PyUtil passes 17 representative cases
+before/after and preserves all 224 selected identities (4 unit/220 contract).
+Exact source comparison confirms unchanged assertion/fixture bodies. No full-suite,
+compactor, live-S3, sensor, or fresh-dataset acceptance is claimed. Both test repos
+are on their feature branches; no commit/push or dependency update was performed.
+Results and next capture handoff:
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/tests/README.md; ../Wintap-PyUtil/tests/README.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-22] analysis/plan | Wintap test-cleanup extension
+
+The human expanded the workflow to Wintap tests and requested initial analysis
+and planning. Added
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis]] and
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]]:
+63 C# files in one Windows-qualified project, seven Python control files, mixed
+source/native/global-state boundaries, and a proposed additive-trait/five-file
+move with an actual Windows baseline still required. Corrected combined-attribute
+scan finds 26 files without Category; static method/theory figures are not runs.
+Updated workflow scope, verification boundary, overview, index, and the historical
+bootstrap ADR's current-implementation note. Created
+[[wiki/tension/wintap-test-platform-boundaries]]; recorded the soft historical/current
+scope distinction without superseding the accepted per-target convention.
+Wintap checkout and branch refs remained unchanged; no source/test edits, restores,
+builds, test runs, native workloads, data access, commits, or pushes were performed.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — include Wintap repo tests; prepare initial analysis and plan. -->
+<!-- GROUND_TRUTH: ../Wintap/tests/Wintap.Tests/Wintap.Tests.csproj; ../Wintap/devtools; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-22] handoff | Wintap TODO review and Linux continuation
+
+Created [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]]
+at human request, preserving the nine reviewed Wintap-related TODOs in the existing
+iterative feature folder. Added destination/transfer checks for uncommitted test
+work, source ownership, the Windows-qualified managed-test boundary, and the
+human-approved small-unit/fresh-capture loop. Updated the master index. No first
+sensor fix was selected; no source, tests, branches, deployments, or telemetry
+datasets were changed, and no build/test/capture, commit, or push was performed.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — retain the reviewed list and prepare a dev_handoff.md before moving to Linux. -->
+
+## [2026-11-22] code/static-verification | Wintap first-slice test cleanup
+
+The human approved implementation, explicitly deferred the unavailable Windows
+baseline for a static draft, and authorized sharing Wintap's feature checkout with
+the sensor worker. Switched its clean checkout to the existing feature branch at
+`a418aa4`; added unit/synthetic class traits, five approved mechanical moves, a
+partial test README, and two local git-ignored static audits. Exact source comparison confirms
+unchanged assertions/fixtures/names/data/historical Categories; the emission
+consumer and all 58 unmoved C# files remain byte-identical. The 63-file inventory
+and all 33 frozen build/dependency/CI inputs are preserved; XML/JSON/path and diff
+checks pass. The 77 classified/84 focused figures remain lexical expectations.
+Updated workflow checklists, current path citations, overview and index.
+Only SDK 8.0.122 is available on this Mac; no restore, build, discovery, managed
+execution, sensor change, dataset read, commit, or push occurred. Windows runtime
+acceptance and fresh-capture validation remain pending in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
+<!-- HUMAN-DECISION: conversation 2026-11-22 — implement the static draft and share the feature checkout; defer Windows runtime acceptance. -->
+<!-- GROUND_TRUTH: ../Wintap/tests/Wintap.Tests/README.md; ../Wintap/developer_docs/audits/wtc-01-first-slice-labels.md; ../Wintap/developer_docs/audits/wtc-02-five-mechanical-moves.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-22] commit/verification | test cleanup and Linux handoff checkpoint
+
+The human authorized committing both sessions' feature work across Analytics,
+Wintap, and PyUtil, excluding unrelated local binary/log/config artifacts. Wintap
+test cleanup is committed as `123bd70`; PyUtil cleanup as `564ec43`; the Analytics
+test moves, wiki work, and Linux handoff accompany this entry in their feature
+commit. Fresh lightweight reruns pass 59 HostActivity and 17 representative PyUtil
+cases. Staged whitespace, exact Wintap source-body preservation, wiki frontmatter/
+links, and privacy checks pass. Updated the handoff's transfer checkpoint and
+verification record. No push, sensor change, deployment, or capture occurred;
+Windows runtime acceptance remains pending. Git-ignored Wintap audits still need
+separate transfer.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — commit all feature changes, including the other session's refactors; leave unrelated local artifacts out. -->
+
+## [2026-11-22] review/handoff | committed cleanup and new-system continuation
+
+Reviewed Analytics `0f8b414`, Wintap `123bd70`, and PyUtil `564ec43` through
+read-only git history/diffs/status and the existing workflow records. The commits
+preserve the expected cleanup; no sensor fix, capture, or Windows runtime proof
+was added. Reused and updated
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]] rather than
+creating a duplicate: exact revision table, separate test/sensor resume prompts,
+bounded checks, missing private-temporary evidence, and shared-worker boundaries.
+No cached remote ref contains the commits; actual remote/destination availability
+is unverified without a network check. Wintap is clean; unrelated local artifacts
+in Analytics/PyUtil remain untouched. New handoff changes require transfer too.
+Updated the index; no source/test edits, builds/reruns, data reads, branch changes,
+commits, pushes, or tool installations were performed in this review.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — review recent commits and prepare any needed handoff for continuing on another system. -->
+
+## [2026-11-22] commit/publication | new-system handoff follow-up
+
+The human authorized committing and pushing the feature work. Published Wintap
+`123bd70` and PyUtil `564ec43` on their matching feature branches, with upstreams
+set to origin. A stale GitHub credential-helper executable blocked the first
+attempts; the existing authenticated helper succeeded via a per-command override,
+without changing persistent Git configuration. This entry and the updated handoff/
+index accompany the Analytics follow-up commit; its publication result is reported
+after the commit/push completes. Previously excluded local binary/log/config
+artifacts and git-ignored Wintap audits remain untouched. No test/source change,
+build/test rerun, collector, capture, dependency installation, or force-push.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — commit and push all feature changes. -->
+
+## [2026-11-22] plan/verification | Linux test continuation and existing-data readiness
+
+Updated [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]]
+with a bounded Linux tranche: destination regression checks, a proposed explicit
+read-only dataset smoke helper with synthetic negative controls, next small test
+cleanup, and later fresh-capture validation. Destination HostActivity passes 59
+tests; Wintap's stdlib parser controls pass 7. Existing RHEL dataset DB opens
+read-only with DuckDB 1.5.6 (24 catalog objects, one empty bounded base-table sample,
+unchanged file metadata); local raw directory is empty. PyUtil's executable is
+unavailable and Windows managed acceptance remains deferred. Recorded scoped
+evidence and updated the index. No code/test edits, dataset repair, DBT/S3/collector,
+installation, branch change, commit or push.
+Updated the brief and handoff next steps to distinguish permitted existing-data
+readiness checks from the still-required fresh-capture correctness gate.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — prepare a test-engineering implementation plan; allow no-heroics existing-data smoke while waiting for the sensor engineer. -->
+
+## [2026-11-22] environment | uv Python readiness follow-up
+
+uv 0.13.5 finds compatible installed Python 3.12.15/3.11.13. The documented offline
+no-sync PyUtil launch selects 3.12 but fails on permission denial while attempting
+to recreate its unusable `.venv`. Separate no-project interpreter probes work but
+lack the required test dependencies. Updated the plan/verification: propose a
+separately approved isolated locked environment, not repair/removal of the old one.
+No dependency install/download, permission change, test run, dataset access or
+tracked PyUtil change.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — try uv for Python. -->
+
+## [2026-11-22] environment/verification | isolated uv PyUtil gate passes
+
+Human-approved isolated Python 3.12.15 uv environment uses cached locked
+dependencies, without project installation or lockfile changes. Copy-based setup
+failed on root disk space; removed only this session's partial temporary venv and
+retried with cache symlinks (small footprint). An initial temporary checker rootdir
+error was retained and corrected without test edits. PyUtil now passes 17
+representative cases and preserves 224 pre/post collected identities, with a
+disjoint 4 unit / 220 contract partition. Five source bodies match their originals;
+all 375 checked inputs remain unchanged. Closed the selected Linux gate and updated
+plan/verification, brief, handoff and index. No dataset access, source/test changes,
+broader suite, DBT/S3, commit or push; old `.venv` received no further repair.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — approve isolated uv environment and bounded tests. -->
+
+## [2026-11-22] review | Streamlit app focus, duplication and maintenance
+
+Created [[wiki/tool/streamlit-app-review]] from Analytics `e6ff8ed` app/page/helper
+sources, dependency/configuration files, tracked-path/symlink checks and scoped
+history. Five app entry points: HostActivity availability, SmokeTests validation,
+DataQA lifecycle/DLL QA, EDA process/network graphs, CALDERA report hierarchy.
+Confirmed identical DataQA/EDA shell files, incomplete dependency recipes, EDA
+logo mismatch and unwired controls, unused DLL prototype and CALDERA launch/default
+path discrepancy. Shared helpers/symlinks are not duplicate copies or missing pages.
+Recommended reviewing legacy-shell consolidation while preserving unique research
+functions; age is not abandonment evidence. Updated repo/pipeline/workflow scope,
+both modern dashboard cross-links and index. Clarified the older broad Streamlit
+dependency framing; no hard contradiction or new retirement decision. Existing
+DBT/stdview compatibility tension remains open. No app launch, dataset/S3 access,
+dependency installation, test rerun, source/app deletion, commit or push.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — review Streamlit apps and summarize focus, duplication and possible staleness. -->
+
+## [2026-11-22] feasibility/intake | process occurrence time versus canonical birth
+
+Added [[wiki/todo/process-observation-time-separate-from-birth]] at human request
+and linked it from both indexes, executable-attribution and periodic-Refresh
+intakes. Source review confirms existing exec/clone kernel nanoseconds, birth-time
+Start/Refresh envelopes, ETL's EventTime/StartTime conflation and missing receive
+propagation, resolver creation-time dependence, PyUtil's eventtime-derived birth,
+and null-first numeric schema risk. Recommend a bounded additive preservation
+slice for the first batch; defer full EventTime semantic migration to coordinated
+resolver/ETL/consumer work. Field contracts, implementation approval and live
+qualification remain open. No timestamp/source/test change, build/test rerun,
+collector/workload, dataset access, commit or push occurred in this review;
+existing sensor-name and separate test/wiki work are preserved.
+<!-- HUMAN-REQUESTED: conversation 2026-11-22 — retain finest occurrence timing independently of coarse birth/hash; assess first-batch feasibility or preserve in backlog. -->
+
+## [2026-11-22] code/verification | first sensor-fix batch source candidate
+
+The uncommitted Wintap candidate now combines the `sfx-01` Linux executable-name
+repair with additive observation timing and UTC-aligned periodic process Refresh
+on Linux and Windows. Birth `EventTime`, resolver behavior and `PID_HASH` remain
+unchanged; exec/clone retain raw kernel nanoseconds, failed conversion leaves UTC
+absent, and Refresh records userspace UTC scan start. Normal/direct Parquet carry
+the new fields with stable nullable numeric schema. The scheduler defaults to
+hourly `HH:05`, skips missed ticks/overlaps and waits for active inventory during
+shutdown; Windows periodic inventory never performs startup reconciliation.
+
+Focused Linux/synthetic tests pass **63/63** after preserved 60/3 and 62/1 repair
+runs. The new Windows periodic synthetic case passes **1/1** on Linux. Locked
+non-incremental Release builds pass with zero errors (Linux 173 warnings; Windows
+cross-build 87). A broader Linux-hosted Windows run is explicitly non-acceptance
+evidence at 103/13; native Windows and bounded live capture remain pending. Full
+diff/privacy review and `git diff --check` pass. Updated the feature plan and
+verification, process semantics, three promoted TODOs and indexes; added the local
+Wintap `sfx-02` audit. No collector, BPF attachment, live workload/data read,
+commit or push occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md; ../wintap/wintap/core/infrastructure/PeriodicProcessRefreshScheduler.cs; ../wintap/shared/WintapAPI/WintapMessage.cs -->
+
+## [2026-11-22] live/repair-verification | first sensor-fix Linux gate
+
+Recorded the separately authorized bounded `live-01` process-only gate. Rundown,
+exec and clone registered; two periodic inventories began; capture and graceful
+shutdown completed with no gate-owned process left. All 8/8 multi-exec cases passed
+stable birth/hash/run scope, complete UTC/raw timing, strict observation ordering
+and executable-derived-name checks. Three stable-process Refresh rows retained
+one identity and three UTC scan observations, but one absent monotonic value became
+numeric `0` in a kernel-led direct-Parquet batch.
+
+Retained `live-01` as immutable defect evidence. The narrow direct projection and
+prefixed nullable-schema repair passes 8/8 observation tests, 65/65 expanded
+Linux/synthetic tests, and a non-incremental Release build with zero errors. Updated
+the Wintap audit, feature verification/checklist, canonical process semantics,
+promoted TODOs and indexes. A separately authorized operator-assisted `live-02`
+must prove null output from the repaired binary; native Windows also remains open.
+Raw telemetry and identifiers remain outside Git. No network, S3, DBT, commit or
+push occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md; ../wintap/wintap/core/etl/load/DirectParquetSink.cs; ../wintap/wintap/core/etl/load/ParquetWriter.cs; ../wintap/tests/Lintap.Tests/ProcessObservationTimingTests.cs -->
+
+## [2026-11-22] live/acceptance | repaired sensor-fix Linux gate
+
+Completed the separately authorized process-only `live-02` with the repaired
+Release binary. Rundown, exec and clone registered; two UTC-aligned periodic
+inventories completed; graceful shutdown left no gate-owned process. All 18/18
+aggregate acceptance checks pass. The stable anchor retains one birth/hash/run
+scope and three scan observations with null—not zero—monotonic timing; all six
+multi-exec summaries remain 8/8.
+
+Across the capture, all 1,312 Refresh rows have userspace UTC and null monotonic
+timing, while all 4,988 Start rows have UTC plus nonzero kernel monotonic timing.
+Both timing fields are optional `INT64`/`BIGINT` in all 124 Parquet files. No
+unfinished/zero-byte output, error/fatal/drop/backlog entry, or artifact hash
+change was found. Additional process-isolated stress passes total 1,300/1,300
+Linux/synthetic executions and 30/30 Linux-hosted Windows periodic synthetic
+executions. `live-01` remains immutable defect evidence; bounded Linux acceptance
+is complete and native Windows remains open. Raw telemetry and identifiers remain
+outside Git. No network, S3, DBT, commit or push occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-02-process-observation-refresh.md; ../wintap/wintap/core/etl/load/DirectParquetSink.cs; ../wintap/wintap/core/etl/load/ParquetWriter.cs -->
+
+## [2026-11-22] implementation/verification | bounded dataset readiness smoke
+
+Implemented TC-LNX-02 under `validation/dataset-smoke/`: an explicit local-only
+CLI, synthetic controls and usage/budget documentation. The helper independently
+reports raw and database readiness; rejects remote/escaping/missing paths and WAL;
+bounds discovery, files, rows, catalog, memory, threads and query time; opens the
+database read-only with external/automatic extension access and spill disabled;
+and never executes stored views/macros or emits names, paths, rows, SQL or exception
+details.
+
+All **18/18** synthetic controls pass with DuckDB 1.5.6. The authorized snapshot
+reports raw `empty` with zero files and all three preferred families missing, while
+the database reports `readable` with 24 catalog objects, 14 base tables and five
+constant sample rows from one table. Database size, mtime and hash are unchanged.
+Real raw-Parquet readiness remains open; no completeness, DBT, parity, quality or
+historical-repair claim is made. Private evidence stays under `/data`. No network,
+S3, DBT, deployment, dependency installation, dataset mutation, commit or push
+occurred.
+<!-- GROUND_TRUTH: validation/dataset-smoke/smoke_dataset.py; validation/dataset-smoke/test_smoke_dataset.py; validation/dataset-smoke/README.md -->
+
+## [2026-11-22] refactor/verification | SmokeTests query-quality slice
+
+Moved the two complete offline SmokeTests query/quality modules into a discoverable
+`tests/contract/` package and documented the focused inventory/command. All 34/34
+selected cases pass before and after (2.920/2.629 seconds); all 34 normalized
+identities match with no duplicates. SHA-256 comparison confirms both test bodies
+and `queries.py` are byte-for-byte unchanged, and focused legacy root discovery
+finds every moved case exactly once without forwarding copies.
+
+Used an existing DuckDB-capable interpreter for this dependency-light selected
+slice only; no SmokeTests environment was provisioned and no project-wide suite was
+claimed. Analysis, persistence, S3, HTTP and Streamlit app/page tests remain at the
+project root. No network, private dataset, collector, S3, DBT, dependency install,
+assertion change, commit or push occurred.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_queries.py; streamlit/projects/SmokeTests/tests/contract/test_quality.py -->
+
+## [2026-11-22] decision/scope | existing RHEL sample is not a gate
+
+The human clarified that the existing RHEL sample directory was supplied strictly
+to bootstrap readiness implementation and will not be updated. Its empty raw
+directory is therefore a completed observation, not a blocker or future
+raw-Parquet acceptance gate. The generic opt-in helper and synthetic controls
+remain useful for separately authorized datasets, but this workflow must not wait
+for files to appear in the sample path or invent a replacement dataset requirement.
+
+Updated the feature brief, implementation checklist, verification, handoff and
+index accordingly. This does not change the accepted `live-02` Linux sensor result,
+authorize another data source, or make a completeness/DBT/parity claim.
+<!-- HUMAN-DECISION: conversation 2026-11-22 — the one-time RHEL sample will not be updated and is not a gate. -->
+
+## [2026-11-22] refactor/verification | SmokeTests analysis-store slice
+
+Moved the complete synthetic round-analysis/summary-store module into the
+SmokeTests `tests/contract/` package. Its 22/22 cases pass before and after
+(1.882/1.759 seconds); all normalized identities match with no duplicates, and
+the moved test plus five immediate source/import files are byte-for-byte unchanged.
+The complete classified contract package now passes **56/56** in 3.032 seconds.
+
+Focused legacy root discovery finds the moved module exactly once. The cross-repo
+durable producer contract, S3 source/HTTP tests and Streamlit app/page tests remain
+at the project root. No network, live S3, collector, private dataset, producer,
+DBT, dependency installation, assertion change, commit or push occurred.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_analysis.py -->
+
+## [2026-11-22] refactor/verification | SmokeTests synthetic S3-source slice
+
+Moved the complete 13-case synthetic S3 configuration/listing/source module into
+the SmokeTests `tests/contract/` package and changed the analysis module's helper
+import to its package-relative path. The selected module passes 13/13 before and
+after (2.561/1.893 seconds); normalized identities match without duplicates, the
+moved test is byte-identical, and four supporting source files are unchanged.
+The full classified package passes **69/69** in 3.487 seconds.
+
+The opt-in HTTP variable was explicitly unset, and legacy root discovery finds
+the moved cases exactly once. No HTTP test, network request, live S3, AWS profile,
+private dataset, collector, durable-producer test, DBT, dependency installation,
+assertion change or push occurred. Private hashes and logs remain under `/data`.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract/test_s3_source.py; streamlit/projects/SmokeTests/tests/contract/test_analysis.py -->
+
+## [2026-11-22] implementation/acceptance | Linux command-line provenance
+
+Completed bounded `sfx-03`: Linux process rows add procfs command-line source and
+capture status, reads stop at 256 KiB with complete-argument truncation, and clone
+never substitutes parent text for child data. Focused tests pass 6/6, the combined
+sensor-fix suite passes 71/71, and the non-incremental Release build has zero errors.
+
+The isolated process-only gate passes 28/28 aggregate assertions across 5,937 rows
+and 113 files. All eight repeated-exec cases retain captured space-bearing values
+for both image stages; all 24 cleared-argv children remain empty with no parent
+sentinel. Existing birth/hash/name/path and Start/Refresh observation timing remain
+valid. One first-batch file omitted the older nullable `Process_Arguments` column,
+so source-specific ordering is available for 7/8 cases; all new fields and image
+ordering remain 8/8. Structured argv, successful-exec correlation, DBT selection,
+historical repair and native Windows acceptance remain open. Raw telemetry and
+identifiers stay outside Git. Wintap committed the implementation locally as
+`2d304d1`; no network, S3, DBT, install, deployment or push occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md; ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs -->
+
+## [2026-11-22] implementation/acceptance | Linux exec observation semantics
+
+Completed bounded `sfx-04`: process exec rows add nullable
+`ExecutionObservationKind`; syscall entry is `exec_attempt`, and
+`sched_process_exec` is `exec_success`. Existing Start, identity, executable
+evidence, command-line quality, timing and source breadcrumbs remain unchanged.
+
+Focused tests pass 7/7, combined sensor fixes pass 78/78, and the non-incremental
+Release build has zero errors. The process-only gate passes 26/26 assertions over
+5,938 rows and 98 files. All eight repeated-exec cases have one null fork, two
+attempts and two successes with exact stage/path pairing and strict ordering; all
+24 fork-only children and all Refresh rows remain null. The optional field is
+present in every file, including null-first batches. Raw identifiers remain
+outside Git; no network, S3, DBT, dependency installation, deployment, historical
+mutation or Windows acceptance occurred. Wintap committed the implementation
+locally as `e93c77b`; nothing was pushed.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md; ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs -->
+
+## [2026-11-22] implementation/acceptance | Linux executable-path evidence source
+
+Completed bounded `sfx-05`: Linux process rows add nullable
+`ExecutablePathSource` while retaining the selected path and name. The vocabulary
+distinguishes exec-event filename, own procfs executable, clone's inherited parent
+procfs executable, and unavailable evidence. Existing identity, timing,
+command-line and exec-kind semantics remain unchanged.
+
+Focused tests pass 5/5, combined sensor fixes pass 83/83, and the non-incremental
+Release build has zero errors. The process-only gate passes 37/37 assertions over
+5,960 rows and 109 files. All 2,967 exec rows use event-filename evidence; clone
+and Refresh rows have valid own-procfs, parent-procfs or unavailable labels. All
+eight repeated-exec and 24 fork-only controls pass, and the optional field is
+present in every file. Raw identifiers remain outside Git; no network, S3, DBT,
+dependency installation, deployment, historical mutation, Windows acceptance or
+push occurred. Wintap committed the implementation locally as `54ddf07`.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md; ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs -->
+
+## [2026-11-22] implementation/acceptance | Linux exit-code capture status
+
+Completed bounded `sfx-06`: Linux Stop rows add nullable
+`ExitCodeCaptureStatus` without changing numeric `ExitCode`. CO-RE reports
+`kernel-wait-status`; fallback placeholder zero reports `unavailable`. Normal and
+direct Stop projections retain the field, including null-first direct schemas.
+
+Focused tests pass 5/5, combined sensor fixes pass 88/88, and the non-incremental
+Release build has zero errors. Failed `live-01` remains immutable evidence of
+1,686 absent-resolver callback errors; the narrow null-safe lookup repair preserves
+initialized-resolver behavior. Interrupted `live-02` produced 1,066 classified
+Stops without runtime errors. Final `live-03` passes 43/43 assertions over 3,430
+rows and 39 files: all 574 Stops are `kernel-wait-status`, matching Exit tier
+`core`, while non-Stops remain null. All repeated-exec and fork-only controls pass.
+Raw identifiers remain outside Git; no BPF, network, S3, DBT, dependency install,
+deployment, historical mutation, Windows acceptance or push occurred. Wintap
+committed the implementation locally as `fde5a56`.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-06-linux-exit-code-status.md; ../wintap/tests/Lintap.Tests/ProcessExitCodeCaptureStatusTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs; ../wintap/wintap/core/infrastructure/EventChannel.cs -->
+
+## [2026-11-22] implementation/acceptance | Linux Stop observation timing
+
+Completed bounded `sfx-07`: Linux Exit retains its existing kernel occurrence
+timestamp as raw monotonic, UTC FILETIME, clock-domain and run-scope metadata.
+Normal Stop ETL now carries those fields and envelope `ReceiveTime`; direct Parquet
+already retains the nested values. Stop `EventTime`, identity, resolver/parent
+behavior, exit semantics, BPF and Start/Refresh behavior remain unchanged.
+
+Focused tests pass 4/4, combined sensor fixes pass 92/92, and the non-incremental
+Release build has zero errors. The process-only gate passes 50/50 assertions over
+3,634 rows and 47 files. All 625 Stops have positive complete timing, one run
+scope, receipt after observation, and exact converted-time agreement with
+`EventTime`; all prior repeated-exec and fork-only controls pass. Raw identifiers
+remain outside Git; no BPF, network, S3, DBT, dependency installation, deployment,
+historical mutation, Windows acceptance or push occurred. Wintap committed the
+implementation locally as `45939db`.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-07-linux-stop-observation-timing.md; ../wintap/tests/Lintap.Tests/ProcessExitObservationTimingTests.cs; ../wintap/wintap/platform/linux/sensor/ebpf/ExitSensor.cs; ../wintap/wintap/core/etl/extract/ProcessStopSerializer.cs -->
+
+## [2026-11-22] investigation/decision | canonical five-tuple connection identity
+
+Found no duplicate-port call in available Wintap v7 history: it has passed distinct
+low/high ports since its recorded 2024 import. Later tracing found the 2024 ACME4
+PyUtil workaround describes unsorted source/destination ID inputs and rebuilds the
+ID from persisted endpoint columns. That can repair a bad producer ID when those
+columns are correct, but cannot recover an endpoint already overwritten there;
+the absent ACME4 producer build leaves that narrower historical question open.
+Current Wintap and temporary PyUtil
+DBT behavior agree on endpoint-pair ordering, reversal, and tuple sensitivity but
+differ in exact identity: Wintap's legacy nested hash includes dotted strings and
+private gateways and can hash incomplete/default input; DBT uses canonical JSON
+over protocol plus numeric endpoint pairs and returns null for incomplete tuples.
+
+Recorded the human-selected DBT behavior as the exact Wintap producer target and
+documented the coordinated rekey consequence. Direct SDK 10.0.402 C# vectors and
+DBT contract SQL passed; exact IDs differ. The Linux Wintap xUnit attempt stopped
+at its Windows assembly boundary, and the unavailable PyUtil pytest environment
+was not replaced. Private evidence remains under `/data`; no source/schema,
+dependency, historical data, network, S3, deployment, native Windows acceptance,
+commit or push occurred. Corrected relevant `../Wintappy` citations to the live
+`../Wintap-PyUtil` checkout path.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs; ../wintap/wintap/core/etl/transform/IdGenerator.cs -->
+<!-- HISTORICAL: removed temporary PyUtil implementation is retained in commits 189da24 and 0e2c7eb. -->
+
+## [2026-11-23] decision/refinement | semantic CONN_ID and sole .NET authority
+
+Human owner clarified that canonical `ConnId` is a semantic contract, not DBT's
+exact JSON preimage: hardcoded context `llnl` plus protocol and two whole IP/port
+endpoint pairs, normalized so opposite send/receive, opposite-host sensor and
+same-host client/server perspectives fuse to one ID. Context retains the future
+network-space namespace hook. Legacy .NET nesting and extra fixed strings may
+remain because deterministic format is an implementation detail.
+
+The end state has exactly one generator in Wintap .NET; DBT and legacy PyUtil
+`rawutil` must stop rehashing and consume producer `connid` after semantic
+qualification. Opened
+[[wiki/tension/private-gateway-connection-identity]] because current gateway lookup
+is host-local and can populate opposite endpoint slots on opposite sensors, which
+may conflict with cross-host fusion. Updated the ADR, diagnostics, network/concept/
+repo pages, feature plan/verification, queue and index. No source, schema, data,
+dependency, deployment or test artifact changed.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/wintap/core/etl/transform/LoHi5Tuple.cs; ../wintap/wintap/core/etl/transform/IdGenerator.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql -->
+
+## [2026-11-23] implementation/verification | sole .NET CONN_ID authority
+
+Implemented the authorized first round across Wintap and Wintap-PyUtil. Wintap
+retains context, whole-endpoint ordering and its legacy nested preimage. Ordinary
+default gateways remain recorded metadata but no longer affect `ConnId`; loopback
+retains host scoping. New source-linked vectors cover opposite sensors, gateway
+independence, loopback reversal/host separation, context and every five-tuple
+field; direct SDK 10.0.402 compilation/execution passes 32/32 cases.
+
+PyUtil silver DBT and legacy raw views now preserve producer `connid`. Removed the
+temporary DBT macro/exact-output contract and legacy scalar-list hash. Focused
+model/raw-view/consumer tests pass 86/86; classified SQL contracts plus new raw-
+view tests pass 222/222. The two new raw-view tests are marked `unit`, bringing
+the documented catalog to 226 cases (6 unit + 220 contract). Static
+single-authority and Python compile checks pass. The accepted ADR and held tension
+retain explicit human-review notices.
+
+Follow-up DBT qualification added producer IDs to the synthetic Parquet fixture
+and a real local build regression. All 11 selected on-run operations, bronze/
+silver models and DBT tests pass, and the materialized table preserves both
+synthetic producer IDs exactly. The broader compacted-input file passes 8 runnable
+tests with its separately guarded destructive migration test skipped. Testing used
+an existing DBT environment and fresh `/data` fixture; no sync, installation,
+source-data or S3 access occurred. The initial `dbt --version` probe was not
+network-isolated and may have made DBT's standard package-version metadata check;
+the build itself was local with anonymous telemetry disabled.
+
+Normal xUnit remains blocked on Linux by Windows targeting and stale net8 assets;
+no restore/install was performed. Four unrelated config tests could not collect
+because the reused environment lacks `dynaconf`. Evidence is under
+`/data/lintap-compactor/sensor-fixes/conn-id-single-authority-20261123/`. No
+deployment, historical mutation, source-data/S3 access, native Windows acceptance
+or push occurred. Milestone commits were created locally after these gates.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md; ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/wintappy/datautils/rawutil.py; ../Wintap-PyUtil/tests/test_network_activity_sql.py; ../Wintap-PyUtil/tests/test_rawutil_conn_id_passthrough.py; ../Wintap-PyUtil/tests/test_compacted_inputs.py -->
+
+## [2026-11-23] implementation/verification | hostname/public CONN_ID context
+
+Refined sole .NET connection identity after human approval. `Transformer` now
+uses the observing hostname as context when the host-oriented local IPv4 is in RFC
+1122 loopback space and literal `public` otherwise. Both gateway preimage slots are
+empty; gateways remain emitted metadata. The existing `llnl` context remains for
+non-connection identities. This intentionally rekeys all connection IDs.
+
+The pre-change source-linked run failed the new exact-context assertion as
+expected. The changed production/test sources compile directly with SDK 10.0.402
+and pass 33/33 endpoint-normalization cases. Focused PyUtil passthrough contracts
+pass 78/78, and all 11 selected real-DBT nodes preserve producer IDs without
+rehashing. DBT qualification for this round is complete. By human direction,
+native Windows testing is deferred rather than eliminated, and release uses a
+clean cutover to newly collected data with no legacy migration or mixed-data
+compatibility requirement. Evidence is under the approved `/data` evidence root;
+no dependency installation, S3/source-data access, push or historical mutation
+occurred.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md; ../wintap/wintap/core/etl/transform/Transformer.cs; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/tests/test_compacted_inputs.py -->
+
+## [2026-11-23] implementation/verification | TC-06 durable SmokeTests slice
+
+Moved the complete 11-case durable producer/Parquet contract into the classified
+SmokeTests contract package. Only the live producer-helper parent depth and three
+dependent package imports changed; test bodies, identities, assertions, fixtures,
+production sources, dependencies and default discovery remain unchanged.
+
+The focused module passes 11/11 before and after with identical normalized
+identities. The contract package grows from 69/69 to 80/80 passing cases, and
+project-root discovery finds all 11 moved identities exactly once among 98 cases.
+Opt-in loopback HTTP and Streamlit UI tests were discovered but not executed. No
+network, S3, private dataset, collector, dependency installation, commit or push
+occurred. Evidence and checksums are retained under the approved `/data` root.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/contract/test_durable.py; streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/ui/test_app.py; streamlit/projects/SmokeTests/tests/transport/test_s3_http.py; streamlit/projects/SmokeTests/tests/contract/test_s3_source.py -->
+
+## [2026-11-23] implementation/verification | TC-06 page-query and localhost default
+
+Moved the unchanged 5-case page-query/materialization module into the classified
+SmokeTests contract package. The focused module passes 5/5 before and after with
+identical identities; the package grows from 80/80 to 85/85, and project discovery
+finds each moved case exactly once.
+
+By human direction, the synthetic loopback HTTP test now runs when
+`SMOKE_S3_HTTP_TEST` is unset and accepts `0`, `false`, `no`, or `off` as explicit
+case-insensitive opt-outs. The default localhost case passes 1/1; the opt-out is
+discovered and skipped; full default project execution passes 98/98. The test stays
+read-only and loopback-only and does not claim external S3, Garage, TLS,
+authorization, or multi-host acceptance. No dependency installation, external
+network/private-data access, collector, deployment, historical mutation, commit,
+or push occurred.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — make SMOKE_S3_HTTP_TEST default true with explicit opt-out. -->
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/transport/test_s3_http.py; streamlit/projects/SmokeTests/tests/contract/test_pages.py; streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/README.md -->
+
+## [2026-11-23] implementation/verification | TC-06 SmokeTests transport/UI completion
+
+Created milestone commit `7056bed` for the durable/page-query/default-localhost
+work, then completed the remaining SmokeTests mechanical organization. The
+byte-identical one-case localhost test moved to `tests/transport`; default execution
+passes and explicit opt-out still skips. The 12-case AppTest module moved to
+`tests/ui` with only three equivalent project-main path-depth adjustments.
+
+Transport passes 1/1 before and after, UI passes 12/12 before and after, contracts
+remain 85/85, and full default project execution remains 98/98. Every moved
+identity is discovered exactly once under its new module, and no forwarding test
+files remain at the project root. No external network/S3/private-data access,
+dependency installation, collector, deployment, historical mutation, or push
+occurred. Broader TC-06 validation/PyUtil/coordination organization remains open.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/contract; streamlit/projects/SmokeTests/tests/transport/test_s3_http.py; streamlit/projects/SmokeTests/tests/ui/test_app.py; streamlit/projects/SmokeTests/tests/README.md -->
+
+## [2026-11-23] scope | include same-PID process-name multiplicity
+
+The human added the latest multiple-`process_name`/same-PID issue to the active
+sensor-fixes and test-cleanup feature. Updated the brief, implementation plan,
+handoff, executable-attribution intake and index. The bounded investigation first
+separates PID reuse across `PidHash` values from repeated image observations within
+one process lifetime, then measures attempt/success ordering and PyUtil's arbitrary
+independent name/path selection. No representative initial/latest-image policy,
+schema/model implementation, historical repair, data access or source change was
+authorized or performed.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — include the latest multiple-name/same-PID issue in the current feature scope. -->
+
+## [2026-11-23] plan | Refresh evidence in process-name multiplicity work
+
+Started a detailed implementation plan for the multiple-`process_name`/same-PID
+issue. The plan treats a matching periodic Refresh as a candidate strong source for
+the image observable at that scan time, while preserving birth identity, exec-event
+semantics and historical transition evidence. It sequences source/schema inventory,
+aggregate measurement, repeated-exec/PID-reuse/Refresh fixtures, read-only candidate
+views, human policy review, and only then a bounded DBT or producer change. No source,
+schema, DBT, dataset, or historical data was changed.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs; ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql -->
+
+## [2026-11-23] plan | prevalence and recurring-cause feedback loop
+
+Extended the process-name multiplicity plan to distinguish raw observation volume
+from independent lifetime, PID-group, host-day, host, and recurring-cause prevalence.
+Added concentration measures, per-host/day caps, leave-one-out checks, versioned
+signature clustering, stratified human labels, baseline/candidate shadow runs, and
+held-out validation. A recurring wrapper pattern can now be recognized as one
+concentrated cause without allowing it to define generality or self-tune the model.
+No source, schema, DBT, dataset, or historical data was changed.
+<!-- HUMAN-REQUESTED: conversation 2026-11-23 — learn from multi-host/multi-day data and use a controlled feedback loop where helpful. -->
+
+## [2026-11-23] plan | column-specific ANY_VALUE resolution
+
+Extended the process-name plan to audit every affected `any_value` use by column
+contract rather than banning the function globally. The plan distinguishes proven
+invariant-safe shortcuts, conflict-visible metadata, and ordering-sensitive paired
+features. It adds distinct-value/null-pattern QA, explicit retained-use regression
+contracts, and replacement requirements for process name/path and other changing
+fields. Duplicate identical values are not treated as semantic conflicts.
+<!-- HUMAN-REQUESTED: conversation 2026-11-23 — resolve ANY_VALUE according to the specific column/feature contract. -->
+
+## [2026-11-23] audit | ANY_VALUE source inventory
+
+Ran a read-only inventory at PyUtil revision `4085747`. Excluding generated
+`wintap_dbt/target/` SQL, the source tree contains 73 textual `any_value` matches
+across 14 files: 71 executable calls and two comments. Recorded preliminary
+process/host/network/file/registry/image-load/SELinux classifications and defined
+fixtures for equivalent duplicates, null handling, conflicts, paired name/path,
+failed exec eligibility, Refresh as-of selection, and ambiguous temporal attribution
+in [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/any-value-audit]]. No
+PyUtil SQL, tests, dataset, or historical data was changed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models; ../Wintap-PyUtil/wintappy/datautils/rawtostdview.sql -->
+
+The focused baseline test command was attempted through the documented offline
+environment path but could not start: system Python lacks `pytest`, and the existing
+offline environment failed closed on a permissions error. This is an environment
+blocker, not a test result; no dependency installation or environment repair was
+performed.
+
+## [2026-11-23] verification | ANY_VALUE synthetic contract slice
+
+With explicit approval, replaced the stale PyUtil virtual environment using the
+locked development dependencies and added six synthetic in-memory DuckDB contract
+tests in `../Wintap-PyUtil/tests/test_any_value_contract_sql.py`. They cover invariant
+shortcuts, duplicate/null handling, visible conflicts, paired name/path selection,
+failed-attempt exclusion, and Refresh as-of selection. The combined focused suite
+passed **31 tests with one pre-existing skip**; the expanded selected contract suite
+passed **226/226**; Black and compilation checks passed. No live data, collector,
+deployment, historical data, or production SQL was changed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/tests/test_any_value_contract_sql.py; ../Wintap-PyUtil/pyproject.toml -->
+
+## [2026-11-23] finding | Linux-primary multiple-name behavior
+
+Promoted the platform boundary to a top-level finding: Linux repeated `exec` can
+legitimately produce multiple image observations under one `PidHash`, while normal
+Windows process creation has no equivalent image-replacement lifecycle. Windows is
+therefore a negative control for stable Refresh values and distinct PID-reuse hashes;
+same-hash name changes should first be investigated as identity, snapshot/enrichment,
+replay, deduplication, or other data-quality anomalies.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs -->
+
+## [2026-11-23] preparation | bounded Linux executable-attribution capture
+
+Extended `../wintap/devtools/telemetry_smoke_workload.py` with optional repeated
+rounds, same-PID multi-successful-exec stages with changing argument tokens, a
+failed-exec-attempt then successful-exec case, and a long-lived Refresh candidate.
+The portable manifest now records execution-stage expectations and Refresh candidates.
+The recommended first real cycle is approximately ten minutes: nine rounds at
+60-second spacing with a 600-second Refresh candidate, using a one-minute Lintap
+process Refresh interval. The Wintap workload regression passes **2/2** under
+Python 3.12; the host default Python 3.6 cannot run the existing test suite's
+`capture_output` option. No Lintap process has been started and no telemetry or DBT
+data has been read or changed.
+<!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py; ../wintap/devtools/test_telemetry_smoke_workload.py -->
+
+The matching Wintap build was prepared with the pinned SDK 10.0.402 under the
+approved `/data/lintap-compactor` evidence root: **0 errors / 174 warnings**. The
+fresh config and `Lintap.dll`/Linux eBPF objects are retained there. Privileged
+collector launch remains with the operator; no Lintap process has been started.
+<!-- GROUND_TRUTH: ../wintap/global.json; ../wintap/wintap/Lintap.csproj; ../wintap/wintap/Makefile -->
+
+## [2026-11-23] verification | finalized Linux repeated-exec capture and DBT audit
+
+Completed the bounded sanitized Linux capture `linux-exec-20261123`: nine rounds,
+19/19 targeted PIDs matched, clean Ctrl-C shutdown, zero serializer drops/backlog/
+Parquet failures, and independent raw evidence for repeated exec, failed attempts and
+Refresh. The raw process scan contained 21,931 rows across 5,807 `PidHash` groups;
+prevalence and concentration counts are recorded in the feature verification page.
+
+The isolated DBT build passed 139/139 nodes. The downstream process projection does
+not yet satisfy the required deterministic paired-row policy: exact latest eligible
+tuple agreement was 3/9 repeated-exec, 7/9 failed-attempt, and 1/1 Refresh cohorts;
+one failed-attempt path was selected by `any_value`. The finding requires a bounded
+deterministic DBT repair, while native Windows negative-control acceptance remains
+open. No source, schema, production or historical data was changed, and no hostnames,
+account names, IP addresses or raw identifiers were persisted here.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/tests/test_any_value_contract_sql.py; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-23] verification | deterministic paired-row prototype
+
+Ran a read-only DuckDB prototype against the isolated finalized capture. A selector
+that excludes `exec_attempt`, prefers latest valid Refresh, falls back to latest
+successful exec, and projects name/path/arguments from one ranked row selected all
+19 targeted cohorts correctly, selected no failed attempts, and remained stable across
+10 randomized source-order runs. The prototype is recorded as design qualification;
+production DBT still needs as-of, tie/ambiguity, non-image-field and regression-test
+contracts. No source or production model was changed.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/tests/test_any_value_contract_sql.py; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-23] implementation | deterministic PyUtil process-image projection
+
+With explicit authorization, changed PyUtil staging and silver DBT models to select
+process name, arguments and path from one deterministic eligible observation row.
+Failed attempts are excluded; latest valid Refresh wins, then latest successful exec,
+with explicit fallback and selected-row timing/role fields. Nullable staging defaults
+preserve older raw Parquet schemas. Focused contracts pass **32/32 with one existing
+skip** and the isolated finalized capture build passes **139/139**. No production or
+historical data was changed; native Windows qualification remains open.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_raw_process.sql; ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; ../Wintap-PyUtil/tests/test_compacted_inputs.py -->
+
+## [2026-11-23] disposition | Linux repeated-exec tranche
+
+Reviewed the remaining Linux scope. The bounded Linux capture, producer evidence,
+failed-attempt exclusion, paired-row PyUtil projection, legacy-schema compatibility,
+and focused/isolated validation are complete. No required Linux implementation
+remains for this tranche. Structured argv/eBPF argv, syscall-result correlation, BPF
+truncation, historical repair, and an explicit as-of relation remain separate future
+follow-ups; native Windows validation remains deferred.
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-23] fix/verification | Multipass recovery and Debian arm64 build
+
+Recovered a fresh Ubuntu arm64 development VM after the Bash launcher timed out in
+`uv` dependency retrieval and then wedged while printing failure diagnostics.
+Standard pip completed the same pinned guest-native environment immediately; the
+full dependency gate passed. Updated the Lintap Bash launcher to use bounded pip
+network retries, avoid recursive ownership changes on the host-mounted data tree,
+and bound cloud-init diagnostic commands. Focused packaging/provisioning tests pass
+26/26; Bash syntax and diff checks pass. Built and structurally inspected the native
+arm64 self-contained `7.0.1~beta.1-1` Debian package: required native dependencies,
+12 eBPF objects, metadata, payload and maintainer scripts passed; SHA-256 is recorded
+in the feature verification. The optional .NET diagnostic-provider soname warning
+remains. No package installation, service start or runtime capture is claimed.
+<!-- GROUND_TRUTH: ../Lintap/multipass-lintap.sh; ../Lintap/tests/test_multipass_provisioning.py; ../Lintap/multipass-check-dev.sh; ../Lintap/packaging/lintap-deb/build-deb.sh; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## [2026-11-23] todo | unify Lintap runtime and ETL configuration
+
+Added a P2 provisional intake item to replace the operator-facing `lintap.env` and
+`ETLConfig.json` split with one canonical configuration. The item requires an
+explicit ownership and precedence contract, migration of existing local values,
+and Debian/RPM plus applicable Windows installer behavior that does not silently
+overwrite administrator configuration. Recorded that Debian conffile and RPM
+`%config(noreplace)` semantics already protect `lintap.env`, while the
+assembly-adjacent ETL JSON remains ordinary application payload. Updated the TODO
+queue, main index, and agent instructions so future TODO requests use the existing
+intake structure rather than a parallel backlog.
+<!-- GROUND_TRUTH: wiki/todo/unify-lintap-runtime-and-etl-configuration.md; ../wintap/wintap/core/shared/ConfigManager.cs; ../wintap/wintap/core/etl/shared/Utilities.cs; ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/lintap-rpm/build-rpm.sh -->
+
+## [2026-11-24] plan | replace packaged Python pidstat with Go
+
+Added a packaging continuation to the existing fix-pidstat-collector feature rather
+than duplicating the rewrite. Current package branch lacks the Go module; inspected
+local topic ref contains the checkpoint with explicit `--collect` mode. Plan covers
+source integration, static architecture-matched binaries, Debian/RPM payload and
+service changes, active/inactive upgrade handoff, preserved configuration/spools,
+rollback and isolated consumer/native-platform qualification. Updated feature plan,
+handoff, verification and main index. No source, branches, packages or services changed;
+historical acceptance and qualification gaps remain explicit.
+<!-- GROUND_TRUTH: wiki/work/fix-pidstat-collector/packaging_plan.md; ../Lintap/packaging/lintap-deb/build-deb.sh; ../Lintap/packaging/lintap-rpm/build-rpm.sh -->
+
+## [2026-11-24] integration | bring Go pidstat develop checkpoint into feature
+
+Human requested develop integration before package replacement. Fetched Lintap refs,
+confirmed `053b2b5` contains the Go module, and merged into the current feature branch
+as `b988aa3` without conflicts. Fifteen Go module files added; package/provisioning
+changes preserved. Existing focused regressions pass 26/26 and merge diff check passes.
+No host Go on PATH, so no fresh Go test/build pass claimed. Updated package plan,
+handoff and verification. Merge remains local/unpushed; no package/service work run.
+<!-- GROUND_TRUTH: wiki/work/fix-pidstat-collector/verification.md; ../Lintap/pidstat-go/Makefile -->
+
+## [2026-11-24] todo | direct DBT hostname filtering
+
+Added a P3 low-priority intake item for case-insensitive hostname selection based
+on raw Parquet filenames in `make dbt-build-direct`. The item records the shared
+DBT path/preflight and PIDSTAT scan points, legacy/new filename delimiter handling,
+the compacted-shard provenance boundary, the direct-target prerequisite caveat,
+and tests required before implementation. No PyUtil source, DBT model, dataset, or
+S3 object was changed.
+<!-- GROUND_TRUTH: wiki/todo/dbt-direct-hostname-filter.md; ../Wintap-PyUtil/Makefile; ../Wintap-PyUtil/wintap_dbt/macros/paths.sql; ../Wintap-PyUtil/wintap_dbt/macros/relations.sql; ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql; ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_pidstat_metrics.sql -->
+
+## [2026-11-24] implementation | Go pidstat release build checkpoint
+
+Authorized continuation adds a build-host release helper and 16 focused regressions
+in Lintap. Verified Go 1.27.3: 27 Go tests, vet/module checks, arm64/amd64 builds
+and static ELF inspection pass; combined package/provisioning regressions pass 42/42.
+Recorded setup/preflight failures and recovery in feature verification. Package
+payloads/services remain Python; no install, service operation, commit/push or fresh
+runtime/consumer qualification claimed.
+<!-- GROUND_TRUTH: ../Lintap/packaging/pidstat-common.sh; ../Lintap/tests/test_pidstat_packaging.py; wiki/work/fix-pidstat-collector/verification.md -->
+
+## [2026-11-24] scope | greenfield Go pidstat deployment
+
+Human confirms no existing deployment footprint. Simplified package plan to fresh
+installation/direct Go startup and Go restart/recovery; removed legacy Python
+upgrade handoff, package downgrade and mixed-installed-base qualification gates.
+Config protections and telemetry/runtime/consumer checks remain. Updated plan,
+handoff, verification and navigation; no source or service changes in this correction.
+
+## [2026-11-24] implementation | Go pidstat package integration and arm64 startup
+
+Human authorized development-VM build/install/service tests and deferred other
+platforms. Both builders/units/env/docs now use Go; 45 focused regressions pass.
+Repaired initial module-path error; guest proxy timeouts bypassed using verified
+offline module cache. Debian arm64 beta.2 artifact installed after resolving existing
+declared LTTng dependency; enabled without autostart, then direct Go start passes.
+27 native Go tests/vet/module checks pass. Default rotation run ongoing; output,
+restart and consumer gates pending. Host Python oracle tests expose three platform
+failures; guest full reference setup blocked by dependency download. No source
+oracle changes, field rollout or commit/push. Full details in feature verification.
+
+## [2026-11-24] verification | installed Go arm64 rotation and recovery
+
+Default run crossed three 300s boundaries with no restarts; graceful seal produced
+four files/25,999 rows/199 timestamps at 5s spacing. Inspected 26-column schema,
+physical types/nulls and local partitions. Modified env survived same-package
+reinstall byte-for-byte; installed SIGKILL/restart recovery and subsequent stop
+produced two additional readable files. Six files total/26,408 rows; no partials,
+only spool lock remains. Development services stopped, package retained. Private
+datasets preserved outside wiki; no identifiers recorded. Consumer/paired-live
+and other native platforms remain open; no commit/push or release claim.
+
+## [2026-11-24] handoff | commit Go pidstat packaging for cross-host tests
+
+Human authorized commit/push. Lintap implementation saved as `4c280b0`; updated
+feature dev handoff with native Ubuntu amd64/RPM commands, verified arm64 lifecycle,
+artifact hash, open qualification gates and setup caveats. Reviewed complete wiki
+diff for privacy; unrelated untracked work excluded. Feature-branch publication
+does not imply native RPM/amd64 or release acceptance.
+
+## [2026-11-25] docs/review | feature-branch Markdown cleanup
+
+Reviewed branch Markdown against `origin/main`. Consolidated sensor-fix and Go
+pidstat plans/handoffs/verification, retaining scoped results, repair failures and
+open qualification gates while removing private capture inventories and identifiers.
+Reconciled completed Linux capture/paired-row DBT repair, stable .NET 10 implementation
+and completed macOS/Linux testing with canonical pages, TODOs and navigation. Native
+Windows, uploader fault/endpoint, Go paired-live/consumer and other native package
+gates remain separate. Historical log entries remain dated history, not current
+instructions. SDK decision consequences flagged for human review. No behavioral
+test rerun or source change performed. Human subsequently authorized committing
+and pushing the documentation cleanup to the feature branch. Whitespace,
+frontmatter, navigation and added-content identifier checks pass; the link scanner's
+POSIX character-class match was a false positive, not a wiki link.
+
+## [2026-11-25] fix/verification | Lintap stable .NET 10 packaging SDK
+
+Human authorized aligning the shared Debian/RPM SDK guard with Wintap's minimum
+10.0.100/latestMinor/no-prerelease policy. Record actual project-selected SDK;
+retain pre-cleanup rejection and staged runtime checks. Updated SDK regressions,
+package guidance, canonical wiki context and feature checklist/verification.
+Focused package/provisioning tests: 54 passed; Bash syntax passes. No native guest
+build, install, service operation, commit or push; unrelated untracked script preserved.
+
+## [2026-11-25] fix/verification | Multipass Go build prerequisite
+
+Added explicit architecture-aware Go 1.27.3 build-host installer with official
+checksum validation and isolated native storage. Both Multipass launchers invoke
+it before checks; documented existing-VM setup without recreation and aligned
+post-create SDK resolution. Focused installer/packaging/provisioning tests: 61
+passed; Bash syntax passes. Tests use fake downloads; live installation and
+PowerShell execution not qualified. No service operation. Human subsequently
+authorized commit/push of both prerequisite fixes and their wiki records.
+
+## [2026-11-25] docs | RHEL 8 Go build-host setup
+
+Added native x86_64 Go 1.27.3 setup/preflight to the RPM README and RHEL 8
+prerequisite workflow, including explicit GO selection, checksum verification,
+CA/proxy guidance and build-host/runtime separation. Corrected the workflow's
+remaining stale exact-.NET-SDK introduction. No remote host operation or native
+RHEL acceptance inferred. Human subsequently authorized commit/push of these
+documentation updates; whitespace checks pass.
+
+## [2026-11-25] fix/verification | RHEL 8 Python manifest compatibility
+
+Operator RPM staging failed on Python 3.6's rejection of subprocess `text=True`.
+Changed both pidstat build-manifest calls to `universal_newlines=True`; clean/dirty
+manifest regressions preserve revision and hashes. Combined focused suite: 63
+passed. Actual Python 3.6/native RHEL rebuild remains unverified. Human authorized
+commit/push of the fix and verification records; whitespace checks pass.
+
+## [2026-11-25] fix/verification | RPM pidstat manifest ownership
+
+Operator RPM check-files rejected the staged Go build manifest as unpackaged.
+Added explicit generated-spec %doc ownership and RPM contract regression;
+combined focused suite: 63 passed. Duplicate app/MCP DuckDB build-ID diagnostic
+retained separately. Native rebuild unverified. Human authorized commit/push
+of the fix and verification records; whitespace checks pass.

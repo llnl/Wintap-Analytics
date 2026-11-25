@@ -5,7 +5,32 @@ import duckdb
 import streamlit as st
 
 from queries import load_manifests
-from s3_source import discover_files, load_config, open_source
+from s3_source import discover_evidence_files, load_config, open_source
+
+
+REMOTE_DIAGNOSTICS = {
+    'remote-connection': (
+        'S3 connection setup failed',
+        'Check credential-chain resolution, endpoint/region/TLS, and DuckDB httpfs availability.'),
+    'remote-listing': (
+        'S3 object listing failed',
+        'Check ListBucket permission, dataset prefix, UTC partition window, and configured listing limits.'),
+    'remote-evidence': (
+        'Smoke evidence loading failed after S3 listing',
+        'Check GetObject permission, DuckDB httpfs reads, and raw_smoke_test object integrity.'),
+    'remote-dashboard': (
+        'Dashboard rendering failed after remote data loading',
+        'The credential and listing stages may already have succeeded; report the diagnostic code.'),
+}
+
+
+def remote_error(stage, error):
+    """Return useful remote diagnostics without rendering exception text."""
+    title, action = REMOTE_DIAGNOSTICS.get(stage, (
+        'Remote source processing failed',
+        'Report the diagnostic code and the action that preceded it.'))
+    category = type(error).__name__
+    return f'{title} [{stage}:{category}]. {action}'
 
 
 def main():
@@ -33,26 +58,31 @@ def main():
             except ValueError as error:
                 st.error(str(error))
                 return
-            start = st.text_input('Start partition day (UTC, YYYYMMDD)', config['start_day'])
-            end = st.text_input('End partition day (UTC, YYYYMMDD)', config['end_day'])
-            st.caption('Publication/collection partitions are not run boundaries or a completeness watermark. Include adjacent days around midnight.')
+            start = st.text_input('Start upload-partition hour (UTC, YYYYMMDDHH)', config['start_hour'])
+            end = st.text_input('End upload-partition hour (UTC, YYYYMMDDHH)', config['end_hour'])
+            st.caption('Upload partitions are not run boundaries or a completeness watermark. Include adjacent hours around delayed publication or UTC boundaries.')
             if config['endpoint'].startswith('http://'):
                 st.warning('Configured endpoint uses unencrypted HTTP; use HTTPS unless intentionally isolated.')
         st.button('Refresh files / results')
     con = client = None
+    stage = 'remote-connection' if remote else 'local-source'
     try:
         snapshot = {}
         evidence_files = telemetry_files = None
         if remote:
+            stage = 'remote-connection'
             con, client = open_source(config)
-            evidence_files, telemetry_files = discover_files(client, config, start, end, snapshot=snapshot)
-            st.caption(f'S3: {len(evidence_files)} evidence files and {len(telemetry_files)} telemetry files listed. Telemetry is read only on explicit validation.')
+            stage = 'remote-listing'
+            evidence_files = discover_evidence_files(client, config, start, end, snapshot=snapshot)
+            st.caption(f'S3: {len(evidence_files)} evidence files listed. Telemetry discovery and reads are deferred until explicit validation.')
         else:
             con = duckdb.connect(':memory:')
+        stage = 'remote-evidence' if remote else 'local-evidence'
         runs, errors = load_manifests(manifest_root, [(f.name, f.getvalue()) for f in uploads or []],
             data_root='' if remote else data_root, connection=con, evidence_files=evidence_files)
         for error in errors:
             st.warning(error)
+        stage = 'remote-dashboard' if remote else 'local-dashboard'
         hosts = sorted({r['host']['hostname'].lower() for r in runs})
         selected_hosts = st.sidebar.multiselect('Test hosts', hosts, default=hosts)
         ctx = dict(con=con, remote=remote, runs=runs, errors=errors,
@@ -61,14 +91,15 @@ def main():
             window=[start, end] if remote else None,
             visible_runs=[r for r in runs if r['host']['hostname'].lower() in selected_hosts],
             data_root='' if remote else data_root, telemetry_files=telemetry_files,
-            unlabelled_host=unlabelled_host, padding=padding, row_limit=row_limit)
+            unlabelled_host=unlabelled_host, padding=padding, row_limit=row_limit,
+            memory_mb=config['memory_mb'] if remote else 4096)
         st.session_state['_smoke_context'] = ctx
         pages = [st.Page('views/overview.py', title='Overview', default=True, url_path='overview'),
                  st.Page('views/canary.py', title='Canary Tests', url_path='canary-tests'),
                  st.Page('views/devtime.py', title='Dev-time Tests', url_path='devtime-tests')]
         st.navigation(pages).run()
     except Exception as error:
-        st.error('Cannot read S3 source; details suppressed to protect credentials.' if remote else str(error))
+        st.error(remote_error(stage, error) if remote else str(error))
     finally:
         st.session_state.pop('_smoke_context', None)
         if client is not None and hasattr(client, 'close'):

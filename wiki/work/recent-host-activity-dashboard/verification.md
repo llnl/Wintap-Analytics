@@ -3,7 +3,7 @@ title: "Verification: Recent Host Activity Dashboard"
 type: concept
 confidence: medium
 grounded_by:
-  - streamlit/projects/HostActivity/test_host_activity.py
+  - streamlit/projects/HostActivity/tests/contract/test_host_activity.py
   - streamlit/projects/HostActivity/README.md
   - streamlit/projects/HostActivity/main.py
 policy: agent-editable
@@ -18,6 +18,11 @@ tags: [host-activity, verification, feature-work]
 ---
 
 # Verification: Recent Host Activity Dashboard
+
+**Test-location update, November 22:** current modules are under
+`streamlit/projects/HostActivity/tests/contract/`. The historical results below
+are unchanged; the separate first-cut run passes all 59 current cases in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
 
 ## Test Commands
 

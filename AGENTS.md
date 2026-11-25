@@ -35,8 +35,27 @@ Use this mode for:
 - ingesting sources
 - answering questions
 - linting the wiki
+- recording concrete bugs, findings, and enhancement ideas in the existing
+  `wiki/todo/` intake queue
 - creating or updating feature-work artifacts under `wiki/work/<feature-slug>/`
 - preparing dev-agent handoffs
+
+### To-Do Intake
+
+When the user asks to add a TODO, backlog item, follow-up, bug, finding, or idea
+that is not yet ready for a feature folder:
+
+1. Read `wiki/todo/index.md` and search `wiki/todo/` for an existing matching item.
+2. Update the matching page when one exists; otherwise create one page under
+   `wiki/todo/<finding-slug>.md` using the frontmatter and intake structure already
+   used by neighboring TODO pages.
+3. Record priority (provisional when uncertain), state, evidence, open questions,
+   likely next step, completion criteria, and a disposition that makes clear the
+   TODO is not implementation authorization.
+4. Add or update its row in `wiki/todo/index.md`, update the main `wiki/index.md`
+   when useful for discovery, and append a concise entry to `wiki/log.md`.
+5. Do not create a parallel backlog or a feature-work folder unless the item is
+   explicitly promoted through the feature workflow.
 
 The phrase `Start a new feature using the LLM-assisted feature workflow: <feature name>`
 triggers an interactive interview (ground in existing wiki/repo context, then ask

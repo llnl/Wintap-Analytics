@@ -11,8 +11,11 @@ grounded_by:
   - ../Wintap-PyUtil/extras/raw-sensor-compact/tests
   - ../Wintap-PyUtil/wintap_dbt/tests
   - ../Wintap-PyUtil/scripts/test_dcc_macos_baseline.py
+  - ../Wintap/tests/Wintap.Tests/Wintap.Tests.csproj
+  - ../Wintap/tests/Wintap.Tests/README.md
+  - ../Wintap/devtools
 policy: agent-editable
-last_validated: 2026-11-17
+last_validated: 2026-11-25
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -30,7 +33,57 @@ first refactor should make purpose and execution boundary visible in the
 filesystem; stale or duplicative cases are reviewed only after that boundary is
 recorded.
 
-## Current snapshot
+## Wintap Extension — Current Platform Boundary
+
+On November 22 the human expanded this workflow to Wintap repository tests,
+requesting initial analysis/planning, not a filesystem change in that pass.
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis]]
+records 63 C# files in one Windows-qualified xUnit project (including linked Linux
+helpers), plus seven Python test-control files. Static attributes/methods are not
+runtime collection or execution results. Native command/traffic workloads, source
+guards, and process-wide integration require separate named gates.
+
+The human subsequently approved
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]] and
+explicitly deferred the unavailable Windows baseline for a static draft on the
+shared feature checkout. Five reviewed classes now have `TestKind=unit` and
+`Execution=synthetic` and reside under `Unit/Api`, `Unit/Shared`, and
+`Unit/Windows/File` / `Unit/Linux/File`. Existing `Category` tags, source bodies,
+fixture access, dependencies, and full-suite/CI selection are unchanged. The test
+README records partial inventory and focused Windows commands. macOS/Linux feature
+testing is complete and `Lintap.Tests` now exists; native Windows build,
+discovery/filtering and execution remain a separate gate. Broader platform ownership
+remains under review in
+[[wiki/tension/wintap-test-platform-boundaries]]. The Analytics/PyUtil inventory
+and historical verification below retain their original scope.
+<!-- GROUND_TRUTH: ../Wintap/tests/Wintap.Tests/Wintap.Tests.csproj; ../Wintap/tests/Wintap.Tests/README.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+## Iterative Implementation — November 22
+
+The human selected this plan as Phase 1 of
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]], then authorized
+small first-draft changes with lightweight affected checks and later validation
+against fresh small sensor captures from a separate session. The detailed loop is
+in [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]].
+
+The first cut relocates all three HostActivity modules intact to
+`tests/contract/` and PyUtil configuration to `tests/unit/config/`. PyUtil's four
+synthetic SQL modules remain in place with explicit `contract` markers because
+they have shared relative-import dependents. Partial per-suite READMEs record
+counts, execution boundaries, and mixed coverage still awaiting separation.
+HostActivity passes 59 cases; PyUtil preserves 224 selected identities and passes
+17 representative cases. Full-suite defaults are unchanged; no assertions or
+historical evidence were removed. Bounded Linux capture/DBT validation is complete;
+remaining suite restructuring and native Windows acceptance are tracked in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/tests/README.md; ../Wintap-PyUtil/tests/README.md; wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification.md -->
+
+The November 22 tracked file inventory was 11 Analytics application test files, 10
+validation files, 14 feature-work files, 60 PyUtil main files, 20 compactor files,
+and seven DBT SQL files. No refreshed full-suite collection is claimed. The
+original snapshot below is retained as historical context, not today's baseline.
+
+## Historical Snapshot — November 17
 
 The inventory excludes dependency `site-packages`, virtual environments, and
 untracked run data/configuration.
@@ -87,7 +140,7 @@ streamlit/projects/SmokeTests/
   tests/
     contract/       # analysis, query, quality, durable-result contracts
     ui/             # app and page navigation/rendering
-    transport/      # synthetic source and opt-in HTTP/S3 transport
+    transport/      # synthetic source and default-on loopback HTTP/S3 transport
 
 validation/<harness>/
   tests/
@@ -101,8 +154,15 @@ wiki/work/host-process-identity-patch/
     qualification/  # installed/pressure/shutdown/retry evidence controls
 ```
 
+As of 2026-11-24, the SmokeTests hierarchy is implemented: 86 contract cases,
+one default-on loopback transport case with explicit opt-out, and 13 Streamlit UI
+cases are discovered exactly once. The additional contract covers exact hourly
+evidence discovery; the thirteenth UI case covers sanitized remote connection
+diagnostics. No project-root forwarding test modules remain.
+<!-- GROUND_TRUTH: streamlit/projects/SmokeTests/tests/README.md; streamlit/projects/SmokeTests/tests/contract; streamlit/projects/SmokeTests/tests/transport; streamlit/projects/SmokeTests/tests/ui -->
+
 The Analytics moves should be mechanical first. Splitting a large file such as
-`HostActivity/test_host_activity.py` or `SmokeTests/test_analysis.py` is a
+`HostActivity/tests/contract/test_host_activity.py` or `SmokeTests/tests/contract/test_analysis.py` is a
 separate change because it changes imports and makes duplicate assertion review
 harder.
 
@@ -178,7 +238,7 @@ These are review groups, not deletion decisions.
 | Review group | Current files | Initial disposition | Reason |
 |---|---|---|---|
 | SmokeTests analysis/pages/app | `test_analysis.py`, `test_pages.py`, `test_app.py` | Relocate, then compare/possibly merge assertions | They all cover working sets, selected runs, overlap, and evaluation boundaries at different layers. Keep UI navigation tests separate from pure query/materialization contracts. |
-| SmokeTests source/HTTP | `test_s3_source.py`, `test_s3_http.py` | Retain and mark transport tiers | Synthetic source parity is default-safe; loopback HTTP is explicit opt-in and is not Garage acceptance. |
+| SmokeTests source/HTTP | `test_s3_source.py`, `test_s3_http.py` | Retain and mark transport tiers | Synthetic source parity and loopback-only HTTP are default-safe. HTTP supports explicit environment opt-out and is not Garage acceptance. |
 | Entity observation/completion | `test_coordination_entity_observations.py`, `*_observation_qualification.py`, `*_completion_observations.py`, `*_completion_qualification.py`, `*_completion_history_qualification.py`, `*_completion_crashes.py` | Relocate; build a coverage map before any merge | Names overlap, but the files distinguish ordinary contracts, genuine retained history, crash seams, and budget/immutability controls. |
 | Entity publication/history | `test_coordination_entity_publications.py`, `*_publication_qualification.py`, `*_writer_history.py`, `*_forward_history.py`, `*_resolution.py` | Relocate; extract shared fixture support only after comparison | Similar lifecycle vocabulary does not prove duplicate evidence. Preserve independent-original and forward-history controls. |
 | Intentional retry | `test_coordination_retry.py`, `test_coordination_intentional_retry.py`, `*_controls.py`, `*_history.py`, `*_credentials.py`, `*_upgrade.py` | Relocate into contract, qualification, compatibility | Separate retry protocol behavior from retained-history, credential-freeze, and schema-upgrade evidence. |
@@ -235,8 +295,8 @@ disposition.
 At minimum, the implementation should compare:
 
 - Analytics Streamlit project discovery and each validation-harness command;
-- PyUtil default pytest collection (currently 1,538 collected tests);
-- the isolated compactor project (currently 702 collected tests);
+- PyUtil default pytest collection (historical snapshot: 1,538 collected tests);
+- the isolated compactor project (historical snapshot: 702 collected tests);
 - the seven dbt SQL tests through the existing dbt command;
 - explicit native-Mac refusal/lifecycle controls on Linux and native-Mac
   qualification only on Darwin; and

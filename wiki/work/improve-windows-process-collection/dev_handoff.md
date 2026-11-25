@@ -95,7 +95,7 @@ Per unit, the Engineer should quote or reference into the instruction:
   `ProcessResolver.cs` — Send/registration contract and start-time-tolerance
   behavior the sensor relies on; read-only for this feature unless a unit
   says otherwise.
-- `../wintap/tests/Wintap.Tests/WintapMessageTests.cs` — existing test style
+- `../wintap/tests/Wintap.Tests/Unit/Api/WintapMessageTests.cs` — existing test style
   and trait convention (P1.1, grandfathered pre-wpc naming).
 
 ## Recommended First Implementation Slice

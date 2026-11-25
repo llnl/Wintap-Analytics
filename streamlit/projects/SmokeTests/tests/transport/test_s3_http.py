@@ -1,4 +1,4 @@
-"""Opt-in real HTTP/S3 transport with synthetic objects, not a Garage acceptance test."""
+"""Default-on loopback HTTP/S3 transport with synthetic objects, not Garage acceptance."""
 import json
 import os
 from pathlib import Path
@@ -15,10 +15,15 @@ import duckdb
 from queries import evaluate_run, load_manifests, prepare_data, quote
 from page_views import materialize_run
 from s3_source import discover_files, open_source
-from test_durable import publish
+from tests.contract.test_durable import publish
 
 
-@unittest.skipUnless(os.environ.get("SMOKE_S3_HTTP_TEST") == "1", "Opt in to loopback HTTP test with cached httpfs")
+def s3_http_test_enabled():
+    """Enable by default; accept conventional false-like values as explicit opt-out."""
+    return os.environ.get("SMOKE_S3_HTTP_TEST", "").strip().lower() not in {"0", "false", "no", "off"}
+
+
+@unittest.skipUnless(s3_http_test_enabled(), "SMOKE_S3_HTTP_TEST explicitly opts out of the loopback HTTP test")
 class HTTPSourceTest(unittest.TestCase):
     def test_real_signed_client_listing_and_duckdb_range_reads_are_read_only(self):
         with tempfile.TemporaryDirectory() as directory:

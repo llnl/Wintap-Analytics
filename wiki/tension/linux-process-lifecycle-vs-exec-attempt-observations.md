@@ -6,8 +6,10 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracer.bpf.c
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/exit_tracer.bpf.c
+  - ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs
+  - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
 policy: agent-editable
-last_validated: 2026-11-03
+last_validated: 2026-11-22
 repo_scope: cross-repo
 implementation_area: wintap-api
 event_domain: process
@@ -37,6 +39,14 @@ rows. Investigate scheduler-primary lifecycle with separate attempt/image
 observations, group-aware Stop meaning and bounded enrichment. No replacement or
 schema contract has been selected; cost and fidelity need live comparison.
 <!-- SPECULATIVE: hybrid observation/projection design awaiting experiment and explicit decision -->
+
+The bounded 2026-11-22 sensor slice preserves both raw Start rows while adding
+nullable `ExecutionObservationKind`: syscall entry is `exec_attempt`, and
+`sched_process_exec` is `exec_success`. This holds the distinction without
+resolving whether a future lifecycle API should split event types. The later bounded
+DBT repair selects one paired image row (valid Refresh, successful exec, fallback);
+ordered history/as-of representation remains a separate follow-up.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §GetExecutionObservationKind, HandleEvent; ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md -->
 
 Research baseline and comparison plan:
 [[wiki/work/lintap-process-creation-validation/future-scheduler-lifecycle-vs-syscalls]].

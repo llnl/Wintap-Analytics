@@ -8,14 +8,15 @@ grounded_by:
   - ../wintap/wintap/core/etl/load/RawSensorWriter.cs
   - ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs
   - ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs
+  - ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs
 policy: agent-editable
-last_validated: 2026-11-16
+last_validated: 2026-11-24
 repo_scope: wintap
 implementation_area: data-pipeline
 event_domain: cross-domain
 audience: mixed
-status: draft
-source_paths: ../wintap/wintap/core/etl/load/CacheManager.cs; ../wintap/wintap/core/etl/load/Merge.cs; ../wintap/wintap/core/etl/load/RawSensorWriter.cs; ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs; ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs
+status: reviewed
+source_paths: ../wintap/wintap/core/etl/load/CacheManager.cs; ../wintap/wintap/core/etl/load/Merge.cs; ../wintap/wintap/core/etl/load/RawSensorWriter.cs; ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs; ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs; ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs
 tags: [todo, upload, s3, partitioning, raw_sensor, wintap, lintap]
 ---
 
@@ -23,10 +24,15 @@ tags: [todo, upload, s3, partitioning, raw_sensor, wintap, lintap]
 
 **Priority:** Separate later task; not a prerequisite to the approved development
 end-to-end integration milestone DCC-E2E-01. Correctness implications still need review.
-**State:** Open — intake only; no .NET code change is authorized by this TODO.
-**Likely next step:** Review the intended timestamp boundary and design a
-retry-safe S3-key/path correction in the shared upload code, then obtain explicit
-implementation authorization.
+**State:** Implemented and locally build/test verified on the approved Wintap
+feature branch; authorized S3-compatible endpoint qualification remains open.
+**Implementation:** The S3 adapter now binds each pending source file to a UTC
+upload-time key in an atomic `.s3upload.json` sidecar. On a later cycle it checks
+that exact key with metadata validation: a matching object is treated as already
+uploaded, an authoritative 404 discards the binding and assigns a fresh current
+UTC partition, and an inconclusive check retries the exact key. Finalized
+`raw_sensor` files are retained across process startup so the binding survives a
+restart; sidecars are removed only after local file deletion.
 
 **November 16 direction:** the human will separately review and enforce that
 upload clients write only into the UTC day/hour time bucket current at upload
@@ -34,9 +40,10 @@ time, including delayed uploads/retries, rather than an old event/merge-time
 partition. This is intended to simplify initial delayed-data handling; downstream
 delayed-event implications remain later work too. Do not pull this implementation
 or exhaustive late-arrival testing into the approved
-[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]]. This is a future
-contract, not a claim of current uploader compliance. Existing source findings
-below retain their reviewed scope; no uploader code or data is changed here.
+[[wiki/work/dbt-compaction-coordination/integration-milestone-plan]]. This was a
+future contract at intake. The approved source implementation now enforces the
+S3 behavior; live endpoint qualification and broader adapter-policy review remain
+open. Existing source findings below describe the pre-fix behavior.
 <!-- SOURCE: Human deferred strict UTC upload-client contract and downstream-work clarification, conversation 2026-11-16. -->
 
 ## Finding
@@ -46,7 +53,7 @@ wall-clock time of the actual upload, rather than from event time or earlier
 local materialization time. A host returning after an outage is expected to
 publish locally cached event rows under the current upload-time partition.
 
-Current Wintap source does not establish that contract:
+Pre-fix source did not establish that contract:
 
 - `CacheManager.doMerge()` captures `DateTime.UtcNow` before the merge and passes
   that value to each merge operation.
@@ -91,21 +98,21 @@ may have reached S3 but the client did not receive a success response.
 5. Confirm downstream Wintappy raw scans discover the resulting partition and
    document any local-cache versus S3-path distinction.
 
-## Open Questions
+## Remaining Questions and Resolved Design
 
-- Does “actual upload time” mean attempt start, S3 acceptance/response time, or
-  another observable UTC instant?
+- Implemented time is UTC attempt binding; an inconclusive prior HEAD keeps the
+  exact key rather than creating a second object in a newer partition.
 - Must all uploader adapters share this rule, or is it specifically the S3
   destination contract?
-- Should the local cached path also change, or only the remote object key?
-- How should retries handle an ambiguous prior PUT so the data is not duplicated
-  under both the old and new partition?
-- Which exact Wintap/Lintap source branch and deployment path own the correction?
+- Only the remote S3 partition is rewritten; local cache/payload rows are unchanged.
+- Live endpoint/fault qualification and broader adapter policy remain open.
 
 ## Scope
 
-This is a cross-repo wiki intake item for a possible shared .NET upload fix.
-No source code, schema, raw document, or S3 object was changed. Implementing the
-follow-up requires a separate explicit code-development authorization. It is
-linked to [[wiki/work/raw-sensor-file-aggregation/brief]], whose no-lookback
-scheduled design depends on this contract or an equivalent verified guarantee.
+This cross-repo item is implemented for the shared S3 uploader on the approved
+Wintap feature branch. The change preserves rows and event timestamps, does not
+change SMB/file-share partition behavior, and does not alter S3 data during local
+verification. It is linked to [[wiki/work/raw-sensor-file-aggregation/brief]],
+whose no-lookback scheduled design depends on this contract or an equivalent
+verified guarantee.
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/load/adapters/base/Uploader.cs; ../wintap/wintap/core/etl/load/adapters/base/S3UploadAttemptBinding.cs; ../wintap/wintap/core/etl/load/adapters/S3Adapter.cs; ../wintap/wintap/core/etl/load/CacheManager.cs -->

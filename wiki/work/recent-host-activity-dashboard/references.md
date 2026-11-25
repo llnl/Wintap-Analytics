@@ -12,7 +12,7 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/macros/validate_source.sql
   - ../Wintap-PyUtil/wintap_dbt/macros/time.sql
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -33,7 +33,7 @@ tags: [host-activity, streamlit, duckdb, s3, raw_sensor, feature-work]
 - `streamlit/projects/SmokeTests/README.md` — local private config, normal AWS
   profile/environment credentials, shared-root and multiple-root examples, and
   direct-S3 launch guidance.
-- `streamlit/projects/SmokeTests/test_s3_source.py` — synthetic S3 listings,
+- `streamlit/projects/SmokeTests/tests/contract/test_s3_source.py` — synthetic S3 listings,
   path validation, file-budget, and DuckDB/S3 setup test patterns.
 - `streamlit/projects/DataQA/pages/raw_events.py` — existing Event Summary view;
   it uses a fixed 30-second bucket and comments on host-dependent chart sizing

@@ -3,13 +3,13 @@ title: "Verification: Compaction Status Utility"
 type: concept
 confidence: medium
 grounded_by:
-  - streamlit/projects/HostActivity/test_host_activity.py
+  - streamlit/projects/HostActivity/tests/contract/test_host_activity.py
   - streamlit/projects/HostActivity/pyproject.toml
   - streamlit/projects/HostActivity/status_source.py
   - streamlit/projects/HostActivity/status_views.py
-  - streamlit/projects/HostActivity/test_status_source.py
+  - streamlit/projects/HostActivity/tests/contract/test_status_source.py
   - streamlit/projects/HostActivity/partition_status.py
-  - streamlit/projects/HostActivity/test_partition_status.py
+  - streamlit/projects/HostActivity/tests/contract/test_partition_status.py
   - ../Wintap-PyUtil/wintappy/coordination/service.py
   - ../Wintap-PyUtil/wintappy/coordination/ledger.py
   - ../Wintap-PyUtil/wintappy/coordination/coordinator.py
@@ -28,6 +28,12 @@ tags: [feature-work, status, compaction, verification, streamlit]
 ---
 
 # Verification: Compaction Status Utility
+
+**Test-location update, November 22:** current HostActivity modules live under
+`tests/contract/`; named discovery now uses `tests.contract.test_status_source`.
+Historical commands/results below are preserved. The new 59-case mechanical-move
+check is recorded separately in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]].
 
 ### Scoped partition-presence overview — November 17, 2026
 
@@ -104,7 +110,7 @@ staleness, page order/duplicates/continuation and redaction. Binding/version byp
 mutations prove the specific checks cause refusal. Actual Streamlit controls cover
 manual-only refresh, cached navigation, no SDK/data connection, unavailable failure
 hiding old results, changed pins clearing cache and always-visible Live warnings.
-<!-- GROUND_TRUTH: streamlit/projects/HostActivity/test_status_source.py; streamlit/projects/HostActivity/test_host_activity.py -->
+<!-- GROUND_TRUTH: streamlit/projects/HostActivity/tests/contract/test_status_source.py; streamlit/projects/HostActivity/tests/contract/test_host_activity.py -->
 
 This qualifies advisory consumer behavior, not producer truth/authenticity or a
 consistent dataset. Same-session timestamp checks are not a monotonic sequence or
@@ -228,7 +234,8 @@ frontmatters**, **213 grounding path references** and **28 added wikilinks**, in
 added-content local-account/home-path/IP-pattern scans pass. The complete additions
 were manually reviewed for persistent-content privacy and read-mode consistency.
 These are scoped documentation checks, not a repository-wide wiki lint or runtime
-qualification. Changes remain uncommitted/unpushed.
+qualification. Changes were uncommitted/unpushed at this historical checkpoint;
+use current feature tips rather than this old publication status.
 
 ## Post-pull producer review — November 14
 

@@ -9,7 +9,7 @@ from unittest.mock import patch
 import duckdb
 from streamlit.testing.v1 import AppTest
 
-from test_durable import publish
+from tests.contract.test_durable import publish
 
 
 class DashboardTests(unittest.TestCase):
@@ -33,7 +33,7 @@ class DashboardTests(unittest.TestCase):
             con.execute(f"COPY (SELECT 'vm-fixture' Hostname, 42 PID, TIMESTAMP '2026-10-25 12:00:01' EventTime, '/fixture/file' File_Path, 'Open' ActivityType) TO '{self.root / 'events.parquet'}' (FORMAT PARQUET)")
 
     def app(self):
-        app = AppTest.from_file(str(Path(__file__).with_name('main.py')), default_timeout=20).run()
+        app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
         app.sidebar.text_input[0].set_value(str(self.root)).run()
         self.assertFalse(app.exception)
         return app
@@ -110,11 +110,21 @@ class DashboardTests(unittest.TestCase):
         self.telemetry()
         with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
              patch('s3_source.open_source', side_effect=lambda _: (duckdb.connect(), object())), \
-             patch('s3_source.discover_files', return_value=([str(evidence)], [str(self.root / 'events.parquet')])):
-            app = AppTest.from_file(str(Path(__file__).with_name('main.py')), default_timeout=20).run()
+             patch('s3_source.discover_evidence_files', return_value=[str(evidence)]), \
+             patch('page_views.discover_telemetry_files', return_value=[str(self.root / 'events.parquet')]) as telemetry, \
+             patch('batch_views.discover_telemetry_files') as batch_telemetry, \
+             patch('batch_views.discover_host_files') as batch_host:
+            app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
             self.assertFalse(app.exception)
+            telemetry.assert_not_called()
             app.switch_page('views/canary.py').run()
+            telemetry.assert_not_called()
+            batch_telemetry.assert_not_called()
+            batch_host.assert_not_called()
             self.validate(app)
+            telemetry.assert_called_once()
+            batch_telemetry.assert_not_called()
+            batch_host.assert_not_called()
             self.assertTrue(any('stimulus only' in m.value for m in app.markdown))
             self.assertTrue(any('Yellow' in m.value for m in app.markdown))
 
@@ -123,11 +133,26 @@ class DashboardTests(unittest.TestCase):
         config.write_text(json.dumps(dict(endpoint='https://garage.example.invalid', datasets=['s3://fixture-bucket/run'])))
         with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
              patch('s3_source.open_source', side_effect=lambda _: (duckdb.connect(), object())), \
-             patch('s3_source.discover_files', side_effect=ValueError('S3 file limit exceeded')):
-            app = AppTest.from_file(str(Path(__file__).with_name('main.py')), default_timeout=20).run()
+             patch('s3_source.discover_evidence_files', side_effect=ValueError('S3 file limit exceeded')):
+            app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
             self.assertFalse(app.exception)
             self.assertTrue(app.error)
+            self.assertIn('S3 object listing failed', app.error[0].value)
+            self.assertIn('[remote-listing:ValueError]', app.error[0].value)
             self.assertFalse(app.metric)
+
+    def test_s3_connection_diagnostic_suppresses_exception_text(self):
+        config = self.root / 'fixture.local.json'
+        config.write_text(json.dumps(dict(endpoint='https://garage.example.invalid', datasets=['s3://fixture-bucket/run'])))
+        private_detail = 'synthetic-private-signed-url-and-secret'
+        with patch.dict(os.environ, {'WINTAP_SMOKE_CONFIG': str(config)}), \
+             patch('s3_source.open_source', side_effect=RuntimeError(private_detail)):
+            app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / 'main.py'), default_timeout=20).run()
+            self.assertFalse(app.exception)
+            self.assertTrue(app.error)
+            self.assertIn('S3 connection setup failed', app.error[0].value)
+            self.assertIn('[remote-connection:RuntimeError]', app.error[0].value)
+            self.assertNotIn(private_detail, app.error[0].value)
 
     def test_working_set_failure_does_not_evaluate_truncated_data(self):
         self.telemetry()

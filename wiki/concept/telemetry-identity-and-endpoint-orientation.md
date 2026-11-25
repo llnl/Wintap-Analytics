@@ -12,8 +12,12 @@ grounded_by:
   - ../wintap/wintap/core/etl/transform/IdGenerator.cs
   - ../wintap/wintap/core/etl/transform/Transformer.cs
   - ../wintap/wintap/core/etl/model/ProcessConnIncrData.cs
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
+  - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
+  - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
 policy: human-review-required
-last_validated: 2026-10-23
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -42,9 +46,19 @@ old packages and historical recordings have not been migrated.
 |---|---|---|
 | `agent_id` / `AgentId` | Persisted collector UUID, host-bound and stable across ordinary restarts. | `pid-v2` checks hostname/machine binding and replaces unbound legacy or differently bound copied state. Fully cloned hostname and machine ID cannot be distinguished locally. It is not a cryptographic host identity. |
 | `pid_hash` / `PidHash` | Process-instance key: normalized hostname, OS PID and canonical process-start UTC FILETIME; independent of agent UUID. | PID alone is reusable. `pid-v2` changes historical hashes; legacy stores/recordings are preserved, not silently rekeyed. |
-| `conn_id` / `ConnId` | Direction-independent key derived from the full five-tuple: two IP/port endpoints and transport protocol, with context/private-gateway disambiguation. | Does not include PID, agent UUID or connection-start time. It identifies tuple equivalence, not a unique socket lifetime or process owner. |
+| `conn_id` / `ConnId` | Direction-independent key for context plus transport protocol and two normalized IP/port endpoint pairs. Host-oriented local IPv4 in RFC 1122 loopback space uses hostname context; every non-loopback connection uses `public`. | Does not include PID, agent UUID or connection-start time. Preimage encoding is private to .NET; both gateway slots are empty for identity while gateway values remain metadata. It identifies tuple equivalence, not a unique socket lifetime or process owner. |
 
-<!-- GROUND_TRUTH: ../wintap/wintap/core/shared/AgentIdentity.cs §LoadOrCreate; ../wintap/wintap/core/shared/ProcessIdentity.cs §Compute; ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenAttrKeyForFive_Tuple_Key; §GenKeyForFive_Tuple_Conn -->
+<!-- GROUND_TRUTH: ../wintap/wintap/core/shared/AgentIdentity.cs §LoadOrCreate; ../wintap/wintap/core/shared/ProcessIdentity.cs §Compute; ../wintap/wintap/core/etl/transform/Transformer.cs §CreateProcessConn -->
+
+Wintap owns the sole nested implementation and orders endpoint pairs.
+Wintap-PyUtil now preserves producer `connid`; its DBT and legacy raw-view hash
+implementations were removed. Gateway values remain metadata, loopback is scoped
+through hostname context, non-loopback uses `public`, and a future symmetric
+network-space namespace is held. See
+[[wiki/decision/canonical-five-tuple-connection-identity]],
+[[wiki/tension/private-gateway-connection-identity]], and
+[[wiki/todo/transformer-five-tuple-connection-port-key]].
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenAttrKeyForFive_Tuple_Key; §GenKeyForFive_Tuple_Conn; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql -->
 
 State now lives in `<runtime-root>/wintapstate.json`, not the installation/build
 working directory. Binding uses normalized hostname plus available Linux machine-id
@@ -77,7 +91,7 @@ cached identities. Deployment/historical acceptance remains separate:
 ## Canonical tuple versus directed tuple versus socket perspective
 
 1. **Canonical Lo/Hi tuple:** endpoints sort by IP, then by port when IPs tie.
-   Reversing source/destination preserves `conn_id` for the same gateway context.
+   Reversing source/destination preserves both current and target `conn_id`.
 2. **Directed Source/Destination tuple:** follows the normalized producer's
    traffic direction. The recorded increment preserves source/destination IPs and
    now `SourcePort`/`DestinationPort`.

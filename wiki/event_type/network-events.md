@@ -11,17 +11,21 @@ grounded_by:
   - ../wintap/wintap/core/etl/transform/NetworkActivity.cs
   - ../wintap/wintap/core/etl/transform/Transformer.cs
   - ../wintap/wintap/core/etl/model/ProcessConnIncrData.cs
-  - ../Wintappy/wintap_dbt/models/silver/process_conn_incr.sql
+  - ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
+  - ../Wintap-PyUtil/wintappy/datautils/rawutil.py
+  - ../Wintap-PyUtil/tests/test_network_activity_sql.py
+  - ../wintap/developer_docs/audits/sfx-08-canonical-connection-identity.md
+  - ../wintap/developer_docs/audits/sfx-09-loopback-connection-context.md
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/network_ops_tracer.bpf.c
   - ../wintap/wintap/platform/linux/sensor/ebpf/NetworkSensor.cs
 policy: agent-editable
-last_validated: 2026-10-25
-repo_scope: wintap
-implementation_area: windows-sensor
+last_validated: 2026-11-23
+repo_scope: cross-repo
+implementation_area: data-pipeline
 event_domain: network
 audience: mixed
 status: draft
-source_paths: ../wintap/wintap/platform/windows/sensor/etw/TcpSensor.cs; ../wintap/wintap/platform/windows/sensor/etw/UdpSensor.cs; ../wintap/wintap/core/etl/esper/tcp.epl; ../wintap/wintap/core/etl/esper/udp.epl
+source_paths: ../wintap/wintap/platform/windows/sensor/etw/TcpSensor.cs; ../wintap/wintap/platform/windows/sensor/etw/UdpSensor.cs; ../wintap/wintap/core/etl/esper/tcp.epl; ../wintap/wintap/core/etl/esper/udp.epl; ../wintap/wintap/core/etl/transform; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql
 tags: [network-events, telemetry-semantics, wintap-api]
 ---
 
@@ -97,6 +101,36 @@ TCP and UDP ETL both use the shared `Every10Seconds` Esper context. TCP aggregat
 
 ## Analysis Implications
 
+### Connection identity compatibility boundary
+
+The accepted `conn_id` contract is context plus protocol and two IP/port endpoint
+pairs, normalized so reversing the complete endpoint pairs preserves the key.
+This enables two host sensors—or client and server processes on one host—to emit
+the same connection identity without downstream renormalization. The exact nested
+.NET preimage may retain legacy conventions; DBT's JSON format is not canonical.
+Context is the observing hostname when the host-oriented local IPv4 is in RFC 1122
+loopback space; otherwise it is literal `public`. The existing hardcoded `llnl`
+context remains for other identity types, not connection identity.
+
+Wintap's current producer and all available v7 history pass distinct low/high
+ports and perform the same endpoint ordering. This does not adjudicate an absent
+ACME4-era producer source/build. The older PyUtil workaround describes that defect
+as unsorted source/destination inputs and rebuilds the ID from persisted endpoint
+columns. If those columns themselves duplicated the remote IP, neither that
+workaround nor current DBT could reconstruct the missing local endpoint.
+The bounded implementation removes downstream DBT/legacy Python rehashing and
+preserves producer `connid`. Default gateways remain recorded metadata, but both
+gateway preimage slots are empty; loopback host scoping is carried only by context.
+Source-linked tests pass opposite-sensor, reversal, same-host, exact hostname/
+`public` context and every-five-tuple-field vectors. This intentionally rekeys all
+connection IDs. A future symmetric private-network namespace remains held in
+[[wiki/tension/private-gateway-connection-identity]]. Adoption still requires a
+clean new-data cutover after deferred native Windows acceptance; no historical or
+mixed-population compatibility is required;
+see [[wiki/decision/canonical-five-tuple-connection-identity]] and
+[[wiki/todo/transformer-five-tuple-connection-port-key]].
+<!-- GROUND_TRUTH: ../wintap/wintap/core/etl/transform/Transformer.cs §CreateProcessConn; ../wintap/wintap/core/etl/transform/IdGenerator.cs §GenAttrKeyForFive_Tuple_Key; ../Wintap-PyUtil/wintappy/datautils/rawutil.py §get_raw_view; ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql -->
+
 ### Directed versus host-relative endpoints
 
 `Source`/`Destination` describe the normalized producer's directed tuple; they
@@ -121,13 +155,13 @@ host-relative socket ports distinguish roles. Never infer orientation from low
 ports, IP inequality, or PID alone.
 <!-- GROUND_TRUTH: ../wintap/wintap/core/etl/model/ProcessConnIncrData.cs §SourcePort; §DestinationPort; ../wintap/tests/Wintap.Tests/NetworkEndpointNormalizationTests.cs §SameIpSamePid_BothSocketRolesKeepDirectedProvenance -->
 
-Wintappy's canonical DBT and legacy network SQL normalize slash/case spellings
+Wintap-PyUtil's canonical DBT and legacy network SQL normalize slash/case spellings
 before calculating activity counters, including IPv6 Send/Recv names. Existing
 badly oriented parquet/database rows are not automatically repaired. Source/dest
 grouping can still split directional rows even after Local/Remote is corrected;
 connection/session reconstruction is a separate analysis concern. IPv6 name
 classification does not certify the IPv4-oriented integer address representation.
-<!-- GROUND_TRUTH: ../Wintappy/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintappy/wintappy/datautils/rawtostdview.sql §process_conn_incr; ../Wintappy/wintap_dbt/models/silver/process_net_conn.sql -->
+<!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process_conn_incr.sql; ../Wintap-PyUtil/wintappy/datautils/rawtostdview.sql §process_conn_incr; ../Wintap-PyUtil/wintap_dbt/models/silver/process_net_conn.sql -->
 
 Regression/live evidence: [[wiki/work/network-endpoint-normalization/verification]].
 

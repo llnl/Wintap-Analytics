@@ -38,12 +38,27 @@ Workshop material documents process-centric SQL exploration over Wintap tables s
 
 ## Pipeline Dependency on Wintappy
 
-This repo's Streamlit tooling has a direct code dependency on the Wintappy (`Wintap-PyUtil`) package, not just its output data: `streamlit/projects/common/dqautil.py` imports `wintappy.datautils.rawutil`, and `streamlit/projects/DataQA/pages/raw_events.py` imports `wintappy.datautils.stdview_duckdb`.
+This repo's **legacy DataQA/EDA Streamlit tooling** has a direct code dependency on the Wintappy (`Wintap-PyUtil`) package, not just its output data: `streamlit/projects/common/dqautil.py` imports `wintappy.datautils.rawutil`, and `streamlit/projects/DataQA/pages/raw_events.py` imports `wintappy.datautils.stdview_duckdb`.
 <!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/common/dqautil.py §import wintappy.datautils.rawutil -->
 <!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/DataQA/pages/raw_events.py §import wintappy.datautils.stdview_duckdb -->
 
 Wintappy is the canonical DBT/DuckDB post-processing pipeline that produces the standard-view tables (`process`, `process_path`, `process_uber_summary`, etc.) this repo's notebooks, workshop material, and Streamlit apps query; see [[wiki/repo/wintappy-pipeline-repo]]. There is an open cross-repo tension over whether that pipeline's current DuckDB-only output matches this repo's expectations of published `stdview-*` parquet datasets; see [[wiki/tension/dbt-duckdb-output-vs-legacy-stdview-parquet]].
 <!-- SYNTHESIS: inferred from ../Wintappy/review-notes/Architecture.md and this repo's streamlit/workshop/2025-acme4-explore usage -->
+
+## Streamlit App Roles — Source Review 2026-11-22
+
+[[wiki/tool/streamlit-app-review]] inventories five app entry points and distinguishes
+legacy DataQA/EDA dataset exploration from the standalone HostActivity availability
+dashboard, SmokeTests manifest-driven validation, and CALDERA report browsing.
+HostActivity and SmokeTests do **not** require importing Wintappy or running DBT;
+their inputs/metrics differ from the legacy prepared-database/rolling-Parquet pages.
+CALDERA consumes annotation/report tables, not host-telemetry validation evidence.
+<!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/HostActivity/README.md; ../Wintap-Analytics/streamlit/projects/SmokeTests/README.md; ../Wintap-Analytics/annotations/acme4/caldera/caldera_explorer.py -->
+
+The review recommends evaluating consolidation of the DataQA/EDA shells while
+preserving useful lifecycle, DLL and graph capabilities. This is source-grounded
+maintenance analysis, not runtime compatibility, usage evidence or a retirement decision.
+Other sections retain their earlier source-validation dates.
 
 ## Wiki Role
 

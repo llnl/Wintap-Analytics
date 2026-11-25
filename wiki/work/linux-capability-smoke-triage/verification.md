@@ -6,10 +6,10 @@ grounded_by:
   - ../wintap/tests/Wintap.Tests/RuntimeCapabilitiesTests.cs
   - ../wintap/devtools/test_smoke_manifest.py
   - ../wintap/devtools/test_telemetry_smoke_workload.py
-  - streamlit/projects/SmokeTests/test_durable.py
+  - streamlit/projects/SmokeTests/tests/contract/test_durable.py
   - wiki/work/clone-default-true/verification.md
 policy: agent-editable
-last_validated: 2026-10-23
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -42,9 +42,8 @@ tags: [feature-work, verification, retrospective]
   Windows-platform/static-analysis warnings remain; no broad Windows suite claim.
 - Analytics isolated venv: `python -m unittest discover -s
   streamlit/projects/SmokeTests -p 'test_*.py' -v` — **19 passed**.
-- Ubuntu arm64 VM: `multipass exec lintap-clone-package --
-  /home/ubuntu/receipt-venv/bin/python -m unittest discover -s
-  /home/ubuntu/wintap/devtools -p 'test_smoke_manifest.py' -v` — **4 passed**,
+- Ubuntu arm64 VM: explicit isolated Python ran `unittest discover -s
+  <wintap-root>/devtools -p 'test_smoke_manifest.py' -v` — **4 passed**,
   including intentional export-failure warnings and retained JSON.
 - Same VM with `-p 'test_telemetry_smoke_workload.py'` — **2 passed**.
 - Lintap: `bash -n packaging/lintap-deb/build-deb.sh

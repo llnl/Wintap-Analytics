@@ -15,13 +15,13 @@ grounded_by:
   - ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_pidstat_metrics.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/pidstat_metrics.sql
   - ../Wintap-Analytics/streamlit/projects/SmokeTests/s3_source.py
-  - ../Wintap-Analytics/streamlit/projects/SmokeTests/test_s3_http.py
+  - ../Wintap-Analytics/streamlit/projects/SmokeTests/tests/transport/test_s3_http.py
   - https://duckdb.org/docs/2.0/sql/statements/copy.html
   - https://duckdb.org/docs/2.0/data/parquet/overview.html
   - https://duckdb.org/docs/2.0/core_extensions/httpfs/s3api.html
   - https://docs.aws.amazon.com/AmazonS3/latest/userguide/Welcome.html
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: cross-domain
@@ -94,10 +94,10 @@ tags: [feature-work, references, raw_sensor, duckdb, s3, parquet]
     is read-only and day-scoped; the compactor needs exact-hour scope and writes.
   <!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/SmokeTests/s3_source.py §open_source/discover_files/object_identity -->
 
-- `../Wintap-Analytics/streamlit/projects/SmokeTests/test_s3_http.py`
-  - Opt-in loopback signed listing/range-read transport coverage; explicitly not
+- `../Wintap-Analytics/streamlit/projects/SmokeTests/tests/transport/test_s3_http.py`
+  - Default-on, explicitly opt-out loopback signed listing/range-read coverage; not
     real Garage acceptance and not multipart-write evidence.
-  <!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/SmokeTests/test_s3_http.py §HTTPSourceTest -->
+  <!-- GROUND_TRUTH: ../Wintap-Analytics/streamlit/projects/SmokeTests/tests/transport/test_s3_http.py §HTTPSourceTest -->
 
 ## External Sources
 

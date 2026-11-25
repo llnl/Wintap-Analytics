@@ -1,6 +1,6 @@
 # Smoke-test results dashboard
 
-From **Wintap-Analytics** on the analysis machine (macOS is supported):
+From **Wintap-Analytics** on the analysis machine (macOS and Windows are supported):
 
 ```bash
 python3 -m pip install -r streamlit/projects/SmokeTests/requirements.txt
@@ -12,6 +12,11 @@ It reads finalized raw parquet with DuckDB in memory. Streamlit pages separate
 Overview, Canary Tests and Dev-time Tests. Test pages provide run selectors,
 saved evidence and explicit selected-run validation. Empty/missing data is normal.
 It **never executes tests or changes collector configuration**.
+
+This directory intentionally has `requirements.txt`, not `pyproject.toml`. Do not
+run `uv sync`; use `uv run --no-project --with-requirements ...` as shown below.
+Select Python 3.13 explicitly: a newer prerelease interpreter may lack a DuckDB
+wheel and incorrectly fall back to a local C++/NMake source build.
 
 Quality checks require file activities per expected/observed path, non-placeholder
 lifecycle identities and required Start→Stop identity linkage. Repeated Starts retain
@@ -44,8 +49,8 @@ is complete. A startup-race run can correctly show generated activity but no dat
 
 ```bash
 python3 devtools/telemetry_smoke_workload.py \
-  --output /home/ubuntu/qa/stimulus-001 \
-  --manifest /home/ubuntu/qa/manifests/run-001.json
+  --output ./qa/stimulus-001 \
+  --manifest ./qa/manifests/run-001.json
 ```
 
 ## Automatic durable evidence (recommended)
@@ -54,7 +59,7 @@ Use a Python environment with `duckdb` installed on the test host:
 
 ```bash
 python3 devtools/telemetry_smoke_workload.py \
-  --output /home/ubuntu/qa/stimulus-002 \
+  --output ./qa/stimulus-002 \
   --smoke-data-root /var/log/lintap/data
 ```
 
@@ -97,7 +102,8 @@ From Wintap-Analytics, copy `garage.example.json` to a private config outside Gi
   "endpoint": "https://garage.example.invalid",
   "region": "us-east-1",
   "datasets": ["s3://example-bucket/example-prefix"],
-  "max_files": 10000
+  "max_files": 20000,
+  "memory_mb": 4096
 }
 ```
 
@@ -123,14 +129,31 @@ to run the dashboard. Path-style addressing supports Garage. HTTPS certificate
 verification stays enabled. Explicit `http://` is allowed with a UI warning for an
 intentionally isolated test endpoint; there is no insecure-TLS option.
 
+The standard chain also supports an EC2 instance profile. On such a host, omit
+`AWS_PROFILE` and static credential variables so boto3 can use its refreshable
+instance-role credentials. For AWS S3, use the regional origin as the endpoint—for
+example, `https://s3.us-west-2.amazonaws.com` with region `us-west-2`—and keep the
+bucket/prefix only in `datasets`.
+
 Launch with a disposable uv dependency environment (does not sync/alter Wintappy):
 
 ```bash
 export WINTAP_SMOKE_CONFIG="$HOME/.config/wintap-smoke/garage.json"
 # Optional: export AWS_PROFILE=<your-existing-profile>
-uv run --no-project \
+uv run --python 3.13 --no-project \
   --with-requirements streamlit/projects/SmokeTests/requirements.txt \
   python -m streamlit run streamlit/projects/SmokeTests/main.py \
+  --server.address 127.0.0.1
+```
+
+Windows PowerShell uses the same app-local requirements:
+
+```powershell
+uv python install 3.13
+$env:WINTAP_SMOKE_CONFIG = "$HOME\.config\wintap-smoke\garage.json"
+uv run --python 3.13 --no-project `
+  --with-requirements .\streamlit\projects\SmokeTests\requirements.txt `
+  python -m streamlit run .\streamlit\projects\SmokeTests\main.py `
   --server.address 127.0.0.1
 ```
 
@@ -140,17 +163,34 @@ the config path. Local/mounted mode remains unchanged. No settings are persisted
 the dashboard. Boto3 lists objects and DuckDB reads them directly with a temporary,
 in-memory S3 secret; there is no dataset download/sync or persistent secret file.
 
-Default window is yesterday through today (UTC); optional `start_day` and `end_day`
-config fields and sidebar controls use **YYYYMMDD**. Listing is paginated and pruned
-to `dayPK=` prefixes, inclusive 1–31 days. Evidence partitions reflect publication
-time, so include adjacent days for midnight runs. Objects uploaded late may require
-an older partition window; the window is not a transport-completeness watermark.
-Listing refreshes on every rerun/Refresh click. File caps fail closed, never silently
-truncate a passing result. Overview reads only evidence, not telemetry schemas/events.
-Explicit validation still requires per-file telemetry schema reads and a selected
-observation scan; large windows can be slow, so start with one or two days.
+The sidebar uses inclusive UTC upload-partition hours in **YYYYMMDDHH** form. Optional
+`start_hour` and `end_hour` config fields set those controls. Legacy `start_day` and
+`end_day` fields remain accepted and expand to `00` through `23`; when no window is
+configured, yesterday through today is the backward-compatible default. These are
+upload/publication partitions, not run-time boundaries or completeness watermarks;
+include adjacent hours when publication may be delayed.
 
-Both `raw_smoke_test` and telemetry use the **same configured connection/source**;
+Startup lists only exact `raw_smoke_test/dayPK=/hourPK=` prefixes and loads portable
+evidence. It does not enumerate ordinary telemetry. Telemetry discovery is deferred
+until **Validate selected run** or **Run all validations**, then restricted to the
+selector-relevant canonical event families, exact selected hour partitions, and
+the manifest hostname (including matching short/FQDN forms) in canonical producer
+filenames.
+File caps fail closed and never silently truncate a passing result. Large validation
+windows can still be expensive, so choose the smallest upload-hour window that safely
+covers on-time and delayed publication.
+
+Validation disables DuckDB disk spill so private telemetry never enters a temporary
+disk cache. `memory_mb` controls the in-memory working-set budget (default 4096;
+accepted range 256–8192). An exhausted budget fails closed without a capture PASS.
+
+Remote failures report a sanitized stage/category code without exception text:
+`remote-connection`, `remote-listing`, `remote-evidence`, or `remote-dashboard`.
+The last two explicitly mean connection/listing may already have succeeded; they
+must not be diagnosed as credential failures without separate evidence. Report the
+code when escalating, never credentials, signed URLs, or unredacted object paths.
+
+Both `raw_smoke_test` and deferred telemetry use the **same configured connection/source**;
 manifest hashes, revision conflicts, hostname/run selectors and missing-data triage
 remain unchanged. S3 connection/read diagnostics suppress details that might contain
 credentials or signed URLs. An unavailable source is an error, not empty green data.
@@ -308,6 +348,17 @@ observations are not original dev-time harness re-validation or historical-loss 
 python3 -m unittest discover -s streamlit/projects/SmokeTests -p 'test_*.py' -v
 ```
 
+The mechanically classified offline contract package can be run separately from
+the SmokeTests project directory:
+
+```bash
+python -m unittest discover -s tests/contract -t . -p 'test_*.py' -v
+```
+
+See `tests/README.md` for its 85-case inventory. The default-on loopback test is
+under `tests/transport/`, and the actual Streamlit app tests are under `tests/ui/`.
+Both remain outside that focused package.
+
 Tests exercise empty UI, repeated run selection, uploaded portable manifests,
 host/PID/path/time isolation, timestamp formats, normal and direct schemas, and
 exact HOST receipt matching, plus live-producer parquet schema, revision/conflict/
@@ -319,9 +370,17 @@ with `python3 devtools/test_smoke_manifest.py -v` and
 
 S3 tests use synthetic configs/listings/credentials and injected files, including
 Streamlit source selection, read-only connection settings and fail-closed limits.
-The optional real loopback HTTP/S3 test requires cached httpfs and is enabled with
-`SMOKE_S3_HTTP_TEST=1`. It exercises signed boto3 listing plus DuckDB range reads,
-not real Garage/TLS/authorization or multi-host acceptance.
+The real loopback HTTP/S3 test is enabled by default and requires an already cached
+DuckDB `httpfs` extension. Set `SMOKE_S3_HTTP_TEST=0` (also `false`, `no`, or
+`off`, case-insensitive) to opt out explicitly. It binds only to `127.0.0.1` and
+uses synthetic objects and credentials while exercising signed boto3 listing plus
+DuckDB range reads; it is not real Garage/TLS/authorization or multi-host
+acceptance.
+
+```bash
+python -m unittest -v tests.transport.test_s3_http
+```
+
 ## TCP endpoint confirmation
 
 The **TCP endpoint normalization** section runs two same-host cases via an assigned

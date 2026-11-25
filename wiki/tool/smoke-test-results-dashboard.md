@@ -16,7 +16,7 @@ grounded_by:
   - streamlit/projects/SmokeTests/batch_views.py
   - streamlit/projects/SmokeTests/result_store.py
 policy: agent-editable
-last_validated: 2026-10-30
+last_validated: 2026-11-24
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -28,6 +28,10 @@ tags: [streamlit, smoke-tests, portable-manifests, cross-host, validation]
 
 # Smoke-test results dashboard
 
+App-role comparison: [[wiki/tool/streamlit-app-review]] — known-stimulus validation
+complements HostActivity availability diagnostics; generic lifecycle/DLL profiling
+and process/network graph exploration remain distinct research capabilities.
+
 End-to-end diagram: [[wiki/workflow/live-collector-validation]] — known activity,
 shared telemetry/evidence delivery, and explicit S3-backed validation.
 
@@ -37,6 +41,11 @@ Run these steps on your **analysis machine** (for example your Mac), as your nor
 login user, from the **Wintap-Analytics repository root**. This recipe uses `uv` to
 install the app's Streamlit, DuckDB and boto3 dependencies and keep them available
 while Streamlit runs.
+
+SmokeTests is a standalone requirements-based app: it intentionally has no local
+or repository-root `pyproject.toml`. Do not use `uv sync`. Use `uv run --no-project
+--with-requirements ...` and explicitly select Python 3.13; a prerelease Python may
+have no DuckDB wheel and fall back to an unavailable Windows C++/NMake build.
 
 ### 1. Create the connection config
 
@@ -57,7 +66,8 @@ Set these values to the destination used by your collector uploader:
   "endpoint": "https://garage.example.invalid",
   "region": "us-east-1",
   "datasets": ["s3://example-bucket/example-prefix"],
-  "max_files": 10000
+  "max_files": 20000,
+  "memory_mb": 4096
 }
 ```
 
@@ -66,7 +76,9 @@ Set these values to the destination used by your collector uploader:
 | `endpoint` | S3 API origin, including `http://` or `https://` and a port if needed. The bucket/prefix belongs in `datasets`. |
 | `region` | Region used by the existing S3/Garage deployment. |
 | `datasets` | S3 root containing the uploaded `raw_sensor/` tree; one or more roots are supported. |
-| `max_files` | Listing cap; `10000` is the starting default. |
+| `max_files` | Fail-closed listing cap; `20000` is the starting default. Narrow upload hours before raising it further. |
+| `memory_mb` | In-memory DuckDB validation budget; default `4096`, accepted range 256–8192. Disk spill remains disabled. |
+| `start_hour` / `end_hour` | Optional inclusive UTC upload-partition bounds in `YYYYMMDDHH`; legacy day bounds expand to full days. |
 
 For example, if an uploaded object is
 `s3://example-bucket/example-prefix/raw_sensor/raw_smoke_test/dayPK=20261030/hourPK=14/example.parquet`,
@@ -90,6 +102,11 @@ work; when using those, omit the profile command. Environment credentials take
 precedence over profile credentials. Credentials belong in that chain, not in
 `garage.json` (the config parser rejects credential fields).
 
+On EC2, the standard chain can use refreshable instance-profile credentials. Omit
+`AWS_PROFILE` and static key variables when the instance role is intended. AWS S3
+still requires an endpoint in this app; for example, region `us-west-2` uses
+`https://s3.us-west-2.amazonaws.com`. The endpoint contains no bucket or prefix.
+
 If this machine has no profile yet and the AWS CLI is installed, create one
 interactively using the credentials issued for the existing S3/Garage dataset:
 
@@ -108,7 +125,7 @@ Still in the **Wintap-Analytics repository root**, in that same terminal:
 
 ```bash
 export WINTAP_SMOKE_CONFIG="$HOME/.config/wintap-smoke/garage.json"
-uv run --no-project \
+uv run --python 3.13 --no-project \
   --with-requirements streamlit/projects/SmokeTests/requirements.txt \
   python -m streamlit run streamlit/projects/SmokeTests/main.py \
   --server.address 127.0.0.1 \
@@ -121,23 +138,36 @@ launch commands. Here `uv run` owns the entire running app process, so its depen
 environment remains available for the app's lifetime.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/README.md §Read directly from Garage / S3; streamlit/projects/SmokeTests/requirements.txt; streamlit/projects/SmokeTests/main.py §main -->
 
+On Windows PowerShell, set `$env:WINTAP_SMOKE_CONFIG` and use backticks for line
+continuation. The source README contains the complete command. `uv python install
+3.13` is a one-time setup when that interpreter is absent.
+
 ### 4. Load and validate your run
 
 1. The sidebar should select **Garage / S3** and show your **Local S3 JSON config**
    path automatically. Leave the local parquet root and optional JSON inputs empty
    for automatic S3 discovery.
-2. Set **Start partition day** / **End partition day** to include the run's UTC
-   collection/publication days, using `YYYYMMDD`. Default is yesterday through today.
-3. Click **Refresh files / results**. The page reports evidence and telemetry file
-   counts; uploaded `raw_smoke_test` supplies the run manifests automatically.
+2. Set **Start upload-partition hour** / **End upload-partition hour** to the smallest
+   safe publication window, using `YYYYMMDDHH`. Include adjacent hours for delayed
+   publication; these are not event-time or run-time bounds.
+3. Click **Refresh files / results**. Startup lists only `raw_smoke_test` evidence;
+   uploaded evidence supplies the run manifests automatically. Ordinary telemetry
+   is not listed or read yet.
 4. Select the test host, then **Canary Tests** → `telemetry-workload` → the exact
    run → **Validate selected run**. For a recurring expanded round, use
-   **Run all validations for this canary**.
+   **Run all validations for this canary**. Only that explicit action lists the
+   selector-relevant canonical event families under the selected hourly partitions,
+   then retains canonical producer filenames matching the manifest hostname's
+   case-insensitive short/FQDN form.
 
 If no run appears, check the dataset prefix, UTC window and uploaded
-`raw_smoke_test` objects. If the app reports **Cannot read S3 source**, check the
-launching shell's credentials, endpoint connectivity and DuckDB `httpfs` availability;
-the extension-cache option is documented in the source README's S3 section.
+`raw_smoke_test` objects. Remote errors now identify a sanitized stage and exception
+category: `remote-connection`, `remote-listing`, `remote-evidence`, or
+`remote-dashboard`. Only the connection stage directly points to credential-chain,
+endpoint/TLS, or `httpfs` setup. Listing points to ListBucket/prefix/window/limits;
+evidence points to GetObject/httpfs/object integrity; dashboard means remote loading
+already progressed and should not be mislabeled as an AWS credential failure. The
+diagnostic deliberately omits exception text, credentials, signed URLs and object paths.
 <!-- GROUND_TRUTH: streamlit/projects/SmokeTests/main.py §main; streamlit/projects/SmokeTests/page_views.py §test_page; streamlit/projects/SmokeTests/batch_views.py §canary_batch_page; streamlit/projects/SmokeTests/README.md §Read directly from Garage / S3 -->
 
 ## App behavior
@@ -146,6 +176,8 @@ Streamlit pages separate **Overview**, **Canary Tests** and **Dev-time Tests**.
 Overview reads manifests only, without telemetry metadata/scans. Test pages offer
 family/run selection, saved selectors/reports and explicit selected-run validation
 with tailored SQL, coverage and rows. Missing runs/data are expected, never PASS.
+Remote startup is evidence-only; telemetry listing and reads are deferred to an
+explicit validation and pruned by canonical event family plus `dayPK`/`hourPK`.
 Read-only in-memory DuckDB queries do not start tests, stop collectors, run DBT
 or modify raw data. All-canary analysis writes summary-only results beside the dataset.
 Analytics owns the app; Wintap owns scripts/manifest production.
@@ -304,8 +336,9 @@ summary persistence; see [[wiki/work/wintap-telemetry-identity-and-data-quality/
 Validation normalizes the selected source's candidate files, scans the union of
 the selected run's exact selector predicates once into a temporary in-memory table,
 then reuses it for checks/details. Overlapping selectors do not duplicate rows.
-Row budget is 100,000 matching observations; DuckDB memory is 256 MB with disk spill
-disabled. Budget/read failure is unavailable validation, not a truncated PASS.
+Row budget is 100,000 matching observations; DuckDB memory is configurable from
+256–8192 MB (4096 MB default) with disk spill disabled. Budget/read failure is
+unavailable validation, not a truncated PASS.
 These bounds do not cap network bytes or wall-clock duration. Individual details
 remain fresh/explicit; round summary persistence is described below. Native timestamp
 pushdown/partition pruning remains a follow-up: uncertain files are not discarded.

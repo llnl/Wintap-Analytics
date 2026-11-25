@@ -20,7 +20,7 @@ grounded_by:
   - streamlit/projects/SmokeTests/page_views.py
   - https://docs.astral.sh/uv/pip/environments/
 policy: agent-editable
-last_validated: 2026-10-30
+last_validated: 2026-11-22
 repo_scope: cross-repo
 implementation_area: analytics
 event_domain: cross-domain
@@ -39,6 +39,14 @@ DuckDB and write access to the collector data root; on root-owned field systems,
 run the workload with `sudo` using an explicitly selected Python interpreter.**
 Wintap owns the workload, evidence publisher and uploader; Analytics owns the
 dashboard and this operator procedure; Lintap supplies packaging/path conventions.
+
+The runnable entry point is `telemetry_smoke_workload.py` in a **Wintap source
+checkout**; it is not a script in Wintap-Analytics, and there is no current
+`telemetry_smoke_test.py` entry point. The recurring Analytics canary adapter also
+imports this Wintap module, so it is not a replacement when the Wintap checkout is
+missing the file. Use a Wintap revision that contains the workload rather than
+renaming a command locally.
+<!-- GROUND_TRUTH: ../wintap/devtools/telemetry_smoke_workload.py §main; validation/telemetry-soak/canary-stimulus.py §stimulus -->
 
 Visual overview: [[wiki/workflow/live-collector-validation]] — two-page editable
 draw.io diagram of the data/evidence paths and root-owned operator workflow.
@@ -85,6 +93,12 @@ From the **Wintap checkout on the collection host**, in your normal login shell:
 WINTAP_REPO=$(pwd -P)
 DATA_ROOT=/var/log/lintap/data  # Replace with this collector's resolved data root.
 QA_ROOT="$HOME/qa/wintap-smoke"
+
+# Fail early if this shell is in the wrong repository or an incompatible revision.
+test -f "$WINTAP_REPO/devtools/telemetry_smoke_workload.py" || {
+  echo "Missing Wintap devtools/telemetry_smoke_workload.py" >&2
+  exit 1
+}
 
 # One-time setup in a dedicated, persistent environment.
 VENV="$HOME/.local/share/wintap-smoke/venv"
@@ -210,7 +224,7 @@ analysis machine's existing AWS profile/environment credentials. See
 | Run appears but no matching telemetry | Allow normal ETL/merge/upload, then verify host/time selectors, sensor startup/capabilities and stimulus path filters. |
 | Required case failed / supplied clone helper broken | Inspect the manifest's failed case; this produces exit 1. |
 
-Commands above were reviewed against current source on 2026-10-30. A new root-run
+Commands above were reviewed against current source on 2026-11-22. A new root-run
 field-host/S3 result is not recorded by this documentation update.
 
 ## Workload-only quick start
@@ -219,7 +233,7 @@ When only local stimulus/JSON is needed, root and DuckDB are unnecessary if the
 output paths are writable. All commands below are from the Wintap repo.
 
 ```bash
-python3 devtools/telemetry_smoke_workload.py --output /home/user/qa/smoke-001
+python3 devtools/telemetry_smoke_workload.py --output ./qa/smoke-001
 ```
 
 Use a fresh directory **outside** collector data/runtime roots and configured
@@ -230,7 +244,7 @@ of their lifecycle; the manifest and evidence remain for analysis.
 
 | Domain | Stimulus | Collected-data expectation / caveat |
 |---|---|---|
-| Process | Named `wt_fork`, `wt_forkexec`, `wt_spawn`, `wt_threads` and child/image names | Start/Stop; fork-only requires Clone; threads must not appear as process Starts. posix_spawn implementation is libc-dependent |
+| Process | Named `wt_fork`, `wt_forkexec`, `wt_spawn`, `wt_threads`, repeated `wt_reexec`, failed-then-successful `wt_execfail`, and optional long-lived `wt_refresh` | Start/Stop; repeated exec stages retain one PID with changing argument tokens; failed attempts are explicitly ineligible successes; fork-only requires Clone; threads must not appear as process Starts. posix_spawn implementation is libc-dependent |
 | Native optional | One round of fork/exec, worker-thread fork, pthread, legacy clone process/thread, clone3 process/thread, explicit vfork+exec | Pass compiled clone helper; missing helper is SKIP, unavailable clone3 records errno. vfork child only calls exec/_exit before image replacement |
 | File | `wt_file`: create/open/write/read/file-backed mmap/close/delete; dirfd relative openat/unlinkat; rename/truncate extras | Linux normalized Open/Read/Write/Close/Delete; mmap becomes Read, rename/truncate have no dedicated FileOps activity |
 | Network | Separate `wt_tcp4srv/cli`, unconnected `wt_udp4srv/cli`, connected-client `wt_udp4cnsrv/cli`; TCP connect/accept/send/recv/disconnect | Independent UDP mode worker/socket/PID cases prevent one connected Receive satisfying unconnected coverage. Server receives still use peer-buffer recvfrom. `--ipv6` is extra stimulus, not certified Linux capture |
@@ -240,6 +254,21 @@ fork birth inherits parent comm; `/proc` resolver can normalize Python aliases;
 exec-entry and image-replacement observations can disagree transiently. Manifest
 PID/TID, UTC interval, case command line, file paths and socket ports are selectors.
 Thread rows explicitly mark `expectedProcessStart: false`.
+The execution selectors additionally record same-PID stage order, argument tokens,
+failed `exec_attempt` paths, and successful `exec_success` stages. `--rounds` and
+`--interval` repeat the complete named set; `--refresh-hold` keeps a process alive
+long enough for a configured collector Refresh tick, but captured Refresh rows still
+depend on collector configuration and timing.
+
+For the current Linux attribution validation, launch Lintap separately with a fresh
+data/runtime root, normal ETL/Parquet output, and a one-minute Refresh schedule. A
+minimal configuration uses `ProcessRefreshEnabled: true`,
+`ProcessRefreshIntervalMinutes: 1`, `ProcessRefreshOffsetMinutes: 0`, and enables
+the process-relevant `Execve`, `Clone`, `Exit`, and `ProcessRundown` sensors. Confirm
+the startup capability receipt and actual data root before invoking the workload;
+the collector must already be running. The exact bounded procedure and config example
+are in `../wintap/devtools/README.md` under “Bounded Linux executable-attribution
+capture”.
 Current portable manifests add explicit per-path activity expectations (rename paths
 need not each perform every operation) and IPv4 TCP/UDP host-relative socket expectations.
 Eight-file canary separately records all eight expected paths. These are stimulus facts,
@@ -253,9 +282,9 @@ exercise exact production path/key projection, complementing unit-test case pair
 ## Native helper
 
 ```bash
-cc -O2 -pthread -o /home/user/qa/clone-helper devtools/clone_lifecycle_workload.c
-python3 devtools/telemetry_smoke_workload.py --output /home/user/qa/smoke-002 \
-  --clone-helper /home/user/qa/clone-helper
+cc -O2 -pthread -o ./qa/clone-helper devtools/clone_lifecycle_workload.c
+python3 devtools/telemetry_smoke_workload.py --output ./qa/smoke-002 \
+  --clone-helper ./qa/clone-helper
 ```
 
 `WINTAP_SMOKE_NAMES=1` is set only for this native invocation. It enables short
@@ -269,7 +298,7 @@ to the sudo workload invocation in step 2, retaining all three output/root argum
 
 The S3 procedure above publishes this envelope automatically as parquet. For a
 manual JSON transfer, choose the shared portable run envelope with
-`--manifest /home/user/qa/manifests/run-001.json` (default `./smoke-results/`).
+`--manifest ./qa/manifests/run-001.json` (default `./smoke-results/`).
 Upload/copy this JSON independently of parquet; the new
 [[wiki/tool/smoke-test-results-dashboard]] groups runs by test UUID and queries
 the recorded test-host/time/PID/path/ports. The workload's original `manifest.json`
@@ -289,14 +318,14 @@ rundown Refresh, HOST, registry or SELinux/security events.
 
 - `python3 devtools/test_telemetry_smoke_workload.py -v`: two tests pass: all stdlib
   domains, expected activity manifest, thread negative case, lifecycle file removal,
-  refusing existing directories and broken helper failure.
+  refusing existing directories, repeated same-PID exec/argument cases, Refresh
+  candidate retention, and broken helper failure.
 - `cc -O2 -Wall -pthread ... clone_lifecycle_workload.c`: no warnings/errors.
-- Builder VM `lintap-clone-validation`, Ubuntu 24.04/aarch64, kernel
+- Disposable builder VM, Ubuntu 24.04/aarch64, kernel
   `6.8.0-147-generic`: default and optional IPv6 stimulus complete; native one-round
   mode completes with no clone3 skips and distinct clone process/thread/vfork cases.
-- Evidence: `/home/ubuntu/clone-validation/telemetry-smoke-first` and
-  `/home/ubuntu/clone-validation/telemetry-smoke-final` (final Python manifest
-  includes parsed native PID/TID records). These are **stimulus**
+- Operator-retained initial/final manifests include parsed native PID/TID records.
+  These are **stimulus**
   runs, not collected cross-domain acceptance. RHEL and other architectures pending.
 - Recompiled helper's default mode also passes actual CO-RE trace validation:
   unchanged 80 process/60 thread manifest, no missing/duplicate births, false thread

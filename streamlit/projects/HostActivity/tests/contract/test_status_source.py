@@ -267,7 +267,7 @@ class StatusUITests(unittest.TestCase):
             "WINTAP_STATUS_BINDING_SHA256": fingerprint(BINDING),
             "WINTAP_STATUS_LEDGER_ID": LEDGER,
         }
-        self.app = AppTest.from_file(str(Path(__file__).with_name("main.py")))
+        self.app = AppTest.from_file(str(Path(__file__).resolve().parents[2] / "main.py"))
 
     def test_status_runs_catalog_never_open_data_or_reserve(self):
         # Omit dataset/AWS settings entirely: status must work without them.

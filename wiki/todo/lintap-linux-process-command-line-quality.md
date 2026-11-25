@@ -8,6 +8,8 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs
+  - ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs
+  - ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c
   - ../Wintap-PyUtil/wintap_dbt/models/bronze/stg_raw_process.sql
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
@@ -22,7 +24,7 @@ audience: mixed
 status: draft
 source_paths: ../wintap/wintap/platform/linux/sensor; ../Wintap-PyUtil/wintap_dbt/models; ../Wintap-PyUtil/data
 complexity: high
-work_state: active
+work_state: promoted-partial
 source_added: Human
 priority: P1 — High (provisional)
 tags: [lintap, linux, process-telemetry, data-quality, dbt, todo]
@@ -32,7 +34,9 @@ tags: [lintap, linux, process-telemetry, data-quality, dbt, todo]
 
 **Priority:** P1 — High (provisional; the focused VM run reported a high blank
 rate and process-level values with multiple distinct observations).
-**State:** Active intake finding; deep-dive implementation not started.
+**State:** Promoted. The bounded `sfx-03` sensor slice is implemented and accepted;
+paired-row DBT selection is complete. Immutable exec argv and historical disposition
+remain separate.
 **Complexity:** High.
 
 ## Goal
@@ -44,6 +48,26 @@ event contract, and process models should make it possible to tell what was
 observed, when it was observed, and how reliable that observation is.
 <!-- SYNTHESIS: recommended direction based on the sensor and dbt paths cited in grounded_by -->
 
+## Bounded sensor disposition — 2026-11-22
+
+The accepted `sfx-03` slice keeps the existing rendered string but adds nullable
+`CommandLineSource` and `CommandLineCaptureStatus` to the shared process object and
+normal/direct Parquet projection. Linux values use source `procfs-cmdline` and
+statuses `captured`, `empty`, `unavailable`, `read-error`, or `truncated`.
+`/proc/<pid>/cmdline` reads stop at 256 KiB; truncated output contains only complete
+NUL-terminated arguments. Clone no longer copies a parent's command line into a
+child observation.
+<!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs §ReadCommandLineFile; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §SelectCommandLineMetadata -->
+
+Focused tests pass 6/6, the combined sensor-fix suite passes 71/71, and a bounded
+process-only capture passes 28/28 aggregate assertions. All 24 cleared-argv child
+cases remain `empty` with zero parent-sentinel values; all eight repeated-exec cases
+retain captured space-bearing values for both image stages. The four observed live
+statuses are explainable, and all 113 files carry the new optional fields. This is
+Linux procfs quality/provenance acceptance, not full completion of the original
+cross-repo TODO.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-03-linux-command-line-provenance.md; ../wintap/tests/Lintap.Tests/ProcessCommandLineQualityTests.cs -->
+
 ## Observed problem
 
 In the focused VM run, 2,707 of 3,309 materialized process records had blank
@@ -54,14 +78,12 @@ were especially sparse: 2,386 of 2,420 had blank command lines. The underlying
 raw data and materialized database are cited in `grounded_by`.
 <!-- HUMAN-REPORTED: focused VM analysis and counts supplied with this to-do; referenced database and raw-data paths exist, but their contents were not independently re-queried for this intake update -->
 
-On Linux, `ProcReader` obtains command-line text from `/proc/<pid>/cmdline`,
-joins NUL-separated values with spaces, and leaves the field unset when it
-cannot read the proc file. The sensor's process-object helper normalizes a null
-command line to an empty string. `ExecveSensor` and process rundown use this proc
-read; the clone sensor also has a parent-command-line fallback when the child's
-value is empty. The syscall-entry BPF context exposes an `argv` pointer, but the
-current process event is enriched from a later userspace `/proc` read rather
-than projecting that vector into the event.
+On Linux, `ProcReader` obtains command-line text from `/proc/<pid>/cmdline` and
+joins NUL-separated values with spaces. The accepted sensor slice now bounds and
+classifies that read, and clone uses child data only. `ExecveSensor` and process
+rundown still use the mutable procfs observation. The syscall-entry BPF context
+exposes an `argv` pointer, but the current process event is enriched from a later
+userspace `/proc` read rather than projecting that vector into the event.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs §ReadCmdline; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §HandleEvent; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §CreateRefreshMessage; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c §trace_event_raw_sys_enter_execve -->
 
 The bronze model aliases raw `CommandLine` to `ProcessArgs` when the latter is
@@ -166,6 +188,10 @@ observation.
 - Which Linux/kernel and eBPF constraints define the maximum captured argument
   count and bytes, and how will truncation be represented?
 <!-- SPECULATIVE: these are unresolved contract and platform questions; the current source does not define the intended canonical semantics or capture limits -->
+
+For the bounded sensor slice, the rendered string and 256 KiB procfs ceiling are
+settled. Structured argv and kernel-boundary limits remain unresolved; the bounded
+process-image summary now uses a deterministic paired-row selector.
 
 ## Related findings
 

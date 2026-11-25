@@ -8,10 +8,21 @@ Master catalog of all pages. Updated by the agent on every ingest.
 
 ## Rollup
 
+Go pidstat package replacement plan:
+[[wiki/work/fix-pidstat-collector/packaging_plan]] — integrate the existing topic-ref
+module, stage static Debian/RPM binaries and replace Python service startup for
+greenfield deployment; qualify fresh-install lifecycle and native runtime/consumer gates.
+Package/service integration and Debian arm64 install/reinstall/default rotation/
+crash-recovery checks pass. Ubuntu amd64/native RPM qualification deferred
+to other platforms. See feature verification; no field-release acceptance claimed.
+
 DBT source-aware validation: [[wiki/work/dbt-source-validation/verification]] —
 local/split/S3 inputs, explicit named AWS profile selection, no placeholder directory,
 partition-scoped DuckDB preflight, offline dashboard checks. Combined SELinux/source
 validation now passes 286 regressions; historical config failure does not reproduce.
+Open low-priority follow-up: [[wiki/todo/dbt-direct-hostname-filter]] — filename-based
+hostname selection for raw-only `make dbt-build-direct`, with source-preflight and
+PIDSTAT coverage still to be designed and qualified.
 Combined release gates: [[wiki/work/selinux-dbt-pipeline/verification]] — required
 PR review, full split-local/authenticated-S3 builds, temporary network-ID consumer
 qualification, and S3 pull-helper hardening.
@@ -21,7 +32,12 @@ release identity, format-specific Debian/RPM/MSI encoding and build-to-install c
 
 Multipass development refresh: [[wiki/repo/lintap-supporting-repo]] — fresh Ubuntu
 arm64 provisioning verifies SDK10.0.402, DuckDB1.5.6, all12 tracers, managed build,
-24 packaging/provisioning regressions and5 validation-harness tests.
+24 packaging/provisioning regressions and5 validation-harness tests. A later Bash
+provisioning repair uses pip after a reproduced uv HTTP stall, avoids recursive
+ownership changes on host mounts, bounds failure diagnostics, and passes the fresh
+VM dependency gate plus 26 focused packaging/provisioning tests. The repaired VM
+also produced and structurally verified a native arm64 `7.0.1~beta.1-1` Debian
+package; install and runtime acceptance remain pending.
 
 Develop merge maintenance: Wintap `5afd320` (local) preserves feature semantics
 and fixes standalone MCP's multi-RID lock graph;113focused managed tests and
@@ -40,13 +56,13 @@ or historical-loss closure. Detailed
 audit payloads are uncommitted;archive provenance is retained,not loaded by default.
 
 RHEL 9 package preparation: [[wiki/repo/lintap-supporting-repo]] — canonical Lintap
-guide now selects SDK 10.0.402 and provides operator-assisted prerequisite/build
+guide selects stable .NET 10 and provides operator-assisted prerequisite/build
 steps; bounded operator-assisted RHEL 9 package/capture/shutdown and fresh DBT smoke
 pass. A newer package deployment and initial canary rounds are reported; independent
 payload proof and full live/multi-day qualification remain pending.
 Upgrade closure: [[wiki/work/wintap-telemetry-identity-and-data-quality/runtime_alignment_plan]]
 — all 13 C# targets and active package/provision/run defaults align with .NET 10;
-exact SDK 10.0.402 is enforced. Native self-contained RPM smoke passes by operator
+stable .NET 10 selection is enforced and recorded. Native self-contained RPM smoke passes by operator
 report; other package modes/platforms and broader acceptance remain pending.
 
 Canonical context:
@@ -69,10 +85,12 @@ Durable startup evidence: [[wiki/schema/runtime-capability-receipt]];
 Clone default-TRUE acceptance: [[wiki/work/clone-default-true/verification]];
 RHEL transfer: [[wiki/work/clone-default-true/dev_handoff]].
 
-Field-friendly named process/file/network stimulus and **root-owned field-host S3
+Field-friendly named process/file/network stimulus, now extended with bounded
+same-PID exec/argument/failed-attempt/Refresh cases, and **root-owned field-host S3
 quick start**: [[wiki/tool/named-telemetry-smoke-workload]] — persistent user-created
 venv, explicit sudo Python/DuckDB, `--smoke-data-root`, automatic `raw_smoke_test` upload and
-dashboard validation.
+dashboard validation. The one-shot entry point lives in the Wintap source checkout as
+`devtools/telemetry_smoke_workload.py`; there is no current `telemetry_smoke_test.py`.
 Visual workflow: [[wiki/workflow/live-collector-validation]] — editable two-page
 draw.io diagram for **live-collector validation** and recurring telemetry canaries.
 Open-ended disposable-host stimuli with uploaded ground-truth snapshots:
@@ -84,6 +102,14 @@ Smoke dashboard **first-time configuration and launch**, results / cross-host ru
 [[wiki/work/smoke-test-dashboard/verification]].
 Dashboard supports private configured Garage/S3 reads as well as mounted datasets;
 all-round summaries persist separately beside data, not under raw telemetry.
+Windows/EC2 launch uses app-local requirements with explicit Python 3.13, supports
+instance-profile credentials, and reports sanitized connection/listing/evidence/
+dashboard failure stages instead of one generic S3 credential message.
+Remote startup now lists only `raw_smoke_test` evidence; telemetry discovery is
+deferred to explicit validation and pruned by canonical event family and exact UTC
+upload-partition hour.
+Strict no-list S3 discovery is deferred as a low-priority intake item:
+[[wiki/todo/smoke-dashboard-no-list-s3-discovery]].
 Overview now reads manifests only; Canary Tests and Dev-time Tests pages use explicit
 validation. One-click canary-round observations and passive HOST startup comparison
 expose coverage gaps without certifying capture. Initial S3 rounds show TCP Accept,
@@ -117,7 +143,15 @@ remains unverified. The row mode retains family-aware timestamps and guarded
 exact `raw_process_file` aggregation (7.9 million rows to 479 points in about
 20 seconds); standard families retain the 2-million-row cap.
 
-Test-suite navigation and refactor plan: [[wiki/overview/test-suite-organization-and-classification]] — inventory of Analytics and PyUtil tests, purpose/execution taxonomy, proposed filesystem, coordination/entity overlap review, and staged move/archive rules. No test files have been moved or deleted yet.
+Sensor-fix workflow: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]] and [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan]] — bounded Linux process evidence/timing/Refresh units and connection-ID cutover are complete. Fresh repeated-exec capture qualified deterministic paired-row DBT selection (valid Refresh, successful exec, fallback), excluding failed attempts. See [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]] for scoped passes, retained failures and separate follow-ups.
+
+Test cleanup: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/implementation_plan#Current Linux Tranche]] — HostActivity 59 and PyUtil representative 17 pass; 224 selected PyUtil identities preserved. SmokeTests organization is complete with 100 passing contract/transport/UI cases and no forwarding modules. Remaining validation/PyUtil/coordination slices are separate; the empty one-time RHEL sample is not a future data gate.
+
+Wintap tests: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_analysis]] is the initial inventory; [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/wintap_test_plan]] retains native Windows gates. macOS/Linux feature testing is complete, `Lintap.Tests` exists, and stable .NET 10 selection is implemented. Broader ownership remains in [[wiki/tension/wintap-test-platform-boundaries]].
+
+Closeout handoff: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]] — use latest feature tips; native Windows, uploader fault/endpoint qualification, selected later cleanup and final human release review remain separate gates.
+
+Test-suite navigation and refactor plan: [[wiki/overview/test-suite-organization-and-classification]] — inventory, purpose/execution taxonomy, proposed filesystem, coordination/entity overlap review, and staged move/archive rules. Partial first-cut moves are implemented; no assertions or historical evidence have been deleted.
 
 Quality follow-up: [[wiki/work/wintap-telemetry-identity-and-data-quality/quality_followup_analysis]]
 — current-source Accept emission and UDP memory-domain defects, live incomplete UDP
@@ -171,7 +205,10 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/tension/raw-sensor-compaction-conditional-writes-vs-endpoint]] | high | Dissolved: ignored conditional PUT remains an endpoint observation, but reservations/manifests were removed. |
 | [[wiki/tension/dbt-arbitrary-representatives-vs-compaction-equivalence]] | high | Resolved by human acceptance: existing ANY_VALUE quality debt is non-blocking for compaction; bronze/schema/build gates remain and affected downstream drift is reported. |
 | [[wiki/tension/native-macos-readers-vs-descendant-shutdown]] | medium | Human accepts best-effort native-Mac process-group release for normal completion, with escaped-descendant risk explicit and reservation retention on timeout/supervisor death/uncertain group state; no VM/Docker prerequisite. An isolated candidate passes 12 actual-Mac synthetic lifecycle controls; broader DBT/data/S3/service platform acceptance remains open. |
+| [[wiki/tension/private-gateway-connection-identity]] | high | Held after refinement: both gateway identity slots are empty, loopback uses hostname context, non-loopback uses `public`, and a future symmetric private-network namespace remains deferred. |
 ## Decision
+
+[[wiki/decision/stable-dotnet-10-development-sdk]] — approved; implementation pending, Linux packaging review separate.
 
 | Page | Confidence | Summary |
 |------|------------|---------|
@@ -185,6 +222,7 @@ same existing branches, feature-only commit/PR scope).
 | [[wiki/decision/ai-velocity-roi-mini-lab]] | high | Per-feature velocity/ROI mini-lab, revised to v2.1 (2026-08-19, post external review): headline **Velocity** = solo-hours / (5.714 × days) in Feature and Portfolio views, forced-counterfactual sealed Q1 under the three-question ratchet, point-plus-uncertainty reporting, frozen-criteria/availability-finality/comparability guardrails, per-unit quality loop, attention proxy as coverage-annotated diagnostic, never-gates rule. |
 | [[wiki/decision/platform-runtime-data-root-defaults]] | high | Records that unconfigured Wintap deployments use the OS defaults owned by Env.cs while explicit programmatic, environment, and JSON overrides remain supported. |
 | [[wiki/decision/separate-data-and-runtime-roots]] | high | Accepted layout decision: durable `raw_sensor` data and host-local runtime state use independently configurable roots; Linux defaults are `<data-root> and <runtime-root>` with no automatic migration. |
+| [[wiki/decision/canonical-five-tuple-connection-identity]] | high | Defines semantic `ConnId` as hostname context for loopback or `public` otherwise plus a direction-independent five-tuple, keeps exact preimage encoding private to sole .NET generation, and requires downstream passthrough. |
 | [[wiki/decision/registry-provider-strategy]] | high | Accepted (2026-08-25, session-handle sub-decision OPEN): manifest-only Windows registry collection via an undocumented Microsoft-Windows-Kernel-Registry capture mode (4-byte 0xFFFFFFFF EVENT_FILTER_DESCRIPTOR at EnableTraceEx2) — standalone mechanism record with the probe matrix, sticky-global-state finding, KCB-correlation negative result, and framed session-handle options. |
 ## Concept
 
@@ -231,7 +269,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 
 | Page | Confidence | Summary |
 |------|------------|---------|
-| [[wiki/event_type/process-events]] | high | Defines the unified WindowsProcessSensor semantics (2026-08): kernel-ETW Start/Stop on the shared session with ETW-canonical create times/PidHash, snapshot Refresh with dedup, SID/command-line/path enrichment fallbacks, manifest Stop-metric merge, opt-in boot-trace replay, QA counters, and ETL boundaries. |
+| [[wiki/event_type/process-events]] | high | Defines birth-based process identity, Windows ETW lifecycle/startup reconciliation, Linux clone/exec boundaries, and the uncommitted additive observation-time/UTC-aligned periodic Refresh candidate with ETL implications and remaining live/native gates. |
 | [[wiki/event_type/file-events]] | high | Defines ETW FileIO producer behavior, file-key path resolution, feedback suppression, and 10-second aggregate ETL semantics. |
 | [[wiki/event_type/network-events]] | high | Defines TCP/UDP ETW producer behavior, endpoint fields, reversible TCP caveats, and 10-second network aggregate ETL semantics. |
 | [[wiki/event_type/powershell-events]] | medium | Script-block event contract, fragment/attribution semantics, sensitivity, `raw_powershell` output, and no dedicated Wintappy DBT staging model found. |
@@ -248,6 +286,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 
 | Page | Confidence | Summary |
 |------|------------|---------|
+| [[wiki/tool/streamlit-app-review]] | medium | Source-only review of five apps: HostActivity availability, SmokeTests validation, legacy DataQA lifecycle/DLL QA, EDA graphs, and CALDERA report browsing. DataQA/EDA shell consolidation candidates; concrete dependency/configuration gaps, distinct metrics and unverified usage/runtime relevance. No retirement decision. |
 | [[wiki/tool/wintap-workbench]] | high | Summarizes the Angular Workbench UI, feature routes, SignalR/EPL query path, and query-state boundary. |
 | [[wiki/tool/durable-process-entity-manager]] | high | Optional fixed-host snapshots/no GC, hourly checkpoints and DBT ancestry; submitted explicit-v5 Linux entity launch/history/clean-original recovery preserves raw cursor and DRAINING. Interrupted-publication repair and broader qualification remain open. |
 | [[wiki/tool/recent-host-activity-dashboard]] | high | Raw metadata/optional row viewer plus pinned manual advisory v1 Status/raw intent Runs; 46 offline tests pass. Partitions/history/certificates unavailable; full catalog and managed jobs pending, no deployment. |
@@ -259,7 +298,7 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 | [[wiki/workflow/future-experiment-analysis-workflows]] | high | Tracks first-class analytics topics including ACME4 Explore, DuckDB view construction, process trees/paths, process-centric SQL, and network joins. |
 | [[wiki/workflow/process-ancestry-completeness-qa]] | medium | First-round DBT terminal/context QA implemented; broader root fraction, concentration/K95 and independent validity-audit guidance remains separate. |
 | [[wiki/workflow/lintap-dev-field-workflow]] | high | The Lintap dev/field split: field-host clones are read-only by policy (reviews transcribed dev-side), diagnostics bundles must be self-sufficient, deploys pull and rebuild tracers on-host, pushes require the human's credentials, and agent memory must mirror into the wiki. |
-| [[wiki/workflow/rhel8-rpm-build-prerequisites]] | high | Preflight and software prerequisites for a native RHEL 8 x86_64 Lintap RPM build, including exact .NET SDK 10.0.402 and the current BTF/CO-RE limitation. |
+| [[wiki/workflow/rhel8-rpm-build-prerequisites]] | high | Preflight and software prerequisites for a native RHEL 8 x86_64 Lintap RPM build, including stable .NET 10 SDK selection and the current BTF/CO-RE limitation. |
 ## Repo
 
 | Page | Confidence | Summary |
@@ -288,11 +327,13 @@ patch and host-bound agent state: [[wiki/work/host-process-identity-patch/verifi
 Priority finding intake queue: [[wiki/todo/index]] — tracks emerging bugs,
 data-quality issues, and enhancements before promotion into a full deep-dive
 feature folder. Current P1 items include [[wiki/todo/linux-process-name-exe-fallback]],
-on validating and fixing reported Linux process names labeled `exe`;
-[[wiki/todo/linux-process-executable-attribution]], on nondeterministic Linux
-process executable attribution in Wintappy's silver model; and
-[[wiki/todo/lintap-linux-process-command-line-quality]], on source capture,
-provenance, and deterministic dbt command-line semantics. The P1 OS metadata
+whose source repair is accepted while historical data lineage remains open;
+[[wiki/todo/linux-process-executable-attribution]], where source rows now preserve
+attempt-versus-success semantics and path-evidence origin but process-lifetime
+selection remains nondeterministic in Wintappy's silver model; and
+[[wiki/todo/lintap-linux-process-command-line-quality]], whose bounded Linux
+source/status and clone-attribution slice is accepted while immutable exec argv
+and deterministic DBT command-line semantics remain. The P1 OS metadata
 correction in [[wiki/diagnostic/duplicate-agent-id-and-os-family]] tracks removal
 of hardcoded `windows` labels and platform-derived, backward-compatible family
 handling. The P2
@@ -304,27 +345,41 @@ listening-socket lifecycle capture and downstream modeling; priority and platfor
 scope remain open. [[wiki/todo/canonical-process-owned-network-grains]] tracks
 canonical process-owned increment/connection grains, conflict visibility, and
 network-observed process identity semantics for reusable analytics.
-[[wiki/todo/transformer-five-tuple-connection-port-key]] tracks the suspected
-high-endpoint-port argument duplication in Wintap's five-tuple connection key;
-the collision impact and compatibility implications remain unverified.
+[[wiki/todo/unify-lintap-runtime-and-etl-configuration]] tracks replacing the
+operator-facing `lintap.env` and `ETLConfig.json` split with one canonical
+configuration while preserving local values across installer upgrades.
+[[wiki/todo/transformer-five-tuple-connection-port-key]] finds no duplicate-port
+call in available v7 history and traces the ACME4 workaround to unsorted producer
+ID inputs. The absent historical build still prevents ruling on duplicated
+persisted endpoints. The accepted target now preserves .NET as the sole generator;
+DBT's exact JSON is not canonical; DBT and legacy raw-view rehashing are now
+removed in the bounded source round, and local DBT passthrough qualification is
+complete. Native Windows acceptance is deferred, not eliminated. Release uses a
+clean cutover to newly collected data with no legacy migration or mixed-data
+compatibility requirement.
 The provisional P2 [[wiki/todo/lintap-rpm-amazon-linux-2023]] tracks the reported
 failure of the current Lintap RPM to install on AWS Amazon Linux 2023; artifact,
 error classification, and target-support boundary remain to be established.
-The untriaged [[wiki/todo/raw-sensor-upload-time-partition]] tracks the shared
-.NET gap between current merge-time partitions and the requested actual-upload
-UTC partition contract.
+The implemented [[wiki/todo/raw-sensor-upload-time-partition]] records the shared
+.NET S3 correction from merge-time paths to UTC upload-time keys, with durable
+unresolved-attempt validation; live endpoint qualification remains open.
 The low-priority [[wiki/todo/daily-compacted-tier]] tracks a future verified
 `compacted2/dayPK` roll-up, disjoint reader precedence, and late-arrival
 handling; it is separate from the current hourly historical catch-up.
 The approved high-priority test maintenance item is
 [[wiki/todo/test-suite-reorganization]], which points to the staged
 [[wiki/overview/test-suite-organization-and-classification]] plan.
-The new P1 [[wiki/todo/periodic-process-refresh-listing]] tracks the requested
-periodic running-process Refresh listing on both Windows and Linux, including the
-default hourly schedule, collection-time observability, and identity-safe
-deduplication.
+The promoted P1 [[wiki/todo/periodic-process-refresh-listing]] records the
+uncommitted UTC-aligned Linux/Windows candidate, hourly `HH:05` default,
+collection-time observability and remaining native/live gates.
+The promoted P1 [[wiki/todo/process-observation-time-separate-from-birth]] records
+the additive raw/UTC observation fields independently of canonical birth/hash;
+full legacy `EventTime` migration still requires coordinated resolver/ETL/consumer
+work.
 
 ## Work
+
+Linux implementation continuation: [[wiki/work/implement-sensor-fixes-and-cleanup-test-code/dev_handoff]] — preserves reviewed Wintap TODOs, destination/transfer checks, existing test-cleanup work, Linux/Windows execution boundaries, and the small approved-unit/capture loop. The first source batch is implemented and synthetically qualified but uncommitted; native Windows, fresh capture and deployment authorization remain open.
 
 Compaction status utility follow-on:
 [[wiki/work/compaction-status-utility/brief]],
@@ -812,7 +867,8 @@ Broad transport/fault coverage and the representative shard/performance benchmar
 remain pending.
 Object filenames may change while
 the partition scheme is preserved. Daily rollup and cron are deferred; the
-upload-time partition TODO is [[wiki/todo/raw-sensor-upload-time-partition]].
+implemented upload-time partition behavior is recorded in
+[[wiki/todo/raw-sensor-upload-time-partition]].
 
 Pidstat Go rewrite, fpc-03 review checkpoint and four-hour VM soak completed
 (2026-10-31 05:18–09:18UTC;49files/399312rows,2880sample times,80canaries;
@@ -821,7 +877,7 @@ human acceptance/packaging pending): [[wiki/work/fix-pidstat-collector/soak_revi
 [[wiki/work/fix-pidstat-collector/dev_handoff]],
 [[wiki/work/fix-pidstat-collector/verification]] — remove installed-host uv/Python/
 DuckDB requirements while preserving metrics and Parquet contracts. First live gate:
-existing Multipass `lintap-dev`, Ubuntu arm64; RHEL 8/amd64 runtime proof deferred.
+existing disposable Multipass VM, Ubuntu arm64; RHEL 8/amd64 runtime proof deferred.
 Native workflow: [[wiki/tool/pidstat-implementation-loop]] — `/pidstat-loop`,
 bounded skill, deterministic Python/Parquet/ELF evidence utility and human fpc-01 pause;
 fresh review via `/pidstat-review` in a new session. fpc-01 human-approved; fpc-02 raw

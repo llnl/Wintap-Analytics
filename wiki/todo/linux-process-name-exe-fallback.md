@@ -8,8 +8,9 @@ grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs
+  - ../wintap/developer_docs/audits/sfx-01-linux-process-names.md
 policy: agent-editable
-last_validated: 2026-11-10
+last_validated: 2026-11-22
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -23,11 +24,13 @@ tags: [todo, priority, linux, process-events, data-quality, telemetry-semantics,
 
 **Priority:** P1 — High (provisional; the reported label obscures executable
 identity across many process records).
-**State:** Open — intake finding; validation and implementation have not started.
-**Likely next step:** Quantify the affected rows in the reviewed DuckDB, trace
-them back through silver/bronze to raw process observations, then reproduce the
-name-selection path on a Linux host before choosing a source fix and any
-historical-data repair.
+**State:** Promoted — the source repair and synthetic/normal-ETL qualification are
+implemented in the feature branch's `sfx-01` unit; bounded Linux `live-01` name
+evidence passed 8/8 multi-exec cases. Affected-row lineage and any historical
+repair remain open.
+**Likely next step:** Trace the reviewed DuckDB values through silver/bronze to raw
+observations before any historical-data decision. The separate repaired-binary
+direct-Parquet timing gate passed in `live-02`.
 
 ## Finding
 
@@ -38,15 +41,18 @@ symlink to its target. The reported row count, affected models, source events,
 and cause have not been independently queried or confirmed for this intake.
 <!-- HUMAN-REPORTED: user observation and suspected cause from review of a local example DuckDB; row counts and lineage not independently queried -->
 
-Current source makes that failure mode plausible but does not establish it for
-the reviewed rows. `ProcReader` records the `/proc/<pid>/exe` symlink target, or
-the procfs path itself when no target is available. Linux process producers
-attempt to resolve procfs paths, but retain the original path when resolution
-does not produce a target. `ExtractProcessName` then takes the path basename;
-for an unresolved `/proc/<pid>/exe` path that basename is literally `exe`.
-Confirm which producer and fallback sequence emitted the reviewed values,
-including whether the deployed sensor version matches the inspected source.
-<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs §ReadExe; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcessSensorHelper.cs §ExtractProcessName; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §ResolveExecutablePath; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §ResolveExecutablePath; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §ResolveExecutablePath, CreateRefreshMessage -->
+The repaired source no longer treats an unresolved `/proc/<pid>/exe` alias as an
+executable basename. It uses resolved readlink target evidence, otherwise observed
+`comm`, otherwise `unknown`; it never parses command-line text as an executable
+path. A genuine executable named `exe`, case, spaces and deleted-image link targets
+remain valid. This establishes the candidate behavior, not the lineage or deployed
+revision behind previously reported rows.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcReader.cs §ReadExe; ../wintap/wintap/platform/linux/sensor/ebpf/helpers/ProcessSensorHelper.cs §ReadExecutableLink/ResolveExecutablePath/ExtractProcessName; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §SelectExecutableMetadata; ../wintap/wintap/platform/linux/sensor/ebpf/CloneSensor.cs §SelectExecutableMetadata; ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §CreateRefreshMessage -->
+
+The authorized `live-01` workload produced eight multi-exec cases. Every case had
+the expected first/second executable-derived names and paths, and none used the
+synthetic command tokens as names. This closes the bounded live-name assertion,
+not the lineage of previously reported rows or deployment acceptance.
 
 ## Validation and repair work
 
@@ -94,6 +100,8 @@ choice of which valid observation represents a process lifetime.
 
 ## Disposition
 
-This is a validation and bug-intake item, not authorization to change Wintap,
-Wintappy, schemas, or historical data. Promote it to a feature-work folder only
-after the affected rows, deployed producer path, and repair scope are established.
+The source repair was selected under
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]]. Keep this item
+promoted until affected-row lineage closes the remaining historical data questions.
+The passed repaired-binary `live-02` timing gate does not reopen the passed
+`live-01` name assertion. No historical repair or Wintappy change is implied.

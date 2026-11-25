@@ -187,8 +187,13 @@ object size and does not establish that Parquet content is valid or complete.
 
 ```bash
 cd streamlit/projects/HostActivity
-uv run python -m unittest discover -s . -p 'test_*.py' -v
+uv run --locked --offline --no-sync python -m unittest discover -s tests -t . -p 'test_*.py' -v
 ```
+
+The first-cut [test inventory](tests/README.md) classifies the 59 existing cases
+under `tests/contract/`; mixed UI controls are retained until a later split.
+The project-root `discover -s .` command still works. These synthetic regressions
+are separate from validation against newly captured sensor datasets.
 
 Tests create temporary local Parquet fixtures and use mocked file-discovery and
 S3 metadata results. They do not access AWS or require a live S3 profile. A

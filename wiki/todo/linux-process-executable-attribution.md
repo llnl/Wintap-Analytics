@@ -5,10 +5,15 @@ confidence: medium
 grounded_by:
   - ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c
+  - ../wintap/wintap/platform/linux/sensor/shared/KernelTimestampConverter.cs
+  - ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs
+  - ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md
+  - ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs
+  - ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md
   - ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql
   - wiki/work/lintap-process-creation-validation/validation-harness-design.md
 policy: agent-editable
-last_validated: 2026-11-17
+last_validated: 2026-11-23
 repo_scope: cross-repo
 implementation_area: data-pipeline
 event_domain: process
@@ -20,12 +25,26 @@ tags: [todo, priority, process-events, data-quality, telemetry-semantics, wintap
 
 # To-Do: Deterministic Linux Process Executable Attribution
 
+## Top-level platform finding
+
+The confirmed multiple-`process_name` behavior is currently a **Linux-specific
+investigation**. Linux can legitimately emit multiple image observations under one
+`PidHash` because repeated `exec` transitions preserve the process identity. Normal
+Windows process creation does not have an equivalent `execve` image replacement;
+multiple names under one Windows `PidHash` would therefore be treated first as an
+identity, snapshot/enrichment, replay/deduplication, or other data-quality anomaly,
+not assumed to be valid repeated-exec behavior. Windows belongs in the validation
+plan as a negative control: repeated Refresh values should normally remain stable,
+and PID reuse should produce a distinct creation-time-scoped hash.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §GetExecutionObservationKind; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §EtwParser_ProcessStart; §CreateRefreshMessage -->
+
 **Priority:** P1 — High (provisional; prioritize because the silver process row
 can silently attribute an executable that did not run).
-**State:** Open — intake finding; deep dive not started.
-**Likely next step:** Promote to a cross-repo feature investigation, then decide
-whether the result is a bug fix, a model enhancement, or both. This intake does
-not select the eventual process/image model.
+**State:** Promoted for the bounded Linux repeated-exec slice. The `sfx-04`
+observation-kind and `sfx-05` path-evidence-source slices, finalized capture, and
+deterministic paired-row DBT projection are accepted. Structured argv/eBPF argv,
+syscall-result correlation, BPF truncation, historical repair, and an explicit
+as-of relation remain separate future follow-ups.
 
 ## Finding
 
@@ -34,10 +53,50 @@ process lifetime. Syscall-entry observations record a requested executable
 before the syscall outcome is known; `sched_process_exec` records a successful
 image installation. Those are different facts and need to remain distinguishable.
 
-The Wintap callback currently emits both observation types as process `Start`
-messages and tags their provenance in `Process.Arguments`. It uses process start
-time as `EventTime`, rather than the individual exec-observation timestamp.
+The latest reported form of this issue—multiple `process_name` values associated
+with the same OS PID—is now explicitly included in
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/brief]]. PID alone is not
+enough to diagnose it: the investigation must distinguish PID reuse across
+different `PidHash` values from multiple image observations within one process
+lifetime, then determine whether downstream selection introduces the problematic
+canonical value.
+<!-- HUMAN-DECISION: conversation 2026-11-23 — include the latest multiple-name/same-PID issue in the active feature scope. -->
+
+The Wintap callback emits both observation types as process `Start` messages and
+tags their provenance in `Process.Arguments`. It keeps process birth as
+`EventTime`; additive fields preserve the individual raw kernel observation and
+converted UTC value separately. The accepted `sfx-04` slice now also labels
+syscall entry as `ExecutionObservationKind=exec_attempt` and
+`sched_process_exec` as `exec_success`.
 <!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §OnStarting, HandleEvent; ../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c §trace_execve_entry, trace_execveat_entry, trace_sched_process_exec -->
+
+## Bounded sensor disposition — 2026-11-22
+
+`sfx-04` adds nullable `ExecutionObservationKind` to the shared process object and
+normal/direct Parquet. Linux syscall-entry exec observations use `exec_attempt`;
+the successful scheduler image-install hook uses `exec_success`. Clone, Refresh
+and unsupported producers remain null. Existing `ActivityType=Start`, identity,
+executable name/path evidence, command-line provenance, timing and
+`PROC_START_SRC` are unchanged.
+<!-- GROUND_TRUTH: ../wintap/shared/WintapAPI/WintapMessage.cs §ProcessObject; ../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs §GetExecutionObservationKind, HandleEvent; ../wintap/wintap/core/etl/extract/ProcessSerializer.cs §handleStartEvent -->
+
+Focused tests pass 7/7, the combined sensor-fix suite passes 78/78, and the
+bounded process-only gate passes 26/26 aggregate assertions. Across eight
+controlled repeated-exec lifetimes, every case has one null fork, two attempts
+and two successes with exact stage-one/stage-two path pairing and strict
+observation ordering. All 24 fork-only controls and all Refresh rows remain null;
+the optional field is present in all 98 Parquet files. This closes source-level
+attempt-versus-installed-image ambiguity, not process-lifetime selection.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-04-linux-exec-observation-kind.md; ../wintap/tests/Lintap.Tests/ProcessExecutionObservationTests.cs -->
+
+`sfx-05` preserves why each existing Linux path was selected through nullable
+`ExecutablePathSource`: `exec-event-filename`, own `procfs-exe`, clone's
+`parent-procfs-exe` fallback, or `unavailable`. It does not change path/name
+selection. Focused tests pass 5/5, the combined suite passes 83/83, and the live
+gate passes 37/37 over 5,960 rows and 109 files. All exec attempts/successes use
+event-filename evidence; clone and Refresh source precedence is explicit and
+valid. This makes rows evidence-aware but still does not choose a lifetime image.
+<!-- GROUND_TRUTH: ../wintap/developer_docs/audits/sfx-05-linux-executable-path-source.md; ../wintap/tests/Lintap.Tests/ProcessExecutablePathSourceTests.cs -->
 
 The Wintappy silver process model groups observations by `pidhash` and uses
 `any_value` independently for `process_name` and `process_path`, without using
@@ -47,17 +106,68 @@ come from different observations. `any_value` also supplies no explicit
 deterministic ordering rule.
 <!-- GROUND_TRUTH: ../Wintap-PyUtil/wintap_dbt/models/silver/process.sql §process_base -->
 
+This does not imply that every `any_value` use is defective. For a field whose
+eligible non-null values are proven identical within the grouping key, `any_value`
+can be a harmless shortcut: duplicate identical rows are not semantic conflict,
+and null-only groups have a separately defined result. The audit must therefore be
+column- and feature-specific. The relevant question is whether multiple distinct
+eligible values exist and whether row provenance/order carries meaning.
+
+The active plan will classify each use as invariant-safe, conflict-visible metadata,
+or ordering-sensitive feature. `process_name`, `process_path`, and image-related
+arguments are initially ordering-sensitive; fields such as `os_pid` may be safe only
+after group-specific invariance tests. Any retained shortcut needs a regression
+contract proving equivalence rather than relying on the function name.
+
 Multiple successful execs within one process lifetime add a separate ambiguity:
 the process-start `EventTime` does not order those image changes or establish
 which successful image the base row should represent.
 
+### Refresh as current-state evidence
+
+The new periodic process listing is a useful candidate for a different question:
+which image was observable for a still-running process at a particular scan time.
+Linux and Windows Refresh retain the birth-scoped identity while adding an
+observation time, so a matching, valid Refresh may be more accurate than an older
+event for a **current-state as-of query**. It is not proof of an exec transition,
+does not replace birth `EventTime`, and is not automatically the canonical lifetime
+image. Enumeration and field reads can race with process changes or exit, and a
+Refresh can be stale relative to the query.
+<!-- GROUND_TRUTH: ../wintap/wintap/platform/linux/sensor/ProcessRundownSensor.cs §CreateRefreshMessage; ../wintap/wintap/platform/windows/sensor/etw/WindowsProcessSensor.cs §RunPeriodicRefreshSnapshot; §CreateRefreshMessage -->
+
+The implementation plan evaluated separate lifetime and current-state views. The
+bounded DBT process projection now applies the measured paired-row precedence for
+the current full-input snapshot: latest valid Refresh, otherwise latest ordered
+`exec_success`, otherwise qualified start evidence. An explicit requested-cutoff
+as-of relation remains deferred for a future follow-up; it is not required to close
+the current Linux repeated-exec slice.
+
+### Population generality and recurring-cause feedback
+
+The severity assessment must separate raw observation volume from independent
+process-lifetime prevalence. A regularly invoked wrapper can generate a large pile
+of multi-name observations while representing one recurring cause on one host or
+host-day. Conversely, a smaller row count spread across many hosts, days, and
+independent lifetimes may indicate a broader producer or model defect.
+
+The measurement plan therefore reports observation, `PidHash` lifetime, PID-group,
+host-day, host, and cause-signature rates, with concentration measures and
+leave-one-host/day-out checks. It also caps recurring signatures to one lifetime per
+host-day when estimating breadth. A repeated signature is evidence of recurrence,
+not automatically a confirmed root cause.
+
+Results can feed algorithm tuning through versioned baseline/candidate shadow runs,
+stratified human labels, and held-out host/time validation. The loop must preserve
+unknown and ambiguous cases, test beyond the dominant recurring wrapper pattern,
+and never self-label from the current arbitrary projection or automatically rewrite
+historical data.
+
 ## Impact
 
-The base process row may report an executable that was never successfully run,
-or combine a process name and path from different observations. The current
-projection therefore does not provide reliable canonical executable
-attribution for a process lifetime. This is a source-level finding; its frequency
-and impact in recorded datasets still need measurement.
+The pre-fix process row could report an executable that never successfully ran
+or combine fields from different observations. Bounded Linux capture measured
+that defect and qualified the paired-row repair. Broader dataset prevalence and
+historical repair remain separate; the old arbitrary projection is not current.
 
 ## Example: wrapper script followed by `dd`
 
@@ -103,10 +213,16 @@ explicit process-lifetime view; this example does not select that policy.
 
 ### Timestamp precision follow-up
 
-The same sample warrants a separate timestamp investigation. The Start rows
-repeat `134394151359900000`, which is aligned to a much coarser boundary, while
-the Stop row carries `134394151363910716` with finer 100-nanosecond FILETIME
-precision. This may be intentional rather than ordinary truncation: the Linux
+The explicit requirement and implemented additive candidate now live in
+[[wiki/todo/process-observation-time-separate-from-birth]]. Preserve canonical
+birth for identity independently of the finest available occurrence time;
+additive timing preservation and migration of legacy `EventTime` semantics are
+separate scopes. Exec/clone kernel timestamps now reach separate normal-ETL
+observation fields; bounded Linux live qualification and paired-row image selection
+are complete. Broader history/as-of contracts remain separate.
+
+The same sample showed clock-tick-aligned Start birth timestamps and finer Stop
+occurrence timestamps. This may be intentional rather than truncation: the Linux
 producer canonicalizes process birth times to the `/proc` clock-tick basis so
 Clone, Execve, and rundown observations produce the same identity. Stop time is
 reported as a termination/event timestamp and need not use that birth-time
@@ -130,10 +246,109 @@ until those source and host details are checked.
 - Which provenance and time fields are available and reliable across raw Wintap
   events, recorded Parquet, and Wintappy's normalized model?
 
+## Candidate two-layer direction
+
+Treat the stable process lifetime and its changing executable image as
+complementary views. Keep one deterministic representative image for the
+process-lifetime row and expose its selected name as `process_name`; separately
+retain the ordered detailed observations that explain how the process reached
+that image. The representative still needs an explicit policy, such as initial
+or latest successful image, and must select name/path from the same observation.
+
+Candidate homes for the ordered detail are:
+
+1. the existing `raw_process` observations plus a normalized ordered view;
+2. a process attribute containing an ordered list of provenance/time/name/path
+   tuples; or
+3. a separate process-image/exec-observation table keyed to the stable process
+   lifetime.
+
+No storage shape or representative-image policy is selected yet. Compare query
+ergonomics, schema evolution, Parquet/DuckDB behavior, cross-platform meaning,
+and preservation of failed exec attempts before choosing among them.
+<!-- HUMAN-REQUESTED: candidate direction from conversation 2026-11-23; not an accepted schema decision. -->
+
+### Future refinement: open-source comparison
+
+Investigate how other open-source tools model identity and mutable executable
+state across repeated `exec`, beginning with Sysdig/Falco libraries, Cilium
+Tetragon, osquery, and Tracee. Consider additional mature references such as
+Elastic's Linux/eBPF process telemetry, Sysmon for Linux, and Linux Audit where
+their event and state models are comparable.
+
+For each tool, record:
+
+- whether process identity remains stable across `exec`;
+- whether the canonical process name is initial, current, latest, or event-local;
+- whether failed exec attempts and successful image installation are distinct;
+- what timestamps, sequence IDs, or parent-image links order repeated execs;
+- whether current state and image history use one record, nested attributes, or
+  separate event/entity tables; and
+- how downstream queries avoid combining name and path from different
+  observations.
+
+Reuse the existing cross-sensor research thread rather than starting a duplicate
+survey: [[wiki/work/lintap-process-creation-validation/index]] and
+[[wiki/work/lintap-process-creation-validation/research-snapshot-2026-07-31]].
+<!-- HUMAN-REQUESTED: future comparative research note, conversation 2026-11-23. -->
+
+## Developer handoff
+
+**Status:** Investigation and design handoff only. No schema, producer, DBT, or
+historical-data change is authorized by this TODO.
+
+**Goal:** Propose a two-layer process model that keeps a stable process-lifetime
+identity, exposes one deterministic representative successful image as
+`process_name`, and retains an ordered history of exec attempts and successful
+image transitions.
+
+### Read first
+
+1. This TODO, especially the wrapper-to-`dd` example and candidate direction.
+2. [[wiki/tension/linux-process-lifecycle-vs-exec-attempt-observations]].
+3. [[wiki/work/lintap-process-creation-validation/validation-harness-design]].
+4. The producer and current projection:
+   `../wintap/wintap/platform/linux/sensor/ebpf/ExecveSensor.cs`,
+   `../wintap/wintap/platform/linux/sensor/ebpf/tracers/execve_tracepoint.bpf.c`,
+   and `../Wintap-PyUtil/wintap_dbt/models/silver/process.sql`.
+
+### Investigation sequence
+
+1. Measure repeated exec attempts, successful execs, and multi-name lifetimes in
+   representative data without treating raw `Start` rows as process births.
+2. Complete the open-source comparison described above, reusing the existing
+   cross-sensor research thread.
+3. Inventory the producer evidence available for ordering each observation.
+   Process-birth `EventTime` alone is insufficient; identify any required event
+   timestamp, monotonic time, sequence, source, and success fields.
+4. Compare the three detail-storage options against DuckDB/Parquet queryability,
+   compatibility, cross-platform semantics, and preservation of research evidence.
+5. Present an explicit representative-image policy and migration/compatibility
+   plan for human review before implementation.
+
+### Minimum acceptance contracts for a proposal
+
+- Repeated exec does not create a new process-lifetime identity.
+- Failed attempts cannot become the representative successful executable.
+- Representative name and path come from the same observation under a
+  deterministic rule.
+- Multiple successful image transitions can be ordered independently of process
+  birth time.
+- Raw intent evidence remains available without inflating process-birth counts.
+- PID reuse remains distinct from repeated exec within one lifetime.
+- Existing Windows semantics and historical raw data are not silently redefined.
+- Fixtures cover failed lookup attempts, wrapper/interpreter transitions,
+  multiple successful execs, PID reuse, and Stop after the final image.
+
+**Expected deliverable:** A source-grounded design recommendation and fixture/data
+measurement report. If implementation is selected, promote this TODO into a
+feature folder and obtain approval for the chosen producer/model/schema changes.
+<!-- HUMAN-REQUESTED: developer handoff added in conversation 2026-11-23. -->
+
 ## Suggested deep-dive work
 
-1. Preserve the distinction between exec attempts and successful execs in the
-   base model.
+1. Consume the now-preserved distinction between exec attempts and successful
+   execs without treating either raw-row count as process-birth count.
 2. Define how successful image changes relate to a process-lifetime identity.
 3. Retain per-exec ordering information separately from process start time.
 4. Replace independent arbitrary selection of name and path with an explicit,
@@ -163,7 +378,11 @@ The broader unresolved lifecycle-versus-attempt tradeoff is tracked in
 
 ## Disposition
 
-No model choice, schema change, implementation scope, or cross-repo code change
-has been authorized by this intake entry. When promoted, follow
-[[wiki/concept/llm-assisted-feature-workflow]] and link the resulting work folder
-from [[wiki/todo/index]].
+The additive sensor distinction and bounded Linux paired-row DBT repair are complete.
+Current selection prefers latest valid Refresh, latest successful exec, then eligible
+fallback, with name/path/arguments from one row and failed attempts excluded. See
+[[wiki/work/implement-sensor-fixes-and-cleanup-test-code/verification]]. The earlier
+investigation sequence is historical; explicit as-of/history, broader ambiguity,
+native Windows, historical repair and syscall-return correlation remain separate.
+This TODO does not authorize those changes. Preserve
+[[wiki/tension/linux-process-lifecycle-vs-exec-attempt-observations]].

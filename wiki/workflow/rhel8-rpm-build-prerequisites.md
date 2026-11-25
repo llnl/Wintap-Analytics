@@ -6,10 +6,12 @@ grounded_by:
   - ../Lintap/packaging/README.md
   - ../Lintap/packaging/lintap-rpm/build-rpm.sh
   - ../Lintap/packaging/dotnet-common.sh
+  - ../Lintap/packaging/install-build-go.sh
+  - ../Lintap/packaging/pidstat-common.sh
   - ../wintap/global.json
   - ../wintap/wintap/platform/linux/sensor/ebpf/tracers/Makefile
 policy: agent-editable
-last_validated: 2026-10-26
+last_validated: 2026-11-25
 repo_scope: Lintap
 implementation_area: packaging
 event_domain: none
@@ -28,8 +30,8 @@ tools only; installing or starting the resulting sensor is a separate action.
 The current RPM builder requires a readable `/sys/kernel/btf/vmlinux` and
 validates the CO-RE `file_ops_tracer.bpf.o` payload. Use a native x86_64 host;
 do not use the script's cross-build option as a workaround. Historical RHEL 8
-notes naming .NET SDK 8 are obsolete: the current project requires SDK
-**10.0.402**.
+notes naming .NET SDK 8 are obsolete: the current project requires a stable
+**.NET 10 SDK** and packaging requires build-host **Go 1.27.3**.
 <!-- GROUND_TRUTH: ../Lintap/packaging/README.md §Supported targets; §Build prerequisites; §Build the RHEL 8 RPM; ../Lintap/packaging/lintap-rpm/build-rpm.sh §require_cmd; §expected_bpf_objects; ../wintap/global.json -->
 
 ## 1. Check the host and enabled repositories (read-only)
@@ -93,10 +95,36 @@ identify the host target triple; `libbpf-devel` supplies the `<bpf/...>`
 headers included by the eBPF sources. The RPM builder compiles the tracer
 objects; it does not need to install or start the Lintap service.
 
-## 3. Select the exact .NET SDK
+## Go build prerequisite — native RHEL 8 x86_64
 
-The source-of-truth version is in `wintap/global.json`. Check whether the
-approved package repositories already provide **10.0.402** before installing a
+After download/software-installation approval, from the sibling checkout parent:
+
+```bash
+sudo bash Lintap/packaging/install-build-go.sh
+source /etc/profile.d/lintap-go.sh
+"$GO" version
+GOTOOLCHAIN=local "$GO" env GOVERSION GOHOSTOS GOHOSTARCH
+source Lintap/packaging/pidstat-common.sh
+lintap_require_pidstat_go
+```
+
+Expect `go1.27.3`, `linux`, `amd64`. The shared installer verifies official release
+metadata/archive checksum, installs under `/opt/lintap-go/1.27.3`, and does not
+replace system Go. It requires curl, CA trust, Python 3, tar/gzip and sha256sum.
+Go is build-host-only; do not add it as an installed RPM runtime dependency.
+Keep `GO` exported for the build; new login shells source its profile automatically.
+
+The distribution's `golang` package may not match the pin. Download/module-proxy
+failures are environment findings: fix approved CA/proxy setup or use verified
+cached inputs, never disable TLS or relax toolchain checks. User-local installation
+is documented in the canonical package guide. Native RHEL 8 execution of this
+new installer has not been verified by the agent; fake-download tests are not that proof.
+<!-- GROUND_TRUTH: ../Lintap/packaging/install-build-go.sh; ../Lintap/packaging/pidstat-common.sh; ../Lintap/packaging/lintap-rpm/README.md -->
+
+## 3. Select a stable .NET 10 SDK
+
+The source policy is in `wintap/global.json`: minimum 10.0.100, `latestMinor`,
+no prereleases. Check whether approved repositories provide stable .NET 10 before installing a
 separate SDK:
 
 ```bash
@@ -104,38 +132,35 @@ dnf --showduplicates list dotnet-sdk-10.0
 command -v dotnet && dotnet --info || true
 ```
 
-Do not install an arbitrary `dotnet-sdk-10.0` package and assume it is the
-required patch. If an approved package installation selects exactly 10.0.402,
-use it. Otherwise, with approval for downloading Microsoft's official
-installer, install the pinned SDK into a user-local, isolated directory (this
+An approved `dotnet-sdk-10.0` package is sufficient if the project resolves a
+stable version at or above its baseline. Otherwise, with approval for downloading
+Microsoft's official installer, install stable .NET 10 into an isolated directory (this
 does not replace a system SDK):
 
 ```bash
-SDK_VERSION=10.0.402
-export DOTNET_ROOT="$HOME/.dotnet/wintap-sdk-$SDK_VERSION"
+export DOTNET_ROOT="$HOME/.dotnet/wintap-sdk-10"
 mkdir -p "$DOTNET_ROOT"
 curl --fail --location https://dot.net/v1/dotnet-install.sh \
   -o "$DOTNET_ROOT/dotnet-install.sh"
 # Inspect/approve the downloaded installer before running it; do not curl | bash.
 bash "$DOTNET_ROOT/dotnet-install.sh" \
-  --version "$SDK_VERSION" --install-dir "$DOTNET_ROOT" --no-path
+  --channel 10.0 --quality GA --install-dir "$DOTNET_ROOT" --no-path
 export PATH="$DOTNET_ROOT:$PATH"
 ```
 
-The RPM builder resolves `global.json` and rejects an SDK other than 10.0.402
-before cleaning or compiling. Verify selection both at the shell and from the
-Wintap checkout:
+The RPM builder validates policy and the resolved stable .NET 10 SDK before
+cleaning or compiling. Run the same project-directory preflight:
 
 ```bash
-test "$(dotnet --version)" = 10.0.402 || { echo 'Wrong SDK selected'; exit 1; }
-(cd wintap && test "$(dotnet --version)" = 10.0.402) || { echo 'Wintap selects a different SDK'; exit 1; }
+source Lintap/packaging/dotnet-common.sh
+lintap_require_dotnet_sdk wintap/wintap
 dotnet --info
 dotnet --list-runtimes
 ```
 
 Keep this SDK on `PATH` for the build. Do not confuse the SDK version with the
 .NET runtime version bundled into the default self-contained RPM.
-<!-- GROUND_TRUTH: ../Lintap/packaging/README.md §Install/select the pinned SDK; ../Lintap/packaging/dotnet-common.sh; ../wintap/global.json -->
+<!-- GROUND_TRUTH: ../Lintap/packaging/README.md §Install/select a stable .NET 10 SDK; ../Lintap/packaging/dotnet-common.sh; ../wintap/global.json -->
 
 ## 4. Confirm the source checkouts and disk location
 
@@ -167,8 +192,7 @@ command, RPM inspection, and any separately approved install/smoke test.
 
 ## Common incorrect assumptions
 
-- SDK 8.0 is not compatible with the current source baseline; use exact SDK
-  10.0.402.
+- SDK 8.0 is not compatible; use a stable .NET 10 SDK selected by the project.
 - An RPM named `.el8` does not prove the build ran on RHEL 8 or that BTF was
   available.
 - `kernel-devel` does not supply running-kernel BTF.

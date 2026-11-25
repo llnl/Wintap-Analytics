@@ -5,7 +5,7 @@ import streamlit as st
 
 from analysis import analyze_round, canary_rounds, input_fingerprint
 from result_store import load_latest, load_result, save_result
-from s3_source import discover_host_files
+from s3_source import discover_host_files, discover_telemetry_files
 
 
 def show_report(report):
@@ -60,43 +60,66 @@ def canary_batch_page(ctx):
     force = st.checkbox('Revalidate even if a saved result matches current inputs', value=False)
     st.caption('Validation writes a summary under analysis/smoke-tests/v1 beside the dataset (first configured S3 root). Raw telemetry and manifests are never modified. Existing results are reused only for matching object/evidence/code/settings fingerprints.')
     try:
-        snapshot = dict(ctx['snapshot'])
+        settings = dict(padding=ctx['padding'], unlabelled_host=ctx['unlabelled_host'], window=ctx['window'],
+                        max_rows=100000, memory_mb=ctx['memory_mb'], hostname_aliases=alias, evidence_errors=ctx['errors'])
+        fingerprint = None
+        report = None
+        saved = False
+        memory = st.session_state.get('_canary_analysis')
         if ctx['remote']:
-            host_files = discover_host_files(ctx['client'], ctx['config'], snapshot)
-            if len(snapshot) > ctx['config']['max_files']:
-                raise ValueError('Combined telemetry/HOST history file limit exceeded')
-            telemetry = ctx['telemetry_files']
+            if memory and memory.get('group') == selected:
+                report, saved = memory['report'], memory['saved']
+            else:
+                try:
+                    report = load_latest(ctx)
+                    saved = report is not None
+                except Exception:
+                    st.warning('Saved result unavailable; verify analysis-prefix read permissions. You can still validate; private details suppressed.')
         else:
             root = Path(ctx['data_root']).expanduser()
             files = sorted(root.rglob('*.parquet')) if ctx['data_root'] and root.exists() else []
             snapshot = {str(p.resolve()): [p.stat().st_size, p.stat().st_mtime_ns] for p in files}
             host_files = [p for p in files if 'raw_host' in p.parts]
             telemetry = [p for p in files if 'raw_smoke_test' not in p.parts]
-        settings = dict(padding=ctx['padding'], unlabelled_host=ctx['unlabelled_host'], window=ctx['window'],
-                        max_rows=100000, memory_mb=256, hostname_aliases=alias, evidence_errors=ctx['errors'])
-        fingerprint = input_fingerprint(group['runs'], ctx['runs'], snapshot, settings, ctx['source_id'])
-        report = None
-        saved = False
-        memory = st.session_state.get('_canary_analysis')
-        if memory and memory['fingerprint'] == fingerprint:
-            report, saved = memory['report'], memory['saved']
-        else:
-            try:
-                report = load_result(ctx, fingerprint)
-                saved = report is not None
-                if report is None:
-                    report = load_latest(ctx)
+            fingerprint = input_fingerprint(group['runs'], ctx['runs'], snapshot, settings, ctx['source_id'])
+            if memory and memory['fingerprint'] == fingerprint:
+                report, saved = memory['report'], memory['saved']
+            else:
+                try:
+                    report = load_result(ctx, fingerprint)
                     saved = report is not None
-            except Exception:
-                st.warning('Saved result unavailable; verify analysis-prefix read permissions. You can still validate; private details suppressed.')
+                    if report is None:
+                        report = load_latest(ctx)
+                        saved = report is not None
+                except Exception:
+                    st.warning('Saved result unavailable; verify analysis-prefix read permissions. You can still validate; private details suppressed.')
         if st.button('Run all validations for this canary', key='validate-canary-round'):
+            if ctx['remote']:
+                snapshot = dict(ctx['snapshot'])
+                domains = {selector['domain'] for run in group['runs'] for selector in run['selectors']}
+                telemetry = discover_telemetry_files(ctx['client'], ctx['config'], *ctx['window'],
+                    domains=domains, snapshot=snapshot,
+                    hosts={run['host']['hostname'] for run in group['runs']})
+                host_files = discover_host_files(ctx['client'], ctx['config'], snapshot)
+                fingerprint = input_fingerprint(group['runs'], ctx['runs'], snapshot, settings, ctx['source_id'])
+                if not force:
+                    if memory and memory['fingerprint'] == fingerprint:
+                        report, saved = memory['report'], memory['saved']
+                    elif report is None or report.get('fingerprint') != fingerprint:
+                        try:
+                            report = load_result(ctx, fingerprint)
+                            saved = report is not None
+                        except Exception:
+                            report, saved = None, False
+                            st.warning('Matching saved result unavailable; validation will recompute it. Private details suppressed.')
             if report is not None and report['fingerprint'] == fingerprint and not force:
                 st.info('Reusing matching saved/in-memory analysis; no telemetry scan.')
             else:
                 with st.spinner('Validating all families and runtime context with one shared observation scan…'):
                     report = analyze_round(ctx['con'], group['runs'], ctx['runs'], telemetry, host_files,
                         data_root=ctx['data_root'], unlabelled_host=ctx['unlabelled_host'], padding=ctx['padding'],
-                        evidence_errors=ctx['errors'], fingerprint=fingerprint, allow_hostname_aliases=alias)
+                        memory_mb=ctx['memory_mb'], evidence_errors=ctx['errors'], fingerprint=fingerprint,
+                        allow_hostname_aliases=alias)
                 saved = False
             if not saved:
                 try:
@@ -104,9 +127,11 @@ def canary_batch_page(ctx):
                     saved = True
                 except Exception:
                     st.warning('Computed, but result was NOT persisted. Grant write access only to the analysis prefix; no credentials or raw-data permissions need changing here.')
-            st.session_state['_canary_analysis'] = dict(fingerprint=fingerprint, report=report, saved=saved)
+            st.session_state['_canary_analysis'] = dict(group=selected, fingerprint=fingerprint, report=report, saved=saved)
         if report is not None:
-            if report['fingerprint'] != fingerprint:
+            if fingerprint is None:
+                st.warning('Prior saved summary shown without a current S3 object snapshot. Click Run all validations to verify or refresh it.')
+            elif report['fingerprint'] != fingerprint:
                 st.warning('STALE snapshot: source objects, manifests, evaluator or settings changed. This is prior analysis, not current coverage. Click Run all validations to recompute.')
             st.caption('Persisted summary loaded; no automatic telemetry validation.' if saved else 'Memory-only summary; not acknowledged as persisted.')
             show_report(report)
